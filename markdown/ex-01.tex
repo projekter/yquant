@@ -1,0 +1,21 @@
+\documentclass[tikz, convert={convertexe=magick}, png]{standalone}
+
+\usepackage{yquant, braket}
+\yquantset{register/default name=$\ket{\reg_{\idx}}$}
+
+\begin{document}
+   \begin{tikzpicture}
+      \begin{yquant}
+         qubit q[3];
+         
+         h q[1];
+         cnot q[2] | q[1];
+         cnot q[1] | q[0];
+         h q[0];
+         measure q[0], q[1];
+         
+         z q[2] | q[1];
+         x q[2] | q[0];
+      \end{yquant}
+   \end{tikzpicture}
+\end{document}
