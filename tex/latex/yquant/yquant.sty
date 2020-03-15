@@ -1,0 +1,40 @@
+% yquant.sty
+%  Typesetting quantum circuits using a flow-oriented language
+%
+% Copyright 2019-2020 Benjamin Desef
+%
+% This work may be distributed and/or modified under the conditions of the LaTeX Project
+% Public License, either version 1.3 of this license or (at your option) any later
+% version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX version 2005/12/01 or
+% later.
+%
+% This work has the LPPL maintenance status `maintained'.
+%
+% The Current Maintainer of this work is Benjamin Desef.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{yquant}[2020/03/15 v0.1 Yet another quantum circuit library for LaTeX]
+
+\RequirePackage{etoolbox}[2018/02/11]
+\RequirePackage{tikz}[2015/08/29]
+\RequirePackage{trimspaces}[2009/09/17]
+\usetikzlibrary{arrows.meta}
+
+\input yquant-config.tex
+\input yquant-tools.tex
+\input yquant-registers.tex
+\input yquant-env.tex
+\input yquant-langhelper.tex
+\input yquant-circuit.tex
+\input yquant-draw.tex
+\input yquant-shapes.tex
+\input yquant-lang.tex
+
+% usually, \\ is robust; but when using \centering, it is \let to \@centercr, which is not robust (probably because this happens only when not protecting). Fix this, so that \\ does not require \protect if a centered circuit is drawn.
+\robustify\@centercr
+
+\endinput
+%%
+%% End of file `yquant.sty'.

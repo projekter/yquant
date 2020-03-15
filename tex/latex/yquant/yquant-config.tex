@@ -1,0 +1,140 @@
+\usetikzlibrary{decorations.pathreplacing}
+\pgfdeclaremetadecoration{tikz@internal}{pre}{
+   \state{pre}[width=\pgfkeysvalueof{/pgf/decoration/pre length}+\pgfkeysvalueof{/pgf/decoration/post length}, next state=main]{
+      \appto\tikz@dec@shift{\pgftransformxshift{-\pgfkeysvalueof{/pgf/decoration/post length}}}
+      \tikz@dec@trans
+      \decoration{\pgfkeysvalueof{/pgf/decoration/pre}}
+   }
+   \state{main}[width=\pgfmetadecoratedremainingdistance, next state=final]{
+      \tikz@dec@trans
+      \decoration{\tikz@decoration@name}
+   }
+   \state{final}{
+      \tikz@dec@trans
+      \decoration{\pgfkeysvalueof{/pgf/decoration/post}}
+   }
+}
+\pgfqkeys{/yquant}{
+   every circuit/.style={},
+   % register settings
+   register/default name/.store in=%
+      \yquant@config@register@default@name,
+   register/minimum height/.code=%
+      {\dimdef\yquant@config@register@minimum@height{#1}},
+   register/separation/.code=%
+      {\dimdef\yquant@config@register@sep{#1}},
+   % register label style
+   every label/.style=%
+      {shape=yquant-text, anchor=circuit, align=right},
+   every initial label/.style=%
+      {anchor=east},
+   every qubit label/.style=%
+      {},
+   every cbit label/.style=%
+      {},
+   every qubits label/.style=%
+      {},
+   every multi label/.style=%
+      {shift={(-.075, 0)}, draw, decoration={brace, mirror, pre=moveto, pre length=-1mm, post=moveto, post length=-1mm}, decorate,
+       every node/.append style={shape=yquant-text, anchor=east, align=right, midway, shift={(-.025, 0)}}},
+   % output label styles
+   every output/.style=%
+      {shape=yquant-text, anchor=west, align=left},
+   every qubit output/.style=%
+      {},
+   every cbit output/.style=%
+      {},
+   every qubits output/.style=%
+      {},
+   every multi output/.style=%
+      {shift={(.075, 0)}, draw, decoration={brace, pre=moveto, pre length=-1mm, post=moveto, post length=-1mm}, decorate,
+       every node/.append style={shape=yquant-text, anchor=west, align=left, midway, shift={(.025, 0)}}},
+   % wire style
+   every wire/.style=%
+      {draw},
+   every qubit wire/.style=%
+      {},
+   every cbit wire/.style=%
+      {},
+   every qubits wire/.style=%
+      {},
+   % operator settings
+   operator/separation/.code=%
+      {\dimdef\yquant@config@operator@sep{#1}},
+   operator/minimum width/.code=%
+      {\dimdef\yquant@config@operator@minimum@width{#1}},
+   % operator style: control
+   every control line/.style=%
+      {draw},
+   every control/.style=%
+      {shape=yquant-circle, anchor=circuit, radius=.5mm},
+   every positive control/.style=%
+      {fill=black},
+   every negative control/.style=%
+      {draw},
+   % operator style: main part
+   every operator/.style=%
+      {anchor=circuit},
+   % overwriting all styles
+   this operator/.style=%
+      {},
+   this control/.style=%
+      {},
+   operator style/.style=%
+      {/yquant/this operator/.append style={#1}},
+   control style/.style=%
+      {/yquant/every control line/.append style={#1},
+       /yquant/this control/.append style={#1}},
+   style/.style=%
+      {/yquant/this operator/.append style={#1},
+       /yquant/every control line/.append style={#1},
+       /yquant/this control/.append style={#1}},
+   % different operator appearances
+   operators/every box/.style=%
+      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},
+   operators/every h/.style=%
+      {/yquant/operators/every box},
+   operators/every pauli/.style=%
+      {/yquant/operators/every box},
+   operators/every x/.style=%
+      {/yquant/operators/every pauli},
+   operators/every y/.style=%
+      {/yquant/operators/every pauli},
+   operators/every z/.style=%
+      {/yquant/operators/every pauli},
+%   operators/every subcircuit/.style=%
+%      {/yquant/operators/every box, inner ysep=0pt},
+   operators/every phase/.style=%
+      {shape=yquant-circle, radius=.5mm, fill},
+   operators/every zz/.style=%
+      % y radius must be twice as large as x radius (= two circles). And there is no
+      % possiblity to distort the circle to an ellipse; x radius is always the defining
+      % property!
+      {shape=yquant-zz, x radius=.5mm, y radius=1mm, fill, draw},
+   operators/every xx/.style=%
+      % same as zz
+      {shape=yquant-xx, x radius=.75mm, y radius=1.5mm, draw},
+   operators/every slash/.style=%
+      {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},
+   operators/every swap/.style=%
+      {shape=yquant-swap, x radius=.75mm, y radius=1.5mm, draw},
+   operators/every not/.style=%
+      {shape=yquant-oplus, radius=1.3mm, draw},
+   operators/every measure/.style=%
+      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},
+   operators/every measure meter/.style=%
+      {draw, -{Latex[length=2.5pt]}},
+   operators/every dmeter/.style=%
+      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
+   operators/every barrier/.style=%
+      {shape=yquant-barrier, dashed, draw},
+   operators/multi operator line/.is if=\yquant@config@multi@line,
+}
+
+\def\yquant@config@register@default@name{\regidx}
+\def\yquant@config@register@minimum@height{3mm}
+\def\yquant@config@register@sep{1mm}
+\def\yquant@config@operator@sep{1mm}
+\def\yquant@config@operator@minimum@width{5mm}
+\newif\ifyquant@config@multi@line
+\yquant@config@multi@linetrue

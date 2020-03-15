@@ -1,0 +1,422 @@
+% BEGIN_FOLD Actual drawing at shipout
+\newcount\yquant@draw@@currentcontroltype%
+
+\protected\def\yquant@draw@group#1#2#3#4#5{%
+   \begingroup%
+      \def\yquant@draw@@x{#1}%
+      \ifx F#2%
+         \yquant@draw@@currentcontroltype=0 %
+      \else%
+         \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
+      \fi%
+      \let\yquant@circuit@extendcontrolline@cmd=\empty%
+      \let\yquant@circuit@extendcontrolline@prev=\relax%
+      \yquant@langhelper@list@attrs%
+      % If the quotes library is loaded, activate it. (else, this is by default \relax)
+      \tikz@enable@node@quotes%
+      \yquant@set{#3}%
+      \def\yquant@draw@@style{#4}%
+      \def\yquant@draw@@content{#5}%
+      \def\yquant@draw@@idx@content{0}%
+      \def\yquant@draw@@idx@pcontrol{0}%
+      \def\yquant@draw@@idx@ncontrol{0}%
+}
+
+\protected\def\yquant@draw@endgroup#1#2#3{%
+      \unless\ifx F#1%
+         \yquant@draw@cline%
+      \fi%
+      \ifcase#3\relax%
+      \or%
+         \yquant@draw@alias@ctrl{#2}n%
+      \or%
+         \yquant@draw@alias@ctrl{#2}p%
+      \or%
+         \yquant@draw@alias@ctrl{#2}p%
+         \yquant@draw@alias@ctrl{#2}n%
+      \or%
+         \yquant@draw@alias{#2}%
+      \or%
+         \yquant@draw@alias{#2}%
+         \yquant@draw@alias@ctrl{#2}n%
+      \or%
+         \yquant@draw@alias{#2}%
+         \yquant@draw@alias@ctrl{#2}p%
+      \or%
+         \yquant@draw@alias{#2}%
+         \yquant@draw@alias@ctrl{#2}p%
+         \yquant@draw@alias@ctrl{#2}n%
+      \fi%
+   \endgroup%
+}
+
+\protected\long\def\yquant@draw@single#1#2{%
+   \let\idx=\yquant@draw@@idx@content%
+   \edef\cmd{%
+      \noexpand\path (\yquant@draw@@x, \yquant@register@get@y{#1})%
+         node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
+              name prefix=, name suffix=, name=yquantbox]%
+         {\unexpanded\expandafter{\yquant@draw@@content}};%
+   }%
+   \cmd%
+   \ifpgfpointshapexproj{yquantbox}%
+      \yquant@circuit@extendwire{#1}%
+   \fi%
+   \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
+   % check for empty name parameter
+   \if\relax\detokenize{#2}\relax%
+   \else%
+      \pgfnodealias{\tikz@pp@name{#2}}{yquantbox}%
+   \fi%
+   \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
+}
+
+\protected\long\def\yquant@draw@multi#1#2#3#4#5{%
+   \let\idx=\yquant@draw@@idx@content%
+   % We need to somehow extract the y radius
+   \edef\cmd{%
+      \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\dimexpr%
+                         \yquant@register@get@y{#1}+\yquant@register@get@y{#2}\relax%
+                      \relax)%
+         node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
+              y radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
+                     .5*\noexpand\pgfkeysvalueof{/tikz/y radius},%
+              name prefix=, name suffix=, name=yquantbox]%
+            {\unexpanded\expandafter{\yquant@draw@@content}};
+   }%
+   \cmd%
+   \ifpgfpointshapexproj{yquantbox}%
+      \let\do=\yquant@circuit@extendwire%
+      \dolistloop{#4}%
+   \fi%
+   \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
+   % check for empty name parameter
+   \if\relax\detokenize{#5}\relax%
+   \else%
+      \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
+   \fi%
+   \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
+}
+
+\protected\long\def\yquant@draw@multiinit#1#2#3#4#5{%
+   \let\idx=\yquant@draw@@idx@content%
+   % We need to somehow extract the y radius
+   \edef\cmd{%
+      \noexpand\path[/yquant/every operator, \yquant@draw@@style,%
+                     /yquant/every multi label, /yquant/this operator]%
+         (\yquant@draw@@x, \yquant@register@get@y{#1}) --%
+         (\yquant@draw@@x, \yquant@register@get@y{#2})%
+         node[name prefix=, name suffix=, name=yquantbox]%
+            {\unexpanded\expandafter{\yquant@draw@@content}};
+   }%
+   \cmd%
+   % no wire extension (we are still at the initial position), no control line (init doesn't allow for those, so just save the no-op)
+   % check for empty name parameter
+   \if\relax\detokenize{#5}\relax%
+   \else%
+      \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
+   \fi%
+   \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
+}
+
+\protected\def\yquant@draw@control#1#2#3{%
+   \edef\cmd{%
+      \noexpand\path (\yquant@draw@@x, \yquant@register@get@y{#2})%
+         node[/yquant/every control, /yquant/every #1 control, /yquant/this control,%
+              name prefix=, name suffix=, name=yquantbox]%
+         {};%
+   }%
+   \cmd%
+   \ifpgfpointshapexproj{yquantbox}%
+      \yquant@circuit@extendwire{#2}%
+   \fi%
+   \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
+   \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
+   % check for empty name parameter
+   \if\relax\detokenize{#3}\relax%
+   \else%
+      \pgfnodealias{\tikz@pp@name{#3}}{yquantbox}%
+   \fi%
+}
+
+\protected\def\yquant@draw@pcontrol#1#2{%
+   \let\idx=\yquant@draw@@idx@pcontrol%
+   \yquant@draw@control{positive}{#1}{#2}%
+   \numdef\yquant@draw@@idx@pcontrol{\yquant@draw@@idx@pcontrol+1}%
+}
+
+\protected\def\yquant@draw@ncontrol#1#2{%
+   \let\idx=\yquant@draw@@idx@ncontrol%
+   \yquant@draw@control{negative}{#1}{#2}%
+   \numdef\yquant@draw@@idx@ncontrol{\yquant@draw@@idx@ncontrol+1}%
+}
+
+\protected\def\yquant@draw@cline{%
+   \edef\cmd{%
+      \noexpand\path[/yquant/every control line]%
+         \yquant@circuit@extendcontrolline@cmd;
+   }%
+   \cmd%
+}
+
+\protected\def\yquant@draw@alias#1{%
+   \pgfnodealias{\tikz@pp@name{#1}}{\tikz@pp@name{#1-0}}%
+}
+
+\protected\def\yquant@draw@alias@ctrl#1#2{%
+   \pgfnodealias{\tikz@pp@name{#1-#2}}{\tikz@pp@name{#1-#20}}%
+}
+% END_FOLD
+
+% BEGIN_FOLD Preparation of drawing a generic shape
+% Most drawing operations will be realized through nodes
+\let\yquant@draw@callback@box=\@gobble
+\let\yquant@draw@callback@wire=\@gobble
+
+\def\yquant@draw@sort#1#2{%
+   \yquant@draw@sort@aux#1\relax#2\relax%
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+}
+
+\def\yquant@draw@sort@aux#1#2#3\relax#4#5#6\relax{%
+   \unless\ifnum#2>#5\relax%
+}
+
+% generic shape of an operator
+% #1: value
+% #2: tikz options that select the correct shape
+% #3: positive controls
+% #4: negative controls
+% #5: targets
+\protected\long\def\yquant@draw#1#2#3#4#5{%
+   % setup the required macros
+   \yquant@circuit@operator{#3}{#4}{#5}%
+   \yquant@draw@{#1}{#2}%
+}
+
+\protected\long\def\yquant@draw@#1#2{%
+   \yquant@sort@clear%
+   \def\idx{0}%
+   \dimen2=\yquant@config@operator@minimum@width%
+   % BEGIN_FOLD register
+   \def\do##1{%
+      \ifx\yquant@lang@attr@name\empty%
+         \let\nodename=\empty%
+      \else%
+         \edef\nodename{\yquant@lang@attr@name-\idx}%
+      \fi%
+      \ifyquant@firsttoken\yquant@register@multi{##1}{%
+         \yquant@draw@@multi{#1}{#2}{##1}%
+      }{%
+         \yquant@draw@@single{#1}{#2}{##1}%
+      }%
+         \expandafter%
+      \endpgfinterruptboundingbox%
+      \expandafter\dimen\expandafter0\expandafter=%
+         \the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+      \ifdim\dimen0>\dimen2 %
+         \dimen2=\dimen0 %
+      \fi%
+      \numdef\idx{\idx+1}%
+      % TODO
+%      \yquant@draw@callback@box\nodename%
+   }%
+   \dolistloop\yquant@circuit@operator@targets%
+   % END_FOLD
+   % BEGIN_FOLD controls
+   \ifyquant@circuit@operator@hasControls%
+      \def\do##1{%
+         \ifx\yquant@lang@attr@name\empty%
+            \let\nodename=\empty%
+         \else%
+            \edef\nodename{\yquant@lang@attr@name-\yquant@draw@controlprefix\idx}%
+         \fi%
+         \yquant@sort@eadd{%
+            \expandafter\noexpand\csname yquant@draw@\yquant@draw@controlprefix control\endcsname%
+               {##1}% register index
+               {\nodename}%
+         }%
+         \unless\ifdefined\yquant@draw@controltype%
+            \edef\yquant@draw@controltype{##1}%
+         \fi%
+         \numdef\idx{\idx+1}%
+      }
+      \def\yquant@draw@controlprefix{p}%
+      \def\idx{0}%
+      \dolistloop\yquant@circuit@operator@pctrls%
+      \def\yquant@draw@controlprefix{n}%
+      \def\idx{0}%
+      \dolistloop\yquant@circuit@operator@nctrls%
+      \unless\ifdefined\yquant@draw@controltype%
+         \PackageError{yquant.sty}{Assertion failure}%
+                      {Internal inconsistency in yquant: Controlled action detected, but no controls were found.}%
+      \fi%
+   \fi%
+   % END_FOLD
+   % We now know the dimensions of all the registers (though we didn't bother with the height of the control knobs [if present], we just assume they are too small to change this).
+   \protected\def\idx{}%
+   \protected@edef\yquant@draw@append{%
+      \noexpand\yquant@draw@group%
+         {\the\dimexpr\yquant@circuit@operator@x+.5\dimen2\relax}% mid x position
+         \ifyquant@circuit@operator@hasControls%
+           \yquant@draw@controltype%
+         \else%
+           F%
+         \fi% if-switch whether controls are present
+         {\yquant@attrs@remaining}% custom style
+         {#2}% operator style
+         {#1}%
+   }%
+   \yquant@sort\yquant@draw@sort%
+   \advance \dimen2 by \yquant@circuit@operator@x\relax%
+   % BEGIN_FOLD shipout
+   \ifyquant@circuit@operator@hasControls%
+      % If we draw a control line, all intermediate registers are affected in their position so that the line is never crossed.
+      \yquant@for \yquant@i := \yquant@circuit@operator@minctrl to \yquant@circuit@operator@maxctrl {%
+         \yquant@register@set@x\yquant@i{\the\dimen2}%
+      }%
+   \fi%
+   \def\do##1{%
+      \appto\yquant@draw@append{##1}%
+      \yquant@draw@finalize@ctrl##1%
+   }%
+   \yquant@sort@dolistloop%
+   \csxappto{\yquant@prefix draw}{%
+      \unexpanded\expandafter{\yquant@draw@append}%
+      \noexpand\yquant@draw@endgroup%
+         \ifyquant@circuit@operator@hasControls%
+            T%
+         \else%
+            F%
+         \fi%
+         \ifx\yquant@lang@attr@name\empty%
+            {}0%
+         \else%
+            {\yquant@lang@attr@name}%
+            \ifnum\yquant@circuit@operator@numtarget=1 %
+               \ifnum\yquant@circuit@operator@numpctrl=1 %
+                  \ifnum\yquant@circuit@operator@numnctrl=1 %
+                     7%
+                  \else%
+                     6%
+                  \fi%
+               \else%
+                  \ifnum\yquant@circuit@operator@numnctrl=1 %
+                     5%
+                  \else%
+                     4%
+                  \fi%
+               \fi%
+            \else%
+               \ifnum\yquant@circuit@operator@numpctrl=1 %
+                  \ifnum\yquant@circuit@operator@numnctrl=1 %
+                     3%
+                  \else%
+                     2%
+                  \fi%
+               \else%
+                  \ifnum\yquant@circuit@operator@numnctrl=1 %
+                     1%
+                  \else%
+                     0%
+                  \fi%
+               \fi%
+            \fi%
+         \fi%
+   }%
+   % END_FOLD
+}
+
+\protected\def\yquant@draw@@single#1#2#3{%
+   \yquant@sort@eadd{%
+      \yquant@draw@single%
+         {#3}% register index
+         {\nodename}%
+   }%
+   % determine the actual dimensions by a virtual draw command
+   \pgfinterruptboundingbox%
+      \yquant@env@virtualize@path%
+      \path%
+         (0pt, 0pt)
+         node[/yquant/every operator, #2, /yquant/this operator,%
+              name prefix=, name suffix=, name=] {#1};%
+      \yquant@register@update@height{#3}{%
+         \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax%
+      }%
+}
+
+\protected\def\yquant@draw@@multi#1#2#3{%
+   \yquant@sort@eadd{%
+      \yquant@draw@multi%
+         #3%
+         {\nodename}%
+   }%
+   % Determining the actual height is a problem - where to store its value? We just assume that there is always enough space for such a control, since it anyway already spans multiple registers. (TODO?)
+   \pgfinterruptboundingbox%
+      \yquant@env@virtualize@path%
+      % Here, we just set a dummy height, as we don't know the actual height yet. As the width of most/all shapes should not depend on their height, it does not matter.
+      \path%
+         (0pt, 0pt)
+         node[/yquant/every operator, #2, /yquant/this operator, y radius=1cm,%
+              name prefix=, name suffix=0, name=] {#1};
+}
+
+\protected\def\yquant@draw@@multiinit#1#2#3{%
+   \yquant@sort@eadd{%
+      \yquant@draw@multiinit%
+         #3%
+         {\nodename}%
+   }%
+   % Determining the actual height is a problem - where to store its value? We just assume that there is always enough space for such a control, since it anyway already spans multiple registers. (TODO?)
+   \pgfinterruptboundingbox%
+      \yquant@env@virtualize@path%
+      % Here, we just set a dummy height, as we don't know the actual height yet. As the width of most/all shapes should not depend on their height, it does not matter.
+      \path%
+         (0pt, 0pt)
+         node[/yquant/every operator, #2, /yquant/every multi label, y radius=1cm,%
+              name prefix=, name suffix=0, name=] {#1};
+}
+
+\def\yquant@draw@finalize@ctrl#1{%
+   \ifx\yquant@draw@multi#1%
+      \expandafter\yquant@draw@finalize@ctrl@multi%
+   \else%
+      \ifx\yquant@draw@multiinit#1%
+         \expandafter\expandafter\expandafter\yquant@draw@finalize@ctrl@multi%
+      \else%
+         \expandafter\expandafter\expandafter\yquant@draw@finalize@ctrl@single%
+      \fi%
+   \fi%
+}
+
+\protected\def\yquant@draw@finalize@ctrl@single#1#2{%
+   \unless\ifyquant@circuit@operator@hasControls%
+      \yquant@register@set@x#1{\the\dimen2}%
+   \fi%
+   \eappto\yquant@draw@append{%
+      \yquant@draw@callback@wire{#1}%
+   }%
+}
+
+\protected\def\yquant@draw@finalize@ctrl@multi#1#2#3#4#5{%
+   \unless\ifyquant@circuit@operator@hasControls{%
+      % \yquant@for uses \loop...\repeat and hence redefines \body, which would destroy an outer loop.
+      % if we did not draw a control line, the x position has not yet been set. A multi-qubit register might visually extend over multiple registers that are not even part, hence we update them all.
+      \yquant@for \yquant@i := #1 to #2 {%
+         \yquant@register@set@x\yquant@i{\the\dimen2}%
+      }%
+   }\fi%
+   % this is called from a do loop itself, so preserve \do (but do not enter grouping)
+   \let\yquant@draw@update@x@multi@@olddo=\do%
+   \def\do##1{%
+      \eappto\yquant@draw@append{%
+         \yquant@draw@callback@wire{##1}%
+      }%
+   }%
+   \dolistloop{#4}%
+   \let\do=\yquant@draw@update@x@multi@@olddo%
+}
+% END_FOLD

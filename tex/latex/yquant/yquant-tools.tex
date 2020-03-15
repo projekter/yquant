@@ -1,0 +1,265 @@
+% from TeXbook, appendix D
+\protected\def\yquant@futurenonspacelet#1{%
+   \def\yquant@futurenonspacelet@cs{#1}%
+   \afterassignment\yquant@futurenonspacelet@i\let\yquant@futurenonspacelet@next= %
+}
+
+\def\yquant@futurenonspacelet@i{%
+   \expandafter\futurelet\yquant@futurenonspacelet@cs\yquant@futurenonspacelet@ii%
+}
+
+\def\yquant@futurenonspacelet@ii{%
+   \expandafter\ifx\yquant@futurenonspacelet@cs\@sptoken%
+      \expandafter\yquant@futurenonspacelet@iii%
+   \else%
+      \expandafter\yquant@futurenonspacelet@next%
+   \fi%
+}
+
+\def\yquant@futurenonspacelet@iii{%
+   \afterassignment\yquant@futurenonspacelet@i%
+   \let\@eattoken= %
+}
+
+% Loop #1 from min(#2, #3) to max(#2, #3), executing #4
+\protected\def\yquant@for #1:=#2to#3#{%
+   \yquant@for@aux#1{#2}{#3}%
+}
+
+\long\def\yquant@for@aux#1#2#3#4{%
+   \ifnum#2<#3\relax%
+      \numdef#1{#2}%
+      % to allow for things like \yquant@for \i := \i to ..., expand the boundaries
+      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#3+1\relax}{#4}%
+   \else%
+      \numdef#1{#3}%
+      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#2+1\relax}{#4}%
+   \fi%
+}
+
+\long\def\yquant@for@loop#1#2#3{%
+   \loop%
+      \ifnum#1<#2\relax%
+         #3%
+         \numdef#1{#1+1}%
+   \repeat%
+}
+
+% Def #1 to be the minimum of #2, ... until \relax
+\protected\def\yquant@min#1{%
+   \def#1{2147483647}%
+   \def\yquant@min@var{#1}%
+   \yquant@min@loop%
+}
+
+\def\yquant@min@loop#1{%
+   \unless\ifx#1\relax\relax%
+      \ifnum#1<\yquant@min@var\relax%
+         \expandafter\edef\yquant@min@var{#1}%
+      \fi%
+      \expandafter\yquant@min@loop%
+   \fi%
+}
+
+% Def #1 to be the maximum of #2, ... until \relax
+\protected\def\yquant@max#1{%
+   \def#1{-2147483647}%
+   \def\yquant@max@var{#1}%
+   \yquant@max@loop%
+}
+
+\def\yquant@max@loop#1{%
+   \unless\ifx#1\relax\relax%
+      \ifnum#1>\yquant@max@var\relax%
+         \expandafter\edef\yquant@max@var{#1}%
+      \fi%
+      \expandafter\yquant@max@loop%
+   \fi%
+}
+
+% Cleanup global tokens after environment
+\protected\def\yquant@cleanup@csadd#1{%
+   \csxappto{\yquant@prefix cleanup}{\expandafter\noexpand\csname#1\endcsname}%
+}
+
+\def\yquant@cleanup#1#2{%
+   \global\undef#1%
+   \unless\ifx|#2%
+      \expandafter\yquant@cleanup\expandafter#2%
+   \fi%
+}
+
+% Executes #3 if #1 (single token!) is equal (\ifx) to the first token of #2, and #4 else.
+\def\ifyquant@firsttoken#1#2{%
+   % First check whether #2 is present at all...
+   \if\relax\detokenize{#2}\relax%
+      \expandafter\@secondoftwo%
+   \else%
+      \ifyquant@firsttoken@aux#1#2\yquant@sep%
+   \fi%
+}
+
+\def\ifyquant@firsttoken@aux#1#2#3\yquant@sep{%
+   \ifx#1#2%
+      \expandafter\expandafter\expandafter\@firstoftwo%
+   \else%
+      \expandafter\expandafter\expandafter\@secondoftwo%
+   \fi%
+}
+
+% Executes #3 if #1 begins with #2, and #4 else - non-expandable
+\protected\def\ifyquant@beginswith#1#2{%
+   \def\ifyquant@beginswith@##1#2##2\yquant@end{%
+      \if\relax\detokenize{##1}\relax%
+         \expandafter\@firstoftwo%
+      \else%
+         \expandafter\@secondoftwo%
+      \fi%
+   }%
+   \ifyquant@beginswith@#1#2\yquant@end%
+}
+
+% absolute value of a dimension
+\def\yquant@abs#1{%
+   \ifdim#1<0pt %
+      \the\dimexpr-\dimexpr#1\relax\relax%
+   \else%
+      #1%
+   \fi%
+}
+
+% Sortlist related macros.
+\newcount\yquant@sort@count
+
+\protected\def\yquant@sort@clear{%
+   % Probably cleanup used macros?
+   \yquant@sort@count=0 %
+}
+
+\protected\def\yquant@sort@eadd#1{%
+   \csedef{yquant@sort@item\the\yquant@sort@count}{#1}%
+   \advance \yquant@sort@count by 1 %
+}
+
+% Perform quicksort on the stored sortlist.
+% #1: compare macro that expands to ##3 if its second argument is strictly larger than its first or to ##4 else
+\protected\def\yquant@sort#1{%
+   \let\yquant@sort@cmp=#1%
+   \expandafter\yquant@sort@aux\expandafter0\expandafter{\the\numexpr\yquant@sort@count-1\relax}%
+}
+
+\protected\def\yquant@sort@aux#1#2{%
+   \ifnum#1<#2\relax%
+      \yquant@sort@divide{#1}{#2}%
+      \edef\cmd{%
+         \noexpand\yquant@sort@aux{#1}{\the\numexpr\count0-1\relax}%
+         \noexpand\yquant@sort@aux{\the\numexpr\count0+1\relax}{#2}%
+      }%
+      \cmd%
+   \fi%
+}
+
+\protected\def\yquant@sort@divide#1#2{%
+   \count0=#1\relax% i
+   \count2=#2\relax% j
+   \advance\count2 by -1 %
+   \letcs\yquant@sort@pivot{yquant@sort@item#2}%
+   \loop%
+      % search an item from the left that is larger or equal to the pivot
+      {% protect the outer loop from finding \repeat
+         \csletcs{next}{iftrue}%
+         \loop%
+            \ifnum\count0<#2\relax%
+               \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
+                  \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
+                  \expandafter\expandafter\expandafter\yquant@sort@pivot%
+                  \expandafter\expandafter\expandafter}%
+                  \expandafter\expandafter\expandafter{%
+                     \csname yquant@sort@item\the\count0\endcsname%
+                  }{%
+                     \csletcs{next}{iffalse}%
+                  }{%
+                     \advance\count0 by 1 %
+                  }%
+            \else%
+               \csletcs{next}{iffalse}%
+            \fi%
+            \next%
+         \repeat%
+         \expandafter%
+      }%
+      \expandafter\count\expandafter0\expandafter=\the\count0\relax%
+      % search an item from the right that is small than the pivot
+      {% protect the outer loop from finding \repeat
+         \csletcs{next}{iftrue}%
+         \loop%
+            \ifnum\count2>#1\relax%
+               \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
+                  \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
+                  \expandafter\expandafter\expandafter\yquant@sort@pivot%
+                  \expandafter\expandafter\expandafter}%
+                  \expandafter\expandafter\expandafter{%
+                     \csname yquant@sort@item\the\count2\endcsname%
+                  }{%
+                     \advance\count2 by -1 %
+                  }{%
+                     \csletcs{next}{iffalse}%
+                  }%
+            \else%
+               \csletcs{next}{iffalse}%
+            \fi%
+            \next%
+         \repeat%
+         \expandafter
+      }%
+      \expandafter\count\expandafter2\expandafter=\the\count2\relax%
+      \ifnum\count0<\count2 %
+         % swap item i <> item j
+         \letcs\tmp{yquant@sort@item\the\count0}%
+         \csletcs{yquant@sort@item\the\count0}{yquant@sort@item\the\count2}%
+         \cslet{yquant@sort@item\the\count2}\tmp%
+      \fi%
+      \ifnum\count0<\count2 %
+   \repeat%
+   \letcs\tmp{yquant@sort@item\the\count0}%
+   \csletcs{yquant@sort@item\the\count0}{yquant@sort@item#2}%
+   \cslet{yquant@sort@item#2}\tmp%
+}
+
+% Sorts an internal etoolbox list #1 using macro #2
+\protected\def\yquant@sort@list#1#2{%
+   \begingroup%
+      \yquant@sort@count=0 %
+      \def\do##1{%
+         \csdef{yquant@sort@item\the\yquant@sort@count}{##1}%
+         \advance\yquant@sort@count by 1 %
+      }%
+      \dolistloop#1%
+      \yquant@sort#2%
+      \let#1=\empty%
+      \count0=0 %
+      \loop%
+         \ifnum\count0<\yquant@sort@count%
+            \expandafter\expandafter\expandafter\listadd%
+            \expandafter\expandafter\expandafter#1%
+            \expandafter\expandafter\expandafter{%
+               \csname yquant@sort@item\the\count0\endcsname%
+            }%
+            \advance\count0 by 1 %
+      \repeat%
+      \expandafter%
+   \endgroup%
+   \expandafter\def\expandafter#1\expandafter{#1}%
+}
+
+\protected\def\yquant@sort@dolistloop{%
+   \count0=0 %
+   \loop%
+      \ifnum\count0<\yquant@sort@count%
+         \expandafter\expandafter\expandafter\do%
+         \expandafter\expandafter\expandafter{%
+            \csname yquant@sort@item\the\count0\endcsname%
+         }
+         \advance\count0 by 1 %
+   \repeat%
+}

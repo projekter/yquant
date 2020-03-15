@@ -1,0 +1,556 @@
+% BEGIN_FOLD Attributes
+\yquant@langhelper@declare@attr{
+   value/.store in=\yquant@lang@attr@value,
+   after/.code={%
+      \yquant@register@get@ids{#1}%
+      \let\yquant@lang@attr@after=\yquant@register@get@ids@list%
+   },
+   type/.store in=\yquant@lang@attr@type
+}
+\yquant@langhelper@declare@attr@global{
+   name/.store in=\yquant@lang@attr@name
+}
+
+\protected\def\yquant@lang@reset@attrs{%
+   \undef\yquant@lang@attr@value%
+   \undef\yquant@lang@attr@after%
+   \undef\yquant@lang@attr@type%
+   \let\yquant@lang@attr@name=\empty%
+}
+% END_FOLD
+
+% BEGIN_FOLD Declaration of registers
+\yquant@langhelper@declare@command@uncontrolled{nobit}\yquant@lang@@nobit
+\yquant@langhelper@setup@attrs{nobit}{}{}
+\def\yquant@lang@@nobit#1{%
+   \let\yquant@lang@create@type=\yquant@register@type@none%
+   \def\yquant@lang@create@style{initial}% there is no separate style, just duplicate
+   \ifdefined\yquant@lang@attr@value%
+      \PackageError{yquant.sty}{Placeholder initialization must not have value}%
+                   {You must not provide a description for an invisible register.}
+   \else
+      \let\yquant@lang@attr@value=\empty%
+   \fi%
+   \yquant@lang@create@parse@name#1[;
+}
+
+\yquant@langhelper@declare@command@uncontrolled{qubit}\yquant@lang@@qubit
+\yquant@langhelper@setup@attrs{qubit}{}{after,value}
+\def\yquant@lang@@qubit#1{%
+   \let\yquant@lang@create@type=\yquant@register@type@q%
+   \def\yquant@lang@create@style{qubit}%
+   \unless\ifdefined\yquant@lang@attr@value%
+      \let\yquant@lang@attr@value=\yquant@config@register@default@name%
+   \fi%
+   \yquant@lang@create@parse@name#1[;
+}
+
+\yquant@langhelper@declare@command@uncontrolled{cbit}\yquant@lang@@cbit
+\yquant@langhelper@setup@attrs{qubit}{}{after,value}
+\def\yquant@lang@@cbit#1{%
+   \let\yquant@lang@create@type=\yquant@register@type@c%
+   \def\yquant@lang@create@style{qubit}%
+   \unless\ifdefined\yquant@lang@attr@value%
+      \let\yquant@lang@attr@value=\yquant@config@register@default@name%
+   \fi%
+   \yquant@lang@create@parse@name#1[;
+}
+
+\yquant@langhelper@declare@command@uncontrolled{qubits}\yquant@lang@@qubits
+\yquant@langhelper@setup@attrs{qubit}{}{after,value}
+\def\yquant@lang@@qubits#1{%
+   \let\yquant@lang@create@type=\yquant@register@type@qs%
+   \def\yquant@lang@create@style{qubits}%
+   \unless\ifdefined\yquant@lang@attr@value%
+      \let\yquant@lang@attr@value=\yquant@config@register@default@name%
+   \fi%
+   \yquant@lang@create@parse@name#1[;
+}
+
+\def\yquant@lang@create@parse@name#1[#2;{%
+   \if\relax\detokenize{#2}\relax%
+      \yquant@lang@create@do#1[1][;%
+   \else%
+      \yquant@lang@create@do#1[#2;%
+   \fi%
+}
+
+\protected\def\yquant@lang@create@do#1[#2]#3[;{%
+   % parse length
+   \if\relax\detokenize{#3}\relax%
+      \yquant@langhelper@validate\len\count{#2}%
+   \else%
+      \PackageError{yquant.sty}{Invalid register name}%
+         {Register names must not contain `[' apart from register length indication.}%
+   \fi%
+   \edef\reg{\trim@spaces{#1}}%
+   \ifcsname\yquant@prefix registername@\reg\endcsname%
+      \PackageError{yquant.sty}{Duplicate registers}%
+         {Register `\reg' was already defined.}%
+   \else%
+      \ifcsname\yquant@prefix registerlast@\reg\endcsname%
+         \PackageError{yquant.sty}{Duplicate registers}%
+            {Register `\reg' was already defined.}%
+      \fi%
+   \fi%
+   % define text macros
+   \ifnum\len=1 %
+      \let\regidx=\reg%
+   \else%
+      \def\regidx{\reg[\idx]}%
+   \fi%
+   % determine x position
+   \ifdefined\yquant@lang@attr@after%
+      \yquant@register@get@maxxlist\yquant@lang@create@x\yquant@lang@attr@after%
+   \else%
+      \def\yquant@lang@create@x{0pt}%
+   \fi%
+   \begingroup%
+      \ifx\yquant@lang@attr@name\empty%
+         \let\yquant@lang@create@name=\empty%
+      \else%
+         \def\yquant@lang@create@name{\yquant@lang@attr@name-\idx}%
+      \fi%
+      % pre-set y position
+      \yquant@for \idx := 0 to \numexpr \len -1\relax {%
+         \yquant@register@define%
+            \yquant@lang@create@type%
+            \yquant@lang@create@x%
+         % First determine the actual height by a virtual draw command
+         \pgfinterruptboundingbox%
+            \yquant@env@virtualize@path%
+            \path%
+               (\yquant@lang@create@x, 0pt)
+               node[/yquant/every label, /yquant/every initial label,%
+                    /yquant/every \yquant@lang@create@style\space label]
+               {\trim@spaces{\yquant@lang@attr@value}};%
+            \expandafter\yquant@register@update@height%
+               \csname\yquant@prefix registers\endcsname%
+               {\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
+         \endpgfinterruptboundingbox%
+         % Prepare to shipout
+         \protected@csxappto{\yquant@prefix draw}{%
+            \yquant@lang@create@draw{\csname\yquant@prefix registers\endcsname}%
+                                    {\yquant@lang@create@x}%
+                                    {\yquant@lang@create@style}%
+                                    {\yquant@lang@attr@value}%
+                                    {\yquant@lang@create@name}%
+         }%
+         \global\csletcs{\yquant@prefix registername@\reg[\idx]}%
+                        {\yquant@prefix registers}%
+         \yquant@cleanup@csadd{\yquant@prefix registername@\reg[\idx]}%
+      }%
+      \unless\ifx\yquant@lang@attr@name\empty%
+         \ifnum\len=1 %
+            \csxappto{\yquant@prefix draw}%
+                     {\yquant@draw@alias{\yquant@lang@attr@name}}%
+         \fi%
+      \fi%
+   \endgroup%
+   \global\csletcs{\yquant@prefix registerlast@\reg}{\yquant@prefix registers}%
+   \yquant@cleanup@csadd{\yquant@prefix registerlast@\reg}%
+}
+
+\protected\def\yquant@lang@create@draw#1#2#3#4#5{%
+   \begingroup%
+      \dimdef\wireypos{\yquant@register@get@y{#1}}%
+      \if\relax\detokenize{#4}\relax%
+         % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate.
+         \path[overlay]
+            (#2, \wireypos)%
+            coordinate[name prefix=, name suffix=, name=yquantbox];
+      \else%
+         \path
+            (#2, \wireypos)%
+            node[/yquant/every label, /yquant/every initial label,%
+                 /yquant/every #3 label, name prefix=, name suffix=, name=yquantbox]%
+                {#4};%
+      \fi%
+      % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
+      \tikzset{/yquant/every wire}%
+      \pgfpointanchor{yquantbox}{east}%
+      % Every label shape should implement the projection anchor, else we just guess the values, but this might be inaccurate for non-rectangular shapes
+      \ifpgfpointshapexproj{yquantbox}%
+         \@tempdima=\pgf@x%
+         \pgfpointshapexproj{yquantbox}%
+                            {\pgfqpoint{\@tempdima}
+                                       {\dimexpr\wireypos+2\pgflinewidth\relax}}%
+         \edef\tmp{{(\the\pgf@x,\the\pgf@y)}}%
+         % This projection should normally not be necessary, as the east anchor _should_ be accurate - but who knows?
+         \pgfpointshapexproj{yquantbox}{\pgfqpoint{\@tempdima}{\wireypos}}%
+         \edef\tmp{\tmp{(\the\pgf@x,\the\pgf@y)}}%
+         \pgfpointshapexproj{yquantbox}
+                            {\pgfqpoint{\@tempdima}%
+                                       {\dimexpr\wireypos-2\pgflinewidth\relax}}%
+         \yquant@register@set@lastwire{#1}{\tmp{(\the\pgf@x,\the\pgf@y)}}%
+      \else%
+         % Just guess the values.
+         \yquant@register@set@lastwire{#1}{%
+            {(\the\pgf@x,\the\dimexpr\wireypos+2\pgflinewidth\relax)}%
+            {(\the\pgf@x,\wireypos)}%
+            {(\the\pgf@x,\the\dimexpr\wireypos-2\pgflinewidth\relax)}%
+         }%
+      \fi%
+      \if\relax\detokenize{#5}\relax%
+      \else%
+         \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
+      \fi%
+   \endgroup%
+}
+% END_FOLD
+
+% BEGIN_FOLD Box registers
+% all-purpose box with arbitrary text
+\yquant@langhelper@declare@command{box}\yquant@lang@@box
+\yquant@langhelper@setup@attrs{box}{value}{}
+\def\yquant@lang@@box{%
+   \yquant@register@get@allowmultitrue%
+   \expandafter\yquant@draw%
+      \expandafter{\yquant@lang@attr@value}
+      {/yquant/operators/every box}%
+}
+
+% Hadamard
+\yquant@langhelper@declare@command{h}\yquant@lang@@h
+\yquant@langhelper@setup@attrs{h}{}{}
+\def\yquant@lang@@h{%
+   \yquant@draw%
+      {$H$}%
+      {/yquant/operators/every h}%
+}
+
+% Pauli X (or NOT)
+\yquant@langhelper@declare@command{x}\yquant@lang@@x
+\yquant@langhelper@setup@attrs{x}{}{}
+\def\yquant@lang@@x{%
+   \yquant@draw%
+      {$X$}%
+      {/yquant/operators/every x}%
+}
+
+% Pauli Y
+\yquant@langhelper@declare@command{y}\yquant@lang@@y
+\yquant@langhelper@setup@attrs{y}{}{}
+\def\yquant@lang@@y{%
+   \yquant@draw%
+      {$Y$}%
+      {/yquant/operators/every y}%
+}
+
+% Pauli Z
+\yquant@langhelper@declare@command{z}\yquant@lang@@z
+\yquant@langhelper@setup@attrs{z}{}{}
+\def\yquant@lang@@z{%
+   \yquant@draw%
+      {$Z$}%
+      {/yquant/operators/every z}%
+}
+
+% sub-circuit: This is a nested circuit.
+%\yquant@langhelper@declare@command{subcircuit}\yquant@lang@@subcircuit
+%\yquant@langhelper@setup@attrs{subcircuit}{}{shift}
+%\protected\def\yquant@lang@@subcircuit#1#2#3{%
+%   % First we restore access to the yquant environment (which was a shorthand to
+%   % re-starting the parser within the environment, conveniently forbidding nesting).
+%   \let\yquant=\yquant@envunstar%
+%   \cslet{yquant*}\yquant@envstar%
+%   % Then determine the actual subcircuit content.
+%   \yquant@circuit@subcircuit\yquant@lang@attr@value%
+%   % Now the subcircuit is stored in \yquant@circuit@subcircuit@box. However, note that
+%   % it may contain named nodes (whose names are stored in
+%   % \csname\yquant@prefix circuit@subcircuit@nodelist\endcsname) that need to be shifted
+%   % whenever we actually position the subcircuit.
+%%   \let\yquant@draw@callback@box=\yquant@circuit@subcircuit@shiftnodes%
+%   \yquant@register@get@allowmultitrue%
+%   \yquant@draw%
+%      {\copy\yquant@circuit@subcircuit@box}%
+%      {/yquant/operators/every subcircuit}
+%      {#1}{#2}{#3}%
+%   \global\setbox\yquant@circuit@subcircuit@box=\box\voidb@x% memory management
+%}
+% END_FOLD
+
+% BEGIN_FOLD other geometric shapes
+% phase
+\yquant@langhelper@declare@command{phase}\yquant@lang@@phase
+\yquant@langhelper@setup@attrs{phase}{value}{}%
+\def\yquant@lang@@phase{%
+   \edef\cmd{%
+      \noexpand\yquant@draw%
+         {}%
+         {/yquant/operators/every phase, label={\unexpanded\expandafter{\yquant@lang@attr@value}}}%
+   }%
+   \cmd%
+}
+
+% two-qubit controlled x (symmetric notation)
+\yquant@langhelper@declare@command{xx}\yquant@lang@@xx
+\yquant@langhelper@setup@attrs{xx}{}{}
+\def\yquant@lang@@xx#1#2#3{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@circuit@operator{#1}{#2}{#3}%
+   \ifyquant@circuit@operator@hasControls%
+      \yquant@draw@{}{/yquant/operators/every xx, /yquant/operator/multi operator line=false}%
+   \else%
+      \yquant@draw@{}{/yquant/operators/every xx}%
+   \fi%
+}
+
+% two-qubit controlled phase (symmetric notation)
+\yquant@langhelper@declare@command@uncontrolled{zz}\yquant@lang@@zz
+\yquant@langhelper@setup@attrs{zz}{}{}
+\def\yquant@lang@@zz{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every zz}%
+      {}{}%
+}
+
+% slash (pseudo-operator, alternative indication for a bundle)
+\yquant@langhelper@declare@command@uncontrolled{slash}\yquant@lang@@slash
+\yquant@langhelper@setup@attrs{slash}{}{}
+\protected\def\yquant@lang@@slash#1{%
+   % temporarily squeeze most into the separation
+   \pgfkeys{%
+      /yquant/operator/minimum width=0pt,
+      /yquant/operator/separation=.5\dimexpr\yquant@config@operator@sep-\pgflinewidth\relax
+   }%
+   \def\yquant@draw@callback@wire##1{%
+      \yquant@register@set@x%
+         {##1}%
+         {\the\dimexpr\yquant@register@get@x{##1}-\yquant@config@operator@sep-\pgflinewidth\relax}%
+   }
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every slash}%
+      {}{}{#1}%
+}
+
+% swap
+\yquant@langhelper@declare@command{swap}\yquant@lang@@swap
+\yquant@langhelper@setup@attrs{swap}{}{}
+\def\yquant@lang@@swap#1#2#3{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@circuit@operator{#1}{#2}{#3}%
+   \ifyquant@circuit@operator@hasControls%
+      \yquant@draw@{}{/yquant/operators/every swap, /yquant/operator/multi operator line=false}%
+   \else%
+      \yquant@draw@{}{/yquant/operators/every swap}%
+   \fi%
+}
+
+% not
+\yquant@langhelper@declare@command{not}\yquant@lang@@not
+\yquant@langhelper@setup@attrs{not}{}{}
+\def\yquant@lang@@not{%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every not}%
+}
+% alias to cnot
+\let\yquant@lang@cnot=\yquant@lang@not
+\yquant@langhelper@setup@attrs{cnot}{}{}
+
+% measure
+\yquant@langhelper@declare@command@uncontrolled{measure}\yquant@lang@@measure
+\yquant@langhelper@setup@attrs{measure}{}{value,type}
+\def\yquant@lang@@measure{%
+   \ifdefined\yquant@lang@attr@type%
+      \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubit}%
+         {\let\yquant@circuit@settype@to=\yquant@register@type@q}%
+         {%
+            \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{cbit}%
+            {\let\yquant@circuit@settype@to=\yquant@register@type@c}%
+            {%
+               \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubits}%
+               {\let\yquant@circuit@settype@to=\yquant@register@type@qs}%
+               {%
+                  \PackageError{yquant.sty}{Invalid bit type: `\yquant@lang@attr@type}%
+                     {Use one of `qubit', `cbit', or `qubits'.}%
+               }%
+            }%
+         }%
+   \else%
+      \let\yquant@circuit@settype@to=\yquant@register@type@c%
+   \fi%
+   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \yquant@register@get@allowmultitrue%
+   \unless\ifcsname yquant@lang@attr@value\endcsname%
+      \let\yquant@lang@attr@value=\empty%
+   \fi%
+   \expandafter\yquant@draw%
+      \expandafter{\yquant@lang@attr@value}%
+      {/yquant/operators/every measure}%
+      {}{}%
+}
+
+% measure (dmeter)
+\yquant@langhelper@declare@command@uncontrolled{dmeter}\yquant@lang@@dmeter
+\yquant@langhelper@setup@attrs{dmeter}{}{value,type}
+\def\yquant@lang@@dmeter{%
+   \ifdefined\yquant@lang@attr@type%
+      \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubit}%
+         {\let\yquant@circuit@settype@to=\yquant@register@type@q}%
+         {%
+            \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{cbit}%
+            {\let\yquant@circuit@settype@to=\yquant@register@type@c}%
+            {%
+               \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubits}%
+               {\let\yquant@circuit@settype@to=\yquant@register@type@qs}%
+               {%
+                  \PackageError{yquant.sty}{Invalid bit type: `\yquant@lang@attr@type}%
+                     {Use one of `qubit', `cbit', or `qubits'.}%
+               }%
+            }%
+         }%
+   \else%
+      \let\yquant@circuit@settype@to=\yquant@register@type@c%
+   \fi%
+   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \yquant@register@get@allowmultitrue%
+   \unless\ifcsname yquant@lang@attr@value\endcsname%
+      \let\yquant@lang@attr@value=\empty%
+   \fi%
+   \expandafter\yquant@draw%
+      \expandafter{\yquant@lang@attr@value}%
+      {/yquant/operators/every dmeter}%
+      {}{}%
+}
+% END_FOLD
+
+% BEGIN_FOLD miscellaneous
+\yquant@langhelper@declare@command@uncontrolled{barrier}\yquant@lang@@barrier
+\yquant@langhelper@setup@attrs{barrier}{}{}
+\def\yquant@lang@@barrier{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every barrier}%
+      {}{}
+}
+
+\yquant@langhelper@declare@command@uncontrolled{align}\yquant@lang@@align
+\yquant@langhelper@setup@attrs{align}{}{}
+\def\yquant@lang@@align#1{%
+   \yquant@register@get@ids{#1}%
+   \yquant@circuit@align\yquant@register@get@ids@list%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{hspace}\yquant@lang@@hspace
+\yquant@langhelper@setup@attrs{hspace}{value}{}
+\def\yquant@lang@@hspace#1{%
+   \yquant@langhelper@validate\amount\dimen\yquant@lang@attr@value%
+   \yquant@register@get@ids{#1}%
+   \yquant@circuit@hspace\yquant@register@get@ids@list\amount%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{discard}\yquant@lang@@discard
+\yquant@langhelper@setup@attrs{discard}{}{}
+\def\yquant@lang@@discard#1{%
+   \yquant@register@get@ids{#1}%
+   \yquant@circuit@settypes\yquant@register@get@ids@list\yquant@register@type@none%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{init}\yquant@lang@@init
+\yquant@langhelper@setup@attrs{init}{value}{type}
+\def\yquant@lang@@init@multi@@extract#1#2#3#4#5{%
+   #5%
+}
+\protected\def\yquant@lang@@init#1{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@register@get@ids{#1}%
+   \ifdefined\yquant@lang@attr@type%
+      \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubit}%
+         {\let\yquant@circuit@settype@to=\yquant@register@type@q}%
+         {%
+            \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{cbit}%
+            {\let\yquant@circuit@settype@to=\yquant@register@type@c}%
+            {%
+               \expandafter\ifstrequal\expandafter{\yquant@lang@attr@type}{qubits}%
+               {\let\yquant@circuit@settype@to=\yquant@register@type@qs}%
+               {%
+                  \PackageError{yquant.sty}{Invalid bit type: `\yquant@lang@attr@type}%
+                     {Use one of `qubit', `cbit', or `qubits'.}%
+               }%
+            }%
+         }%
+   \else%
+      % We don't know which type is desired. Scan all target registers and use the first wire that is available as a type.
+      \let\yquant@circuit@settype@to=\yquant@register@type@none%
+      \def\do##1{%
+         \ifyquant@firsttoken\yquant@register@multi{##1}{%
+            \def\@do####1{%
+               \edef\yquant@circuit@settype@to{\yquant@register@get@type{####1}}%
+               \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
+                  \expandafter\listbreak%
+               \fi%
+            }%
+            \forlistloop\@do{\yquant@lang@@init@multi@@extract##1}%
+         }{%
+            \edef\yquant@circuit@settype@to{\yquant@register@get@type{##1}}%
+         }%
+         \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
+            \expandafter\listbreak%
+         \fi%
+      }%
+      \dolistloop\yquant@register@get@ids@list%
+      \ifx\yquant@circuit@settype@to\yquant@register@type@none%
+         % now we don't have a clue; assume it's a qubit
+         \let\yquant@circuit@settype@to=\yquant@register@type@q%
+      \fi%
+      \ifx\yquant@circuit@settype@to\yquant@register@type@q%
+         \def\yquant@lang@attr@type{qubit}%
+      \else%
+         \ifx\yquant@circuit@settype@to\yquant@register@type@c%
+            \def\yquant@lang@attr@type{cbit}%
+         \else%
+            \def\yquant@lang@attr@type{qubits}%
+         \fi%
+      \fi%
+   \fi%
+   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \let\yquant@draw@@multi=\yquant@draw@@multiinit%
+   \yquant@circuit@operator{}{}{#1}%
+   % special case: if there were no operations at any affected wire before, we will replace the wire description
+   \ifdim\yquant@circuit@operator@x=\yquant@config@operator@sep\relax%
+      \def\yquant@circuit@operator@x{-.5\dimen2}%
+      \expandafter\yquant@draw@%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@attr@type\space label}%
+   \else%
+      \expandafter\yquant@draw@%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/every label, /yquant/every \yquant@lang@attr@type\space label}%
+   \fi%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{output}\yquant@lang@@output
+\yquant@langhelper@setup@attrs{output}{value}{}
+\def\yquant@lang@@output#1{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@register@get@ids{#1}%
+   \expandafter\yquant@circuit@output\expandafter{\yquant@register@get@ids@list}%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{setwire}\yquant@lang@@setwire
+\yquant@langhelper@setup@attrs{setwire}{value}{}
+\protected\def\yquant@lang@@setwire#1{%
+   \yquant@register@get@ids{#1}%
+   \expandafter\ifstrequal\expandafter{\yquant@lang@attr@value}{qubit}%
+      {\let\yquant@circuit@settype@to=\yquant@register@type@q}%
+      {%
+         \expandafter\ifstrequal\expandafter{\yquant@lang@attr@value}{cbit}%
+         {\let\yquant@circuit@settype@to=\yquant@register@type@c}%
+         {%
+            \expandafter\ifstrequal\expandafter{\yquant@lang@attr@value}{qubits}%
+            {\let\yquant@circuit@settype@to=\yquant@register@type@qs}%
+            {%
+               \PackageError{yquant.sty}{Invalid bit type: `\yquant@lang@attr@value}%
+                  {Use one of `qubit', `cbit', or `qubits'.}%
+            }%
+         }%
+      }%
+   \yquant@circuit@settypes\yquant@register@get@ids@list\yquant@circuit@settype@to%
+}
+% END_FOLD

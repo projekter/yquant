@@ -1,0 +1,476 @@
+% BEGIN_FOLD Drawing wires
+% extends the wire of register #1. Assumes a node called yquantbox is set up, and it is a node with appropriate projections.
+\protected\def\yquant@circuit@extendwire#1{%
+   \begingroup%
+      \edef\wiretype{\yquant@register@get@type{#1}}%
+      \dimdef\wireypos{\yquant@register@get@y{#1}}%
+      \tikzset{/yquant/every wire}%
+      \unless\ifnum\wiretype=\yquant@register@type@none{%
+         \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
+      }\fi%
+      % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires
+      \tikzset{/yquant/every wire}%
+      \pgfpointanchor{yquantbox}{east}%
+      \@tempdima=\pgf@x%
+      \pgfpointshapexproj{yquantbox}%
+                         {\pgfqpoint{\@tempdima}
+                                    {\dimexpr\wireypos+2\pgflinewidth\relax}}%
+      \edef\tmp{{(\the\pgf@x,\the\pgf@y)}}%
+      % For multi-qubit registers, the east anchor is not necessarily accurate.
+      \pgfpointshapexproj{yquantbox}{\pgfqpoint{\@tempdima}{\wireypos}}%
+      \edef\tmp{\tmp{(\the\pgf@x,\the\pgf@y)}}%
+      \pgfpointshapexproj{yquantbox}
+                         {\pgfqpoint{\@tempdima}%
+                                    {\dimexpr\wireypos-2\pgflinewidth\relax}}%
+      \yquant@register@set@lastwire{#1}{\tmp{(\the\pgf@x,\the\pgf@y)}}%
+   \endgroup%
+}
+
+% finishes the wire of register #1 until x position \yquant@env@end@xpos
+\protected\def\yquant@circuit@endwire#1{%
+   \begingroup%
+      \edef\wiretype{\yquant@register@get@type{#1}}%
+      \unless\ifnum\wiretype=\yquant@register@type@none\relax%
+         % we don't have a yquantbox node but still want to extend the line; so just install a dummy projection
+         \let\pgfpointshapexproj=\yquant@circuit@endwire@xproj%
+         \dimdef\wireypos{\yquant@register@get@y{#1}}%
+         \tikzset{/yquant/every wire}%
+         \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
+      \fi%
+   \endgroup%
+}
+
+\protected\def\yquant@circuit@endwire@xproj#1#2{%
+   \pgf@process{%
+      #2%
+      \pgf@x=\yquant@env@end@xpos%
+   }%
+}
+
+\def\yquant@circuit@extendwire@@extract(#1,#2){%
+   #1%
+}
+
+% a bit faster than nested \@firstoftwo/\@secondoftwo
+% note \@thirdofthree is defined in the latex kernel already.
+\long\def\@firstofthree#1#2#3{#1}%
+\long\def\@secondofthree#1#2#3{#2}%
+
+% quantum wire
+\protected\csdef{yquant@circuit@extendwire@1}#1{%
+   \edef\tmp{\yquant@register@get@lastwire{#1}}%
+   \edef\tmp{\expandafter\@secondofthree\tmp}%
+   \edef\lastx{\expandafter\yquant@circuit@extendwire@@extract\tmp}%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastx}{\wireypos}}%
+   \ifdim\lastx<\pgf@x%
+      \edef\cmd{%
+         \noexpand\path [/yquant/every wire, /yquant/every qubit wire]
+            \tmp -- (\the\pgf@x,\the\pgf@y);%
+      }%
+      \cmd%
+   \fi%
+}
+
+% classical wire
+\protected\csdef{yquant@circuit@extendwire@2}#1{%
+   \edef\tmp{\yquant@register@get@lastwire{#1}}%
+   \edef\tmpa{\expandafter\@firstofthree\tmp}%
+   \edef\lastxa{\expandafter\yquant@circuit@extendwire@@extract\tmpa}%
+   \edef\tmpb{\expandafter\@thirdofthree\tmp}%
+   \edef\lastxb{\expandafter\yquant@circuit@extendwire@@extract\tmpb}%
+   \let\cmd=\empty%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxa}%
+                                            {\dimexpr\wireypos+2\pgflinewidth\relax}}%
+   \ifdim\lastxa<\pgf@x%
+      \edef\cmd{%
+         \tmpa -- (\the\pgf@x,\the\pgf@y)%
+      }%
+   \fi%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxb}%
+                                            {\dimexpr\wireypos-2\pgflinewidth\relax}}%
+   \ifdim\lastxb<\pgf@x%
+      \eappto\cmd{%
+         \tmpb -- (\the\pgf@x,\the\pgf@y)%
+      }%
+   \fi%
+   \unless\ifx\cmd\empty%
+      \edef\cmd{\noexpand\path [/yquant/every wire, /yquant/every cbit wire] \cmd;}%
+      \cmd%
+   \fi%
+}
+
+% quantum-bundle
+\protected\csdef{yquant@circuit@extendwire@3}#1{%
+   \edef\tmp{\yquant@register@get@lastwire{#1}}%
+   \edef\tmpa{\expandafter\@firstofthree\tmp}%
+   \edef\lastxa{\expandafter\yquant@circuit@extendwire@@extract\tmpa}%
+   \edef\tmpb{\expandafter\@secondofthree\tmp}%
+   \edef\lastxb{\expandafter\yquant@circuit@extendwire@@extract\tmpb}%
+   \edef\tmpc{\expandafter\@thirdofthree\tmp}%
+   \edef\lastxc{\expandafter\yquant@circuit@extendwire@@extract\tmpc}%
+   \let\cmd=\empty%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxa}%
+                                            {\dimexpr\wireypos+2\pgflinewidth\relax}}%
+   \ifdim\lastxa<\pgf@x%
+      \edef\cmd{%
+         \tmpa -- (\the\pgf@x,\the\pgf@y)%
+      }%
+   \fi%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxb}{\wireypos}}%
+   \ifdim\lastxb<\pgf@x%
+      \eappto\cmd{%
+         \tmpb -- (\the\pgf@x,\the\pgf@y)%
+      }%
+   \fi%
+   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxc}%
+                                            {\dimexpr\wireypos-2\pgflinewidth\relax}}%
+   \ifdim\lastxc<\pgf@x%
+      \eappto\cmd{%
+         \tmpc -- (\the\pgf@x,\the\pgf@y)%
+      }%
+   \fi%
+   \unless\ifx\cmd\empty%
+      \edef\cmd{\noexpand\path [/yquant/every wire, /yquant/every qubits wire] \cmd;}%
+      \cmd%
+   \fi%
+}
+% END_FOLD
+
+% BEGIN_FOLD Drawing control lines
+% populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and it is a node with appropriate projections. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
+\protected\def\yquant@circuit@extendcontrolline#1#2{%
+   \begingroup%
+      \tikzset{/yquant/every control line}%
+      \expandafter%
+   \endgroup%
+   \expandafter\@tempdima\the\pgflinewidth%
+   \ifcase#1%
+      % no control (or to a discarded target, which we don't do)
+   \or%
+      % qubit
+      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+         \pgfpointanchor{yquantbox}{north}%
+         \pgfpointshapeyproj{yquantbox}{\pgf@x=#2\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+      \fi%
+      \yquant@circuit@extendcontrolline@store{#2}%
+   \or%
+      % cbit
+      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+         \pgfpointanchor{yquantbox}{north}%
+         \pgfpointshapeyproj{yquantbox}%
+                            {\pgf@x=\dimexpr#2-2\@tempdima\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+         \pgfpointshapeyproj{yquantbox}%
+                            {\pgf@x=\dimexpr#2+2\@tempdima\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+      \fi%
+      \yquant@circuit@extendcontrolline@store{#2}%
+   \or%
+      % quantum-bundle (very unusual, but perhaps for transversal operations?)
+      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+         \pgfpointanchor{yquantbox}{north}%
+         \pgfpointshapeyproj{yquantbox}%
+                            {\pgf@x=\dimexpr#2-2\@tempdima\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+         \pgfpointshapeyproj{yquantbox}%
+                            {\pgf@x=\dimexpr#2\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+         \pgfpointshapeyproj{yquantbox}%
+                            {\pgf@x=\dimexpr#2+2\@tempdima\relax}%
+         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
+            -- (\the\pgf@x,\the\pgf@y)%
+         }%
+      \fi%
+      \yquant@circuit@extendcontrolline@store{#2}%
+   \else%
+      \PackageError{yquant.sty}{Invalid control line type `\the#1'}%
+                   {yquant encountered an internal error.}%
+   \fi%
+}
+
+\protected\def\yquant@circuit@extendcontrolline@store#1{%
+   \pgfpointanchor{yquantbox}{south}%
+   \pgfpointshapeyproj{yquantbox}%
+                      {\pgf@x=\dimexpr#1-2\@tempdima\relax}%
+   \edef\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
+   \pgfpointshapeyproj{yquantbox}%
+                      {\pgf@x=#1\relax}%
+   \eappto\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
+   \pgfpointshapeyproj{yquantbox}%
+                      {\pgf@x=\dimexpr#1+2\@tempdima\relax}%
+   \eappto\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
+}
+% END_FOLD
+
+\newif\ifyquant@circuit@operator@hasControls%
+% sets up the relevant variables associated with an operator
+% #1: positive controls
+% #2: negative controls
+% #3: targets
+\protected\def\yquant@circuit@operator#1#2#3{%
+   % convert all names to indices
+   % targets
+   \yquant@register@get@ids{#3}%
+   \let\yquant@circuit@operator@targets=\yquant@register@get@ids@list%
+   \let\yquant@circuit@operator@mintarget=\yquant@register@get@ids@min%
+   \let\yquant@circuit@operator@maxtarget=\yquant@register@get@ids@max%
+   \let\yquant@circuit@operator@numtarget=\yquant@register@get@ids@count%
+   % For the targets, multi-qubit registers might have been allowed, but certainly not for
+   % the controls!
+   \yquant@register@get@allowmultifalse%
+   % positive controls
+   \yquant@register@get@ids{#1}%
+   \let\yquant@circuit@operator@pctrls=\yquant@register@get@ids@list%
+   \let\yquant@circuit@operator@minpctrl=\yquant@register@get@ids@min%
+   \let\yquant@circuit@operator@maxpctrl=\yquant@register@get@ids@max%
+   \let\yquant@circuit@operator@numpctrl=\yquant@register@get@ids@count%
+   \ifnum\yquant@register@get@ids@count>0 %
+      \yquant@circuit@operator@hasControlstrue%
+   \fi%
+   % negative controls
+   \yquant@register@get@ids{#2}%
+   \let\yquant@circuit@operator@nctrls=\yquant@register@get@ids@list%
+   \let\yquant@circuit@operator@minnctrl=\yquant@register@get@ids@min%
+   \let\yquant@circuit@operator@maxnctrl=\yquant@register@get@ids@max%
+   \let\yquant@circuit@operator@numnctrl=\yquant@register@get@ids@count%
+   \ifnum\yquant@register@get@ids@count>0 %
+      \yquant@circuit@operator@hasControlstrue%
+   \fi%
+   % determine the qubits spanned
+   \yquant@min\yquant@circuit@operator@minctrl%
+      \yquant@circuit@operator@mintarget%
+      \yquant@circuit@operator@minpctrl%
+      \yquant@circuit@operator@minnctrl%
+      \relax%
+   \yquant@max\yquant@circuit@operator@maxctrl%
+      \yquant@circuit@operator@maxtarget%
+      \yquant@circuit@operator@maxpctrl%
+      \yquant@circuit@operator@maxnctrl%
+      \relax%
+   % obtain the required minimal x position
+   \yquant@register@get@maxxrange%
+      \yquant@circuit@operator@x%
+      \yquant@circuit@operator@minctrl%
+      \yquant@circuit@operator@maxctrl%
+   \dimdef\yquant@circuit@operator@x{%
+      \yquant@circuit@operator@x+\yquant@config@operator@sep%
+   }%
+}
+
+% BEGIN_FOLD Subcircuit-related
+% Does all necessary calculations for inserting a sub-circuit
+% #1: subcircuit code (should start with \begin{yquant})
+%\newbox\yquant@circuit@subcircuit@box
+%\protected\long\def\yquant@circuit@subcircuit#1{%
+%   % We need to place the inner circuit at the correct position; but for this, we need
+%   % its extent. For this, we first place it within a box. But this box is then
+%   % integrated seamlessly, in particular, named nodes must be re-placed. We use a lot of
+%   % inspiration from pgf's matrix capabilities.
+%   % First, we anticipate the macro that is used by our subcircuit to store the node
+%   % names.
+%   \edef\yquant@circuit@subcircuit@nodelist{yquant@env\the\numexpr\yquant@env+1\relax @circuit@subcircuit@nodelist}%
+%   \global\cslet\yquant@circuit@subcircuit@nodelist\empty%
+%   \pgfinterruptboundingbox%
+%      % we make sure there are no conflicts by prefixing any named nodes in any case.
+%      \ifx\yquant@lang@attr@name\empty%
+%         \pgfkeys{/tikz/name prefix/.expanded={sub\yquant@prefix-}}%
+%      \else%
+%         \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}\yquant@lang@attr@name-}}%
+%      \fi%
+%      \let\pgf@nodecallback=\yquant@circuit@subcircuit@nodecallback%
+%      \pgftransformreset%
+%      \global\setbox\yquant@circuit@subcircuit@box=\hbox{{%
+%         % bypass 'overlay' option
+%         \pgf@relevantforpicturesizetrue%
+%         \pgfsys@beginpicture%
+%         #1%
+%         \pgfsys@endpicture%
+%         \ifdim\pgf@picmaxx=-16000pt %
+%            \global\pgf@picmaxx=0pt %
+%            \global\pgf@picminx=0pt %
+%            \global\pgf@picmaxy=0pt %
+%            \global\pgf@picminy=0pt %
+%         \fi%
+%      }}%
+%      \wd\yquant@circuit@subcircuit@box=0pt %
+%      \global\setbox\yquant@circuit@subcircuit@box=\hbox{{%
+%         \hskip-\pgf@picminx%
+%         \unhbox\yquant@circuit@subcircuit@box%
+%         \hskip\pgf@picmaxx%
+%      }}%
+%      \ht\yquant@circuit@subcircuit@box=\pgf@picmaxy%
+%      \dp\yquant@circuit@subcircuit@box=-\pgf@picminy%
+%      % We need to remember the offset for the coordinate shifts
+%      \dimgdef\yquant@circuit@subcircuit@shiftx{-\pgf@picminx}%
+%   \endpgfinterruptboundingbox%
+%   \ifx\yquant@lang@attr@name\empty%
+%      % However, if the outer node was not named, no access to the inner nodes is desired,
+%      % so we delete all nodes again.
+%      \def\do##1{%
+%         \csgundef{pgf@sh@ns@##1}%
+%         \csgundef{pgf@sh@np@##1}%
+%         \csgundef{pgf@sh@nt@##1}%
+%         \csgundef{pgf@sh@pi@##1}%
+%         \csgundef{pgf@sh@ma@##1}%
+%      }%
+%      \dolistcsloop\yquant@circuit@subcircuit@nodelist%
+%      \global\cslet\yquant@circuit@subcircuit@nodelist\empty%
+%   \else%
+%      % But now access is desired, and probably we are deeply nested. Append the sublist to ours, so that our parent can re-map them again.
+%      \ifx\pgf@nodecallback\yquant@circuit@subcircuit@nodecallback%
+%         \csxappto{\yquant@prefix circuit@subcircuit@nodelist}%
+%                  {\csname\yquant@circuit@subcircuit@nodelist\endcsname}%
+%      \fi%
+%   \fi%
+%}
+%
+%\def\yquant@circuit@subcircuit@nodecallback#1{%
+%   \listcsxadd{\yquant@prefix circuit@subcircuit@nodelist}{#1}%
+%}
+
+%\protected\def\yquant@circuit@subcircuit@shiftnodes#1{%
+%   \expandafter\unless\expandafter\ifx\csname\yquant@circuit@subcircuit@nodelist\endcsname\empty{%
+%      \pgftransformreset%
+%      \pgf@process{\pgfpointanchor{#1}{text}}%
+%      \edef\yquant@circuit@subcircuit@offset{%
+%         \noexpand\pgfqpoint{\the\dimexpr\pgf@x+\yquant@circuit@subcircuit@shiftx\relax}%
+%                            {\the\dimexpr\pgf@y\relax}%
+%      }%
+%      \def\do##1{%
+%         \pgf@shift@node{##1}\yquant@circuit@subcircuit@offset%
+%      }%
+%      \dolistcsloop\yquant@circuit@subcircuit@nodelist%
+%   }\fi%
+%}
+% END_FOLD
+
+% BEGIN_FOLD Helpers for operator callbacks
+% turn a wire into a different type
+\def\yquant@circuit@settype#1{%
+   \yquant@register@set@type{#1}\yquant@circuit@settype@to%
+}
+
+% performs an alignment of all registers specified in the argument; that is, the next operation on any of the listed registers will be after the maximum position of all of them
+% #1: arbitrary register list
+\protected\def\yquant@circuit@align#1{%
+   \begingroup%
+      \yquant@register@get@maxxlist\x{#1}%
+      \def\do##1{%
+         \yquant@register@set@x{##1}\x%
+      }%
+      \dolistloop{#1}%
+   \endgroup%
+}
+
+% introduces a horizontal skip (= invisible operator of given width) among the registers; that is, those registers are first aligned, then skipped by the given amount.
+% #1: arbitrary register list
+% #2: skip width
+\protected\def\yquant@circuit@hspace#1#2{%
+   \begingroup%
+      \yquant@register@get@maxxlist\x{#1}%
+      \dimdef\x{\x+#2}%
+      \def\do##1{%
+         \yquant@register@set@x{##1}\x%
+      }%
+      \dolistloop{#1}%
+   \endgroup%
+}
+
+% sets the type of a list of registers
+% #1: arbitrary register list
+% #2: new type
+\protected\def\yquant@circuit@settypes#1#2{%
+   \begingroup%
+      \let\tmp=\empty%
+      \def\do##1{%
+         % We do not extend the wire: a register that is discarded somewhere does not make
+         % sense, only right after some application (which is supposed to already have
+         % extended the wire appropriately).
+         \appto\tmp{\yquant@register@set@type{##1}#2}%
+      }%
+      \dolistloop{#1}%
+      \csxappto{\yquant@prefix draw}{\tmp}%
+   \endgroup%
+}
+
+% sets the output of wires
+% #1: arbitrary register list
+\protected\def\yquant@circuit@output#1{%
+   \csxappto{\yquant@prefix outputs}%
+            {\noexpand\yquant@circuit@output@do%
+               {\noexpand#1}% there is nothing to expand - except the first token, which might be \yquant@register@multi, and we need to preserve this.
+               {\yquant@attrs@remaining}%
+               {\unexpanded\expandafter{\yquant@lang@attr@value}}%
+            }%
+}
+
+\protected\long\def\yquant@circuit@output@do#1#2#3{%
+   % this must only be called at the end of an environment, where \yquant@env@end@xpos is
+   % set up properly!
+   \def\do##1{%
+      \ifyquant@firsttoken\yquant@register@multi{##1}{%
+         \csxappto{\yquant@prefix draw}%
+                  {\noexpand\yquant@circuit@output@do@multi%
+                   \yquant@circuit@output@do@multi@@extract##1{\unexpanded{#3}}}%
+      }{%
+         \csgappto{\yquant@prefix draw}%
+                  {\yquant@circuit@output@do@single{##1}{#3}}%
+      }%
+   }%
+   % \dolistloop will carry out one \expandafter on the argument; but this expansion step
+   % is already done. If #1 starts with \yquant@register@multi, this will be expanded once
+   % despite \protected, so insert some expand-to-nothing token first.
+   \csgappto{\yquant@prefix draw}{%
+      \yquant@circuit@output@group{#2}%
+   }
+   \dolistloop{\empty#1}%
+   \csgappto{\yquant@prefix draw}{%
+      \yquant@circuit@output@endgroup%
+   }%
+}
+
+\def\yquant@circuit@output@do@multi@@extract#1#2#3#4#5{%
+   {#2}{#3}%
+}
+
+\protected\long\def\yquant@circuit@output@group#1{%
+   \begingroup%
+      \def\idx{0}%
+      \yquant@set{#1}%
+}
+
+\let\yquant@circuit@output@endgroup=\endgroup%
+
+\long\def\yquant@circuit@output@do@single#1#2{%
+   \path
+      (\yquant@env@end@xpos, \yquant@register@get@y{#1})
+      node[/yquant/every output,
+           /yquant/every \ifcase\yquant@register@get@type{#1} qubit\or cbit\or qubits\fi\space output] {#2};
+   \numdef\idx{\idx+1}%
+}
+
+\long\def\yquant@circuit@output@do@multi#1#2#3{%
+   \path[/yquant/every multi output]
+      (\yquant@env@end@xpos, \yquant@register@get@y{#1}) --
+      (\yquant@env@end@xpos, \yquant@register@get@y{#2})
+      node {#3};%
+   \numdef\idx{\idx+1}%
+}
+% END_FOLD

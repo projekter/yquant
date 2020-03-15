@@ -1,0 +1,261 @@
+\newif\ifyquant@env@lazy
+
+\protected\def\yquant@envunstar{%
+   \yquant@env@lazyfalse%
+   \yquant@env@begin%
+}
+
+\protected\def\yquant@envstar{%
+   \yquant@env@lazytrue%
+   \yquant@env@begin%
+}
+
+\protected\def\yquant@env@begin{%
+   % We check for an optional argument, but if it is in a new line, we don't take it - it
+   % might well be the square brace of an argument. Temporary change newlines to ordinary
+   % characters.
+   \catcode`\^^M=12 %
+   \yquant@futurenonspacelet\yquant@env@begin@next\yquant@env@begin@checkarg%
+}
+
+{\catcode`\^^M=12 \global\let\yquant@env@linebreak=^^M}
+
+\protected\def\yquant@env@begin@checkarg{%
+   \catcode`\^^M=5 %
+   \ifx\yquant@env@begin@next[%
+      \expandafter\yquant@env@begin@arg%
+   \else%
+      \ifx\yquant@env@begin@next\yquant@env@linebreak%
+         % In this case we don't really want to inject the wrong-catcode linebreak back,
+         % which would produce an error.
+         \afterassignment\yquant@env@begin@noarg%
+         \expandafter\expandafter\expandafter\let%
+         \expandafter\expandafter\expandafter\@eattoken%
+         % since ^^M is an ordinary character, no need for "= ".
+      \else%
+         \expandafter\expandafter\expandafter\yquant@env@begin@noarg%
+      \fi%
+   \fi%
+}
+
+\def\yquant@env@begin@noarg{%
+   \yquant@env@begin@arg[]%
+}
+
+\long\protected\def\yquant@env@begin@arg[#1]{%
+   \begingroup%
+      \advance\yquant@env by 1 %
+      \edef\yquant@prefix{yquant@env\the\yquant@env @}%
+      \let\yquant=\yquant@env@scan%
+      \yquant@lang@reset@attrs%
+      \csgdef{\yquant@prefix registers}{0}%
+%      \csgdef{\yquant@prefix lasty}{0pt}%
+      \global\cslet{\yquant@prefix draw}\relax%
+      \global\cslet{\yquant@prefix outputs}\relax%
+      \csxdef{\yquant@prefix cleanup}{%
+         \expandafter\noexpand\csname\yquant@prefix registers\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix draw\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix outputs\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix cleanup\endcsname%
+      }%
+      \ifnum\yquant@env=1 %
+         \yquant@env@substikz%
+      \fi%
+      \scope[{/yquant/.cd, every circuit, #1}]%
+}
+\newif\ifyquantdebug
+\protected\def\yquant@env@end{%
+         \letcs\yquant@env@end@registers{\yquant@prefix registers}%
+         \ifnum\yquant@env@end@registers>0 %
+            % draw all wires
+            \yquant@register@get@maxxrange\yquant@env@end@xpos{1}{\yquant@env@end@registers}%
+            % to have a symmetric situation, we extend again one separation at the end
+            \csxappto{\yquant@prefix draw}{%
+               \def\noexpand\yquant@env@end@xpos{%
+                  \the\dimexpr\yquant@env@end@xpos+\yquant@config@operator@sep\relax%
+               }%
+            }
+            % also calculate the true y positions
+            \dimen0=0pt %
+            \dimen2=0pt %
+            \dimen4=\yquant@config@register@sep %
+            \yquant@for \i := 1 to \yquant@env@end@registers {%
+               % add a final wire
+               \csxappto{\yquant@prefix draw}{%
+                  \yquant@circuit@endwire{\i}%
+               }%
+               % we do not care if the wire is present for the y position
+               \dimen2=.5\dimexpr\yquant@register@get@height\i\relax%
+               \advance\dimen0 by \dimen2\relax%
+               % top-to-bottom means negative coordinates in pgf
+               \yquant@register@set@y\i{-\the\dimen0}%
+               \advance\dimen0 by \dimen2\relax%
+               \advance\dimen0 by \dimen4\relax%
+            }%
+            \csname\yquant@prefix outputs\endcsname%
+         \fi%
+      \endscope%
+      % Now we actually carry out the tikz commands which were previously stored in the draw command. But before this, we get rid of all \yquant@env@scan calls and also restore the scope command, since this would add itself once again. And get@y needs to expand.
+      \let\path=\tikz@command@path%
+      \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
+      \let\tikz@scope@opt=\yquant@env@substikz@scope%
+      \let\endtikz@scope@env=\yquant@env@substikz@endscope%
+      \let\endscope=\endtikz@scope@env%
+      \let\stopscope=\endscope%
+      \yquant@register@get@y@@expandable%
+      \ifyquantdebug%
+         \csshow{\yquant@prefix draw}%
+      \fi%
+      \csname\yquant@prefix draw\endcsname%
+      \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
+   \endgroup%
+}
+
+\tikzaddtikzonlycommandshortcutlet\yquant\yquant@envunstar
+\expandafter\tikzaddtikzonlycommandshortcutlet\csname yquant*\endcsname\yquant@envstar
+\tikzaddtikzonlycommandshortcutlet\endyquant\yquant@env@end
+\expandafter\tikzaddtikzonlycommandshortcutlet\csname endyquant*\endcsname\yquant@env@end
+
+\protected\def\yquantset{%
+   \pgfqkeys{/yquant}%
+}
+\let\yquant@set=\yquantset%
+
+% private yquant-language related helpers
+% In order to allow nested environments and also grouping (without the need to smuggle definitions out of the groups whenever necessary), we count the number of nested environments.
+\newcount\yquant@env
+
+\def\yquant@env@substikz@finish{%
+   % Rendering pipeline
+   \endgroup%
+   \global\pgflinewidth=\tikzscope@linewidth\relax%
+   \tikz@path@do@at@end%
+}
+
+% first undoes the substikz commands, next turns the \path command into a virtual one that does not produce any output.
+\protected\def\yquant@env@virtualize@path{%
+   \yquant@register@get@y@@expandable%
+   \let\path=\tikz@command@path%
+   \let\tikz@finish=\yquant@env@substikz@finish%
+   \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
+}
+
+% substitute the tikz commands (defined in \tikz@installcommands) so that they can be arbitrarily interleaved with yquant code. We patch \path, \scope, \endscope, \stopscope, their internal complements, and also patch \yquantset.
+\protected\def\yquant@env@substikz{%
+   % \tikz@path@do@at@end is called after a path. Hence, it is an ideal candidate to re-invoke \yquant@env@scan. However, it is by default defined to be \tikz@lib@scope@check, and we need this definition for the scopes library to work correctly. But since \tikz@lib@scope@check is also called after a scope and the end of a scope, this is even better. Yet, we need to check whether the scopes library is present or not.
+   \let\yquant@env@substikz@scopecheck=\tikz@lib@scope@check%
+   \ifx\tikz@lib@scope@check\pgfutil@empty%
+      % no, it is not. This is simple.
+      \let\tikz@lib@scope@check=\yquant@env@scan%
+   \else%
+      % yes, it is. Call it after the special behavior is done.
+      \patchcmd\tikz@lib@scope@check{{}}{\yquant@env@scan}\relax{%
+         \PackageWarning{yquant.sty}{Patching \string\tikz@lib@scope@check\space failed; you must invoke \string\yquant\space manually after every tikz command to switch back to yquant code.}%
+      }
+   \fi%
+   % We not only need to re-invoke yquant after the tikz command, but we must also make sure that the tikz command is not actually drawn now, but at the end. However, what happens if some macros are used within the command? Here, we choose to expand the macros to the values they have _now_, but protected (which should prevent bad things for formatting commands). If you find this to be an issue, please report.
+   \def\path##1;{%
+      \protected@csxappto{\yquant@prefix draw}{%
+         \noexpand\path##1;%
+      }%
+      \yquant%
+   }%
+   % no need for \scoped, because it internally calls \scope.
+   % We need to hack into \scope, but this is a bit tricky due to its argument handling. In order to get all optional arguments, including the possible animations library, correct, we change \tikz@scope@opt.
+   \let\yquant@env@substikz@scope=\tikz@scope@opt%
+   \def\tikz@scope@opt[##1]{%
+      \protected@csxappto{\yquant@prefix draw}{%
+         \noexpand\tikz@scope@env[{##1}]%
+      }%
+      \yquant@env@substikz@scope[{##1}]%
+   }%
+   \let\yquant@env@substikz@endscope=\endtikz@scope@env%
+   \def\endtikz@scope@env{%
+      \csgappto{\yquant@prefix draw}{%
+         \yquant@env@substikz@endscope%
+      }%
+      \yquant@env@substikz@endscope%
+   }%
+   \let\endscope=\endtikz@scope@env%
+   \let\stopscope=\endscope%
+   % We define \yquantset as a pgfkeys-like macro. Anything else would deteriorate performance badly, as \pgfkeys, \pgfqkeys, or \tikzset are used a lot internally.
+   \protected\def\yquantset##1{%
+      \protected@csxappto{\yquant@prefix draw}{%
+         \noexpand\pgfqkeys{/yquant}{##1}%
+      }%
+      \pgfqkeys{/yquant}{##1}%
+      \yquant@env@scan%
+   }%
+}
+
+% Scan until the next non-space token is found and execute it as a csname
+\def\yquant@env@scan{%
+   \begingroup%
+      \yquant@env@contscan%
+}
+
+\protected\def\yquant@env@contscan{%
+   \yquant@futurenonspacelet\yquant@env@nextchar\yquant@env@check%
+}
+
+\def\yquant@env@rescan{%
+   \endgroup%
+   \yquant@env@scan%
+}
+
+\protected\def\yquant@env@check{%
+   \let\next=\relax%
+   % Here we assume standard catcodes for A and [, but our language specification also requires this implicitly.
+   \ifx\yquant@env@nextchar[%
+      \let\next=\yquant@langhelper@check@attrs%
+   \else%
+      \ifcat\noexpand\yquant@env@nextchar A% letter
+         \let\next=\yquant@langhelper@check@name%
+      \else%
+         \ifcat\noexpand\yquant@env@nextchar\bgroup%
+            \endgroup%
+            \let\next=\yquant@env@opengroup%
+         \else%
+            \ifcat\noexpand\yquant@env@nextchar\egroup%
+               \endgroup%
+               \let\next=\yquant@env@closegroup%
+            \else%
+               \ifx\yquant@env@nextchar\par%
+                  \let\next=\yquant@env@gobblepar%
+               \else%
+                  \ifcat\noexpand\yquant@env@nextchar\relax%
+                     \endgroup%
+                     \let\next=\relax%
+                  \else%
+                     \PackageError{yquant.sty}%
+                        {Invalid yquant syntax: `\meaning\yquant@env@nextchar'}%
+                        {Adhere to the specs!}%
+                  \fi%
+               \fi%
+            \fi%
+         \fi%
+      \fi%
+   \fi%
+   \next%
+}
+
+\protected\def\yquant@env@opengroup{%
+   \afterassignment\yquant@env@opengroup@aux%
+   \let\@eattoken= %
+}
+
+\def\yquant@env@opengroup@aux{%
+   \bgroup%
+      \csgappto{\yquant@prefix draw}{\begingroup}%
+      \yquant@env@scan%
+}
+
+\def\yquant@env@closegroup{%
+   \csgappto{\yquant@prefix draw}{\endgroup}%
+   \aftergroup\yquant@env@scan%
+}
+
+\def\yquant@env@gobblepar{%
+   \afterassignment\yquant@env@contscan%
+   \let\@eattoken= %
+}

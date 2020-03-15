@@ -1,0 +1,315 @@
+% Parsing attributes
+\let\yquant@langhelper@list@attrs=\empty
+
+\protected\long\def\yquant@langhelper@check@attrs[#1]{%
+   \appto\yquant@langhelper@list@attrs{#1,}%
+   \yquant@env@contscan%
+}
+
+% shorthands for declaring attributes
+\protected\def\yquant@langhelper@declare@attr{%
+   \pgfqkeys{/yquant/all attrs}%
+}
+
+\protected\def\yquant@langhelper@declare@attr@global{%
+   \pgfqkeys{/yquant/global attrs}%
+}
+
+\pgfkeys{%
+   /yquant/attr filter handler/.code={%
+      \let\yquant@langhelper@filter@@name=\pgfkeyscurrentkeyRAW%
+      \let\yquant@langhelper@filter@@value=\pgfkeyscurrentvalue%
+      % the key was filtered out, i.e., it is neither a local nor a global attribute.
+      \pgfkeysinterruptkeyfilter%
+         % execute it in /yquant, if it exists there
+         \pgfqkeys{/yquant}{\yquant@langhelper@filter@@name/.try/.expand once=\yquant@langhelper@filter@@value}%
+         \ifpgfkeyssuccess%
+            \eappto#1{%
+               ,/yquant/\unexpanded\expandafter{\yquant@langhelper@filter@@name}%
+                  \unless\ifx\yquant@langhelper@filter@@value\pgfkeysnovalue@text%
+                     ={\unexpanded\expandafter{\yquant@langhelper@filter@@value}}%
+                  \fi%
+            }%
+         \else%
+            \pgfkeys{/yquant/operator style/.expanded=%
+               {\unexpanded\expandafter{\yquant@langhelper@filter@@name}=%
+                  {\unexpanded\expandafter{\yquant@langhelper@filter@@value}}%
+               }%
+            }%
+            \eappto#1{%
+               ,/yquant/operator style={\unexpanded\expandafter{\yquant@langhelper@filter@@name}%
+                  \unless\ifx\yquant@langhelper@filter@@value\pgfkeysnovalue@text%
+                     ={\unexpanded\expandafter{\yquant@langhelper@filter@@value}}%
+                  \fi%
+               }%
+            }%
+         \fi%
+      \endpgfkeysinterruptkeyfilter%
+   },
+   /pgf/key filters/attr filter/.code={%
+      % we need to capture every non-attribute (which means filtering them out).
+      \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/attrs/}{%
+         % the key is in /yquant/attrs. Does it actually exist (but not as a handler, which would define non-existing keys)?
+         \if\pgfkeyscasenumber1%
+            \pgfkeysfiltercontinuetrue%
+         \else%
+            \if\pgfkeyscasenumber2%
+               \pgfkeysfiltercontinuetrue%
+            \else%
+               % 0 or 3 for our case means non-existing - now we need to check whether we can find it in the global attributes.
+               \pgfkeysifassignable{/yquant/global attrs/\pgfkeyscurrentkeyRAW}{%
+                  \pgfkeysfiltercontinuetrue%
+               }{%
+                  % it is not, so it is not a known attribute for this operator. Filter.
+                  \pgfkeysfiltercontinuefalse%
+               }%
+            \fi%
+         \fi%
+      }{%
+         % the key is not in /yquant/attrs. Is it a global attribute (usually, the user should not access this explicitly, but let's be tolerant here)?
+         \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/global attrs/}{%
+            % the key is in /yquant/global attrs. Does it actually exist?
+            \if\pgfkeyscasenumber1%
+               \pgfkeysfiltercontinuetrue%
+            \else%
+               \if\pgfkeyscasenumber2%
+                  \pgfkeysfiltercontinuetrue%
+               \else%
+                  % no - that's it.
+                  \pgfkeysfiltercontinuefalse%
+               \fi%
+            \fi%
+         }{%
+            % the key is no known attribute
+            \pgfkeysfiltercontinuefalse%
+         }%
+      }%
+   },
+   /yquant/attr filter/.style={
+      /pgf/key filters/attr filter/.install key filter,
+      /yquant/attr filter handler/.install key filter handler=\yquant@attrs@remaining%
+   }%
+}
+
+% specifies which attributes can be used for a given command
+% #1: command name
+% #2: comma-separated list of required attrs
+% #3: comma-separated list of optional attrs
+\protected\def\yquant@langhelper@setup@attrs#1#2#3{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      \edef\keyscmd{%
+         \noexpand\pgfkeyslet{/yquant/attrs/\cmd/.unknown/.@cmd}%
+                             \yquant@langhelper@setup@attrs@unknown%
+      }%
+      \let\keysset=\relax%
+      \let\keyscheck=\relax%
+      \def\do##1{%
+         \eappto\keyscmd{%
+            \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
+               \unexpanded{%
+                  \cslet{yquant@langhelper@attrs@req@##1}\relax%
+                  \pgfkeysinterruptkeyfilter%
+                     \pgfkeys{/yquant/all attrs/##1={####1}}%
+                  \endpgfkeysinterruptkeyfilter%
+               }
+            }%
+         }%
+         \eappto\keysset{%
+            \def\expandafter\noexpand\csname yquant@langhelper@attrs@req@##1\endcsname{%
+               \yquant@langhelper@setup@attrs@missing{##1}%
+            }%
+         }%
+         \expandafter\appto\expandafter\keyscheck%
+            \csname yquant@langhelper@attrs@req@##1\endcsname%
+      }%
+      \docsvlist{#2}%
+      \global\cslet{yquant@langhelper@setup@attrs@set@\cmd}\keysset%
+      \global\cslet{yquant@langhelper@setup@attrs@check@\cmd}\keyscheck%
+      \def\do##1{%
+         \eappto\keyscmd{%
+            \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
+               \unexpanded{%
+                  \pgfkeysinterruptkeyfilter%
+                     \pgfkeys{/yquant/all attrs/##1={####1}}%
+                  \endpgfkeysinterruptkeyfilter%
+               }%
+            }%
+         }%
+      }%
+      \docsvlist{#3}%
+      \expandafter%
+   \endgroup%
+   \keyscmd%
+}
+
+\protected\def\yquant@langhelper@setup@attrs@unknown#1\pgfeov{%
+   % This is in its essence /.search also={/yquant/global attrs}, but with filtering interrupted
+   \pgfkeysinterruptkeyfilter%
+      \ifpgfkeysaddeddefaultpath%
+         % only process keys for which no full path has been provided:
+         \pgfkeyssuccessfalse%
+         \let\pgfkeys@searchalso@name=\pgfkeyscurrentkeyRAW%
+         % We interrupt the filtering process because we only want to append the very top-level command to the remaining-macro.
+         \unless\ifpgfkeyssuccess%
+            \pgfqkeys{/yquant/global attrs}%
+                     {\pgfkeys@searchalso@name={#1}}%
+         \fi%
+      \else%
+         % the /.search also implementation defines this in an unexpanded macro, which is then executed. Any reason?
+         \pgfkeysvalueof{/handlers/.unknown/.@cmd}#1\pgfeov%
+      \fi%
+   \endpgfkeysinterruptkeyfilter%
+}
+
+\protected\def\yquant@langhelper@setup@attrs@missing#1{%
+   \PackageError{yquant.sty}{Required attribute `#1' missing}%
+      {You used a command that requires specifying the attribute `#1'.}%
+}%
+
+% Parsing command itself
+\protected\def\yquant@langhelper@check@name#1 {%
+   \lowercase{\edef\cmd{#1}}%
+   \unless\ifcsname yquant@lang@\cmd\endcsname%
+      \PackageError{yquant.sty}{Unsupported yquant command: `#1'}%
+         {You used a command that is unknown to yquant.}%
+   \fi%
+   % Provide the association with the correct attributes
+   \csname yquant@langhelper@setup@attrs@set@\cmd\endcsname%
+   % For "ordinary" uses of the quotes library (without additional options), it would be better not to load the library now, since then the original text (everything in quotes) is just appended to /yquant/operator style. However, then uses with options will break the pgfkeys parser, as they are invalid. For this reason, we must enable the quotes library already at this state, with the consequence that we store the longer version, i.e., the output of the quotes-parsed expression instead.
+   \tikz@enable@node@quotes%
+   % execute them
+   \let\yquant@attrs@remaining=\empty%
+   \unless\ifx\yquant@langhelper@list@attrs\empty%
+      \edef\yquant@langhelper@list@attrs{%
+         \noexpand\pgfqkeysfiltered%
+            {/yquant/attrs/\cmd}%
+            {\unexpanded\expandafter{\yquant@langhelper@list@attrs}}%
+      }%
+      \pgfkeys{/yquant/attr filter}%
+      \yquant@langhelper@list@attrs%
+      \let\yquant@langhelper@list@attrs=\empty% required for nested environments
+   \fi%
+   % If there was an argument, set it
+   \@ifnextchar\bgroup%
+      \yquant@langhelper@check@name@i%
+      \yquant@langhelper@check@name@ii%
+}
+
+\protected\long\def\yquant@langhelper@check@name@i#1{%
+   \ifdefined\yquant@lang@attr@value%
+      \PackageWarning{yquant.sty}{Node content given explicitly and as an attribute. Using the explicit value.}%
+   \fi%
+   \def\yquant@lang@attr@value{#1}%
+   \let\yquant@langhelper@attrs@req@value=\relax%
+   \yquant@langhelper@check@name@ii%
+}
+
+\protected\def\yquant@langhelper@check@name@ii{%
+   % Check all necessary attributes were given.
+   \csname yquant@langhelper@setup@attrs@check@\cmd\endcsname%
+   % Finally execute the command
+   \csname yquant@lang@\cmd\endcsname%
+}
+
+% Defining commands that accept registers and take an optional value
+% #1: name of the argument
+% #2: command that is to be called with three parameters: the indices of the positive and negative controls and registers, all as named lists
+\protected\def\yquant@langhelper@declare@command#1#2{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      \long\protected\csgdef{yquant@lang@\cmd}{%
+         \let\cmd=#2%
+         \yquant@langhelper@declare@command@@parse%
+      }%
+   \endgroup%
+}
+
+% Defining commands that accept registers and take an additional value
+% #1: name of the argument
+% #2: command that is to be called with three parameters: the indices of the positive and negative controls and registers, all as named lists
+\protected\def\yquant@langhelper@declare@command@uncontrolled#1#2{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      \long\protected\csgdef{yquant@lang@\cmd}{%
+         \def\cmd{\yquant@langhelper@declare@command@@uncontrolled{#2}}%
+         \yquant@langhelper@declare@command@@parse%
+      }%
+   \endgroup%
+}
+
+\long\def\yquant@langhelper@declare@command@@parse#1;{%
+   \yquant@langhelper@declare@command@@extract@nctrl#1~;%
+   \yquant@env@rescan%
+}
+
+\def\yquant@langhelper@declare@command@@extract@nctrl#1~#2;{%
+   \if\relax\detokenize{#2}\relax%
+      \yquant@langhelper@declare@command@@extract@pctrl#1|~~;%
+   \else%
+      \yquant@langhelper@declare@command@@extract@pctrl#1|~#2;%
+   \fi%
+}
+
+\def\yquant@langhelper@declare@command@@extract@pctrl#1|#2~#3~;{%
+   \if\relax\detokenize{#2}\relax%
+      \yquant@langhelper@declare@command@@exec#1||~#3;%
+   \else%
+      \yquant@langhelper@declare@command@@exec#1|#2~#3;%
+   \fi%
+}
+
+\protected\def\yquant@langhelper@declare@command@@exec#1|#2|~#3;{%
+   \edef\params{%
+      {\trim@spaces{#2}}%
+      {\trim@spaces{#3}}%
+      {\trim@spaces{#1}}%
+   }%
+   \expandafter\cmd\params%
+}
+
+\protected\def\yquant@langhelper@declare@command@@uncontrolled#1#2#3{%
+   \ifstrempty{#2}\relax{%
+      \PackageError{yquant.sty}{Positive controls are not allowed for this command}{}%
+   }%
+   \ifstrempty{#3}\relax{%
+      \PackageError{yquant.sty}{Negative controls are not allowed for this command}{}%
+   }%
+   #1%
+}
+
+% shorthands for validation of property values
+% #1: a macro that will contain the sanitized value
+% #2: a TeX register type: most likely \count, \dimen
+% #3: a string to be checked
+% This macro is not expandable.
+\protected\def\yquant@langhelper@validate#1#2#3{%
+   \begingroup%
+      \afterassignment\yquant@langhelper@validate@i%
+      #2 255=#3\relax\yquant@end%
+      \unless\ifvalid%
+         \PackageError{yquant.sty}{Invalid property value: `#3'}%
+            {The value must be assignable to a \protect#2 register.}%
+      \fi%
+      \expandafter%
+   \endgroup%
+   \expandafter\def\expandafter#1\expandafter{\the#2 255}%
+}
+
+\def\yquant@langhelper@validate@relax{\relax}
+\protected\def\yquant@langhelper@validate@i#1\relax#2\yquant@end{%
+   % if the valid value was not user-delimited by \relax, #1 and #2 are empty
+   % if the valid value was user-delimited by \relax, #1 is empty and #2 is \relax
+   \let\ifvalid=\iffalse%
+   \if\relax\detokenize{#1}\relax%
+      \def\tmp{#2}%
+      \ifx\empty\tmp%
+         \csletcs{ifvalid}{iftrue}%
+      \else%
+         \ifx\yquant@langhelper@validate@relax\tmp%
+            \csletcs{ifvalid}{iftrue}%
+         \fi%
+      \fi%
+   \fi%
+   % eat the rest (which should be empty anyway)
+}
