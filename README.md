@@ -107,7 +107,7 @@ Much more examples and explanations can be found in the PDF version of this Read
     [name=smeas]
     dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
     ["Recovery"]
-    box {$\symcal R$} (msg) | syndrome;
+    box {$\mathcal R$} (msg) | syndrome;
     discard syndrome;
   \end{yquant}
   \node[draw, dashed, fit=(inits-2) (scnot0-p0) (smeas-2), "Syndrome Measurement"] {};
