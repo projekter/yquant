@@ -16,7 +16,8 @@
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
 \usepackage{yquant,braket,hyphenat,microtype,hologo,minted}
 \usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
-\usepackage{amsmath,mdframed,adjustbox,cleveref}
+\usepackage{amsmath,adjustbox,cleveref}
+\usepackage[framemethod=tikz]{mdframed}
 % END_FOLD
 
 \makeatletter
@@ -62,6 +63,7 @@
          \tex}{%
    \end{minipage}}
 
+\newsavebox\codeexamplebox
 \newenvironment{codeexample}{%
    \VerbatimEnvironment%
    \let\FVB@VerbatimOut\minted@FVB@VerbatimOut
@@ -72,10 +74,17 @@
 }{
    \end{VerbatimOut}%
    \minted@langlinenoson%
-   \noindent\begin{minipage}{.5\linewidth}%
+   \savebox\codeexamplebox{\input \minted@jobname.pyg}%
+   \ifdim\wd\codeexamplebox>\dimexpr.5\linewidth-3mm\relax%
+      \wd\codeexamplebox=.5\linewidth% squeeze if necessary
+   \else%
+      \wd\codeexamplebox=\dimexpr\wd\codeexamplebox+3mm\relax% else give some space
+   \fi%
+   \noindent\begin{minipage}{\wd\codeexamplebox}%
       \centering%
-      \input \minted@jobname.pyg%
-   \end{minipage}\begin{minipage}{.5\linewidth}%
+      \usebox\codeexamplebox%
+   \end{minipage}%
+   \begin{minipage}{\dimexpr\linewidth-\wd\codeexamplebox\relax}%
       \minted@pygmentize{\minted@lang}%
    \end{minipage}%
    \minted@langlinenosoff%
@@ -100,27 +109,23 @@
    \par%
 }
 
+\def\bd@boxextra#1{%
+   \node[anchor=north west] at (current bounding box.north east) {\hskip7pt#1};%
+}
+
 \newcommand*\bd@boxintro[5]{%
    \begingroup%
       \setlength{\parskip}{0pt}%
       \setlength{\parindent}{0pt}%
-      \def\bd@boxtitle{%
-         \smash{\rlap{%
-            \hskip\linewidth%
-            \hskip\marginparsep%
-            \hskip7pt% This is the distance to the box end
-            #1%
-         }}%
-      }%
       \if\relax\detokenize{#5}\relax%
-         \begin{mdframed}[style=bdBox, backgroundcolor=#4, linecolor=#2]%
-            \vtop to 0pt{\leavevmode\strut\bd@boxtitle}%
+         \begin{mdframed}[style=bdBox, backgroundcolor=#4, linecolor=#2,
+                          firstextra=\bd@boxextra{#1}, singleextra=\bd@boxextra{#1}]%
       \else%
          \begin{mdframed}[style=bdBox, backgroundcolor=#4,
                           frametitlefont=\bfseries\sffamily\color{#3},
                           frametitlebackgroundcolor=#2,
-                          frametitle={\leavevmode\strut\bd@boxtitle#5},
-                          linecolor=#2]%
+                          frametitle={\strut#5}, linecolor=#2,
+                          firstextra=\bd@boxextra{#1}, singleextra=\bd@boxextra{#1}]%
       \fi%
       \ignorespaces%
 }
@@ -192,7 +197,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is not yet available on CTAN.
-      This alpha version~0.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This alpha version~0.1.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -298,24 +303,43 @@
          
          Additionally, if you refer to the index $i$ of a vector register of length $L < i$, this register will automatically be enlarged to $i \coloneq L$.
          It is also possible to convert a scalar register into a vector register in this manner.
-         However, this only works if the vector register is the last one currently in use; all registers above the last one are ``sealed,'' i.e., they cannot be enlarged any more.
+         To enlarge a register in the unstarred environment, you must precede the number of registers to be added in the second declaration by a plus sign.
+         Note that in this manner, you may even create discontiguous vectors.
          
          \emph{This might be a good point to proceed to the examples \cref{sec:examples}.}
       
       \subsection{Formal syntax}
          Every \Yquant{} command has the same structure (described here in EBNF syntax):
          \begin{minted}{ebnf}
-Command = { Arguments }, ?command?, [ Value ] Register, Controls, ";";
+Command = { Arguments }, ?command?, [ Value ], [ RegisterList ], Controls, ";";
 Arguments = "[", ?pgfkeys?, "]";
 Value = "{", ?TeX code?, "}";
-Register = RegisterSingle | RegisterMulti, [ ",", Register ];
-RegisterSingle = RegisterName | RegisterRange;
-RegisterMulti = "(", RegisterSingle, ")";
-RegisterName = ?name?, [ "[", RegisterIndex, "]" ];
-RegisterRange = [ RegisterName ], "-", [ RegisterName ];
-Controls = [ "|", [ Register ] ], [ "~", [ Register ] ];
+Controls = [ "|", [ RegisterSingleList ] ], [ "~", [ RegisterSingleList ] ];
+
+RegisterList = (RegisterSingle | RegisterMulti), [ ",", RegisterList ];
+RegisterSingleList = RegisterSingle, [ ",", RegisterSingleList ];
+
+RegisterSingle = RegisterSingleNoRange | RegisterRange;
+RegisterSingleNoRange = ?name?, [ "[", IndexMultiList, "]" ];
+RegisterMulti = "(", ( RegisterMultiNoRange | RegisterRange ), ")";
+RegisterMultiNoRange = ?name?, [ "[", IndexSingleList, "]" ];
+RegisterRange = [ RegisterUnique ], "-", [ RegisterUnique ];
+RegisterUnique = ?name?, [ "[", ?number?, "]" ];
+
+IndexMultiList = IndexMulti, [ ",", IndexMulti ];
+IndexSingleList = IndexSingle, [ ",", IndexSingle ];
+IndexMulti = IndexSingle | ( "(", IndexSingle, ")" );
+IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{minted}
-         Here, we use
+         Note that \Yquant{} is quite tolerant with respect to whitespaces.
+         Virtually every comma in the EBNF notation may consist of an arbitrary (including zero) number of whitespaces.
+         
+         Valid values for
+         \begin{BVerbatim}[commandchars=\\\{\}]
+\PYG{n+ni}{?command?}
+         \end{BVerbatim}
+         \space (case\hyp insensitive) are documented in a \cref{sec:gates}.
+         We use
          \begin{BVerbatim}[commandchars=\\\{\}]
 \PYG{n+ni}{?pgfkeys?}
          \end{BVerbatim}
@@ -324,12 +348,16 @@ Controls = [ "|", [ Register ] ], [ "~", [ Register ] ];
 \PYG{n+ni}{?name?}
          \end{BVerbatim}
          \space we denote any valid register name.
-         \Yquant{} does not pose particular restrictions on register names, but they should not contain any of the control literals used before (semicolon, comma, parentheses, square brackets, dash, pipe, tilde); and you should avoid using special \TeX{} characters.
-         Valid values for
+         Register names must not contain any of the control literals used before (semicolon, comma, parentheses, square brackets, dash, pipe, tilde); and you should avoid using special \TeX{} characters.
+         Note that for performance reasons, \Yquant{} does not check whether a register name is valid or not, but expect to either see unintended output or not\hyp so\hyp helpful error messages if you choose an invalid name.
          \begin{BVerbatim}[commandchars=\\\{\}]
-\PYG{n+ni}{?command?}
+\PYG{n+ni}{?number?}
          \end{BVerbatim}
-         \space (case\hyp insensitive) are documented in a later section.
+         \space is a decimal integer larger or equal to zero (in the context of register creation, strictly larger; in this context, it may also contain a leading
+         \begin{BVerbatim}[commandchars=\\\{\}]
+\PYG{l+s+s2}{\PYGZdq{}+\PYGZdq{}}
+         \end{BVerbatim}
+         ).
          
       \subsection{Registers}
          Every quantum circuit is structured by means of \emph{registers}.
@@ -355,24 +383,49 @@ Controls = [ "|", [ Register ] ], [ "~", [ Register ] ];
          Registers can have a vector character, i.e., not only a \emph{name}, but also an \emph{index} (or, in the declaration, a \emph{length}).
          The index (zero\hyp based) or length is specified in square brackets following the name, which closely mimics the OpenQASM language.
          
+         Since version 0.1.1, vector registers may be non\hyp contiguous: Whenever you create a bunch of registers, it is put at the bottom of the circuit.
+         If you later on again create registers of the same name---either implicitly in the \tex!yquant*! environment, or explicitly by preceding the length of the vectors entries to be added by a plus, as in \yquant!qubit a[+3];!---they will be put to what is \emph{now} the bottom of the circuit, even if some other registers are interspersed.
+         
          Registers are referenced---i.e., used in operations---by their name and index.
          If the latter is omitted, all indices of the register are targeted.
          Multiple registers can be referenced by joining their names in a comma\hyp separated list, or by means of a range specifier: give the name of the first (topmost), a dash, and the last (bottom\hyp most) register.
          Both are inclusive.
-         In a range specifier, omitting the start name means that the range begins at the first known qubit; omitting the end name means that the range ends at the last known (at the moment of its use) qubit.
+         In a range specifier, omitting the start name means that the range begins at the first known register; omitting the end name means that the range ends at the last known (at the moment of its use) register.
          Omitting both indicates a range over all known registers.
          
-         Note that all those specifications refer to the operation being carried out on each of the registers \emph{individually}, i.e., producing several copies of the operation.
+         Since version 0.1.1, it is also possible to use comma\hyp separated lists and ranges within the indices themselves, so that, e.g., \yquant!a[0, 2, 5-], b[-2]! will target the zeroth and second index of \yquant!a!; the remaining indices of \yquant!a! starting from five; and the first three indices of \yquant!b!.
+         However, if you use an \emph{outer} range (i.e., a range between indices of registers with different names), the initial and final register of the range must be unique, i.e., either you omit the index (targeting the first or last register with the given name) or specify a single one.
+         
+         \begin{warning}[Ranges and discontiguous registers]
+            Assume a configuration in which the vector register \yquant!a! begins with one qubit, then the single register \yquant!b! follows, and after that \yquant!a! is continued with another qubit.
+            
+            The range \yquant!a-b! will target \yquant!a[0]! and \yquant!b[0]!, but not \yquant!a[1]!.
+            As \yquant!a! is used as the initial register in the range without an explicit index specification, \Yquant{} automatically translates this into \yquant!a[0]!, while \yquant!b!, being used as the final register, is automatically translated into the last register of name \yquant!b! (which here happens to be \yquant!b[0]!).
+            Ranges between different register names (outer ranges) are \emph{visual} ranges, i.e., they refer to the top\hyp to\hyp bottom order that is visible.
+            Consequently, the register \yquant!a[1]! is left out since it is visually below the others.
+            
+            Likewise, the range \yquant!b-a! will target \yquant!b[0]! and \yquant!a[1]!.
+            
+            Ranges within indices are \emph{logical} ranges.
+            Hence, \yquant!a!, \yquant!a[-]!, \yquant!a[0-]!, \yquant!a[-1]!, and \yquant!a[0-1]! are all equivalent: they all refer to the registers \yquant!a[0]! and \yquant!a[1]!, but never to \yquant!b!, regardless of any visual position.
+         \end{warning}
+         
+         All that was said so far refers to the operation being carried out on each of the registers \emph{individually}, i.e., producing several copies of the operation.
          This is different from using the operation multiple times on the individual single registers only with regard to the vertical positioning: if specified as a register list with one operation, all copies of the operation will be aligned at the same vertical position (as if an \gate{align} command had been carried out before).
-         Consequently it is forbidden (in the sense of ``not useful,'' but \Yquant{} does not check for this) to list the same register multiple times in one operation.
+         \begin{warning}
+            It is forbidden (in the sense of ``not useful,'' but \Yquant{} does not check for this) to list the same register multiple times (explicitly or via ranges) in one operation.
+         \end{warning}
          
          Instead of copies of single\hyp register operations, one might want to carry out a multi\hyp register operation.
          In this case, the desired list of registers (comma separated, range, or both) must be surrounded by parentheses.
          It is possible to mix single- and multi\hyp register operations arbitrarily.
-         However, note that some gates, such as the \gate{swap} gate, always require multi\hyp register operations with a fixed number of constituents; others, such as the \gate{slash} pseudo\hyp gate always require single\hyp register operations.
-         Again others are completely flexible.
-         \Yquant{} will prevent you from using a gate in a multi\hyp qubit setting when it may only be used for single registers simply by no longer recognizing the parenthesis---this check comes almost for free.
-         All other types of validity checks are up to the user.
+         In an index list, you may also choose to surround only certain indices with parenthesis, provided the whole register is not already a multi\hyp register.
+         \begin{warning}
+            Note that some gates, such as the \gate{swap} gate, always require multi\hyp register operations with a fixed number of constituents; others, such as the \gate{slash} pseudo\hyp gate always require single\hyp register operations.
+            Again others are completely flexible.
+            \Yquant{} will prevent you from using a gate in a multi\hyp qubit setting when it may only be used for single registers.
+            All other types of validity checks are up to the user.
+         \end{warning}
       
       \subsection{Arguments}
          Every command may take one or multiple arguments.
@@ -988,7 +1041,7 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
       cnot q[2] | q[1];
       cnot q[1] | q[0];
       h q[0];
-      measure q[0], q[1];
+      measure q[0-1];
       
       z q[2] | q[1];
       x q[2] | q[0];
@@ -1024,7 +1077,7 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
       h j[1];
       box {$S$} j[1] | j[2];
       h j[2];
-      swap (j[0], j[2]);
+      swap (j[0, 2]);
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
@@ -1057,9 +1110,9 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
    \begin{yquant}
       qubit j[4];
       
-      cnot j[2] | j[0], j[1];
+      cnot j[2] | j[0, 1];
       x j[0];
-      box {$U$} j[1] | j[0], j[2]-j[3];
+      box {$U$} j[1] | j[0, 2-3];
       h j[2];
       measure j[3];
    \end{yquant}
@@ -1088,7 +1141,8 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
+      qubit {$\ket{q_0} = \ket\psi$} q[1];
+      qubit {$\ket{q_{\idx}} = \ket0$} q[+2];
       
       h q[1];
       cnot q[1] | q[0];
@@ -1102,7 +1156,10 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \end{codeexample}
             Note that we left out two Hadamards at the end.
             
-            Other alternatives to the declaration would be to use three different registers that can be assigned a text individually.
+            Before version 0.1.1, the recommended approach (which of course still works) to define a vector qubit register with various texts was to use case discrimination on \tex!\idx!, for example in the following manner:
+            \begin{minted}{tex}
+qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
+            \end{minted}
          \end{example}
          
          \begin{example}[test9 (two-qubit gate circuit implementation of Toffoli)]
@@ -1126,18 +1183,20 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_0}$} q0;
-      cbit {$c_1$} c1;
-      qubit {$\ket{q_2}$} q2;
+      qubit {$\ket{q_0}$} q;
+      cbit {$c_1$} c;
+      qubit {$\ket{q_2}$} q[+1];
       
-      h q0;
-      box {$U$} (q0, c1);
-      box {$S$} q2;
-      box {$U$} (c1, q2);
+      h q[0];
+      box {$U$} (q[0], c);
+      box {$S$} q[1];
+      box {$U$} (c, q[1]);
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
-            Observe that here we chose the simplest solution and used three scalar registers, as the classical one is in between the quantum ones.
+            Instead of a discontigous vector register, we could also have used three scalar registers.
+            The labels chosen for \pkg{qasm} do not fit well to the used required by this use.
+            We might also have used a three\hyp register vector and used the \gate{setwire} pseudo\hyp gate to immediately change the second register into a classical one, which would give indices matching the labels---but still, the registers would have a common name, which would make this a very unnatural approach.
          \end{example}
          
          \begin{example}[test11 (user-defined multi-qubit ops)]
@@ -1147,14 +1206,14 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
       qubit q[3];
       
       h q[0];
-      box {$U_{f(x)}$} (q[0], q[1]);
+      box {$U_{f(x)}$} (q[0, 1]);
       h q[1];
       box {$U_{f(x, y)}$} (q);
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
             Here we used the fact that a vector register can also be addressed as a whole.
-            Instead of \tex!(q)!, we could have also written, e.g., \tex!(q[0]-q[2])! or enumerated all sub\hyp registers in a comma\hyp separated list.
+            Instead of \tex!(q)!, we could have also written, e.g., \tex!(q[0]-q[2])! or \tex!(q[0-2])!, or enumerated all sub\hyp registers in a comma\hyp separated list.
          \end{example}
          
          \clearpage
@@ -1165,9 +1224,9 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
       qubit q[3];
       
       h q[0];
-      box {$U$} (q[1]-q[2]) | q[0];
+      box {$U$} (q[1-2]) | q[0];
       h q[0];
-      box {$V$} (q[0]-q[1]) | q[2];
+      box {$V$} (q[0-1]) | q[2];
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
@@ -1242,7 +1301,8 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_{\idx}} = \ifcase\idx \ket\psi \else \ket+ \fi$} q[2];
+      qubit {$\ket{q_0} = \ket\psi$} q;
+      qubit {$\ket{q_1} = \ket+$} q[+1];
       
       zz (q);
       dmeter {$H Z_\theta$} q[0];
@@ -1255,7 +1315,9 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_{\idx}} = \ket{\ifcase\idx\relax \psi \or \psi \or \phi \or 0 \fi}$} q[4];
+      qubit {$\ket{q_{\idx}} = \ket\psi$} q[2];
+      qubit {$\ket{q_2} = \ket\phi$} q[+1];
+      qubit {$\ket{q_3} = \ket0$} q[+1];
       
       zz (q[1], q[2]);
       align q;
@@ -1278,14 +1340,17 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_{\idx}} = \ket{\ifcase\idx\relax \psi \or + \or + \or \phi \fi}$} q[4];
+      qubit {$\ket{q_0} = \ket\psi$} q;
+      qubit {$\ket{q_{\idx}} = \ket+$} q[+2];
+      qubit {$\ket{q_3} = \ket\phi$} q[+1];
       
-      zz (q[0], q[1]), (q[2], q[3]);
-      zz (q[1], q[2]);
-      dmeter {$H$} q[1], q[2];
+      zz q[(0-1), (2-3)];
+      zz (q[1-2]);
+      dmeter {$H$} q[1-2];
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
+            This example shows how the multi\hyp qubit delimiter (the parenthesis) can even be used within indices.
          \end{example}
          
          \begin{example}[test18 (multiple-control bullet op)]
@@ -1294,13 +1359,15 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
    \begin{yquant}
       qubit {$\ket{q_{\idx}} = \ket{\ifcase\idx\relax \psi \or + \or + \or \phi \fi}$} q[4];
       
-      phase {} q[0] | q[1]-q[3];
-      dmeter {$H$} q[1], q[2];
+      phase {} | q;
+      dmeter {$H$} q[1, 2];
    \end{yquant}
 \end{tikzpicture}
             \end{codeexample}
-            This non\hyp standard gate is something that would have to be defined in an accompanying text; probably it is a generalization of \tex!zz!, $\symbb1 - 2 \ketbra{1\dotsm1}{1\dotsm1}$.
-            We implemented it by carrying out a phase gate (which has a mandatory \texttt{value} attribute, which we left empty) and conditioned it on the rest.
+            This non\hyp standard gate is something that would have to be defined in an accompanying text; probably it is a generalization of \gate{zz}, $\symbb1 - 2 \ketbra{1\dotsm1}{1\dotsm1}$.
+            We implemented it by carrying out a \gate{phase} gate on \emph{no} register (since \gate{phase} requires an argument, we gave an empty one)---indeed, according to the grammar, this is valid syntax with probably no other use case than this---and conditioned it on all others.
+            So in principle, we could have used an arbitrary gate, but \gate{phase} was the semantically closest (\gate{zz} does not allow for controls).
+            This time, we also used the common way to initialize a gate with various identifiers as was done before version~0.1.1, using case distinctions.
          \end{example}
       \endgroup
    
@@ -1317,7 +1384,7 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
                \begin{codeexample*}
 \begin{tikzpicture}[baseline=(current bounding box.center)]
    \begin{yquant*}
-      box {$U$} q[2] | q[1], q[0];
+      box {$U$} q[2] | q[0, 1];
    \end{yquant*}
 \end{tikzpicture}
 $=$
@@ -1392,7 +1459,7 @@ $=$
 \end{tikzpicture}
                \end{codeexample*}
                In this case, an implicit register declaration would not have worked: we would have needed to define the first part of the syndrome register \emph{before} the second part of the message register.
-               But this would then have prevented us from extending the syndrome register.
+               But this would then have mixed data with syndrome registers in the vertical ordering.
                
                This also is a first demonstration of how to access \Yquant{} objects from within \TikZ.
                We name several elements that visually form the enclosing rectangle; then, we use the \TikZ{} library \texttt{fit} to put a node around them all.
@@ -1465,7 +1532,7 @@ $=$
 \begin{tikzpicture}
    \begin{yquant*}
       cnot q[2] | q[0];
-      cnot q[0] | q[1]-q[3];
+      cnot q[0] | q[1-3];
       box {$U$} q[0] | q[2];
    \end{yquant*}
 \end{tikzpicture}
@@ -1477,7 +1544,7 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      box {$U_{\protect\the \numexpr\idx+1}$} q[0], q[2] | q[1];
+      box {$U_{\protect\the\numexpr\idx+1}$} q[0, 2] | q[1];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -1505,20 +1572,20 @@ $=$
                \end{example}
                
                \begin{example}
-                  \begin{codeexample*}
+                  \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
       {
          \yquantset{every multi label/.append style={decorate=false, draw=none}}
-         init {$\ket{0^k}$} (a[0],a[1]);
+         init {$\ket{0^k}$} (a[-1]);
       }
-      init {$\ket\psi$} (b[0],b[1]);
+      init {$\ket\psi$} (b[-1]);
       qubit {\ifcase\idx\relax$A$\or$B$\fi} c[2];
       [every multi label/.append style={decorate=false, draw=none, every node/.append style={shift={(-.3, 0)}}}]
       init {$\ket\psi$} (c);
    \end{yquant*}
 \end{tikzpicture}
-                  \end{codeexample*}
+                  \end{codeexample}
                   Here, three different styles for the initialization of multi\hyp qubit labels are used.
                   The second one (using a curly brace) corresponds to the default.
                   It is overwritten for the first qubit, and to make this modification local, this is done in a group.
@@ -1526,13 +1593,14 @@ $=$
                   This is achieved by some trickery: the individual labels are given as initialization labels on the register; the global label is given as an \tex!init! multi\hyp qubit gate.
                \end{example}
                
+         \clearpage
          \subsubsection{V. More Complicated Circuits: Multiple Qubit gates and Beyond}
             \paragraph{A. Multiple qubit gates}\leavevmode
                \begin{example}
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      box {$U^\dagger$} (a[0]-a[2]);
+      box {$U^\dagger$} (a[-2]);
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -1564,9 +1632,9 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      box {$\symcal F$} (a[0]-a[1]);
+      box {$\symcal F$} (a[-1]);
       [name=g]
-      box {$\symcal G$} a[0], a[2];
+      box {$\symcal G$} a[0, 2];
       \draw (g-0) -- (g-1);
    \end{yquant*}
 \end{tikzpicture}
@@ -1622,7 +1690,7 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      dmeter {Bell} (a[0]-a[1]);
+      dmeter {Bell} (a[0, 1]);
       discard a;
    \end{yquant*}
 \end{tikzpicture}
@@ -1633,7 +1701,7 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      measure {$\ket{\xi_\mp}$} (a[0]-a[1],a[3]);
+      measure {$\ket{\xi_\mp}$} (a[-1, 3]);
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -1648,7 +1716,7 @@ $=$
 \begin{tikzpicture}
    \begin{yquant*}
       [name=sw]
-      swap (a[0]-a[1]);
+      swap (a[0-1]);
       [draw=none]
       box {$X$} a[1];
       slash b;
@@ -1689,7 +1757,7 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      x a[0], a[1];
+      x a[0, 1];
       barrier (a);
    \end{yquant*}
 \end{tikzpicture}
@@ -1704,13 +1772,13 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      zz (a[0], a[2]);
+      zz (a[0, 2]);
       cnot a[1] ~ a[0];
-      zz (a[2], a[3]);
+      zz (a[2, 3]);
       h a[3] | a[0] ~ a[1];
-      measure a[2], a[3];
-      box {$U$} (a[0], a[1]) | a[3] ~ a[2];
-      discard a[2], a[3];
+      measure a[2, 3];
+      box {$U$} (a[0, 1]) | a[3] ~ a[2];
+      discard a[2, 3];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -1728,9 +1796,9 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      swap (a[0], a[1]);
+      swap (a[0, 1]);
       box {$T^\dagger$} a[2] | a[1];
-      swap (a[0], a[1]);
+      swap (a[0, 1]);
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -1767,7 +1835,7 @@ $=$
       cnot a[2] | a[0];
       cnot a[2] | a[1];
       [name=left]
-      h a[0], a[1];
+      h a[0, 1];
       z a[2];
       cnot a[1] | a[0];
       [name=righttop]
@@ -1921,7 +1989,7 @@ $=$
 \begin{tikzpicture}
    \begin{yquant*}
       [name=c]
-      cnot a[0], a[2] | a[1];
+      cnot a[0, 2] | a[1];
       [name=m]
       measure a[1];
       discard a[2];
@@ -1941,7 +2009,7 @@ $=$
                \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      cnot a[1], a[2] | a[0];
+      cnot a[1, 2] | a[0];
       measure a[1], a[2];
       box {$U$} a[0] | a[1];
       box {$V$} a[0] | a[2];
@@ -1957,12 +2025,12 @@ $=$
                \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      init {$\ket0^{\otimes3}$} (a[0]-a[2]);
+      init {$\ket0^{\otimes3}$} (a[-2]);
       
-      box {$U$} (a[1]-a[2]) | a[0];
+      box {$U$} (a[1-2]) | a[0];
       measure a[0];
       discard a[0];
-      output {$\ket{11}$} (a[1]-a[2]);
+      output {$\ket{11}$} (a[1-2]);
    \end{yquant*}
 \end{tikzpicture}
                \end{codeexample}
@@ -1997,7 +2065,7 @@ $=$
       [name=a]
       qubit {} a[4];
       [x radius=1cm, name=u]
-      box {$U$} (a[1]-a[3]) | a[0];
+      box {$U$} (a[1-3]) | a[0];
    \end{yquant}
    \draw[braced]
       ([xshift=2pt] a-1 -| u.west) -- ([xshift=2pt] a-2 -| u.west)
@@ -2036,8 +2104,8 @@ $=$
 \begin{tikzpicture}
    \begin{yquant}
       qubit {$c_{\idx}$} c[4];
-      box {M\\A\\J} (c[0]-c[2]);
-      box {M\\A\\J} (c[1]-c[3]);
+      box {M\\A\\J} (c[-2]);
+      box {M\\A\\J} (c[1-]);
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample}
@@ -2216,8 +2284,8 @@ $=$
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}[register/minimum height=0pt]
-      x a[0], a[2];
-      zz (a[0], a[1]);
+      x a[0, 2];
+      zz (a[0, 1]);
       x a[0];
       h b;
    \end{yquant*}
@@ -2363,10 +2431,10 @@ $=$
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample*}
-                  Since the ``thin'' style is the default, we here present the opposite.
-                  Also note that by default, all operators are transparent, here we changed this by giving all of them a white background color (but as a style \emph{prefix}, so that, e.g., black fillings overwrite this).
+                  As the ``thin'' style is the default, we present the opposite.
+                  By default, all operators are transparent; we changed this by giving all of them a white background color (but as a style \emph{prefix}, so that, e.g., black fillings overwrite this).
                   Contrary to \pkg{quantikz}, this also fills the \gate{cnot}s.
-                  If you only want to fill certain operators, you have to selectively target them using their appropriate styles.
+                  If you only want to fill certain operators, you have to selectively target them using their styles.
                \end{example}
                
                \begin{example}
@@ -2375,7 +2443,7 @@ $=$
    \begin{yquant}[operators/every box/.append style={fill=white}]
       qubit {} j[3];
       box {$J_{12}$} (-j[1]);
-      box {$J_{13}$} (j[0], j[2]);
+      box {$J_{13}$} (j[0, 2]);
       box {$J_{23}$} (j[1]-);
    \end{yquant}
 \end{tikzpicture}
@@ -2550,11 +2618,6 @@ $=$
          \item Better handling of non\hyp adjacent wires. \\
             While this would be a nice feature, an implementation would hard: How should the individual shapes behave for non\hyp adjacent wires?
             Two boxes, connected by a wire, as used in one \pkg{qcircuit} example, is a simplistic design that quickly fails for more complicated or larger shapes.
-         \item Subranges. \\
-            It would be nice to also have support for ranges within vector registers, such as \yquant!a[1-3]! or \yquant!a[-5]!.
-         \item Whitespaces in ranges. \\
-            At the moment, whitespace handling in range specifiers is somewhat restricted.
-            Better not to use whitespaces.
          \item Styling the wires. \\
             It is currently relatively hard to selectively style wires.
             While individual wire segments can be targeted by changing the appropriate wire styles before the operation that would draw the ingoing wire, it must then be reset and it is cumbersome to do this for all wire segments of a register.
@@ -2575,5 +2638,14 @@ $=$
             In principle, \Yquant's approach could allow for a simple key switch that changes horizontal to vertical.
             Currently, this is largely unsupported by all quantum circuit packages except for \pkg{qpic}.
       \end{itemize}
+   
+   \section{Changelog}
+      \subsection{2020-03-15: Version 0.1}
+         Initial release
+      
+      \subsection{2020-03-22: Version 0.1.1}
+         Complete rewrite of the register name parser.
+         \Yquant{} now understands comma\hyp separated lists and ranges in indices, and also is far more tolerant with respect to whitespaces. \\
+         \Yquant{} now also supports non\hyp contiguous vector registers and allows to add new registers into an already existing vector that is not the last register, and also in the unstarred mode.
 %END_FOLD
 \end{document}

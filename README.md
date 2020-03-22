@@ -8,7 +8,7 @@ It builds on and interacts with TiKZ, which brings an enourmous flexibility for 
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
 ## Examples
-Much more examples and explanations can be found in the PDF version of this Readme.
+Many more examples and explanations can be found in the [PDF version](doc/latex/yquant/yquant-doc.pdf) of this Readme.
 
 ### Simple teleportation circuit
 ![ex-01.png](markdown/ex-01.png)
@@ -21,7 +21,7 @@ Much more examples and explanations can be found in the PDF version of this Read
     cnot q[2] | q[1];
     cnot q[1] | q[0];
     h q[0];
-    measure q[0], q[1];
+    measure q[0-1];
 
     z q[2] | q[1];
     x q[2] | q[0];
@@ -119,13 +119,13 @@ Much more examples and explanations can be found in the PDF version of this Read
 ```LaTeX
 \begin{tikzpicture}
    \begin{yquant*}
-      zz (a[0], a[2]);
+      zz (a[0, 2]);
       cnot a[1] ~ a[0];
-      zz (a[2], a[3]);
+      zz (a[2, 3]);
       h a[3] | a[0] ~ a[1];
-      measure a[2], a[3];
-      box {$U$} (a[0], a[1]) | a[3] ~ a[2];
-      discard a[2], a[3];
+      measure a[2, 3];
+      box {$U$} (a[0, 1]) | a[3] ~ a[2];
+      discard a[2, 3];
    \end{yquant*}
 \end{tikzpicture}
 ```
