@@ -79,19 +79,26 @@
    % parse length
    \if\relax\detokenize{#3}\relax%
       \yquant@langhelper@validate\len\count{#2}%
+      \ifnum\len<1 %
+         \PackageError{yquant.sty}{Invalid register length}%
+                      {Valid register lengths are integers greater or equal to one.}%
+      \fi
    \else%
       \PackageError{yquant.sty}{Invalid register name}%
          {Register names must not contain `[' apart from register length indication.}%
    \fi%
    \edef\reg{\trim@spaces{#1}}%
-   \ifcsname\yquant@prefix registername@\reg\endcsname%
-      \PackageError{yquant.sty}{Duplicate registers}%
-         {Register `\reg' was already defined.}%
-   \else%
-      \ifcsname\yquant@prefix registerlast@\reg\endcsname%
+   % we allow for scattering, so check whether the register already exists
+   \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
+      \ifyquant@firsttoken+{#2}{%
+         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1}%
+         \numdef\len{\len+\idx}%
+      }{%
          \PackageError{yquant.sty}{Duplicate registers}%
-            {Register `\reg' was already defined.}%
-      \fi%
+            {Register `\reg' was already defined. Use `\reg[+#2]' with explicit plus symbol to indicate that you want to enlarge the register on purpose.}%
+      }%
+   \else%
+      \def\idx{0}%
    \fi%
    % define text macros
    \ifnum\len=1 %
@@ -112,10 +119,11 @@
          \def\yquant@lang@create@name{\yquant@lang@attr@name-\idx}%
       \fi%
       % pre-set y position
-      \yquant@for \idx := 0 to \numexpr \len -1\relax {%
+      \yquant@for \idx := \idx to \numexpr \len -1\relax {%
          \yquant@register@define%
             \yquant@lang@create@type%
             \yquant@lang@create@x%
+            \reg\idx%
          % First determine the actual height by a virtual draw command
          \pgfinterruptboundingbox%
             \yquant@env@virtualize@path%
@@ -136,9 +144,6 @@
                                     {\yquant@lang@attr@value}%
                                     {\yquant@lang@create@name}%
          }%
-         \global\csletcs{\yquant@prefix registername@\reg[\idx]}%
-                        {\yquant@prefix registers}%
-         \yquant@cleanup@csadd{\yquant@prefix registername@\reg[\idx]}%
       }%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
@@ -147,8 +152,6 @@
          \fi%
       \fi%
    \endgroup%
-   \global\csletcs{\yquant@prefix registerlast@\reg}{\yquant@prefix registers}%
-   \yquant@cleanup@csadd{\yquant@prefix registerlast@\reg}%
 }
 
 \protected\def\yquant@lang@create@draw#1#2#3#4#5{%
