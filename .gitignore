@@ -271,3 +271,6 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+# Minted cache directory
+_minted-*
