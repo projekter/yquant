@@ -4,12 +4,19 @@
    \begingroup%
       \edef\wiretype{\yquant@register@get@type{#1}}%
       \dimdef\wireypos{\yquant@register@get@y{#1}}%
-      \tikzset{/yquant/every wire}%
+      \edef\wirestyle{\noexpand\tikzset{%
+         /yquant/this wire/.style={%
+            /yquant/every wire,%
+            /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
+            \yquant@register@get@style{#1}%
+         }%
+      }}%
+      \wirestyle%
       \unless\ifnum\wiretype=\yquant@register@type@none{%
          \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
       }\fi%
       % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires
-      \tikzset{/yquant/every wire}%
+      \tikzset{/yquant/this wire}%
       \pgfpointanchor{yquantbox}{east}%
       \@tempdima=\pgf@x%
       \pgfpointshapexproj{yquantbox}%
@@ -34,7 +41,14 @@
          % we don't have a yquantbox node but still want to extend the line; so just install a dummy projection
          \let\pgfpointshapexproj=\yquant@circuit@endwire@xproj%
          \dimdef\wireypos{\yquant@register@get@y{#1}}%
-         \tikzset{/yquant/every wire}%
+         \edef\wirestyle{\noexpand\tikzset{%
+            /yquant/this wire/.style={%
+               /yquant/every wire,%
+               /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
+               \yquant@register@get@style{#1}%
+            }%
+         }}%
+         \wirestyle%
          \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
       \fi%
    \endgroup%
@@ -64,7 +78,7 @@
    \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastx}{\wireypos}}%
    \ifdim\lastx<\pgf@x%
       \edef\cmd{%
-         \noexpand\path [/yquant/every wire, /yquant/every qubit wire]
+         \noexpand\path [/yquant/this wire]
             \tmp -- (\the\pgf@x,\the\pgf@y);%
       }%
       \cmd%
@@ -94,7 +108,7 @@
       }%
    \fi%
    \unless\ifx\cmd\empty%
-      \edef\cmd{\noexpand\path [/yquant/every wire, /yquant/every cbit wire] \cmd;}%
+      \edef\cmd{\noexpand\path [/yquant/this wire] \cmd;}%
       \cmd%
    \fi%
 }
@@ -130,7 +144,7 @@
       }%
    \fi%
    \unless\ifx\cmd\empty%
-      \edef\cmd{\noexpand\path [/yquant/every wire, /yquant/every qubits wire] \cmd;}%
+      \edef\cmd{\noexpand\path [/yquant/this wire] \cmd;}%
       \cmd%
    \fi%
 }
@@ -367,6 +381,10 @@
    \yquant@register@set@type{#1}\yquant@circuit@settype@to%
 }
 
+\protected\def\yquant@circuit@addstyle#1#2{%
+   \yquant@register@set@style{#1}{\yquant@register@get@style{#1},#2}%
+}
+
 % performs an alignment of all registers specified in the argument; that is, the next operation on any of the listed registers will be after the maximum position of all of them
 % #1: arbitrary register list
 \protected\def\yquant@circuit@align#1{%
@@ -393,19 +411,20 @@
    \endgroup%
 }
 
-% sets the type of a list of registers
-% #1: arbitrary register list
-% #2: new type
-\protected\def\yquant@circuit@settypes#1#2{%
+% applies an action to a list of registers
+% #1: action
+% #2: arbitrary register list
+% #3: parameter(s)
+\protected\def\yquant@circuit@actonwires#1#2#3{%
    \begingroup%
       \let\tmp=\empty%
       \def\do##1{%
          % We do not extend the wire: a register that is discarded somewhere does not make
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
-         \appto\tmp{\yquant@register@set@type{##1}#2}%
+         \appto\tmp{#1{##1}#3}%
       }%
-      \dolistloop{#1}%
+      \dolistloop{#2}%
       \csxappto{\yquant@prefix draw}{\tmp}%
    \endgroup%
 }

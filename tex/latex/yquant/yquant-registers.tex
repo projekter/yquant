@@ -18,6 +18,7 @@
       {#2}% x pos
       {\yquant@config@register@minimum@height}% height; at the end, the y position
       {}% wire start positions
+      {}% wire style
    }%
    \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@\reg}{#4}%
@@ -392,21 +393,21 @@
    \yquant@register@get@type@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@type@aux#1#2#3#4{#1}
+\def\yquant@register@get@type@aux#1#2#3#4#5{#1}
 
 \def\yquant@register@get@x#1{%
    \expandafter\expandafter\expandafter%
    \yquant@register@get@x@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@x@aux#1#2#3#4{#2}
+\def\yquant@register@get@x@aux#1#2#3#4#5{#2}
 
 \def\yquant@register@get@height#1{%
    \expandafter\expandafter\expandafter%
    \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@height@aux#1#2#3#4{#3}
+\def\yquant@register@get@height@aux#1#2#3#4#5{#3}
 
 % The y parameter get macros exist in two forms: The protected one is used during the storage to the draw macro; it should never be executed. The env environment then maps them to their proper expandable forms.
 \protected\def\yquant@register@get@@protected{%
@@ -443,7 +444,14 @@
    \yquant@register@get@lastwire@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@lastwire@aux#1#2#3#4{#4}
+\def\yquant@register@get@lastwire@aux#1#2#3#4#5{#4}
+
+\def\yquant@register@get@style#1{%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@style@aux\csname\yquant@prefix register@#1\endcsname%
+}
+
+\def\yquant@register@get@style@aux#1#2#3#4#5{#5}
 
 % Set #1 to the maximum x value found between #2 and #3
 \protected\def\yquant@register@get@maxxrange#1#2#3{%
@@ -487,8 +495,8 @@
    \csname\yquant@prefix register@#1\endcsname\yquant@register@set@type@aux%
 }
 
-\long\def\yquant@register@set@type@aux#1#2#3#4#5{%
-   {#5}{#2}{#3}{#4}%
+\long\def\yquant@register@set@type@aux#1#2#3#4#5#6{%
+   {#6}{#2}{#3}{#4}{#5}%
 }
 
 \protected\def\yquant@register@set@x#1{%
@@ -496,8 +504,8 @@
    \csname\yquant@prefix register@#1\endcsname\yquant@register@set@x@aux%
 }
 
-\long\def\yquant@register@set@x@aux#1#2#3#4#5{%
-   {#1}{#5}{#3}{#4}%
+\long\def\yquant@register@set@x@aux#1#2#3#4#5#6{%
+   {#1}{#6}{#3}{#4}{#5}%
 }
 
 \protected\def\yquant@register@update@height#1#2{%
@@ -517,8 +525,8 @@
    \edef\yquant@register@y{\yquant@register@get@y{#1}}%
 }
 
-\long\def\yquant@register@set@height@aux#1#2#3#4#5{%
-   {#1}{#2}{#5}{#4}%
+\long\def\yquant@register@set@height@aux#1#2#3#4#5#6{%
+   {#1}{#2}{#6}{#4}{#5}%
 }
 
 \protected\def\yquant@register@set@lastwire#1{%
@@ -526,7 +534,16 @@
    \csname\yquant@prefix register@#1\endcsname\yquant@register@set@lastwire@aux%
 }
 
-\long\def\yquant@register@set@lastwire@aux#1#2#3#4#5{%
-   {#1}{#2}{#3}{#5}%
+\long\def\yquant@register@set@lastwire@aux#1#2#3#4#5#6{%
+   {#1}{#2}{#3}{#6}{#5}%
+}
+
+\protected\def\yquant@register@set@style#1{%
+   \expandafter\yquant@register@set@@aux%
+   \csname\yquant@prefix register@#1\endcsname\yquant@register@set@style@aux%
+}
+
+\long\def\yquant@register@set@style@aux#1#2#3#4#5#6{%
+   {#1}{#2}{#3}{#4}{#6}%
 }
 % END_FOLD

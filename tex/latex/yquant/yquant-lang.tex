@@ -452,7 +452,10 @@
 \yquant@langhelper@setup@attrs{discard}{}{}
 \def\yquant@lang@@discard#1{%
    \yquant@register@get@ids{#1}%
-   \yquant@circuit@settypes\yquant@register@get@ids@list\yquant@register@type@none%
+   \yquant@circuit@actonwires%
+      \yquant@register@set@type%
+      \yquant@register@get@ids@list%
+      \yquant@register@type@none%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{init}\yquant@lang@@init
@@ -536,9 +539,9 @@
    \expandafter\yquant@circuit@output\expandafter{\yquant@register@get@ids@list}%
 }
 
-\yquant@langhelper@declare@command@uncontrolled{setwire}\yquant@lang@@setwire
-\yquant@langhelper@setup@attrs{setwire}{value}{}
-\protected\def\yquant@lang@@setwire#1{%
+\yquant@langhelper@declare@command@uncontrolled{settype}\yquant@lang@@settype
+\yquant@langhelper@setup@attrs{settype}{value}{}
+\protected\def\yquant@lang@@settype#1{%
    \yquant@register@get@ids{#1}%
    \expandafter\ifstrequal\expandafter{\yquant@lang@attr@value}{qubit}%
       {\let\yquant@circuit@settype@to=\yquant@register@type@q}%
@@ -554,6 +557,35 @@
             }%
          }%
       }%
-   \yquant@circuit@settypes\yquant@register@get@ids@list\yquant@circuit@settype@to%
+   \yquant@circuit@actonwires%
+      \yquant@register@set@type%
+      \yquant@register@get@ids@list%
+      \yquant@circuit@settype@to%
+}
+
+\def\yquant@lang@setwire{%
+   \PackageWarning{yquant.sty}{`setwire' gate is deprecated as of yquant 0.1.2. Use `settype' instead.}%
+   \yquant@lang@settype%
+}
+\yquant@langhelper@setup@attrs{setwire}{value}{}
+
+\yquant@langhelper@declare@command@uncontrolled{setstyle}\yquant@lang@@setstyle
+\yquant@langhelper@setup@attrs{setstyle}{value}{}
+\protected\def\yquant@lang@@setstyle#1{%
+   \yquant@register@get@ids{#1}%
+   \yquant@circuit@actonwires%
+      \yquant@register@set@style%
+      \yquant@register@get@ids@list%
+      {{\yquant@lang@attr@value}}%
+}
+
+\yquant@langhelper@declare@command@uncontrolled{addstyle}\yquant@lang@@addstyle
+\yquant@langhelper@setup@attrs{addstyle}{value}{}
+\protected\def\yquant@lang@@addstyle#1{%
+   \yquant@register@get@ids{#1}%
+   \yquant@circuit@actonwires%
+      \yquant@circuit@addstyle%
+      \yquant@register@get@ids@list%
+      {{\yquant@lang@attr@value}}%
 }
 % END_FOLD
