@@ -144,6 +144,14 @@
    \expandafter\yquant@sort@aux\expandafter0\expandafter{\the\numexpr\yquant@sort@count-1\relax}%
 }
 
+\def\yquant@sort@ascending#1#2{%
+   \ifnum#2>#1 %
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+}
+
 \protected\def\yquant@sort@aux#1#2{%
    \ifnum#1<#2\relax%
       \yquant@sort@divide{#1}{#2}%
@@ -155,6 +163,8 @@
    \fi%
 }
 
+\def\iftrue@hidden{\iftrue}%
+\def\iffalse@hidden{\iffalse}%
 \protected\def\yquant@sort@divide#1#2{%
    \count0=#1\relax% i
    \count2=#2\relax% j
@@ -163,7 +173,6 @@
    \loop%
       % search an item from the left that is larger or equal to the pivot
       {% protect the outer loop from finding \repeat
-         \csletcs{next}{iftrue}%
          \loop%
             \ifnum\count0<#2\relax%
                \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
@@ -173,21 +182,20 @@
                   \expandafter\expandafter\expandafter{%
                      \csname yquant@sort@item\the\count0\endcsname%
                   }{%
-                     \csletcs{next}{iffalse}%
+                     \expandafter\iffalse@hidden%
                   }{%
                      \advance\count0 by 1 %
+                     \expandafter\iftrue@hidden%
                   }%
             \else%
-               \csletcs{next}{iffalse}%
+               \expandafter\iffalse@hidden%
             \fi%
-            \next%
          \repeat%
          \expandafter%
       }%
       \expandafter\count\expandafter0\expandafter=\the\count0\relax%
       % search an item from the right that is small than the pivot
       {% protect the outer loop from finding \repeat
-         \csletcs{next}{iftrue}%
          \loop%
             \ifnum\count2>#1\relax%
                \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
@@ -198,13 +206,13 @@
                      \csname yquant@sort@item\the\count2\endcsname%
                   }{%
                      \advance\count2 by -1 %
+                     \expandafter\iftrue@hidden%
                   }{%
-                     \csletcs{next}{iffalse}%
+                     \expandafter\iffalse@hidden%
                   }%
             \else%
-               \csletcs{next}{iffalse}%
+               \expandafter\iffalse@hidden%
             \fi%
-            \next%
          \repeat%
          \expandafter
       }%
