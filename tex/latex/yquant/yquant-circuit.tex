@@ -1,50 +1,37 @@
 % BEGIN_FOLD Drawing wires
+% a bit faster than nested \@firstoftwo/\@secondoftwo
+% note \@thirdofthree is defined in the latex kernel already.
+\long\def\@firstofthree#1#2#3{#1}%
+\long\def\@secondofthree#1#2#3{#2}%
+\long\def\@firstoffour#1#2#3#4{#1}%
+\long\def\@secondoffour#1#2#3#4{#2}%
+\long\def\@thirdoffour#1#2#3#4{#3}%
+\long\def\@fourthoffour#1#2#3#4{#4}%
+\long\def\@thirdandfourthoffour#1#2#3#4{#3#4}%
+
 % extends the wire of register #1. Assumes a node called yquantbox is set up, and the \pgfshapeclippathhorzresult was set up appropriately for this node.
 \protected\def\yquant@circuit@extendwire#1{%
    \begingroup%
-      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
       \pgfpointanchor{yquantbox}{center}%
       \edef\wirexpos{\the\pgf@x}%
+      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
+      \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
       \ifnum\wiretype=\yquant@register@type@none%
-         \yquant@register@set@lastwire{#1}{{\wirexpos}{\relax}}%
-      \else%
-         \edef\wirestyle{\noexpand\tikzset{%
-            /yquant/this wire/.style={%
-               /yquant/every wire,%
-               /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
-               \yquant@register@get@style{#1}%
-            }%
-         }}%
-         \wirestyle%
-         \edef\wirexprevpos{\expandafter\@firstoftwo\wirelast}%
-         % load the clipping of the previous operator and add the one for the current
-         \edef\wireclipping{%
-            \unexpanded\expandafter\expandafter\expandafter{%
-               \expandafter\@secondoftwo\wirelast%
-            }%
-            \unexpanded\expandafter{\pgfshapeclippathhorzresult}%
-         }%
-         % store the clipping of the current operator and update the position
+         % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
          \yquant@register@set@lastwire{#1}{%
-            {\wirexpos}{\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+            {\wirexprevpos}{\wirexpos}{}%
+            {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
          }%
-         \pgfscope%
-            % install the clipping
-            \pgfsyssoftpath@setcurrentpath\wireclipping%
-            % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
-            \ifyquantdebug%
-               \pgfsetfillcolor{orange}%
-               \pgfsetfillopacity{.3}%
-               \pgfusepathqfill%
-            \else%
-               \pgfpathrectanglecorners%
-                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-               \pgfseteorule% even-odd to properly invert the clipping
-               \pgfusepathqclip%
-            \fi%
-            \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
-         \endpgfscope%
+      \else%
+         % append the previous `last' clipping to the old list and insert the new one
+         \yquant@register@set@lastwire{#1}{%
+            {\wirexprevpos}{\wirexpos}%
+            {\unexpanded\expandafter\expandafter\expandafter{%
+                \expandafter\@thirdandfourthoffour\wirelast%
+             }%
+            }
+            {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+         }%
       \fi%
    \endgroup%
 }
@@ -52,88 +39,22 @@
 % finishes the wire of registers 1 to #1 until x position \yquant@env@end@xpos
 \protected\def\yquant@circuit@endwires#1{%
    \yquant@for \yquant@circuit@endwires@i := 1 to #1 {
-      \begingroup%
-         \yquant@register@get@typeywire\yquant@circuit@endwires@i\wiretype\wireypos\wirelast%
-         \unless\ifnum\wiretype=\yquant@register@type@none%
-            \let\wirexpos=\yquant@env@end@xpos%
-            \edef\wirestyle{\noexpand\tikzset{%
-               /yquant/this wire/.style={%
-                  /yquant/every wire,%
-                  /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
-                     \yquant@register@get@style\yquant@circuit@endwires@i%
-               }%
-            }}%
-            \wirestyle%
-            \edef\wirexprevpos{\expandafter\@firstoftwo\wirelast}%
-            \edef\wireclipping{%
-               \unexpanded\expandafter\expandafter\expandafter{%
-                  \expandafter\@secondoftwo\wirelast%
-               }%
-            }%
-            \pgfscope%
-               % install the clipping
-               \pgfsyssoftpath@setcurrentpath\wireclipping%
-               % and invert it. Take care to make the bounding box large enough, if it is not already.
-               \ifdim\pgf@picmaxx<\wirexpos%
-                  \global\pgf@picmaxx=\wirexpos %
-               \fi%
-               \ifyquantdebug%
-                  \pgfsetfillcolor{orange}%
-                  \pgfsetfillopacity{.3}%
-                  \pgfusepathqfill%
-               \else%
-                  \pgfpathrectanglecorners%
-                     {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                     {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-                  \pgfseteorule% even-odd to properly invert the clipping
-                  \pgfusepathqclip%
-               \fi%
-               \csname yquant@circuit@extendwire@\wiretype\endcsname\yquant@circuit@endwires@i%
-            \endpgfscope%
-         \fi%
-      \endgroup%
+      \yquant@draw@wire\yquant@circuit@endwires@i\yquant@env@end@xpos%
    }%
 }
 
-% a bit faster than nested \@firstoftwo/\@secondoftwo
-% note \@thirdofthree is defined in the latex kernel already.
-\long\def\@firstofthree#1#2#3{#1}%
-\long\def\@secondofthree#1#2#3{#2}%
-
-% quantum wire
-\protected\csdef{yquant@circuit@extendwire@1}#1{%
-   \ifdim\wirexprevpos<\wirexpos%
-      \edef\cmd{%
-         \noexpand\path [/yquant/this wire]
-            (\wirexprevpos,\wireypos) -- (\wirexpos,\wireypos);%
+% outputs the wire according to its previous instructions and prepares for a change in the wire style
+\protected\def\yquant@circuit@flushwire#1{%
+   \yquant@draw@wire{#1}{}%
+   \begingroup%
+      \yquant@register@get@lastwire{#1}\wirelast%
+      \yquant@register@set@lastwire{#1}{%
+         {\expandafter\@secondoffour\wirelast}{}%
+         {\unexpanded\expandafter\expandafter\expandafter{%
+             \expandafter\@fourthoffour\wirelast%
+          }}{}%
       }%
-      \cmd%
-   \fi%
-}
-
-% classical wire
-\protected\csdef{yquant@circuit@extendwire@2}#1{%
-   \ifdim\wirexprevpos<\wirexpos%
-      \edef\cmd{%
-         \noexpand\path [/yquant/this wire]
-            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
-            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
-      }%
-      \cmd%
-   \fi%
-}
-
-% quantum-bundle
-\protected\csdef{yquant@circuit@extendwire@3}#1{%
-   \ifdim\wirexprevpos<\wirexpos%
-      \edef\cmd{%
-         \noexpand\path [/yquant/this wire]
-            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
-            (\wirexprevpos,\wireypos)--(\wirexpos,\wireypos)%
-            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
-      }%
-      \cmd%
-   \fi%
+   \endgroup%
 }
 % END_FOLD
 
@@ -346,10 +267,17 @@
 % BEGIN_FOLD Helpers for operator callbacks
 % turn a wire into a different type
 \def\yquant@circuit@settype#1{%
+   \yquant@circuit@flushwire{#1}%
    \yquant@register@set@type{#1}\yquant@circuit@settype@to%
 }
 
-\protected\def\yquant@circuit@addstyle#1#2{%
+\protected\long\def\yquant@circuit@setstyle#1#2{%
+   \yquant@circuit@flushwire{#1}%
+   \yquant@register@set@style{#1}{#2}%
+}
+
+\protected\long\def\yquant@circuit@addstyle#1#2{%
+   \yquant@circuit@flushwire{#1}%
    \yquant@register@set@style{#1}{\yquant@register@get@style{#1},#2}%
 }
 
@@ -379,7 +307,7 @@
    \endgroup%
 }
 
-% applies an action to a list of registers
+% applies an action to wires a list of registers and causes them to be redrawn
 % #1: action
 % #2: arbitrary register list
 % #3: parameter(s)

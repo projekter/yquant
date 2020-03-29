@@ -172,7 +172,7 @@
       % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
       \tikzset{/yquant/every wire}%
       \pgfpointanchor{yquantbox}{east}%
-      \yquant@register@set@lastwire{#1}{{\the\pgf@x}{\relax}}%
+      \yquant@register@set@lastwire{#1}{{\the\pgf@x}{\the\pgf@x}{}{}}%
       \if\relax\detokenize{#5}\relax%
       \else%
          \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
@@ -531,9 +531,9 @@
          }%
       }%
    \yquant@circuit@actonwires%
-      \yquant@register@set@type%
+      \yquant@circuit@settype%
       \yquant@register@get@ids@list%
-      \yquant@circuit@settype@to%
+      {}%
 }
 
 \def\yquant@lang@setwire{%
@@ -547,7 +547,7 @@
 \protected\def\yquant@lang@@setstyle#1{%
    \yquant@register@get@ids{#1}%
    \yquant@circuit@actonwires%
-      \yquant@register@set@style%
+      \yquant@circuit@setstyle%
       \yquant@register@get@ids@list%
       {{\yquant@lang@attr@value}}%
 }

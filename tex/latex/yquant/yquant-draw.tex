@@ -186,6 +186,89 @@
 \protected\def\yquant@draw@alias@ctrl#1#2{%
    \pgfnodealias{\tikz@pp@name{#1-#2}}{\tikz@pp@name{#1-#20}}%
 }
+
+\protected\def\yquant@draw@wire#1#2{%
+   \begingroup%
+      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
+      \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
+      \ifx\yquant@env@end@xpos#2\relax%
+         \let\wirexpos=\yquant@env@end@xpos%
+      \else%
+         \edef\wirexpos{\expandafter\@secondoffour\wirelast}%
+      \fi%
+      \unless\ifnum\wiretype=\yquant@register@type@none%
+         \unless\ifdim\wirexpos=\wirexprevpos %
+            \edef\wirestyle{\noexpand\tikzset{%
+               /yquant/this wire/.style={%
+                  /yquant/every wire,%
+                  /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
+                     \yquant@register@get@style{#1}%
+               }%
+            }}%
+            \wirestyle%
+            % load all clippings
+            \edef\wireclipping{%
+               \unexpanded\expandafter\expandafter\expandafter{%
+                  \expandafter\@thirdandfourthoffour\wirelast%
+               }%
+            }%
+            \pgfscope%
+               % install the clipping
+               \pgfsyssoftpath@setcurrentpath\wireclipping%
+               % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
+               \ifyquantdebug%
+                  \pgfsetfillcolor{orange}%
+                  \pgfsetfillopacity{.3}%
+                  \pgfusepathqfill%
+               \else%
+                  \pgfpathrectanglecorners%
+                     {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                     {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+                  \pgfseteorule% even-odd to properly invert the clipping
+                  \pgfusepathqclip%
+               \fi%
+               \csname yquant@draw@wire@\wiretype\endcsname{#1}%
+            \endpgfscope%
+         \fi%
+      \fi%
+   \endgroup%
+}
+
+% quantum wire
+\protected\csdef{yquant@draw@wire@\yquant@register@type@q}#1{%
+   \ifdim\wirexprevpos<\wirexpos%
+      \edef\cmd{%
+         \noexpand\path [/yquant/this wire]
+            (\wirexprevpos,\wireypos) -- (\wirexpos,\wireypos);%
+      }%
+      \cmd%
+   \fi%
+}
+
+% classical wire
+\protected\csdef{yquant@draw@wire@\yquant@register@type@c}#1{%
+   \ifdim\wirexprevpos<\wirexpos%
+      \edef\cmd{%
+         \noexpand\path [/yquant/this wire]
+            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
+            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
+      }%
+      \cmd%
+   \fi%
+}
+
+% quantum-bundle
+\protected\csdef{yquant@draw@wire@\yquant@register@type@qs}#1{%
+   \ifdim\wirexprevpos<\wirexpos%
+      \edef\cmd{%
+         \noexpand\path [/yquant/this wire]
+            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
+            (\wirexprevpos,\wireypos)--(\wirexpos,\wireypos)%
+            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
+      }%
+      \cmd%
+   \fi%
+}
 % END_FOLD
 
 % BEGIN_FOLD Preparation of drawing a generic shape
