@@ -1,46 +1,13 @@
 % BEGIN_FOLD Drawing wires
-% extends the wire of register #1. Assumes a node called yquantbox is set up, and it is a node with appropriate projections.
+% extends the wire of register #1. Assumes a node called yquantbox is set up, and the \pgfshapeclippathhorzresult was set up appropriately for this node.
 \protected\def\yquant@circuit@extendwire#1{%
    \begingroup%
-      \edef\wiretype{\yquant@register@get@type{#1}}%
-      \dimdef\wireypos{\yquant@register@get@y{#1}}%
-      \edef\wirestyle{\noexpand\tikzset{%
-         /yquant/this wire/.style={%
-            /yquant/every wire,%
-            /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
-            \yquant@register@get@style{#1}%
-         }%
-      }}%
-      \wirestyle%
-      \unless\ifnum\wiretype=\yquant@register@type@none{%
-         \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
-      }\fi%
-      % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires
-      \tikzset{/yquant/this wire}%
-      \pgfpointanchor{yquantbox}{east}%
-      \@tempdima=\pgf@x%
-      \pgfpointshapexproj{yquantbox}%
-                         {\pgfqpoint{\@tempdima}
-                                    {\dimexpr\wireypos+2\pgflinewidth\relax}}%
-      \edef\tmp{{(\the\pgf@x,\the\pgf@y)}}%
-      % For multi-qubit registers, the east anchor is not necessarily accurate.
-      \pgfpointshapexproj{yquantbox}{\pgfqpoint{\@tempdima}{\wireypos}}%
-      \edef\tmp{\tmp{(\the\pgf@x,\the\pgf@y)}}%
-      \pgfpointshapexproj{yquantbox}
-                         {\pgfqpoint{\@tempdima}%
-                                    {\dimexpr\wireypos-2\pgflinewidth\relax}}%
-      \yquant@register@set@lastwire{#1}{\tmp{(\the\pgf@x,\the\pgf@y)}}%
-   \endgroup%
-}
-
-% finishes the wire of register #1 until x position \yquant@env@end@xpos
-\protected\def\yquant@circuit@endwire#1{%
-   \begingroup%
-      \edef\wiretype{\yquant@register@get@type{#1}}%
-      \unless\ifnum\wiretype=\yquant@register@type@none\relax%
-         % we don't have a yquantbox node but still want to extend the line; so just install a dummy projection
-         \let\pgfpointshapexproj=\yquant@circuit@endwire@xproj%
-         \dimdef\wireypos{\yquant@register@get@y{#1}}%
+      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
+      \pgfpointanchor{yquantbox}{center}%
+      \edef\wirexpos{\the\pgf@x}%
+      \ifnum\wiretype=\yquant@register@type@none%
+         \yquant@register@set@lastwire{#1}{{\wirexpos}{\relax}}%
+      \else%
          \edef\wirestyle{\noexpand\tikzset{%
             /yquant/this wire/.style={%
                /yquant/every wire,%
@@ -49,20 +16,83 @@
             }%
          }}%
          \wirestyle%
-         \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
+         \edef\wirexprevpos{\expandafter\@firstoftwo\wirelast}%
+         % load the clipping of the previous operator and add the one for the current
+         \edef\wireclipping{%
+            \unexpanded\expandafter\expandafter\expandafter{%
+               \expandafter\@secondoftwo\wirelast%
+            }%
+            \unexpanded\expandafter{\pgfshapeclippathhorzresult}%
+         }%
+         % store the clipping of the current operator and update the position
+         \yquant@register@set@lastwire{#1}{%
+            {\wirexpos}{\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+         }%
+         \pgfscope%
+            % install the clipping
+            \pgfsyssoftpath@setcurrentpath\wireclipping%
+            % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
+            \ifyquantdebug%
+               \pgfsetfillcolor{orange}%
+               \pgfsetfillopacity{.3}%
+               \pgfusepathqfill%
+            \else%
+               \pgfpathrectanglecorners%
+                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \pgfseteorule% even-odd to properly invert the clipping
+               \pgfusepathqclip%
+            \fi%
+            \csname yquant@circuit@extendwire@\wiretype\endcsname{#1}%
+         \endpgfscope%
       \fi%
    \endgroup%
 }
 
-\protected\def\yquant@circuit@endwire@xproj#1#2{%
-   \pgf@process{%
-      #2%
-      \pgf@x=\yquant@env@end@xpos%
+% finishes the wire of registers 1 to #1 until x position \yquant@env@end@xpos
+\protected\def\yquant@circuit@endwires#1{%
+   \yquant@for \yquant@circuit@endwires@i := 1 to #1 {
+      \begingroup%
+         \yquant@register@get@typeywire\yquant@circuit@endwires@i\wiretype\wireypos\wirelast%
+         \unless\ifnum\wiretype=\yquant@register@type@none%
+            \let\wirexpos=\yquant@env@end@xpos%
+            \edef\wirestyle{\noexpand\tikzset{%
+               /yquant/this wire/.style={%
+                  /yquant/every wire,%
+                  /yquant/every \ifcase\wiretype qubit \or cbit \or qubits \fi wire,%
+                     \yquant@register@get@style\yquant@circuit@endwires@i%
+               }%
+            }}%
+            \wirestyle%
+            \edef\wirexprevpos{\expandafter\@firstoftwo\wirelast}%
+            \edef\wireclipping{%
+               \unexpanded\expandafter\expandafter\expandafter{%
+                  \expandafter\@secondoftwo\wirelast%
+               }%
+            }%
+            \pgfscope%
+               % install the clipping
+               \pgfsyssoftpath@setcurrentpath\wireclipping%
+               % and invert it. Take care to make the bounding box large enough, if it is not already.
+               \ifdim\pgf@picmaxx<\wirexpos%
+                  \global\pgf@picmaxx=\wirexpos %
+               \fi%
+               \ifyquantdebug%
+                  \pgfsetfillcolor{orange}%
+                  \pgfsetfillopacity{.3}%
+                  \pgfusepathqfill%
+               \else%
+                  \pgfpathrectanglecorners%
+                     {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                     {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+                  \pgfseteorule% even-odd to properly invert the clipping
+                  \pgfusepathqclip%
+               \fi%
+               \csname yquant@circuit@extendwire@\wiretype\endcsname\yquant@circuit@endwires@i%
+            \endpgfscope%
+         \fi%
+      \endgroup%
    }%
-}
-
-\def\yquant@circuit@extendwire@@extract(#1,#2){%
-   #1%
 }
 
 % a bit faster than nested \@firstoftwo/\@secondoftwo
@@ -72,14 +102,10 @@
 
 % quantum wire
 \protected\csdef{yquant@circuit@extendwire@1}#1{%
-   \edef\tmp{\yquant@register@get@lastwire{#1}}%
-   \edef\tmp{\expandafter\@secondofthree\tmp}%
-   \edef\lastx{\expandafter\yquant@circuit@extendwire@@extract\tmp}%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastx}{\wireypos}}%
-   \ifdim\lastx<\pgf@x%
+   \ifdim\wirexprevpos<\wirexpos%
       \edef\cmd{%
          \noexpand\path [/yquant/this wire]
-            \tmp -- (\the\pgf@x,\the\pgf@y);%
+            (\wirexprevpos,\wireypos) -- (\wirexpos,\wireypos);%
       }%
       \cmd%
    \fi%
@@ -87,129 +113,76 @@
 
 % classical wire
 \protected\csdef{yquant@circuit@extendwire@2}#1{%
-   \edef\tmp{\yquant@register@get@lastwire{#1}}%
-   \edef\tmpa{\expandafter\@firstofthree\tmp}%
-   \edef\lastxa{\expandafter\yquant@circuit@extendwire@@extract\tmpa}%
-   \edef\tmpb{\expandafter\@thirdofthree\tmp}%
-   \edef\lastxb{\expandafter\yquant@circuit@extendwire@@extract\tmpb}%
-   \let\cmd=\empty%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxa}%
-                                            {\dimexpr\wireypos+2\pgflinewidth\relax}}%
-   \ifdim\lastxa<\pgf@x%
+   \ifdim\wirexprevpos<\wirexpos%
       \edef\cmd{%
-         \tmpa -- (\the\pgf@x,\the\pgf@y)%
+         \noexpand\path [/yquant/this wire]
+            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
+            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
       }%
-   \fi%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxb}%
-                                            {\dimexpr\wireypos-2\pgflinewidth\relax}}%
-   \ifdim\lastxb<\pgf@x%
-      \eappto\cmd{%
-         \tmpb -- (\the\pgf@x,\the\pgf@y)%
-      }%
-   \fi%
-   \unless\ifx\cmd\empty%
-      \edef\cmd{\noexpand\path [/yquant/this wire] \cmd;}%
       \cmd%
    \fi%
 }
 
 % quantum-bundle
 \protected\csdef{yquant@circuit@extendwire@3}#1{%
-   \edef\tmp{\yquant@register@get@lastwire{#1}}%
-   \edef\tmpa{\expandafter\@firstofthree\tmp}%
-   \edef\lastxa{\expandafter\yquant@circuit@extendwire@@extract\tmpa}%
-   \edef\tmpb{\expandafter\@secondofthree\tmp}%
-   \edef\lastxb{\expandafter\yquant@circuit@extendwire@@extract\tmpb}%
-   \edef\tmpc{\expandafter\@thirdofthree\tmp}%
-   \edef\lastxc{\expandafter\yquant@circuit@extendwire@@extract\tmpc}%
-   \let\cmd=\empty%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxa}%
-                                            {\dimexpr\wireypos+2\pgflinewidth\relax}}%
-   \ifdim\lastxa<\pgf@x%
+   \ifdim\wirexprevpos<\wirexpos%
       \edef\cmd{%
-         \tmpa -- (\the\pgf@x,\the\pgf@y)%
+         \noexpand\path [/yquant/this wire]
+            (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
+            (\wirexprevpos,\wireypos)--(\wirexpos,\wireypos)%
+            (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
       }%
-   \fi%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxb}{\wireypos}}%
-   \ifdim\lastxb<\pgf@x%
-      \eappto\cmd{%
-         \tmpb -- (\the\pgf@x,\the\pgf@y)%
-      }%
-   \fi%
-   \pgfpointshapexproj{yquantbox}{\pgfqpoint{\lastxc}%
-                                            {\dimexpr\wireypos-2\pgflinewidth\relax}}%
-   \ifdim\lastxc<\pgf@x%
-      \eappto\cmd{%
-         \tmpc -- (\the\pgf@x,\the\pgf@y)%
-      }%
-   \fi%
-   \unless\ifx\cmd\empty%
-      \edef\cmd{\noexpand\path [/yquant/this wire] \cmd;}%
       \cmd%
    \fi%
 }
 % END_FOLD
 
 % BEGIN_FOLD Drawing control lines
-% populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and it is a node with appropriate projections. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
+% populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
 \protected\def\yquant@circuit@extendcontrolline#1#2{%
    \begingroup%
       \tikzset{/yquant/every control line}%
       \expandafter%
    \endgroup%
+   \eappto\yquant@circuit@extendcontrolline@clip{%
+      \unexpanded\expandafter{\pgfshapeclippathvertresult}%
+   }%
    \expandafter\@tempdima\the\pgflinewidth%
    \ifcase#1%
       % no control (or to a discarded target, which we don't do)
    \or%
       % qubit
+      \pgfpointanchor{yquantbox}{center}%
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \pgfpointanchor{yquantbox}{north}%
-         \pgfpointshapeyproj{yquantbox}{\pgf@x=#2\relax}%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
+            -- (#2,\the\pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
    \or%
       % cbit
+      \pgfpointanchor{yquantbox}{center}%
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \pgfpointanchor{yquantbox}{north}%
-         \pgfpointshapeyproj{yquantbox}%
-                            {\pgf@x=\dimexpr#2-2\@tempdima\relax}%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
-         }%
-         \pgfpointshapeyproj{yquantbox}%
-                            {\pgf@x=\dimexpr#2+2\@tempdima\relax}%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            -- (\the\dimexpr#2-2\@tempdima\relax,\the\pgf@y)%
             \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
+            -- (\the\dimexpr#2+2\@tempdima\relax,\the\pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
    \or%
       % quantum-bundle (very unusual, but perhaps for transversal operations?)
+      \pgfpointanchor{yquantbox}{center}%
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \pgfpointanchor{yquantbox}{north}%
-         \pgfpointshapeyproj{yquantbox}%
-                            {\pgf@x=\dimexpr#2-2\@tempdima\relax}%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
-         }%
-         \pgfpointshapeyproj{yquantbox}%
-                            {\pgf@x=\dimexpr#2\relax}%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            -- (\the\dimexpr#2-2\@tempdima\relax,\the\pgf@y)%
             \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
-         }%
-         \pgfpointshapeyproj{yquantbox}%
-                            {\pgf@x=\dimexpr#2+2\@tempdima\relax}%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
+            -- (\the\dimexpr#2\relax,\the\pgf@y)%
             \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\pgf@x,\the\pgf@y)%
+            -- (\the\dimexpr#2+2\@tempdima\relax,\the\pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
@@ -220,16 +193,11 @@
 }
 
 \protected\def\yquant@circuit@extendcontrolline@store#1{%
-   \pgfpointanchor{yquantbox}{south}%
-   \pgfpointshapeyproj{yquantbox}%
-                      {\pgf@x=\dimexpr#1-2\@tempdima\relax}%
-   \edef\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
-   \pgfpointshapeyproj{yquantbox}%
-                      {\pgf@x=#1\relax}%
-   \eappto\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
-   \pgfpointshapeyproj{yquantbox}%
-                      {\pgf@x=\dimexpr#1+2\@tempdima\relax}%
-   \eappto\yquant@circuit@extendcontrolline@prev{{(\the\pgf@x,\the\pgf@y)}}%
+   \edef\yquant@circuit@extendcontrolline@prev{%
+      {(\the\dimexpr#1-2\@tempdima\relax,\the\pgf@y)}%
+      {(\the\dimexpr#1\relax,\the\pgf@y)}%
+      {(\the\dimexpr#1+2\@tempdima\relax,\the\pgf@y)}%
+   }%
 }
 % END_FOLD
 

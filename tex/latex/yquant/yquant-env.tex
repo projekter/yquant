@@ -49,7 +49,6 @@
       \let\yquant=\yquant@env@scan%
       \yquant@lang@reset@attrs%
       \csgdef{\yquant@prefix registers}{0}%
-%      \csgdef{\yquant@prefix lasty}{0pt}%
       \global\cslet{\yquant@prefix draw}\relax%
       \global\cslet{\yquant@prefix outputs}\relax%
       \csxdef{\yquant@prefix cleanup}{%
@@ -74,16 +73,13 @@
                \def\noexpand\yquant@env@end@xpos{%
                   \the\dimexpr\yquant@env@end@xpos+\yquant@config@operator@sep\relax%
                }%
+               \yquant@circuit@endwires{\yquant@env@end@registers}%
             }
             % also calculate the true y positions
             \dimen0=0pt %
             \dimen2=0pt %
             \dimen4=\yquant@config@register@sep %
             \yquant@for \i := 1 to \yquant@env@end@registers {%
-               % add a final wire
-               \csxappto{\yquant@prefix draw}{%
-                  \yquant@circuit@endwire{\i}%
-               }%
                % we do not care if the wire is present for the y position
                \dimen2=.5\dimexpr\yquant@register@get@height\i\relax%
                \advance\dimen0 by \dimen2\relax%

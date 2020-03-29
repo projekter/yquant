@@ -11,6 +11,7 @@
       \fi%
       \let\yquant@circuit@extendcontrolline@cmd=\empty%
       \let\yquant@circuit@extendcontrolline@prev=\relax%
+      \let\yquant@circuit@extendcontrolline@clip=\empty%
       \yquant@langhelper@list@attrs%
       % If the quotes library is loaded, activate it. (else, this is by default \relax)
       \tikz@enable@node@quotes%
@@ -57,11 +58,12 @@
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               name prefix=, name suffix=, name=yquantbox]%
          {\unexpanded\expandafter{\yquant@draw@@content}};%
+      \pgfshapeclippath{yquantbox}%
+                       {/yquant/every operator, \yquant@draw@@style,%
+                        /yquant/this operator}%
    }%
    \cmd%
-   \ifpgfpointshapexproj{yquantbox}%
-      \yquant@circuit@extendwire{#1}%
-   \fi%
+   \yquant@circuit@extendwire{#1}%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
    \if\relax\detokenize{#2}\relax%
@@ -83,12 +85,13 @@
                      .5*\noexpand\pgfkeysvalueof{/tikz/y radius},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};
+      \pgfshapeclippath{yquantbox}%
+                       {/yquant/every operator, \yquant@draw@@style,%
+                        /yquant/this operator}%
    }%
    \cmd%
-   \ifpgfpointshapexproj{yquantbox}%
-      \let\do=\yquant@circuit@extendwire%
-      \dolistloop{#4}%
-   \fi%
+   \let\do=\yquant@circuit@extendwire%
+   \dolistloop{#4}%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
    \if\relax\detokenize{#5}\relax%
@@ -125,11 +128,12 @@
          node[/yquant/every control, /yquant/every #1 control, /yquant/this control,%
               name prefix=, name suffix=, name=yquantbox]%
          {};%
+      \pgfshapeclippath{yquantbox}%
+                       {/yquant/every control, /yquant/every #1 control,%
+                        /yquant/this control}%
    }%
    \cmd%
-   \ifpgfpointshapexproj{yquantbox}%
-      \yquant@circuit@extendwire{#2}%
-   \fi%
+   \yquant@circuit@extendwire{#2}%
    \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
@@ -152,11 +156,27 @@
 }
 
 \protected\def\yquant@draw@cline{%
+   \pgfscope%
+      % install the clipping
+      \pgfsyssoftpath@setcurrentpath\yquant@circuit@extendcontrolline@clip%
+      % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
+      \ifyquantdebug%
+         \pgfsetfillcolor{teal}%
+         \pgfsetfillopacity{.3}%
+         \pgfusepathqfill%
+      \else%
+         \pgfpathrectanglecorners%
+            {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+            {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+         \pgfseteorule% even-odd to properly invert the clipping
+         \pgfusepathqclip%
+      \fi%
    \edef\cmd{%
       \noexpand\path[/yquant/every control line]%
          \yquant@circuit@extendcontrolline@cmd;
    }%
    \cmd%
+   \endpgfscope%
 }
 
 \protected\def\yquant@draw@alias#1{%

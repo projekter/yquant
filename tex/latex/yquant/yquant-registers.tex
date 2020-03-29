@@ -453,6 +453,17 @@
 
 \def\yquant@register@get@style@aux#1#2#3#4#5{#5}
 
+\def\yquant@register@get@typeywire#1{%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@typeywire@aux\csname\yquant@prefix register@#1\endcsname%
+}
+
+\protected\def\yquant@register@get@typeywire@aux#1#2#3#4#5#6#7#8{%
+   \def#6{#1}%
+   \def#7{#3}%
+   \def#8{#4}%
+}%
+
 % Set #1 to the maximum x value found between #2 and #3
 \protected\def\yquant@register@get@maxxrange#1#2#3{%
    \begingroup%
@@ -496,7 +507,7 @@
 }
 
 \long\def\yquant@register@set@type@aux#1#2#3#4#5#6{%
-   {#6}{#2}{#3}{#4}{#5}%
+   {#6}\unexpanded{{#2}{#3}{#4}{#5}}%
 }
 
 \protected\def\yquant@register@set@x#1{%
@@ -505,7 +516,7 @@
 }
 
 \long\def\yquant@register@set@x@aux#1#2#3#4#5#6{%
-   {#1}{#6}{#3}{#4}{#5}%
+   \unexpanded{{#1}}{#6}\unexpanded{{#3}{#4}{#5}}%
 }
 
 \protected\def\yquant@register@update@height#1#2{%
@@ -521,12 +532,8 @@
 }
 
 % Set the currently used register
-\protected\def\yquant@register@use#1{%
-   \edef\yquant@register@y{\yquant@register@get@y{#1}}%
-}
-
 \long\def\yquant@register@set@height@aux#1#2#3#4#5#6{%
-   {#1}{#2}{#6}{#4}{#5}%
+   \unexpanded{{#1}{#2}}{#6}\unexpanded{{#4}{#5}}%
 }
 
 \protected\def\yquant@register@set@lastwire#1{%
@@ -535,7 +542,7 @@
 }
 
 \long\def\yquant@register@set@lastwire@aux#1#2#3#4#5#6{%
-   {#1}{#2}{#3}{#6}{#5}%
+   \unexpanded{{#1}{#2}{#3}}{#6}\unexpanded{{#5}}%
 }
 
 \protected\def\yquant@register@set@style#1{%
@@ -544,6 +551,6 @@
 }
 
 \long\def\yquant@register@set@style@aux#1#2#3#4#5#6{%
-   {#1}{#2}{#3}{#4}{#6}%
+   \unexpanded{{#1}{#2}{#3}{#4}}{#6}%
 }
 % END_FOLD

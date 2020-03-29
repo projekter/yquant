@@ -25,7 +25,7 @@
       {\dimdef\yquant@config@register@sep{#1}},
    % register label style
    every label/.style=%
-      {shape=yquant-text, anchor=circuit, align=right},
+      {shape=yquant-text, anchor=center, align=right},
    every initial label/.style=%
       {anchor=east},
    every qubit label/.style=%
@@ -67,14 +67,14 @@
    every control line/.style=%
       {draw},
    every control/.style=%
-      {shape=yquant-circle, anchor=circuit, radius=.5mm},
+      {shape=yquant-circle, anchor=center, radius=.5mm},
    every positive control/.style=%
       {fill=black},
    every negative control/.style=%
       {draw},
    % operator style: main part
    every operator/.style=%
-      {anchor=circuit},
+      {anchor=center},
    % overwriting all styles
    this operator/.style=%
       {},
@@ -107,17 +107,13 @@
    operators/every phase/.style=%
       {shape=yquant-circle, radius=.5mm, fill},
    operators/every zz/.style=%
-      % y radius must be twice as large as x radius (= two circles). And there is no
-      % possiblity to distort the circle to an ellipse; x radius is always the defining
-      % property!
-      {shape=yquant-zz, x radius=.5mm, y radius=1mm, fill, draw},
+      {shape=yquant-circle, radius=.5mm, fill, draw},
    operators/every xx/.style=%
-      % same as zz
-      {shape=yquant-xx, x radius=.75mm, y radius=1.5mm, draw},
+      {shape=yquant-rectangle, radius=.75mm, draw},
    operators/every slash/.style=%
       {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},
    operators/every swap/.style=%
-      {shape=yquant-swap, x radius=.75mm, y radius=1.5mm, draw},
+      {shape=yquant-swap, radius=.75mm, draw},
    operators/every not/.style=%
       {shape=yquant-oplus, radius=1.3mm, draw},
    operators/every measure/.style=%
@@ -128,7 +124,6 @@
       {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
    operators/every barrier/.style=%
       {shape=yquant-barrier, dashed, draw},
-   operators/multi operator line/.is if=\yquant@config@multi@line,
 }
 
 \def\yquant@config@register@default@name{\regidx}
@@ -136,5 +131,3 @@
 \def\yquant@config@register@sep{1mm}
 \def\yquant@config@operator@sep{1mm}
 \def\yquant@config@operator@minimum@width{5mm}
-\newif\ifyquant@config@multi@line
-\yquant@config@multi@linetrue

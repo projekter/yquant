@@ -172,28 +172,7 @@
       % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
       \tikzset{/yquant/every wire}%
       \pgfpointanchor{yquantbox}{east}%
-      % Every label shape should implement the projection anchor, else we just guess the values, but this might be inaccurate for non-rectangular shapes
-      \ifpgfpointshapexproj{yquantbox}%
-         \@tempdima=\pgf@x%
-         \pgfpointshapexproj{yquantbox}%
-                            {\pgfqpoint{\@tempdima}
-                                       {\dimexpr\wireypos+2\pgflinewidth\relax}}%
-         \edef\tmp{{(\the\pgf@x,\the\pgf@y)}}%
-         % This projection should normally not be necessary, as the east anchor _should_ be accurate - but who knows?
-         \pgfpointshapexproj{yquantbox}{\pgfqpoint{\@tempdima}{\wireypos}}%
-         \edef\tmp{\tmp{(\the\pgf@x,\the\pgf@y)}}%
-         \pgfpointshapexproj{yquantbox}
-                            {\pgfqpoint{\@tempdima}%
-                                       {\dimexpr\wireypos-2\pgflinewidth\relax}}%
-         \yquant@register@set@lastwire{#1}{\tmp{(\the\pgf@x,\the\pgf@y)}}%
-      \else%
-         % Just guess the values.
-         \yquant@register@set@lastwire{#1}{%
-            {(\the\pgf@x,\the\dimexpr\wireypos+2\pgflinewidth\relax)}%
-            {(\the\pgf@x,\wireypos)}%
-            {(\the\pgf@x,\the\dimexpr\wireypos-2\pgflinewidth\relax)}%
-         }%
-      \fi%
+      \yquant@register@set@lastwire{#1}{{\the\pgf@x}{\relax}}%
       \if\relax\detokenize{#5}\relax%
       \else%
          \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
@@ -289,14 +268,11 @@
 % two-qubit controlled x (symmetric notation)
 \yquant@langhelper@declare@command{xx}\yquant@lang@@xx
 \yquant@langhelper@setup@attrs{xx}{}{}
-\def\yquant@lang@@xx#1#2#3{%
+\def\yquant@lang@@xx{%
    \yquant@register@get@allowmultitrue%
-   \yquant@circuit@operator{#1}{#2}{#3}%
-   \ifyquant@circuit@operator@hasControls%
-      \yquant@draw@{}{/yquant/operators/every xx, /yquant/operator/multi operator line=false}%
-   \else%
-      \yquant@draw@{}{/yquant/operators/every xx}%
-   \fi%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every xx}%
 }
 
 % two-qubit controlled phase (symmetric notation)
@@ -333,14 +309,11 @@
 % swap
 \yquant@langhelper@declare@command{swap}\yquant@lang@@swap
 \yquant@langhelper@setup@attrs{swap}{}{}
-\def\yquant@lang@@swap#1#2#3{%
+\def\yquant@lang@@swap{%
    \yquant@register@get@allowmultitrue%
-   \yquant@circuit@operator{#1}{#2}{#3}%
-   \ifyquant@circuit@operator@hasControls%
-      \yquant@draw@{}{/yquant/operators/every swap, /yquant/operator/multi operator line=false}%
-   \else%
-      \yquant@draw@{}{/yquant/operators/every swap}%
-   \fi%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every swap}%
 }
 
 % not

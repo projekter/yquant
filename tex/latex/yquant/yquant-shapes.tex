@@ -1,96 +1,62 @@
-% To draw the wires, we need to determine border angles. However, pgf's approach for this (giving the border point that lies on a line from the center to a desired probe point) is not suitable for this. Instead, we need to give a point that is projected perpendicularly onto the shape.
-\def\pgf@sh@anchorxproj#1{%
-   \csgdef{pgf@anchor@\pgf@sm@shape@name @xproj}##1{\pgf@process{##1}#1}%
-}%
-\def\pgf@sh@inheritanchorxproj[from=#1]{%
-   \global\csletcs{pgf@anchor@\pgf@sm@shape@name @xproj}{pgf@anchor@#1@xproj}%
-}%
-\def\pgf@sh@anchoryproj#1{%
-   \csgdef{pgf@anchor@\pgf@sm@shape@name @yproj}##1{\pgf@process{##1}#1}%
-}%
-\def\pgf@sh@inheritanchoryproj[from=#1]{%
-   \global\csletcs{pgf@anchor@\pgf@sm@shape@name @yproj}{pgf@anchor@#1@yproj}%
-}%
+\long\def\pgf@sh@clippathhorz#1{%
+   \csgdef{pgf@sh@cliphorz@\pgf@sm@shape@name}{#1}%
+}
+\let\pgf@sh@clippath=\pgf@sh@clippathhorz%
+\long\def\pgf@sh@clippathvert#1{%
+   \csgdef{pgf@sh@clipvert@\pgf@sm@shape@name}{#1}%
+}
+\def\pgf@sh@inheritclippath[from=#1]{%
+   \global\csletcs{pgf@sh@cliphorz@\pgf@sm@shape@name}{pgf@sh@cliphorz@#1}%
+   \global\csletcs{pgf@sh@clipvert@\pgf@sm@shape@name}{pgf@sh@clipvert@#1}%
+}
 \patchcmd%
    \pgfdeclareshape%
    {\let\anchorborder=\pgf@sh@anchorborder}%
    {\let\anchorborder=\pgf@sh@anchorborder%
-    \let\anchorxproj=\pgf@sh@anchorxproj%
-    \let\inheritanchorxproj=\pgf@sh@inheritanchorxproj
-    \let\anchoryproj=\pgf@sh@anchoryproj%
-    \let\inheritanchoryproj=\pgf@sh@inheritanchoryproj}%
+    \let\clippathhorz=\pgf@sh@clippathhorz%
+    \let\clippathvert=\pgf@sh@clippathvert%
+    \let\clippath=\pgf@sh@clippath%
+    \let\inheritclippath=\pgf@sh@inheritclippath}%
    {}%
    {\PackageError{yquant.sty}%
                  {Failed to patch \string\pgfdeclareshape}%
                  {yquant could not provide a necessary extension to pgf.}}%
-% This is mostly a copy of \pgfpointshapeborder, but we do not perform the center-anchor shift.
-\def\pgfpointshapexproj#1#2{%
+% Every shape additionally provides information about how it should clip the wires. The clipping softpath instructions of shape #1 are stored into \pgfshapeclippathresult. The path is drawn with the tikz options #2 in place.
+\protected\def\pgfshapeclippath#1#2{%
    % Ok, check whether #1 is known!
    \ifcsname pgf@sh@ns@#1\endcsname%
-      \pgf@process{%
+      \begin{pgfinterruptpath}%
          \edef\pgfreferencednodename{#1}% for use inside of anchors.
+         % install the given style and extract whether we draw a line.
+         \let\tikz@mode=\pgfutil@empty%
+         \tikzset{every path/.try,#2}%
+         \edef\oldpgflinewidth{\the\pgflinewidth}%
+         \tikz@mode@drawfalse%
+         \tikz@mode%
+         \unless\iftikz@mode@draw%
+            \pgflinewidth=0pt %
+         \fi%
          % MW install special macros
          \csname pgf@sh@ma@#1\endcsname% MW
          % install special coordinates
          \csname pgf@sh@np@#1\endcsname%
-         \pgf@process{%
-            \pgf@process{\pgfpointtransformed{#2}}%
-            \pgfsettransform{\csname pgf@sh@nt@#1\endcsname}%
-            \pgftransforminvert%
-            \pgf@pos@transform@glob%
-            \pgf@xa=\pgf@x%
-            \pgf@ya=\pgf@y%
-            \csname pgf@anchor@\csname pgf@sh@ns@#1\endcsname @xproj\endcsname{\pgfqpoint{\pgf@xa}{\pgf@ya}}%
-            \pgfsettransform{\csname pgf@sh@nt@#1\endcsname}%
-            \pgf@pos@transform@glob%
-         }%
-         % Add inter picture transformation
-         \pgf@shape@interpictureshift{#1}%
-         % Undo current transformation
-         \pgftransforminvert%
-         \pgf@pos@transform@glob%
-      }%
+         \pgfsettransform{\csname pgf@sh@nt@#1\endcsname}%
+         \csname pgf@sh@cliphorz@\csname pgf@sh@ns@#1\endcsname\endcsname%
+         \pgfsyssoftpath@getcurrentpath\pgfshapeclippathresult%
+         \pgfprocessround{\pgfshapeclippathresult}{\pgfshapeclippathresult}%
+         \global\let\pgfshapeclippathhorzresult=\pgfshapeclippathresult%
+         \ifcsname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+            % different clipping in vertical direction
+            \pgfsyssoftpath@setcurrentpath\pgfutil@empty%
+            \csname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+            \pgfsyssoftpath@getcurrentpath\pgfshapeclippathresult%
+            \pgfprocessround{\pgfshapeclippathresult}{\pgfshapeclippathresult}%
+         \fi%
+         \global\let\pgfshapeclippathvertresult=\pgfshapeclippathresult%
+      \end{pgfinterruptpath}%
    \else%
       \pgferror{No shape named #1 is known}%
       \pgfpointorigin%
-   \fi%
-}%
-\def\ifpgfpointshapexproj#1{%
-   \pgfutil@ifundefined{pgf@sh@ns@#1}%
-      {\pgferror{No shape named #1 is known}}%
-      {\ifcsname pgf@anchor@\csname pgf@sh@ns@#1\endcsname @xproj\endcsname}%
-}
-\let\pgfpointshapeyproj=\pgfpointshapexproj%
-\patchcmd%
-   \pgfpointshapeyproj%
-   {xproj}{yproj}%
-   {}{\PackageError{yquant.sty}{Failed to provide \string\pgfpointshapeyproj}{}}%
-\def\ifpgfpointshapeyproj#1{%
-   \pgfutil@ifundefined{pgf@sh@ns@#1}%
-      {\pgferror{No shape named #1 is known}}%
-      {\ifcsname pgf@anchor@\csname pgf@sh@ns@#1\endcsname @yproj\endcsname}%
-}
-
-% Calculate the intersection of an ellipse centered at the origin with radii #1 and #2 with a horizontal line at position #3. Result goes to \pgf@xa, and it is the right intersection point.
-\protected\def\yquant@shape@ellipse@xfromy#1#2#3{%
-   \ifdim#3>#2\relax%
-      \global\pgf@xa=0pt %
-   \else%
-      \ifdim-\dimexpr#3\relax>#2\relax%
-         \global\pgf@xa=0pt %
-      \else%
-         \begingroup%
-            % Here, we essentially do #1*sqrt(1-(#3/#2)^2)
-            \dimen2=#2\relax%
-            \dimen3=#3\relax%
-            % if we divide by a dimension, it is internally converted to sp, so we divide by its pt-value and again by 65536. Same for multiplication. etex fuses muldiv to 64bit, so we don't get overflows.
-            % calculate the sqrt; but \pgfmathsqrt@ expects a real number without dimension suffix. It internally does \expandafter\pgfmath@x#1pt\relax, so just gobble the additional pt.
-            % TODO: is there a better way, exploiting perhaps a representation in sp?
-            \pgfmathsqrt@{\the\dimexpr1pt-\dimen3*\dimen3/\dimen2*65536/\dimen2\relax%
-                          \@gobbletwo}%
-            \global\pgf@xa=\pgfmathresult\dimexpr#1\relax%
-         \endgroup%
-      \fi%
    \fi%
 }
 
@@ -99,39 +65,28 @@
    \foreach \anc in {center, mid, base, north, south, west, mid west, base west, north west, south west, east, mid east, base east, north east, south east} {%
       \inheritanchor[from=rectangle]{\anc}%
    }%
-   \global\cslet{pgf@anchor@yquant-text@circuit}\pgf@anchor@rectangle@center%
    \inheritanchorborder[from=rectangle]%
    \inheritbackgroundpath[from=rectangle]%
-   \anchorxproj{%
-      \pgf@xa=\pgf@x%
-      \pgf@ya=\pgf@y%
-      % The origin is at the left baseline of the text, i.e. to the left we have the inner + outer xsep, the the right there's the text + inner + outer xsep.
-      \northeast%
-      \pgf@xb=.5\pgf@x%
-      \southwest%
-      \advance \pgf@xb by .5\pgf@x%
-      \ifdim\pgf@xa>\pgf@xb%
-         % to the right
-         \northeast%
-      % else we already called \southwest
-      \fi%
-      \pgf@y=\pgf@ya%
+   \clippath{%
+      % all pgf temporaries may be overwritten by \pgfpathrectanglecorners
+      \begingroup%
+         % the outer sep may depend on the line width (though there may not be any line)
+         \pgflinewidth=\oldpgflinewidth%
+         \global\@tempdima=\pgfkeysvalueof{/pgf/outer xsep} %
+         \global\@tempdimb=\pgfkeysvalueof{/pgf/outer ysep} %
+      \endgroup%
+      \advance\@tempdima by -.5\pgflinewidth%
+      \advance\@tempdimb by -.5\pgflinewidth%
+      \pgfpathrectanglecorners%
+         {\southwest%
+          \advance\pgf@x by \@tempdima%
+          \advance\pgf@y by \@tempdimb%
+         }
+         {\northeast%
+          \advance\pgf@x by -\@tempdima%
+          \advance\pgf@y by -\@tempdimb%
+         }%
    }%
-   \anchoryproj{%
-      \pgf@xa=\pgf@x%
-      \pgf@ya=\pgf@y%
-      % The origin is at the left baseline of the text, i.e. to the top we have the text height + inner + outer ysep, the the bottom there's the text depth + inner + outer ysep.
-      \northeast%
-      \pgf@yb=.5\pgf@y%
-      \southwest%
-      \advance \pgf@yb by .5\pgf@y%
-      \ifdim\pgf@ya>\pgf@yb%
-         % to the top
-         \northeast%
-      % else we already called \southwest
-      \fi%
-      \pgf@x=\pgf@xa%
-   }
 }
 
 \pgfdeclareshape{yquant-rectangle}{%
@@ -198,28 +153,6 @@
       \pgfpointborderrectangle{\pgfqpoint{\@tempdima}{\@tempdimb}}%
                               {\pgfqpoint{\xradius}{\yradius}}%
    }%
-   \anchorxproj{%
-      \ifdim\pgf@x>0pt %
-         % to the right
-         \pgf@x=\xradius\relax%
-      \else%
-         % to the left
-         \pgf@x=-\xradius\relax%
-      \fi%
-   }%
-   \anchoryproj{%
-      \ifdim\pgf@y>0pt %
-         % to the top
-         \pgf@y=\yradius\relax%
-      \else%
-         % to the bottom
-         \pgf@y=-\yradius\relax%
-      \fi%
-   }%
-   % END_FOLD
-   % BEGIN_FOLD Circuit-related anchors
-   \global\csletcs{pgf@anchor@yquant-rectangle@circuit}%
-                  {pgf@anchor@yquant-rectangle@center}%
    % END_FOLD
    % BEGIN_FOLD Path
    \backgroundpath{%
@@ -227,12 +160,19 @@
          {\pgfqpoint{-\xradius}{\yradius}}%
          {\pgfqpoint{\xradius}{-\yradius}}%
    }%
+   \clippath{%
+      \pgfpathrectanglecorners%
+         {\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                    {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+         {\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth\relax}%
+                    {-\dimexpr\yradius+.5\pgflinewidth\relax}}%
+   }%
    % END_FOLD
 }
 
 \pgfdeclareshape{yquant-circle}{%
    \inheritsavedanchors[from=yquant-rectangle]%
-   \foreach \anc in {center, north, east, south, west, circuit, text} {%
+   \foreach \anc in {center, north, east, south, west, text} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \anchor{north east}%
@@ -254,170 +194,175 @@
                             {\pgfqpoint{.707107\dimexpr\xradius\relax}%
                                        {.707107\dimexpr\yradius\relax}}%
    }%
-   \anchorxproj{%
-      \yquant@shape@ellipse@xfromy\xradius\yradius\pgf@y%
-      \ifdim\pgf@x>0pt %
-         % to the right
-         \pgf@x=\pgf@xa%
-      \else%
-         % to the left
-         \pgf@x=-\pgf@xa%
-      \fi%
-   }%
-   \anchoryproj{%
-      \yquant@shape@ellipse@xfromy\yradius\xradius\pgf@x%
-      \ifdim\pgf@y>0pt %
-         % to the top
-         \pgf@y=\pgf@xa%
-      \else%
-         % to the bottom
-         \pgf@y=-\pgf@xa%
-      \fi%
-   }%
-   \foregroundpath{%
+   \backgroundpath{%
       \pgfpathellipse{\pgfpointorigin}%
                      {\pgfqpoint{\xradius}{0pt}}%
                      {\pgfqpoint{0pt}{\yradius}}%
    }%
+   \clippath{%
+      \pgfpathellipse{\pgfpointorigin}%
+                     {\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth}{0pt}}%
+                     {\pgfqpoint{0pt}{\dimexpr\yradius+.5\pgflinewidth}}%
+   }%
 }
 
-\pgfdeclareshape{yquant-zz}{%
-   % Here, the radii have a special meaning, we don't put text into the shape
+\pgfdeclareshape{yquant-slash}{%
    \saveddimen\xradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
    }%
    \saveddimen\yradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}}%
    }%
-   \foreach \anc in {center, north, east, south, west, circuit} {%
-      \inheritanchor[from=yquant-circle]{\anc}%
-   }%
-   \anchor{north east}%
-          {\pgfqpoint{.707107\dimexpr\xradius\relax}%
-                     {\dimexpr\yradius-.292893\dimexpr\xradius\relax\relax}}%
-   \anchor{south east}%
-          {\pgfqpoint{.707107\dimexpr\xradius\relax}%
-                     {\dimexpr-\yradius+.292893\dimexpr\xradius\relax\relax}}%
-   \anchor{south west}%
-          {\pgfqpoint{-.707107\dimexpr\xradius\relax}%
-                     {\dimexpr-\yradius+.292893\dimexpr\xradius\relax\relax}}%
-   \anchor{north west}%
-          {\pgfqpoint{-.707107\dimexpr\xradius\relax}%
-                     {\dimexpr\yradius-.292893\dimexpr\xradius\relax\relax}}%
-   % TODO: this is not really the correct border anchor
-   \inheritanchorborder[from=yquant-rectangle]%
-   \anchorxproj{%
-      \ifdim\pgf@y<0pt %
-         \pgf@ya=\dimexpr\pgf@y+\yradius-\xradius\relax%
-      \else%
-         \pgf@ya=\dimexpr\pgf@y-\yradius+\xradius\relax%
-      \fi%
-      \yquant@shape@ellipse@xfromy\xradius\xradius\pgf@ya%
-      \ifdim\pgf@x>0pt %
-         % to the right
-         \pgf@x=\pgf@xa%
-      \else%
-         % to the left
-         \pgf@x=-\pgf@xa%
-      \fi%
-   }%
-   \anchoryproj{%
-      \yquant@shape@ellipse@xfromy\xradius\xradius\pgf@xa%
-      \ifdim\pgf@y>0pt %
-         % to the top
-         \pgf@y=\dimexpr\yradius-\xradius+\pgf@xa\relax%
-      \else%
-         % to the bottom
-         \pgf@y=-\dimexpr\yradius-\xradius+\pgf@xa\relax%
-      \fi%
-   }%
-   \backgroundpath{%
-      \pgfpathmoveto{\pgfqpoint{0pt}{\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      \pgfpathlineto{\pgfqpoint{0pt}{-\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      \pgfpathcircle{\pgfqpoint{0pt}{\dimexpr\yradius-\xradius\relax}}%
-                    {\xradius}%
-      \pgfpathcircle{\pgfqpoint{0pt}{\dimexpr\xradius-\yradius\relax}}%
-                    {\xradius}%
-   }%
-}
-
-\pgfdeclareshape{yquant-xx}{%
-   \inheritsavedanchors[from=yquant-zz]%
-   \savedmacro\ifconnector{%
-      \let\ifconnector=\ifyquant@config@multi@line%
-   }%
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
-      \inheritanchor[from=yquant-rectangle]{\anc}%
-   }%
-   % TODO: this is not really the correct border anchor
-   \inheritanchorborder[from=yquant-rectangle]%
-   \inheritanchorxproj[from=yquant-rectangle]%
-   \inheritanchoryproj[from=yquant-rectangle]%
-   % Draw the operator itself
-   \backgroundpath{%
-      \ifconnector%
-         \pgfpathmoveto{\pgfqpoint{0pt}{\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-         \pgfpathlineto{\pgfqpoint{0pt}{-\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      \fi%
-      \pgfpathrectanglecorners%
-         {\pgfqpoint{-\xradius}{\dimexpr\yradius\relax}}%
-         {\pgfqpoint{\xradius}{\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      \pgfpathrectanglecorners%
-         {\pgfqpoint{-\xradius}{-\yradius}}%
-         {\pgfqpoint{\xradius}{-\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-   }%
-}
-
-\pgfdeclareshape{yquant-slash}{%
-   \inheritsavedanchors[from=yquant-zz]%
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \inheritanchorborder[from=yquant-rectangle]%
    \backgroundpath{%
       \pgfpathmoveto{\pgfqpoint{\xradius}{\yradius}}%
       \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
+   }%
+   \clippath{%
+      % we need to clip to the line; but this is not possible, we can only clip to the inner of a path. For this reason, calculate the rectangle that represents the line.
+      % TODO: for round line endings, this is not a rectangle. Only a problem if the yradius is so short that the slash ends within a wire.
+      \ifcsname yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth\endcsname%
+         \letcs\tmp{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+         \dimen2=\expandafter\@firstoftwo\tmp%
+         \dimen4=\expandafter\@secondoftwo\tmp%
+      \else%
+         % cos(arctan(x)) = 1/sqrt(1+x^2)
+         % sin(arctan(x)) = x/sqrt(1+x^2)
+         \dimen2=\xradius %
+         \dimen4=\yradius %
+         % if we divide by a dimension, it is internally converted to sp, so we divide by its pt-value and again by 65536. Same for multiplication. etex fuses muldiv to 64bit, so we don't get overflows.
+         \dimen0=\dimexpr\dimen4*\dimen4/\dimen2*65536/\dimen2\relax%
+         % calculate the sqrt; but \pgfmathsqrt@ expects a real number without dimension suffix. It internally does \expandafter\pgfmath@x#1pt\relax, so just gobble the additional pt.
+         \pgfmathsqrt@{\the\dimexpr1pt+\dimen0\relax\@gobbletwo}%
+         \pgfmathreciprocal@\pgfmathresult%
+         \dimen2=\dimexpr.5\pgflinewidth*\dimexpr\pgfmathresult pt\relax/65536\relax%
+         \dimen4=\dimexpr\dimexpr\yradius\relax*\dimen2/\dimexpr\xradius\relax\relax%
+         \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+                {{\the\dimen2}{\the\dimen4}}%
+      \fi%
+      \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
+                               {-\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
+                               {\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+\dimen4\relax}%
+                               {\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius-\dimen4\relax}%
+                               {-\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathclose%
    }%
 }
 
 \pgfdeclareshape{yquant-swap}{%
-   \inheritsavedanchors[from=yquant-xx]%
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
+   \inheritsavedanchors[from=yquant-slash]%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \inheritanchorborder[from=yquant-rectangle]%
-   \inheritanchoryproj[from=yquant-rectangle]%
    \backgroundpath{%
-      % Connector
-      \ifconnector%
-         \pgfpathmoveto{\pgfqpoint{0pt}{\dimexpr\yradius-\xradius\relax}}%
-         \pgfpathlineto{\pgfqpoint{0pt}{-\dimexpr\yradius-\xradius\relax}}%
-      \fi%
-      % Upper cross
       \pgfpathmoveto{\pgfqpoint{-\xradius}{\yradius}}%
-      \pgfpathlineto{\pgfqpoint{\xradius}%
-                               {\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      \pgfpathmoveto{\pgfqpoint{\xradius}{\yradius}}%
-      \pgfpathlineto{\pgfqpoint{-\xradius}
-                               {\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
-      % Lower cross
-      \pgfpathmoveto{\pgfqpoint{-\xradius}%
-                               {-\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
       \pgfpathlineto{\pgfqpoint{\xradius}{-\yradius}}%
-      \pgfpathmoveto{\pgfqpoint{\xradius}%
-                               {-\dimexpr\yradius-2\dimexpr\xradius\relax\relax}}%
+      \pgfpathmoveto{\pgfqpoint{\xradius}{\yradius}}%
       \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
+   }%
+   \clippathhorz{%
+      % we need to clip to the line; but this is not possible, we can only clip to the inner of a path. For this reason, calculate the rectangle that represents the line.
+      % TODO: for round line endings, this is not a rectangle. Only a problem if the yradius is so short that the slash ends within a wire.
+      \ifcsname yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth\endcsname%
+         \letcs\tmp{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+         \dimen2=\expandafter\@firstoftwo\tmp%
+         \dimen4=\expandafter\@secondoftwo\tmp%
+      \else%
+         % cos(arctan(x)) = 1/sqrt(1+x^2)
+         % sin(arctan(x)) = x/sqrt(1+x^2)
+         \dimen2=\xradius %
+         \dimen4=\yradius %
+         % if we divide by a dimension, it is internally converted to sp, so we divide by its pt-value and again by 65536. Same for multiplication. etex fuses muldiv to 64bit, so we don't get overflows.
+         \dimen0=\dimexpr\dimen4*\dimen4/\dimen2*65536/\dimen2\relax%
+         % calculate the sqrt; but \pgfmathsqrt@ expects a real number without dimension suffix. It internally does \expandafter\pgfmath@x#1pt\relax, so just gobble the additional pt.
+         \pgfmathsqrt@{\the\dimexpr1pt+\dimen0\relax\@gobbletwo}%
+         \pgfmathreciprocal@\pgfmathresult%
+         \dimen2=\dimexpr.5\pgflinewidth*\dimexpr\pgfmathresult pt\relax/65536\relax%
+         \dimen4=\dimexpr\dimexpr\yradius\relax*\dimen2/\dimexpr\xradius\relax\relax%
+         \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+                {{\the\dimen2}{\the\dimen4}}%
+      \fi%
+      \dimen6=\dimexpr\dimen2*\dimexpr\xradius\relax/\dimexpr\yradius\relax+%
+                      \dimen2*\dimexpr\yradius\relax/\dimexpr\xradius\relax\relax%
+      \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
+                               {\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius-\dimen4\relax}%
+                               {\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
+                               {\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+\dimen4\relax}%
+                               {\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimen6}{0pt}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+\dimen4\relax}%
+                               {-\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
+                               {-\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius-\dimen4\relax}%
+                               {-\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
+                               {-\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimen6}{0pt}}%
+      \pgfpathclose%
+   }%
+   \clippathvert{%
+      % we need to clip to the line; but this is not possible, we can only clip to the inner of a path. For this reason, calculate the rectangle that represents the line.
+      % TODO: for round line endings, this is not a rectangle. Only a problem if the yradius is so short that the slash ends within a wire.
+      \ifcsname yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth\endcsname%
+         \letcs\tmp{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+         \dimen2=\expandafter\@firstoftwo\tmp%
+         \dimen4=\expandafter\@secondoftwo\tmp%
+      \else%
+         % cos(arctan(x)) = 1/sqrt(1+x^2)
+         % sin(arctan(x)) = x/sqrt(1+x^2)
+         \dimen2=\xradius %
+         \dimen4=\yradius %
+         % if we divide by a dimension, it is internally converted to sp, so we divide by its pt-value and again by 65536. Same for multiplication. etex fuses muldiv to 64bit, so we don't get overflows.
+         \dimen0=\dimexpr\dimen4*\dimen4/\dimen2*65536/\dimen2\relax%
+         % calculate the sqrt; but \pgfmathsqrt@ expects a real number without dimension suffix. It internally does \expandafter\pgfmath@x#1pt\relax, so just gobble the additional pt.
+         \pgfmathsqrt@{\the\dimexpr1pt+\dimen0\relax\@gobbletwo}%
+         \pgfmathreciprocal@\pgfmathresult%
+         \dimen2=\dimexpr.5\pgflinewidth*\dimexpr\pgfmathresult pt\relax/65536\relax%
+         \dimen4=\dimexpr\dimexpr\yradius\relax*\dimen2/\dimexpr\xradius\relax\relax%
+         \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
+                {{\the\dimen2}{\the\dimen4}}%
+      \fi%
+      \dimen6=\dimexpr\dimen4*\dimexpr\xradius\relax/\dimexpr\yradius\relax+%
+                      \dimen4*\dimexpr\yradius\relax/\dimexpr\xradius\relax\relax%
+      \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
+                               {\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius-\dimen4\relax}%
+                               {\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{0pt}{\dimen6}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
+                               {\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+\dimen4\relax}%
+                               {\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+\dimen4\relax}%
+                               {-\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
+                               {-\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{0pt}{-\dimen6}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius-\dimen4\relax}%
+                               {-\dimexpr\yradius+\dimen2\relax}}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
+                               {-\dimexpr\yradius-\dimen2\relax}}%
+      \pgfpathclose%
    }%
 }
 
 \pgfdeclareshape{yquant-oplus}{%
-   \inheritsavedanchors[from=yquant-zz]%
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
+   \inheritsavedanchors[from=yquant-slash]%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-circle]{\anc}%
    }%
    \inheritanchorborder[from=yquant-circle]%
-   \inheritanchorxproj[from=yquant-circle]%
-   \inheritanchoryproj[from=yquant-circle]%
    \backgroundpath{%
       \pgfpathmoveto{\pgfqpoint{0pt}{\yradius}}%
       \pgfpathlineto{\pgfqpoint{0pt}{-\yradius}}%
@@ -427,6 +372,7 @@
                      {\pgfqpoint{\xradius}{0pt}}%
                      {\pgfqpoint{0pt}{\yradius}}%
    }%
+   \inheritclippath[from=yquant-circle]%
 }
 
 \pgfdeclareshape{yquant-measure}{%
@@ -458,7 +404,7 @@
    \saveddimen\textheight{%
       \pgf@x=\ht\pgfnodeparttextbox%
    }
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \anchor{text}{%
@@ -466,13 +412,8 @@
       \pgf@y=\dimexpr-\yradius+1pt+\pgf@y\relax%
    }%
    \inheritanchorborder[from=yquant-rectangle]%
-   \inheritanchorxproj[from=yquant-rectangle]%
-   \inheritanchoryproj[from=yquant-rectangle]%
-   \backgroundpath{%
-      \pgfpathrectanglecorners%
-         {\pgfqpoint{-\xradius}{\yradius}}%
-         {\pgfqpoint{\xradius}{-\yradius}}%
-   }
+   \inheritbackgroundpath[from=yquant-rectangle]%
+   \inheritclippath[from=yquant-rectangle]%
    \beforebackgroundpath{%
       % Make sure the meter does not extend beyond the box (we are in a scope here)
       \path [clip]
@@ -521,16 +462,12 @@
          {-\dimexpr.5\wd\pgfnodeparttextbox+1mm\relax}%
          {-\dimexpr.5\ht\pgfnodeparttextbox-.5\dp\pgfnodeparttextbox\relax}%
    }%
-   \foreach \anc in {center, north, south, south west, west, north west, circuit, text} {%
+   \foreach \anc in {center, north, south, south west, west, north west, text} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \foreach \anc in {north east, east, south east} {%
       \inheritanchor[from=yquant-circle]{\anc}%
    }%
-%   \anchor{text}{%
-%      \stext%
-%      \pgf@x=-.5\dimexpr\xradius-\pgf@x\relax%
-%   }%
    \anchorborder{%
       \@tempdima=\pgf@x%
       \@tempdimb=\pgf@y%
@@ -545,40 +482,6 @@
                                  {\pgfqpoint{\xradius}{\yradius}}%
       \fi%
    }%
-   \anchorxproj{%
-      \ifdim\pgf@x>\dimexpr\xradius-3mm\relax%
-         % to the right
-         \advance\pgf@x by -\dimexpr\xradius-3mm\relax%
-         \yquant@shape@ellipse@xfromy{3mm}\yradius\pgf@y%
-         \pgf@x=\dimexpr\pgf@xa+\xradius-3mm\relax%
-      \else%
-         % to the left
-         \pgf@x=-\xradius\relax%
-      \fi%
-   }%
-   \anchoryproj{%
-      \ifdim\pgf@x>\dimexpr\xradius-3mm\relax%
-         % to the right
-         \advance\pgf@x by -\dimexpr\xradius-3mm\relax%
-         \yquant@shape@ellipse@xfromy\yradius{3mm}\pgf@x%
-         \advance\pgf@x by \dimexpr\xradius-3mm\relax%
-         \ifdim\pgf@y>0pt %
-            % to the top
-            \pgf@y=\pgf@xa%
-         \else%
-            % to the bottom
-            \pgf@y=-\pgf@xa%
-         \fi%
-      \else%
-         % to the left
-         \ifdim\pgf@y>0pt %
-            % to the top
-            \pgf@y=\yradius\relax%
-         \else%
-            \pgf@y=-\yradius\relax%
-         \fi%
-      \fi%
-   }%
    \backgroundpath{%
       \pgfpathmoveto{\pgfqpoint{-\xradius}{\yradius}}%
       \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}{\yradius}}%
@@ -586,29 +489,42 @@
       \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
       \pgfpathclose%
    }%
+   \clippath{%
+      \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                               {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}%
+                               {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+      \pgfpatharc{90}{-90}{3mm+.5\pgflinewidth and \yradius+.5\pgflinewidth}%
+      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                               {-\dimexpr\yradius+.5\pgflinewidth\relax}}%
+      \pgfpathclose%
+   }%
 }
 
 \pgfdeclareshape{yquant-barrier}{%
-   % Here, the radii have a special meaning, we don't put text into the shape
-   \saveddimen\xradius{%
-      \pgf@x=.5\pgflinewidth%
-   }%
    \savedanchor\shorten{%
       \pgfqpoint\pgf@shorten@end@additional\pgf@shorten@start@additional%
    }%
    \saveddimen\yradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}+.5*\yquant@config@register@sep}%
    }%
-   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west, circuit} {%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \inheritanchorborder[from=yquant-rectangle]%
    \backgroundpath{%
-      \pgfsetlinewidth{\xradius}%
       \shorten%
       \pgf@xa=\dimexpr\yradius+\pgf@x\relax%
       \pgf@ya=\dimexpr\yradius+\pgf@y\relax%
       \pgfpathmoveto{\pgfqpoint{0pt}{\pgf@xa}}%
       \pgfpathlineto{\pgfqpoint{0pt}{-\pgf@ya}}%
+   }%
+   \clippath{%
+      \shorten%
+      \@tempdima=\dimexpr\yradius+\pgf@x\relax%
+      \@tempdimb=\dimexpr\yradius+\pgf@y\relax%
+      \pgfpathrectanglecorners
+         {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
+         {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
    }%
 }
