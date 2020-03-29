@@ -117,16 +117,16 @@
    \begingroup%
       \setlength{\parskip}{0pt}%
       \setlength{\parindent}{0pt}%
-      \if\relax\detokenize{#5}\relax%
+      \ifstrempty{#5}{%
          \begin{mdframed}[style=bdBox, backgroundcolor=#4, linecolor=#2,
                           firstextra=\bd@boxextra{#1}, singleextra=\bd@boxextra{#1}]%
-      \else%
+      }{%
          \begin{mdframed}[style=bdBox, backgroundcolor=#4,
                           frametitlefont=\bfseries\sffamily\color{#3},
                           frametitlebackgroundcolor=#2,
                           frametitle={\strut#5}, linecolor=#2,
                           firstextra=\bd@boxextra{#1}, singleextra=\bd@boxextra{#1}]%
-      \fi%
+      }%
       \ignorespaces%
 }
 \def\bd@boxoutro{%

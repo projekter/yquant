@@ -64,22 +64,22 @@
 }
 
 \def\yquant@register@get@id@lazycreate@parse#1[#2;{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@register@get@id@lazycreate@do#1[0][;%
-   \else%
+   }{%
       \yquant@register@get@id@lazycreate@do#1[#2;%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@register@get@id@lazycreate@do#1[#2]#3[;{%
    % parse length
-   \if\relax\detokenize{#3}\relax%
+   \ifstrempty{#3}{%
       \yquant@langhelper@validate\len\count{#2}%
       \numdef\len{\len+1}%
-   \else%
+   }{%
       \PackageError{yquant.sty}{Invalid register name}%
          {Register names must not contain `[' apart from register length indication.}%
-   \fi%
+   }%
    \edef\reg{\trim@spaces{#1}}%
    % Was this register already defined?
    \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
@@ -196,13 +196,13 @@
 }
 
 \def\yquant@register@get@ids@checkrange#1-#2\yquant@sep{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       % the string does not contain a dash
       \yquant@register@get@ids@norange{#1}%
-   \else%
+   }{%
       % this is a range argument
       \yquant@register@get@ids@range#1-#2\yquant@sep%
-   \fi%
+   }%
 }
 
 \def\yquant@register@get@ids@norange#1{%
@@ -215,7 +215,7 @@
 
 \protected\def\yquant@register@get@ids@norange@checkindex#1\yquant@register@get@ids@@index#2\yquant@sep{%
    \edef\current{\trim@spaces{#1}}%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       % the string does not contain a sub-index; we add the full register
       \yquant@register@get@id\first{\current[0]}%
       \letcs\high{\yquant@prefix registerhigh@\current}%
@@ -231,9 +231,9 @@
          \yquant@register@get@id\idx{\current[\i]}%
          \listeadd\yquant@register@get@ids@list{\idx}%
       }%
-   \else%
+   }{%
       \yquant@register@get@ids@norange@index#2%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@register@get@ids@norange@index#1\yquant@register@get@ids@@index{%
@@ -292,13 +292,13 @@
 }
 
 \def\yquant@register@get@ids@subindex@checkrange#1-#2\yquant@sep{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       % the string does not contain a dash, this is a single sub-item
       \yquant@register@get@ids@subindex@norange{\trim@spaces{#1}}%
-   \else%
+   }{%
       % this is a range argument
       \yquant@register@get@ids@subindex@range#1-#2\yquant@sep%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@register@get@ids@subindex@norange#1{%
@@ -364,20 +364,20 @@
 }
 
 \def\yquant@register@get@ids@range@getfirst#1\yquant@register@get@ids@@index#2\yquant@sep{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@register@get@id\first{\trim@spaces{#1}[0]}%
-   \else%
+   }{%
       \yquant@register@get@ids@range@get\first#1\yquant@register@get@ids@@index#2%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@register@get@ids@range@getlast#1\yquant@register@get@ids@@index#2\yquant@sep{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@register@get@id@high\last{\trim@spaces{#1}}%
       \yquant@register@get@id\last{\trim@spaces{#1}[\last]}%
-   \else%
+   }{%
       \yquant@register@get@ids@range@get\last#1\yquant@register@get@ids@@index#2%
-   \fi%
+   }%
 }
 
 \def\yquant@register@get@ids@range@get#1#2\yquant@register@get@ids@@index#3\yquant@register@get@ids@@index{%

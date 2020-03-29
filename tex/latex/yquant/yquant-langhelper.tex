@@ -244,19 +244,19 @@
 }
 
 \def\yquant@langhelper@declare@command@@extract@nctrl#1~#2;{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@langhelper@declare@command@@extract@pctrl#1|~~;%
-   \else%
+   }{%
       \yquant@langhelper@declare@command@@extract@pctrl#1|~#2;%
-   \fi%
+   }%
 }
 
 \def\yquant@langhelper@declare@command@@extract@pctrl#1|#2~#3~;{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@langhelper@declare@command@@exec#1||~#3;%
-   \else%
+   }{%
       \yquant@langhelper@declare@command@@exec#1|#2~#3;%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@langhelper@declare@command@@exec#1|#2|~#3;{%
@@ -301,7 +301,7 @@
    % if the valid value was not user-delimited by \relax, #1 and #2 are empty
    % if the valid value was user-delimited by \relax, #1 is empty and #2 is \relax
    \let\ifvalid=\iffalse%
-   \if\relax\detokenize{#1}\relax%
+   \ifstrempty{#1}{%
       \def\tmp{#2}%
       \ifx\empty\tmp%
          \csletcs{ifvalid}{iftrue}%
@@ -310,6 +310,6 @@
             \csletcs{ifvalid}{iftrue}%
          \fi%
       \fi%
-   \fi%
+   }\relax%
    % eat the rest (which should be empty anyway)
 }

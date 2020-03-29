@@ -92,11 +92,11 @@
 % Executes #3 if #1 (single token!) is equal (\ifx) to the first token of #2, and #4 else.
 \def\ifyquant@firsttoken#1#2{%
    % First check whether #2 is present at all...
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \expandafter\@secondoftwo%
-   \else%
+   }{%
       \ifyquant@firsttoken@aux#1#2\yquant@sep%
-   \fi%
+   }%
 }
 
 \def\ifyquant@firsttoken@aux#1#2#3\yquant@sep{%
@@ -110,11 +110,7 @@
 % Executes #3 if #1 begins with #2, and #4 else - non-expandable
 \protected\def\ifyquant@beginswith#1#2{%
    \def\ifyquant@beginswith@##1#2##2\yquant@end{%
-      \if\relax\detokenize{##1}\relax%
-         \expandafter\@firstoftwo%
-      \else%
-         \expandafter\@secondoftwo%
-      \fi%
+      \ifstrempty{##1}%
    }%
    \ifyquant@beginswith@#1#2\yquant@end%
 }

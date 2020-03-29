@@ -68,25 +68,25 @@
 }
 
 \def\yquant@lang@create@parse@name#1[#2;{%
-   \if\relax\detokenize{#2}\relax%
+   \ifstrempty{#2}{%
       \yquant@lang@create@do#1[1][;%
-   \else%
+   }{%
       \yquant@lang@create@do#1[#2;%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@lang@create@do#1[#2]#3[;{%
    % parse length
-   \if\relax\detokenize{#3}\relax%
+   \ifstrempty{#3}{%
       \yquant@langhelper@validate\len\count{#2}%
       \ifnum\len<1 %
          \PackageError{yquant.sty}{Invalid register length}%
                       {Valid register lengths are integers greater or equal to one.}%
       \fi
-   \else%
+   }{%
       \PackageError{yquant.sty}{Invalid register name}%
          {Register names must not contain `[' apart from register length indication.}%
-   \fi%
+   }%
    \edef\reg{\trim@spaces{#1}}%
    % we allow for scattering, so check whether the register already exists
    \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
@@ -157,26 +157,25 @@
 \protected\def\yquant@lang@create@draw#1#2#3#4#5{%
    \begingroup%
       \dimdef\wireypos{\yquant@register@get@y{#1}}%
-      \if\relax\detokenize{#4}\relax%
+      \ifstrempty{#4}{%
          % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate.
          \path[overlay]
             (#2, \wireypos)%
             coordinate[name prefix=, name suffix=, name=yquantbox];
-      \else%
+      }{%
          \path
             (#2, \wireypos)%
             node[/yquant/every label, /yquant/every initial label,%
                  /yquant/every #3 label, name prefix=, name suffix=, name=yquantbox]%
                 {#4};%
-      \fi%
+      }%
       % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
       \tikzset{/yquant/every wire}%
       \pgfpointanchor{yquantbox}{east}%
       \yquant@register@set@lastwire{#1}{{\the\pgf@x}{\the\pgf@x}{}{}}%
-      \if\relax\detokenize{#5}\relax%
-      \else%
+      \ifstrempty{#5}\relax{%
          \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
-      \fi%
+      }%
    \endgroup%
 }
 % END_FOLD

@@ -66,10 +66,9 @@
    \yquant@circuit@extendwire{#1}%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
-   \if\relax\detokenize{#2}\relax%
-   \else%
+   \ifstrempty{#2}\relax{%
       \pgfnodealias{\tikz@pp@name{#2}}{yquantbox}%
-   \fi%
+   }%
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
@@ -94,10 +93,9 @@
    \dolistloop{#4}%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
-   \if\relax\detokenize{#5}\relax%
-   \else%
+   \ifstrempty{#5}\relax{%
       \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
-   \fi%
+   }%
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
@@ -115,10 +113,9 @@
    \cmd%
    % no wire extension (we are still at the initial position), no control line (init doesn't allow for those, so just save the no-op)
    % check for empty name parameter
-   \if\relax\detokenize{#5}\relax%
-   \else%
+   \ifstrempty{#5}\relax{%
       \pgfnodealias{\tikz@pp@name{#5}}{yquantbox}%
-   \fi%
+   }%
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
@@ -137,10 +134,9 @@
    \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
    \yquant@circuit@extendcontrolline\yquant@draw@@currentcontroltype\yquant@draw@@x%
    % check for empty name parameter
-   \if\relax\detokenize{#3}\relax%
-   \else%
+   \ifstrempty{#3}\relax{%
       \pgfnodealias{\tikz@pp@name{#3}}{yquantbox}%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@draw@pcontrol#1#2{%
