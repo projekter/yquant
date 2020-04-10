@@ -66,6 +66,8 @@
       {\dimdef\yquant@config@operator@sep{#1}},
    operator/minimum width/.code=%
       {\dimdef\yquant@config@operator@minimum@width{#1}},
+   operator/multi warning/.is if=%
+      yquant@config@operator@multi@warn,
    % operator style: control
    every control line/.style=%
       {draw},
@@ -78,11 +80,9 @@
    % operator style: main part
    every operator/.style=%
       {anchor=center},
-   operator multi main/.is if=%
+   operator/multi main/.is if=%
       yquant@config@operator@multi@main,
-   operator multi warning/.is if=%
-      yquant@config@operator@multi@warn,
-   operator multi as single/.style=%
+   operator/multi as single/.style=%
       {/yquant/every multi line/.style=/yquant/every control line},
    every multi line/.style=%
       {draw},
@@ -118,13 +118,13 @@
    operators/every phase/.style=%
       {shape=yquant-circle, radius=.5mm, fill},
    operators/every zz/.style=%
-      {shape=yquant-circle, radius=.5mm, fill, /yquant/operator multi as single},
+      {shape=yquant-circle, radius=.5mm, fill, /yquant/operator/multi as single},
    operators/every xx/.style=%
-      {shape=yquant-rectangle, radius=.75mm, draw, /yquant/operator multi as single},
+      {shape=yquant-rectangle, radius=.75mm, draw, /yquant/operator/multi as single},
    operators/every slash/.style=%
       {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},
    operators/every swap/.style=%
-      {shape=yquant-swap, radius=.75mm, draw, /yquant/operator multi as single},
+      {shape=yquant-swap, radius=.75mm, draw, /yquant/operator/multi as single},
    operators/every not/.style=%
       {shape=yquant-oplus, radius=1.3mm, draw},
    operators/every measure/.style=%

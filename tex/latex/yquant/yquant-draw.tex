@@ -102,7 +102,7 @@
                          \yquant@register@get@y{#1}+\yquant@register@get@y{#2}\relax%
                       \relax)%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
-              /yquant/operator multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
+              /yquant/operator/multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
               y radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
                      .5*\noexpand\pgfkeysvalueof{/tikz/y radius}\fi,%
               name prefix=, name suffix=, name=yquantbox]%
@@ -608,7 +608,7 @@
       \edef\cmd{%
          \noexpand\path (0pt, 0pt)%
             node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
-                 /yquant/operator multi main=\ifnum#3=1 true\else false\fi,
+                 /yquant/operator/multi main=\ifnum#3=1 true\else false\fi,
                  name prefix=, name suffix=, name=]%
                {\unexpanded\expandafter{\yquant@draw@@content}};
       }%
