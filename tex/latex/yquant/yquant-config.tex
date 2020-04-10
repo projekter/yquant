@@ -1,4 +1,3 @@
-\usetikzlibrary{decorations.pathreplacing,decorations.pathmorphing}
 \pgfdeclaremetadecoration{tikz@internal}{pre}{
    \state{pre}[width=\pgfkeysvalueof{/pgf/decoration/pre length}+\pgfkeysvalueof{/pgf/decoration/post length}, next state=main]{
       \appto\tikz@dec@shift{\pgftransformxshift{-\pgfkeysvalueof{/pgf/decoration/post length}}}
