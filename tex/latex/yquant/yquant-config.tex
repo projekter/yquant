@@ -138,7 +138,7 @@
    operators/every wave/.style=%
       {shape=yquant-circle, radius=.5mm, fill},
    operators/every wave line/.style=%
-      {/yquant/every multi line/.append style={decoration={snake, amplitude=.25mm, segment length=5pt}, decorate}},
+      {/yquant/every multi line/.append style={decoration={snake, amplitude=.25mm, segment length=5pt}, decorate}, /tikz/label position=left},
    /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,
    gapped brace/apply shift/.code={%
       \let\tikz@timer@line=\yquant@gappedbrace@timer%

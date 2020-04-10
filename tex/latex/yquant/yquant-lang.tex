@@ -406,20 +406,15 @@
 }
 
 \yquant@langhelper@declare@command@uncontrolled{correlate}\yquant@lang@@correlate
-\yquant@langhelper@setup@attrs{correlate}{}{value}
+\yquant@langhelper@setup@attrs{correlate}{}{}
 \def\yquant@lang@@correlate{%
    \yquant@register@get@allowmultitrue%
+   \yquant@register@get@multiassingle%
    \appto\yquant@attrs@remaining{/yquant/operators/every wave line,}%
-   \edef\cmd{%
-      \noexpand\yquant@draw%
-         {}%
-         {/yquant/operators/every wave%
-          \ifdefined\yquant@lang@attr@value,
-             label={\unexpanded\expandafter{\yquant@lang@attr@value}},
-             label position=left%
-          \fi}{}{}%
-   }%
-   \cmd%
+   \yquant@draw%
+      {}%
+      {/yquant/operators/every wave}%
+      {}{}%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{align}\yquant@lang@@align
