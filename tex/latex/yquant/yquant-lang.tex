@@ -268,7 +268,7 @@
 \yquant@langhelper@declare@command{xx}\yquant@lang@@xx
 \yquant@langhelper@setup@attrs{xx}{}{}
 \def\yquant@lang@@xx{%
-   \yquant@register@get@allowmultitrue%
+   \yquant@register@get@multiassingle%
    \yquant@draw%
       {}%
       {/yquant/operators/every xx}%
@@ -278,7 +278,7 @@
 \yquant@langhelper@declare@command@uncontrolled{zz}\yquant@lang@@zz
 \yquant@langhelper@setup@attrs{zz}{}{}
 \def\yquant@lang@@zz{%
-   \yquant@register@get@allowmultitrue%
+   \yquant@register@get@multiassingle%
    \yquant@draw%
       {}%
       {/yquant/operators/every zz}%
@@ -309,7 +309,7 @@
 \yquant@langhelper@declare@command{swap}\yquant@lang@@swap
 \yquant@langhelper@setup@attrs{swap}{}{}
 \def\yquant@lang@@swap{%
-   \yquant@register@get@allowmultitrue%
+   \yquant@register@get@multiassingle%
    \yquant@draw%
       {}%
       {/yquant/operators/every swap}%
@@ -405,6 +405,23 @@
       {}{}
 }
 
+\yquant@langhelper@declare@command@uncontrolled{correlate}\yquant@lang@@correlate
+\yquant@langhelper@setup@attrs{correlate}{}{value}
+\def\yquant@lang@@correlate{%
+   \yquant@register@get@allowmultitrue%
+   \appto\yquant@attrs@remaining{/yquant/operators/every wave line,}%
+   \edef\cmd{%
+      \noexpand\yquant@draw%
+         {}%
+         {/yquant/operators/every wave%
+          \ifdefined\yquant@lang@attr@value,
+             label={\unexpanded\expandafter{\yquant@lang@attr@value}},
+             label position=left%
+          \fi}{}{}%
+   }%
+   \cmd%
+}
+
 \yquant@langhelper@declare@command@uncontrolled{align}\yquant@lang@@align
 \yquant@langhelper@setup@attrs{align}{}{}
 \def\yquant@lang@@align#1{%
@@ -424,17 +441,24 @@
 \yquant@langhelper@setup@attrs{discard}{}{}
 \def\yquant@lang@@discard#1{%
    \yquant@register@get@ids{#1}%
+   \let\yquant@circuit@settype@to=\yquant@register@type@none%
    \yquant@circuit@actonwires%
-      \yquant@register@set@type%
+      \yquant@circuit@settype%
       \yquant@register@get@ids@list%
       \yquant@register@type@none%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{init}\yquant@lang@@init
 \yquant@langhelper@setup@attrs{init}{value}{type}
-\def\yquant@lang@@init@multi@@extract#1#2#3#4#5{%
-   #5%
+\protected\def\yquant@lang@@init@multi@@extract#1#2#3{%
+   \yquant@for \yquant@i := #1 to #2 {%
+      \edef\yquant@circuit@settype@to{\yquant@register@get@type\yquant@i}%
+      \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
+         \expandafter\yquant@for@break%
+      \fi%
+   }%
 }
+\long\def\@fifthoffive#1#2#3#4#5{#5}
 \protected\def\yquant@lang@@init#1{%
    \yquant@register@get@allowmultitrue%
    \yquant@register@get@ids{#1}%
@@ -458,13 +482,9 @@
       \let\yquant@circuit@settype@to=\yquant@register@type@none%
       \def\do##1{%
          \ifyquant@firsttoken\yquant@register@multi{##1}{%
-            \def\@do####1{%
-               \edef\yquant@circuit@settype@to{\yquant@register@get@type{####1}}%
-               \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
-                  \expandafter\listbreak%
-               \fi%
-            }%
-            \forlistloop\@do{\yquant@lang@@init@multi@@extract##1}%
+            \let\yquant@register@multi@contiguous=\yquant@lang@@init@multi@@extract%
+            \@fifthoffive##1%
+            % we should reset multi@contiguous to the original command; but this is really just a placeholder. As long as it is \protected, everything is fine.
          }{%
             \edef\yquant@circuit@settype@to{\yquant@register@get@type{##1}}%
          }%
@@ -493,6 +513,8 @@
    % special case: if there were no operations at any affected wire before, we will replace the wire description
    \ifdim\yquant@circuit@operator@x=\yquant@config@operator@sep\relax%
       \def\yquant@circuit@operator@x{-.5\dimen2}%
+      \let\yquant@draw@finalize@ctrl@single=\yquant@draw@finalize@ctrl@singleinit%
+      \let\yquant@draw@finalize@ctrl@multi=\yquant@draw@finalize@ctrl@multiinit%
       \expandafter\yquant@draw@%
          \expandafter{\yquant@lang@attr@value}%
          {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@attr@type\space label}%

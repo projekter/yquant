@@ -130,6 +130,7 @@
       \count4=0 % number of total registers
       \ifblank{#1}{}{%
          \let\ifinmulti=\iffalse%
+         \let\ifallowmain=\iffalse%
          \let\do=\yquant@register@get@ids@outerlist%
          \begingroup%
             \catcode`[=\active%
@@ -170,9 +171,15 @@
       \count0=2147483647 % minimal id
       \count2=0 % maximal id
       \count4=0 % number of total registers
+      \count6=-1 % index of main register
       \let\ifinmulti=\iftrue%
+      \let\ifallowmain=\iftrue%
       \let\do=\yquant@register@get@ids@multilist%
       \docsvlist{#1}%
+      \ifnum\count6=-1 %
+         \count6=\count0 %
+      \fi%
+      \yquant@register@multi@splitparts%
       \edef\process{%
             \endgroup%
          \noexpand\listadd\noexpand\yquant@register@get@ids@list{%
@@ -215,6 +222,29 @@
 
 \protected\def\yquant@register@get@ids@norange@checkindex#1\yquant@register@get@ids@@index#2\yquant@sep{%
    \edef\current{\trim@spaces{#1}}%
+   \ifallowmain%
+      \expandafter\ifyquant@firsttoken\expandafter*\expandafter{\current}{%
+         \edef\current{%
+            \expandafter\expandafter\expandafter\trim@spaces%
+            \expandafter\expandafter\expandafter{%
+               \expandafter\@gobble\current%
+            }%
+         }%
+         % catch the minimal index
+         \edef\yquant@register@get@ids@norange@checkindex@setmain{%
+            \count6=\count2%
+            \ifnum\count0<\the\count0 %
+               \count0=\the\count0 %
+            \fi%
+         }%
+         \count0=2147483647 %
+         \csletcs{ifallowmain}{iffalse}%
+      }{
+         \let\yquant@register@get@ids@norange@checkindex@setmain=\relax%
+      }%
+   \else%
+      \let\yquant@register@get@ids@norange@checkindex@setmain=\relax%
+   \fi%
    \ifstrempty{#2}{%
       % the string does not contain a sub-index; we add the full register
       \yquant@register@get@id\first{\current[0]}%
@@ -234,6 +264,7 @@
    }{%
       \yquant@register@get@ids@norange@index#2%
    }%
+   \yquant@register@get@ids@norange@checkindex@setmain%
 }
 
 \protected\def\yquant@register@get@ids@norange@index#1\yquant@register@get@ids@@index{%
@@ -270,9 +301,15 @@
       \count0=2147483647 % minimal id
       \count2=0 % maximal id
       \count4=0 % number of total registers
+      \count6=-1 % index of main register
       \let\ifinmulti=\iftrue%
+      \let\ifallowmain=\iftrue%
       \let\do=\yquant@register@get@ids@subindex@nomulti%
       \docsvlist{#1}%
+      \ifnum\count6=-1 %
+         \count6=\count0 %
+      \fi%
+      \yquant@register@multi@splitparts%
       \edef\process{%
             \endgroup%
          \noexpand\listadd\noexpand\yquant@register@get@ids@list{%
@@ -294,7 +331,8 @@
 \def\yquant@register@get@ids@subindex@checkrange#1-#2\yquant@sep{%
    \ifstrempty{#2}{%
       % the string does not contain a dash, this is a single sub-item
-      \yquant@register@get@ids@subindex@norange{\trim@spaces{#1}}%
+      \edef\idx{\trim@spaces{#1}}%
+      \expandafter\yquant@register@get@ids@subindex@norange\expandafter{\idx}%
    }{%
       % this is a range argument
       \yquant@register@get@ids@subindex@range#1-#2\yquant@sep%
@@ -302,7 +340,18 @@
 }
 
 \protected\def\yquant@register@get@ids@subindex@norange#1{%
-   \yquant@register@get@id\idx{\current[#1]}%
+   \ifallowmain%%
+      \ifyquant@firsttoken*{#1}{%
+         \edef\idx{\current[\expandafter\trim@spaces\expandafter{\@gobble#1}]}%
+         \yquant@register@get@id\idx\idx%
+         \count6=\idx%
+         \csletcs{ifallowmain}{iffalse}%
+      }{
+         \yquant@register@get@id\idx{\current[#1]}%
+      }%
+   \else%
+      \yquant@register@get@id\idx{\current[#1]}%
+   \fi%
    \ifnum\idx<\count0 %
       \count0=\idx\relax%
    \fi%
@@ -314,16 +363,55 @@
 }
 
 \protected\def\yquant@register@get@ids@subindex@range#1-#2-\yquant@sep{%
-   \ifblank{#1}{%
-      \def\first{0}%
-   }{%
-      \yquant@langhelper@validate\first\count{#1}%
-   }%
-   \ifblank{#2}{%
-      \yquant@register@get@id@high\last\current%
-   }{%
-      \yquant@langhelper@validate\last\count{#2}%
-   }%
+   \ifallowmain%
+      \ifyquant@firsttoken*{#1}{%
+         \expandafter\ifblank\expandafter{\@gobble#1}{%
+            \def\first{0}%
+         }{%
+            \expandafter\yquant@langhelper@validate\expandafter\first\expandafter\count\expandafter{\@gobble#1}%
+         }%
+         \yquant@register@get@id\idx{\current[\first]}%
+         \count6=\idx%
+         \csletcs{ifallowmain}{iffalse}%
+      }{%
+         \ifblank{#1}{%
+            \def\first{0}%
+         }{%
+            \yquant@langhelper@validate\first\count{#1}%
+         }%
+      }%
+   \else%
+      \ifblank{#1}{%
+         \def\first{0}%
+      }{%
+         \yquant@langhelper@validate\first\count{#1}%
+      }%
+   \fi%
+   \ifallowmain%
+      % in #1, all initial spaces are gobbled automatically, but not in #2
+      \expandafter\ifyquant@firsttoken\expandafter*\expandafter{\empty#2}{%
+         \expandafter\ifblank\expandafter{\@gobble#2}{%
+            \yquant@register@get@id@high\last\current%
+         }{%
+            \expandafter\yquant@langhelper@validate\expandafter\last\expandafter\count\expandafter{\@gobble#2}%
+         }%
+         \yquant@register@get@id\idx{\current[\last]}%
+         \count6=\idx%
+         \csletcs{ifallowmain}{iffalse}%
+      }{%
+         \ifblank{#2}{%
+            \yquant@register@get@id@high\last\current%
+         }{%
+            \yquant@langhelper@validate\last\count{#2}%
+         }%
+      }%
+   \else%
+      \ifblank{#2}{%
+         \yquant@register@get@id@high\last\current%
+      }{%
+         \yquant@langhelper@validate\last\count{#2}%
+      }%
+   \fi%
    \yquant@for \i := \first to \last {%
       \yquant@register@get@ids@subindex@norange\i%
    }%
@@ -331,14 +419,33 @@
 
 \protected\def\yquant@register@get@ids@range#1-#2-\yquant@sep{%
    % being a range between two registers, those must be uniquely identifiable, i.e. either a single sub-indexed part of a vector register, or no vector specification at all.
-   \ifblank{#1}{%
-      \def\first{1}%
-   }{%
-      \yquant@register@get@ids@range@getfirst#1\yquant@register@get@ids@@index\yquant@sep%
-   }%
+   \ifallowmain%
+      \ifyquant@firsttoken*{#1}{%
+         \expandafter\ifblank\expandafter{\@gobble#1}{%
+            \def\first{1}%
+         }{%
+            \expandafter\yquant@register@get@ids@range@getfirst\@gobble#1\yquant@register@get@ids@@index\yquant@sep%
+         }%
+         \count6=\first%
+         \csletcs{ifallowmain}{iffalse}%
+      }{%
+         \ifblank{#1}{%
+            \def\first{1}%
+         }{%
+            \yquant@register@get@ids@range@getfirst#1\yquant@register@get@ids@@index\yquant@sep%
+         }%
+      }%
+   \else%
+      \ifblank{#1}{%
+         \def\first{1}%
+      }{%
+         \yquant@register@get@ids@range@getfirst#1\yquant@register@get@ids@@index\yquant@sep%
+      }%
+   \fi%
+   % it does not make sense to allow to set the main part on the second half of the range, since a range over registers (not indices) is automatically visual, so this range will be contiguous.
    \ifblank{#2}{%
       \letcs\last{\yquant@prefix registers}%
-   }{%%
+   }{%
       \yquant@register@get@ids@range@getlast#2\yquant@register@get@ids@@index\yquant@sep%
    }%
    \ifnum\first<\last\relax%
@@ -385,6 +492,94 @@
 }
 
 \let\yquant@register@multi=\empty%
+\protected\def\yquant@register@multi@contiguous{}%
+
+% splits \yquant@register@get@ids@list into a list of contiguous parts
+\protected\def\yquant@register@multi@splitparts{%
+   \begingroup%
+      \let\registers=\yquant@register@get@ids@list%
+      \yquant@sort@list\registers\yquant@sort@ascending%
+      \let\newlist=\empty%
+      \count2=-1 %
+      \def\do##1{%
+         \ifnum\count2=-1 %
+            \count2=##1 %
+            \count4=\count2 %
+         \else%
+            \advance\count2 by 1 %
+            \ifnum##1>\count2 %
+               % this is a discontiguous change (we disallow duplicate entries)
+               \eappto\newlist{%
+                  \yquant@register@multi@contiguous%
+                     {\the\count4}{\the\numexpr\count2-1\relax}%
+                     {\ifnum\count6<\count2 %
+                         \ifnum\count4>\count6 %
+                            0%
+                         \else%
+                            1%
+                         \fi%
+                      \else%
+                         0%
+                      \fi}%
+               }%
+               \count2=##1 %
+               \count4=\count2 %
+            \fi%
+         \fi%
+      }%
+      \dolistloop\registers%
+      % we disallow empty lists
+      \eappto\newlist{%
+         \yquant@register@multi@contiguous%
+            {\the\count4}{\the\count2}%
+            {\ifnum\count6>\count2 %
+                0%
+             \else%
+                \ifnum\count4>\count6 %
+                   0%
+                \else%
+                   1%
+                \fi%
+             \fi}%
+      }%
+      \expandafter%
+   \endgroup%
+   \expandafter\def\expandafter\yquant@register@get@ids@list\expandafter{%
+      \newlist%
+   }%
+}
+
+% splits \yquant@register@get@ids@list into a list of discontiguous parts
+\protected\def\yquant@register@multi@splitparts@sepall{%
+   \begingroup%
+      \let\registers=\yquant@register@get@ids@list%
+      \yquant@sort@list\registers\yquant@sort@ascending%
+      \let\newlist=\empty%
+      \def\do##1{%
+         \eappto\newlist{%
+            \yquant@register@multi@contiguous%
+               {##1}{##1}%
+               {\ifnum##1=\count6 %
+                   1%
+                \else%
+                   0%
+                \fi%
+               }%
+         }%
+      }%
+      \dolistloop\registers%
+      \expandafter%
+   \endgroup%
+   \expandafter\def\expandafter\yquant@register@get@ids@list\expandafter{%
+      \newlist%
+   }%
+}
+
+\protected\def\yquant@register@get@multiassingle{%
+   \yquant@register@get@allowmultitrue%
+   \let\yquant@register@multi@splitparts=\yquant@register@multi@splitparts@sepall%
+   \pgfkeys{/yquant/operator multi as single}%
+}
 % END_FOLD
 
 % BEGIN_FOLD Getters: extract the requested information from the register with given id

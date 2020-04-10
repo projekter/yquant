@@ -60,7 +60,7 @@
       \ifnum\yquant@env=1 %
          \yquant@env@substikz%
       \fi%
-      \scope[{/yquant/.cd, every circuit, #1}]%
+      \scope[{/yquant/.cd, #1, /tikz/.cd, /yquant/every circuit}]%
 }
 \newif\ifyquantdebug
 \protected\def\yquant@env@end{%

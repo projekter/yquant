@@ -389,47 +389,73 @@
             \pgf@x=1.25mm %
          \fi%
       \else%
-         % We need the 2.3mm for the meter sign, the height of the text plus a minimum separation of 2pt
-         \pgf@y=.5\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox+2.3mm+4pt\relax%
+         \pgf@y=\dimexpr.5\ht\pgfnodeparttextbox+.5\dp\pgfnodeparttextbox+2pt\relax%
+         \ifyquant@config@operator@multi@main%
+            \advance\pgf@y by 1.25mm %
+         \fi%
          \ifdim\pgf@x<\pgf@y%
             \pgf@x=\pgf@y%
          \fi%
       \fi%
    }%
    \savedanchor\stext{%
-      \pgfqpoint%
-         {-.5\wd\pgfnodeparttextbox}%
-         {\dp\pgfnodeparttextbox}%
+      \ifyquant@config@operator@multi@main%
+         \pgfqpoint%
+            {-.5\wd\pgfnodeparttextbox}%
+            {\dp\pgfnodeparttextbox}%
+      \else%
+         \pgfqpoint%
+            {-.5\wd\pgfnodeparttextbox}%
+            {-\dimexpr.5\ht\pgfnodeparttextbox-.5\dp\pgfnodeparttextbox\relax}%
+      \fi%
    }%
    \saveddimen\textheight{%
       \pgf@x=\ht\pgfnodeparttextbox%
-   }
+   }%
+   \savedmacro\main{%
+      \ifyquant@config@operator@multi@main%
+         \def\main{\noexpand\yquant@config@operator@multi@maintrue}%
+      \else%
+         \ifdim\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox\relax=0pt%
+            \def\main{\noexpand\yquant@config@operator@multi@maintrue}%
+         \else%
+            \def\main{\noexpand\yquant@config@operator@multi@mainfalse}%
+         \fi%
+      \fi%
+   }%
    \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
    }%
    \anchor{text}{%
       \stext%
-      \pgf@y=\dimexpr-\yradius+1pt+\pgf@y\relax%
+      \main%
+      \ifyquant@config@operator@multi@main%
+         \pgf@y=\dimexpr-\yradius+1pt+\pgf@y\relax%
+      \fi%
    }%
    \inheritanchorborder[from=yquant-rectangle]%
    \inheritbackgroundpath[from=yquant-rectangle]%
    \inheritclippath[from=yquant-rectangle]%
    \beforebackgroundpath{%
-      % Make sure the meter does not extend beyond the box (we are in a scope here)
-      \path [clip]
-         (-\xradius, \yradius) rectangle (\xradius, -\yradius);%
-      % The position of the meter symbol depends on the presence of the text. If there is no text, we just vertically center. If there is some text, we shift the symbol upwards from the text until there is no overlap any more.
-      \csname pgf@anchor@yquant-measure@text\endcsname%
-      \advance\pgf@y by \textheight\relax%
-      \ifdim\pgf@y<-1.15mm %
-         \@tempdima=-1.15mm %
-      \else%
-         \@tempdima=\dimexpr\pgf@y+2pt\relax%
+      \main%
+      % we only draw the meter symbol if this is the main part of a multi-register (or there is no text)
+      \ifyquant@config@operator@multi@main%
+         % Make sure the meter does not extend beyond the box (we are in a scope here)
+         \path [clip]
+            (-\xradius, \yradius) rectangle (\xradius, -\yradius);%
+         % The position of the meter symbol depends on the presence of the text. If there is no text, we just vertically center. If there is some text, we shift the symbol upwards from the text until there is no overlap any more.
+         \csname pgf@anchor@yquant-measure@text\endcsname%
+         \advance\pgf@y by \textheight\relax%
+         \ifdim\pgf@y<-1.15mm %
+            \@tempdima=-1.15mm %
+         \else%
+            \@tempdima=\dimexpr\pgf@y+2pt\relax%
+         \fi%
+         \path [/yquant/operators/every measure meter]
+            (-2.25mm, \@tempdima) arc[start angle=160, end angle=20,%
+                                      x radius=2.25mm, y radius=1.4mm]
+            (0, \@tempdima) -- ++(1.6mm, 2.3mm);
       \fi%
-      \path [/yquant/operators/every measure meter]
-         (-2.25mm, \@tempdima) arc[start angle=160, end angle=20,%
-                                   x radius=2.25mm, y radius=1.4mm]
-         (0, \@tempdima) -- ++(1.6mm, 2.3mm);
    }%
 }
 
@@ -501,9 +527,13 @@
    }%
 }
 
-\pgfdeclareshape{yquant-barrier}{%
+\pgfdeclareshape{yquant-line}{%
    \savedanchor\shorten{%
       \pgfqpoint\pgf@shorten@end@additional\pgf@shorten@start@additional%
+   }%
+   \saveddimen\xradius{%
+      % we only need this for the border anchor; the value is automatically correct in the paths.
+      \pgf@x=.5\pgflinewidth%
    }%
    \saveddimen\yradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}+.5*\yquant@config@register@sep}%
