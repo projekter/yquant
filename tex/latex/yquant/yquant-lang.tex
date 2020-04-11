@@ -408,8 +408,9 @@
 \yquant@langhelper@declare@command@uncontrolled{correlate}\yquant@lang@@correlate
 \yquant@langhelper@setup@attrs{correlate}{}{}
 \def\yquant@lang@@correlate{%
+   % do not call \yquant@register@get@multiassingle, we do not want to install a different multi line style!
    \yquant@register@get@allowmultitrue%
-   \yquant@register@get@multiassingle%
+   \let\yquant@register@multi@splitparts=\yquant@register@multi@splitparts@sepall%
    \yquant@draw%
       {}%
       {/yquant/operators/every wave}%
