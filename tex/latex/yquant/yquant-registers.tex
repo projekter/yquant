@@ -72,26 +72,26 @@
 }
 
 \protected\def\yquant@register@get@id@lazycreate@do#1[#2]#3[;{%
-   % parse length
-   \ifstrempty{#3}{%
-      \yquant@langhelper@validate\len\count{#2}%
-      \numdef\len{\len+1}%
-   }{%
-      \PackageError{yquant.sty}{Invalid register name}%
-         {Register names must not contain `[' apart from register length indication.}%
-   }%
-   \edef\reg{\trim@spaces{#1}}%
-   % Was this register already defined?
-   \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
-      \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1}%
-      \unless\ifnum\idx<\len\relax%
-         \PackageError{yquant.sty}{Internal inconsistency detected}%
-            {Tried to create a register on-the-fly that already existed.}%
-      \fi%
-   \else%
-      \def\idx{0}%
-   \fi%
    \begingroup%
+      % parse length
+      \ifstrempty{#3}{%
+         \yquant@langhelper@validate\len\count{#2}%
+         \numdef\len{\len+1}%
+      }{%
+         \PackageError{yquant.sty}{Invalid register name}%
+            {Register names must not contain `[' apart from register length indication.}%
+      }%
+      \edef\reg{\trim@spaces{#1}}%
+      % Was this register already defined?
+      \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
+         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1}%
+         \unless\ifnum\idx<\len\relax%
+            \PackageError{yquant.sty}{Internal inconsistency detected}%
+               {Tried to create a register on-the-fly that already existed.}%
+         \fi%
+      \else%
+         \def\idx{0}%
+      \fi%
       % pre-set y position
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
          \yquant@register@define%
@@ -343,7 +343,7 @@
    \ifallowmain%%
       \ifyquant@firsttoken*{#1}{%
          \edef\idx{\current[\expandafter\trim@spaces\expandafter{\@gobble#1}]}%
-         \yquant@register@get@id\idx\idx%
+         \expandafter\yquant@register@get@id\expandafter\idx\expandafter{\idx}%
          \count6=\idx%
          \csletcs{ifallowmain}{iffalse}%
       }{
