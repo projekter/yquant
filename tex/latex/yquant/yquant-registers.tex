@@ -578,7 +578,7 @@
 \protected\def\yquant@register@get@multiassingle{%
    \yquant@register@get@allowmultitrue%
    \let\yquant@register@multi@splitparts=\yquant@register@multi@splitparts@sepall%
-   \pgfkeys{/yquant/operator/multi as single}%
+   \preto\yquant@attrs@remaining{/yquant/operator/multi as single,}%
 }
 % END_FOLD
 
