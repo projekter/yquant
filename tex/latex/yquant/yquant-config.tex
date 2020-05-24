@@ -1,145 +1,147 @@
-\pgfdeclaremetadecoration{tikz@internal}{pre}{
-   \state{pre}[width=\pgfkeysvalueof{/pgf/decoration/pre length}+\pgfkeysvalueof{/pgf/decoration/post length}, next state=main]{
-      \appto\tikz@dec@shift{\pgftransformxshift{-\pgfkeysvalueof{/pgf/decoration/post length}}}
-      \tikz@dec@trans
-      \decoration{\pgfkeysvalueof{/pgf/decoration/pre}}
-   }
-   \state{main}[width=\pgfmetadecoratedremainingdistance, next state=final]{
-      \tikz@dec@trans
-      \decoration{\tikz@decoration@name}
-   }
-   \state{final}{
-      \tikz@dec@trans
-      \decoration{\pgfkeysvalueof{/pgf/decoration/post}}
-   }
+\pgfdeclaremetadecoration{tikz@internal}{pre}{%
+   \state{pre}[width=\pgfkeysvalueof{/pgf/decoration/pre length}+\pgfkeysvalueof{/pgf/decoration/post length}, next state=main]{%
+      \appto\tikz@dec@shift{\pgftransformxshift{-\pgfkeysvalueof{/pgf/decoration/post length}}}%
+      \tikz@dec@trans%
+      \decoration{\pgfkeysvalueof{/pgf/decoration/pre}}%
+   }%
+   \state{main}[width=\pgfmetadecoratedremainingdistance, next state=final]{%
+      \tikz@dec@trans%
+      \decoration{\tikz@decoration@name}%
+   }%
+   \state{final}{%
+      \tikz@dec@trans%
+      \decoration{\pgfkeysvalueof{/pgf/decoration/post}}%
+   }%
 }
-\pgfqkeys{/yquant}{
+\pgfqkeys{/yquant}{%
    every circuit/.style={%
       every node/.prefix style={transform shape},%
       every label/.prefix style={transform shape=false}% TODO: no, we don't really want this, but pgf bug #843 requires this if we still want to have `label position` available
-   },
+   },%
    % register settings
    register/default name/.store in=%
-      \yquant@config@register@default@name,
+      \yquant@config@register@default@name,%
    register/minimum height/.code=%
-      {\dimdef\yquant@config@register@minimum@height{#1}},
+      {\dimdef\yquant@config@register@minimum@height{#1}},%
    register/separation/.code=%
-      {\dimdef\yquant@config@register@sep{#1}},
+      {\dimdef\yquant@config@register@sep{#1}},%
    % register label style
    every label/.style=%
-      {shape=yquant-text, anchor=center, align=right},
+      {shape=yquant-text, anchor=center, align=right},%
    every initial label/.style=%
-      {anchor=east},
+      {anchor=east},%
    every qubit label/.style=%
-      {},
+      {},%
    every cbit label/.style=%
-      {},
+      {},%
    every qubits label/.style=%
-      {},
+      {},%
    every multi label/.style=%
-      {shift={(-.075, 0)}, draw, decoration={gapped brace, mirror}, decorate, /yquant/gapped brace/apply shift,
-       every node/.append style={shape=yquant-text, anchor=east, align=right, shift={(-.05, 0)}, pos=-1}},
+      {shift={(-.075, 0)}, draw, decoration={gapped brace, mirror}, decorate, /yquant/gapped brace/apply shift,%
+       every node/.append style={shape=yquant-text, anchor=east, align=right, shift={(-.05, 0)}, pos=-1}},%
+   every input label/.style=%
+      {},%
    % output label styles
    every output/.style=%
-      {shape=yquant-text, anchor=west, align=left},
+      {shape=yquant-text, anchor=west, align=left},%
    every qubit output/.style=%
-      {},
+      {},%
    every cbit output/.style=%
-      {},
+      {},%
    every qubits output/.style=%
-      {},
+      {},%
    every multi output/.style=%
-      {shift={(.075, 0)}, draw, decoration={gapped brace}, decorate, /yquant/gapped brace/apply shift,
-       every node/.append style={shape=yquant-text, anchor=west, align=left, shift={(.05, 0)}, pos=-1}},
+      {shift={(.075, 0)}, draw, decoration={gapped brace}, decorate, /yquant/gapped brace/apply shift,%
+       every node/.append style={shape=yquant-text, anchor=west, align=left, shift={(.05, 0)}, pos=-1}},%
    % wire style
    every wire/.style=%
-      {draw},
+      {draw},%
    every qubit wire/.style=%
-      {},
+      {},%
    every cbit wire/.style=%
-      {},
+      {},%
    every qubits wire/.style=%
-      {},
+      {},%
    % operator settings
    operator/separation/.code=%
-      {\dimdef\yquant@config@operator@sep{#1}},
+      {\dimdef\yquant@config@operator@sep{#1}},%
    operator/minimum width/.code=%
-      {\dimdef\yquant@config@operator@minimum@width{#1}},
+      {\dimdef\yquant@config@operator@minimum@width{#1}},%
    operator/multi warning/.is if=%
-      yquant@config@operator@multi@warn,
+      yquant@config@operator@multi@warn,%
    % operator style: control
    every control line/.style=%
-      {draw},
+      {draw},%
    every control/.style=%
-      {shape=yquant-circle, anchor=center, radius=.5mm},
+      {shape=yquant-circle, anchor=center, radius=.5mm},%
    every positive control/.style=%
-      {fill=black},
+      {fill=black},%
    every negative control/.style=%
-      {draw},
+      {draw},%
    % operator style: main part
    every operator/.style=%
-      {anchor=center},
+      {anchor=center},%
    operator/multi main/.is if=%
-      yquant@config@operator@multi@main,
+      yquant@config@operator@multi@main,%
    operator/multi as single/.style=%
-      {/yquant/every multi line/.style=/yquant/every control line},
+      {/yquant/every multi line/.style=/yquant/every control line},%
    every multi line/.style=%
-      {draw, decoration={snake, amplitude=.25mm, segment length=5pt}, decorate},
+      {draw, decoration={snake, amplitude=.25mm, segment length=5pt}, decorate},%
    % overwriting all styles
    this operator/.style=%
-      {},
+      {},%
    this control/.style=%
-      {},
+      {},%
    operator style/.style=%
-      {/yquant/this operator/.append style={#1}},
+      {/yquant/this operator/.append style={#1}},%
    control style/.style=%
-      {/yquant/every control line/.append style={#1},
-       /yquant/this control/.append style={#1}},
+      {/yquant/every control line/.append style={#1},%
+       /yquant/this control/.append style={#1}},%
    style/.style=%
-      {/yquant/this operator/.append style={#1},
-       /yquant/every control line/.append style={#1},
-       /yquant/this control/.append style={#1}},
+      {/yquant/this operator/.append style={#1},%
+       /yquant/every control line/.append style={#1},%
+       /yquant/this control/.append style={#1}},%
    % different operator appearances
    operators/every box/.style=%
-      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},
+      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
+   operators/every subcircuit/.style=%
+      {/yquant/operators/every box},%
    operators/every h/.style=%
-      {/yquant/operators/every box},
+      {/yquant/operators/every box},%
    operators/every pauli/.style=%
-      {/yquant/operators/every box},
+      {/yquant/operators/every box},%
    operators/every x/.style=%
-      {/yquant/operators/every pauli},
+      {/yquant/operators/every pauli},%
    operators/every y/.style=%
-      {/yquant/operators/every pauli},
+      {/yquant/operators/every pauli},%
    operators/every z/.style=%
-      {/yquant/operators/every pauli},
-%   operators/every subcircuit/.style=%
-%      {/yquant/operators/every box, inner ysep=0pt},
+      {/yquant/operators/every pauli},%
    operators/every phase/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},
+      {shape=yquant-circle, radius=.5mm, fill},%
    operators/every zz/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},
+      {shape=yquant-circle, radius=.5mm, fill},%
    operators/every xx/.style=%
-      {shape=yquant-rectangle, radius=.75mm, draw},
+      {shape=yquant-rectangle, radius=.75mm, draw},%
    operators/every slash/.style=%
-      {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},
+      {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},%
    operators/every swap/.style=%
-      {shape=yquant-swap, radius=.75mm, draw},
+      {shape=yquant-swap, radius=.75mm, draw},%
    operators/every not/.style=%
-      {shape=yquant-oplus, radius=1.3mm, draw},
+      {shape=yquant-oplus, radius=1.3mm, draw},%
    operators/every measure/.style=%
-      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},
+      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
    operators/every measure meter/.style=%
-      {draw, -{Latex[length=2.5pt]}},
+      {draw, -{Latex[length=2.5pt]}},%
    operators/every dmeter/.style=%
-      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
+      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},%
    operators/every barrier/.style=%
-      {shape=yquant-line, dashed, draw},
+      {shape=yquant-line, dashed, draw},%
    operators/every wave/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},
-   /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,
+      {shape=yquant-circle, radius=.5mm, fill},%
+   /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,%
    gapped brace/apply shift/.code={%
       \let\tikz@timer@line=\yquant@gappedbrace@timer%
-   },
+   },%
 }
 
 \def\yquant@config@register@default@name{\regidx}
@@ -162,7 +164,7 @@
    \ifdim\tikz@time pt=-1pt %
       % first set \pgfdecoratedremainingdistance appropriately
       \pgfpointdiff\tikz@timer@start\tikz@timer@end%
-      \pgfmathsqrt@{\dimexpr\pgf@x*\pgf@x/65536+\pgf@y*\pgf@y/65536\relax\@gobbletwo}
+      \pgfmathsqrt@{\dimexpr\pgf@x*\pgf@x/65536+\pgf@y*\pgf@y/65536\relax\@gobbletwo}%
       \pgfdecoratedremainingdistance=\pgfmathresult pt %
       % now perform the transformation
       \pgf@xc=\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance%

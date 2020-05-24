@@ -44,67 +44,217 @@
 
 \long\protected\def\yquant@env@begin@arg[#1]{%
    \begingroup%
-      \advance\yquant@env by 1 %
+      \let\yquant@parent=\yquant@prefix%
+      \global\advance\yquant@env by 1 %
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
+      \ifnum\yquant@env=1 %
+         \yquant@env@substikz%
+         \def\yquant@env@create@x{0pt}%
+         \global\cslet{\yquant@prefix parameters}\empty%
+      \else%
+         \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
+         \let\yquant@env@create@x=\yquant@circuit@operator@x%
+         \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
+         \yquant@env@lazyfalse% forbid lazy register creation in subcircuits. We need a proper and in-order declaration of the subcircuit's interface.
+      \fi%
       \let\yquant=\yquant@env@scan%
-      \yquant@lang@reset@attrs%
+      \yquant@env@reset@commands%
       \csgdef{\yquant@prefix registers}{0}%
       \global\cslet{\yquant@prefix draw}\relax%
       \global\cslet{\yquant@prefix outputs}\relax%
+      \global\cslet{\yquant@prefix xmin}\yquant@env@create@x%
+      \global\cslet{\yquant@prefix subcircuits}\empty%
+      \global\cslet{\yquant@prefix inonly}\empty%
       \csxdef{\yquant@prefix cleanup}{%
          \expandafter\noexpand\csname\yquant@prefix registers\endcsname%
          \expandafter\noexpand\csname\yquant@prefix draw\endcsname%
          \expandafter\noexpand\csname\yquant@prefix outputs\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix parameters\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix xmin\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix inonly\endcsname%
          \expandafter\noexpand\csname\yquant@prefix cleanup\endcsname%
       }%
-      \ifnum\yquant@env=1 %
-         \yquant@env@substikz%
-      \fi%
       \scope[{/yquant/.cd, #1, /tikz/.cd, /yquant/every circuit}]%
 }
-\newif\ifyquantdebug
+
 \protected\def\yquant@env@end{%
          \letcs\yquant@env@end@registers{\yquant@prefix registers}%
          \ifnum\yquant@env@end@registers>0 %
             % draw all wires
             \yquant@register@get@maxxrange\yquant@env@end@xpos{1}{\yquant@env@end@registers}%
             % to have a symmetric situation, we extend again one separation at the end
+            \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
+            \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
+            \yquant@cleanup@csadd{xmax}%
             \csxappto{\yquant@prefix draw}{%
-               \def\noexpand\yquant@env@end@xpos{%
-                  \the\dimexpr\yquant@env@end@xpos+\yquant@config@operator@sep\relax%
-               }%
-               \yquant@circuit@endwires{\yquant@env@end@registers}%
-            }
-            % also calculate the true y positions
-            \dimen0=0pt %
-            \dimen2=0pt %
-            \dimen4=\yquant@config@register@sep %
-            \yquant@for \i := 1 to \yquant@env@end@registers {%
-               % we do not care if the wire is present for the y position
-               \dimen2=.5\dimexpr\yquant@register@get@height\i\relax%
-               \advance\dimen0 by \dimen2\relax%
-               % top-to-bottom means negative coordinates in pgf
-               \yquant@register@set@y\i{-\the\dimen0}%
-               \advance\dimen0 by \dimen2\relax%
-               \advance\dimen0 by \dimen4\relax%
+               \yquant@circuit@endwires{\yquant@env@end@xpos}%
             }%
             \csname\yquant@prefix outputs\endcsname%
+            % also calculate the true y positions
+            \unless\ifdefined\yquant@parent%
+               \yquant@env@end@calcypositions%
+            \fi%
+         \else%
+            \ifdefined\yquant@parent%
+               \PackageError{yquant.sty}{Empty subcircuit}%
+                            {Subcircuits must contain registers.}%
+            \else%
+               \PackageWarning{yquant.sty}{Empty quantum circuit}%
+            \fi%
          \fi%
-      \endscope%
-      % Now we actually carry out the tikz commands which were previously stored in the draw command. But before this, we get rid of all \yquant@env@scan calls and also restore the scope command, since this would add itself once again. And get@y needs to expand.
-      \let\path=\tikz@command@path%
-      \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
-      \let\tikz@scope@opt=\yquant@env@substikz@scope%
-      \let\endtikz@scope@env=\yquant@env@substikz@endscope%
-      \let\endscope=\endtikz@scope@env%
-      \let\stopscope=\endscope%
-      \yquant@register@get@y@@expandable%
-      \ifyquantdebug%
-         \csshow{\yquant@prefix draw}%
+      \endscope% this triggers a re-scan (which then terminates directly due to the following macro), but it would be more painful to avoid it.
+      \ifdefined\yquant@parent%
+         % We are in a subcircuit. The drawing and cleanup is delayed until the end.
+         \csxappto{\yquant@parent cleanup}%
+            {\unexpanded\expandafter\expandafter\expandafter{%
+               \csname\yquant@prefix cleanup\endcsname%
+            }}%
+         \ifyquantdebug%
+            \csshow{\yquant@prefix draw}%
+         \fi%
+      \else%
+         % Now we actually carry out the tikz commands which were previously stored in the draw command. But before this, we get rid of all \yquant@env@scan calls and also restore the scope command, since this would add itself once again. And get@y needs to expand.
+         \let\path=\tikz@command@path%
+         \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
+         \let\tikz@scope@opt=\yquant@env@substikz@scope%
+         \let\endtikz@scope@env=\yquant@env@substikz@endscope%
+         \let\endscope=\endtikz@scope@env%
+         \let\stopscope=\endscope%
+         \yquant@register@get@y@@expandable%
+         \ifyquantdebug%
+            \csshow{\yquant@prefix draw}%
+         \fi%
+         \csname\yquant@prefix draw\endcsname%
+         \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
+         \global\yquant@env=0 %
       \fi%
-      \csname\yquant@prefix draw\endcsname%
-      \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
    \endgroup%
+}
+
+\protected\def\yquant@env@end@calcypositions{%
+   \begingroup%
+      \dimen4=\yquant@config@register@sep %
+      % We know the heights of most gates, but subcircuits are tricky. Since the position of their inner wires depends on the heights of the outer wires, we could not make any assumption about their heights yet. So we now need multiple iterations: First, we fix the positions of our own wires preliminarily. Then, we iterate through all subcircuits at the first level, place their wires appropriately and try to align input and output. In doing so, we recognize when there's not enough space at an outer wire. If this is the case, we enlarge the outer wire's height appropriately and restart alignment from the outmost level. If everything is proper, we start aligning at the next level.
+      \yquant@env@end@calcypositions@toplevel1%
+      % Turn the preliminary positions into true ones at every level.
+      \yquant@env@end@setypositions1%
+   \endgroup%
+}
+
+\protected\def\yquant@env@end@calcypositions@loop#1{%
+   % \yquant@parent has to be set already
+   \def\yquant@prefix{yquant@env#1@}%
+   % #1 now holds the id of the subcircuit. Find the first input.
+   \edef\firstinput{%
+      \expandafter\expandafter\expandafter%
+         \@firstoftwo\csname\yquant@prefix firstinput\endcsname%
+   }%
+   \edef\lastinput{%
+      \expandafter\expandafter\expandafter%
+         \@firstoftwo\csname\yquant@prefix lastinput\endcsname%
+   }%
+   % we already made sure during in \yquant@circuit@subcircuit that there is enough space above and below the subcircuit. Still, the wires need to be positioned. However, we will first deal with all intermediate wires, which need to be placed by means of shifts - there is no direct correspondence to heights or depths of parent wires any more.
+   \ifnum\firstinput<\numexpr\lastinput-1\relax%
+      \dimen0=\dimexpr%
+         \csname y@\csname\yquant@prefix registermap@\firstinput\endcsname\endcsname+%
+         \yquant@register@get@depth\firstinput+\dimen4%
+      \relax%
+      \yquant@for \i := \numexpr\firstinput+1\relax to \lastinput {%
+         \advance\dimen0 by \yquant@register@get@height\i\relax%
+         \ifcsname\yquant@prefix registermap@\i\endcsname%
+            % this is an input: do we have enough space by using the outer position?
+            \letcs\outername{\yquant@prefix registermap@\i}%
+            \letcs\outery{y@\outername}%
+            \ifdim\dimen0>\outery\relax%
+               % re-aligning the outer positions is required
+               \ifcsname y+@\outername\endcsname%
+                  \csdimdef{y+@\outername}%
+                           {\csname y+@\outername\endcsname+\dimen0-\outery}%
+               \else%
+                  \csdimdef{y+@\outername}{\dimen0-\outery}%
+               \fi%
+               \let\yquant@env@end@calcypositions@redo=\relax%
+            \fi%
+         \else%
+            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
+         \fi%
+         \ifdefined\yquant@env@end@calcypositions@redo%
+            \expandafter\yquant@for@break%
+         \else%
+            \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
+         \fi%
+      }%
+   \fi%
+   \unless\ifdefined\yquant@env@end@calcypositions@redo%
+      % sounds good, no readjustments necessary. Now transfer the wires above and below in the appropriate macros.
+      \ifnum\firstinput>1 %
+         \dimen0=\dimexpr%
+            \csname y@\csname\yquant@prefix registermap@\firstinput\endcsname\endcsname-%
+            \yquant@register@get@height\firstinput-\dimen4%
+         \relax%
+         \yquant@fordown \i := \numexpr\firstinput-1\relax downto 1 {%
+            \advance\dimen0 by -\yquant@register@get@depth\i\relax%
+            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
+            \advance\dimen0 by -\dimexpr\yquant@register@get@height\i+\dimen4\relax%
+         }%
+      \fi%
+      \ifnum\lastinput<\csname\yquant@prefix registers\endcsname%
+         \dimen0=\dimexpr%
+            \csname y@\csname\yquant@prefix registermap@\lastinput\endcsname\endcsname+%
+            \yquant@register@get@depth\lastinput+\dimen4%
+         \relax%
+         \yquant@for \i := \numexpr\lastinput+1\relax to \csname\yquant@prefix registers\endcsname {%
+            \advance\dimen0 by \yquant@register@get@height\i\relax%
+            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
+            \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
+         }%
+      \fi%
+   \fi%
+   \ifdefined\yquant@env@end@calcypositions@redo%
+      % forget every plan about going deeper, restart.
+      \expandafter\listbreak%
+   \else%
+      \expandafter\yquant@env@end@calcypositions@subcircuits%
+   \fi%
+}
+
+\protected\def\yquant@env@end@calcypositions@subcircuits{%
+   \let\yquant@parent=\yquant@prefix%
+   \forlistcsloop\yquant@env@end@calcypositions@loop{\yquant@prefix subcircuits}%
+   \ifdefined\yquant@env@end@calcypositions@redo%
+      \expandafter\listbreak%
+   \fi%
+}
+
+\protected\def\yquant@env@end@calcypositions@toplevel{%
+   \def\yquant@prefix{yquant@env1@}%
+   \dimen0=0pt %
+   \yquant@for \i := 1 to \yquant@env@end@registers {%
+      % we do not care if the wire is present for the y position
+      \advance\dimen0 by \yquant@register@get@height\i\relax%
+      \ifcsname y+@\yquant@prefix register@\i\endcsname%
+         \advance\dimen0 by \csname y+@\yquant@prefix register@\i\endcsname\relax%
+      \fi%
+      \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
+      \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
+   }%
+   \undef\yquant@env@end@calcypositions@redo%
+   \let\yquant@parent=\yquant@prefix%
+   \forlistcsloop\yquant@env@end@calcypositions@loop{\yquant@prefix subcircuits}%
+   \ifdefined\yquant@env@end@calcypositions@redo%
+      \expandafter\yquant@env@end@calcypositions@toplevel%
+   \fi%
+}
+
+\protected\def\yquant@env@end@setypositions#1{%
+   \def\yquant@prefix{yquant@env#1@}%
+   \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+      \unless\ifcsname\yquant@prefix registermap@\i\endcsname%
+         \yquant@register@set@y\i{-\csname y@\yquant@prefix register@\i\endcsname}%
+      \fi%
+   }%
+   \forlistcsloop\yquant@env@end@setypositions{\yquant@prefix subcircuits}%
 }
 
 \tikzaddtikzonlycommandshortcutlet\yquant\yquant@envunstar
@@ -117,11 +267,16 @@
 }
 \let\yquant@set=\yquantset%
 
-% private yquant-language related helpers
 % In order to allow nested environments and also grouping (without the need to smuggle definitions out of the groups whenever necessary), we count the number of nested environments.
 \newcount\yquant@env
 
-\def\yquant@env@substikz@finish{%
+% Some commands may be overwritten while a subcircuit is processed, in particular attributes, but also some others. However, within the subcircuit, they need to have their original (un)definition.
+\protected\def\yquant@env@reset@commands{%
+   \yquant@lang@reset@attrs%
+   \yquant@register@reset@multi%
+}
+
+\protected\def\yquant@env@substikz@finish{%
    % Rendering pipeline
    \endgroup%
    \global\pgflinewidth=\tikzscope@linewidth\relax%
@@ -147,7 +302,7 @@
       % yes, it is. Call it after the special behavior is done.
       \patchcmd\tikz@lib@scope@check{{}}{\yquant@env@scan}\relax{%
          \PackageWarning{yquant.sty}{Patching \string\tikz@lib@scope@check\space failed; you must invoke \string\yquant\space manually after every tikz command to switch back to yquant code.}%
-      }
+      }%
    \fi%
    % We not only need to re-invoke yquant after the tikz command, but we must also make sure that the tikz command is not actually drawn now, but at the end. However, what happens if some macros are used within the command? Here, we choose to expand the macros to the values they have _now_, but protected (which should prevent bad things for formatting commands). If you find this to be an issue, please report.
    \def\path##1;{%

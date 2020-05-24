@@ -1,18 +1,8 @@
 % BEGIN_FOLD Drawing wires
-% a bit faster than nested \@firstoftwo/\@secondoftwo
-% note \@thirdofthree is defined in the latex kernel already.
-\long\def\@firstofthree#1#2#3{#1}%
-\long\def\@secondofthree#1#2#3{#2}%
-\long\def\@firstoffour#1#2#3#4{#1}%
-\long\def\@secondoffour#1#2#3#4{#2}%
-\long\def\@thirdoffour#1#2#3#4{#3}%
-\long\def\@fourthoffour#1#2#3#4{#4}%
-\long\def\@thirdandfourthoffour#1#2#3#4{#3#4}%
-
 % extends the wire of register #1. Assumes a node called yquantbox is set up, and the \pgfshapeclippathhorzresult was set up appropriately for this node.
-\protected\def\yquant@circuit@extendwire#1{%
+\protected\def\yquant@circuit@extendwire#1#2{%
    \begingroup%
-      \pgfpointanchor{yquantbox}{center}%
+      \pgfpointanchor{yquantbox}{#2}%
       \edef\wirexpos{\the\pgf@x}%
       \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
       \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
@@ -29,23 +19,46 @@
             {\unexpanded\expandafter\expandafter\expandafter{%
                 \expandafter\@thirdandfourthoffour\wirelast%
              }%
-            }
+            }%
             {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
          }%
       \fi%
    \endgroup%
 }
 
-% finishes the wire of registers 1 to #1 until x position \yquant@env@end@xpos
+% finishes the wires of all registers until x position #1
 \protected\def\yquant@circuit@endwires#1{%
-   \yquant@for \yquant@circuit@endwires@i := 1 to #1 {
-      \yquant@draw@wire\yquant@circuit@endwires@i\yquant@env@end@xpos%
+   \ifcsname\yquant@prefix xshift\endcsname%
+      \dimdef\yquant@env@end@xpos{#1+\csname\yquant@prefix xshift\endcsname}%
+   \else%
+      \def\yquant@env@end@xpos{#1}%
+   \fi%
+   \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
+      % we only extend the wire if it does not come from the outer circuit - this one would be responsible for the extension.
+      \ifcsname\yquant@prefix registermap@\yquant@circuit@endwires@i\endcsname%
+         \xifinlistcs\yquant@circuit@endwires@i{\yquant@prefix inonly}{%
+            % however, the wire is to be discarded after this circuit
+            \edef\storedleft{\the\pgf@picminx}%
+            \yquant@draw@wire\yquant@circuit@endwires@i1%
+            \global\pgf@picminx=\storedleft%
+            \yquant@register@set@type\yquant@circuit@endwires@i\yquant@register@type@none%
+         }\relax%
+      \else%
+         \yquant@draw@wire\yquant@circuit@endwires@i1%
+      \fi%
    }%
 }
 
 % outputs the wire according to its previous instructions and prepares for a change in the wire style
 \protected\def\yquant@circuit@flushwire#1{%
-   \yquant@draw@wire{#1}{}%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+     % make sure drawing the wire does not affect our left bounding box position
+      \edef\storedleft{\the\pgf@picminx}%
+      \yquant@draw@wire{#1}0%
+      \global\pgf@picminx=\storedleft%
+   \else%
+      \yquant@draw@wire{#1}0%
+   \fi%
    \begingroup%
       \yquant@register@get@lastwire{#1}\wirelast%
       \yquant@register@set@lastwire{#1}{%
@@ -198,92 +211,60 @@
    }%
 }
 
-% BEGIN_FOLD Subcircuit-related
-% Does all necessary calculations for inserting a sub-circuit
-% #1: subcircuit code (should start with \begin{yquant})
-%\newbox\yquant@circuit@subcircuit@box
-%\protected\long\def\yquant@circuit@subcircuit#1{%
-%   % We need to place the inner circuit at the correct position; but for this, we need
-%   % its extent. For this, we first place it within a box. But this box is then
-%   % integrated seamlessly, in particular, named nodes must be re-placed. We use a lot of
-%   % inspiration from pgf's matrix capabilities.
-%   % First, we anticipate the macro that is used by our subcircuit to store the node
-%   % names.
-%   \edef\yquant@circuit@subcircuit@nodelist{yquant@env\the\numexpr\yquant@env+1\relax @circuit@subcircuit@nodelist}%
-%   \global\cslet\yquant@circuit@subcircuit@nodelist\empty%
-%   \pgfinterruptboundingbox%
-%      % we make sure there are no conflicts by prefixing any named nodes in any case.
-%      \ifx\yquant@lang@attr@name\empty%
-%         \pgfkeys{/tikz/name prefix/.expanded={sub\yquant@prefix-}}%
-%      \else%
-%         \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}\yquant@lang@attr@name-}}%
-%      \fi%
-%      \let\pgf@nodecallback=\yquant@circuit@subcircuit@nodecallback%
-%      \pgftransformreset%
-%      \global\setbox\yquant@circuit@subcircuit@box=\hbox{{%
-%         % bypass 'overlay' option
-%         \pgf@relevantforpicturesizetrue%
-%         \pgfsys@beginpicture%
-%         #1%
-%         \pgfsys@endpicture%
-%         \ifdim\pgf@picmaxx=-16000pt %
-%            \global\pgf@picmaxx=0pt %
-%            \global\pgf@picminx=0pt %
-%            \global\pgf@picmaxy=0pt %
-%            \global\pgf@picminy=0pt %
-%         \fi%
-%      }}%
-%      \wd\yquant@circuit@subcircuit@box=0pt %
-%      \global\setbox\yquant@circuit@subcircuit@box=\hbox{{%
-%         \hskip-\pgf@picminx%
-%         \unhbox\yquant@circuit@subcircuit@box%
-%         \hskip\pgf@picmaxx%
-%      }}%
-%      \ht\yquant@circuit@subcircuit@box=\pgf@picmaxy%
-%      \dp\yquant@circuit@subcircuit@box=-\pgf@picminy%
-%      % We need to remember the offset for the coordinate shifts
-%      \dimgdef\yquant@circuit@subcircuit@shiftx{-\pgf@picminx}%
-%   \endpgfinterruptboundingbox%
-%   \ifx\yquant@lang@attr@name\empty%
-%      % However, if the outer node was not named, no access to the inner nodes is desired,
-%      % so we delete all nodes again.
-%      \def\do##1{%
-%         \csgundef{pgf@sh@ns@##1}%
-%         \csgundef{pgf@sh@np@##1}%
-%         \csgundef{pgf@sh@nt@##1}%
-%         \csgundef{pgf@sh@pi@##1}%
-%         \csgundef{pgf@sh@ma@##1}%
-%      }%
-%      \dolistcsloop\yquant@circuit@subcircuit@nodelist%
-%      \global\cslet\yquant@circuit@subcircuit@nodelist\empty%
-%   \else%
-%      % But now access is desired, and probably we are deeply nested. Append the sublist to ours, so that our parent can re-map them again.
-%      \ifx\pgf@nodecallback\yquant@circuit@subcircuit@nodecallback%
-%         \csxappto{\yquant@prefix circuit@subcircuit@nodelist}%
-%                  {\csname\yquant@circuit@subcircuit@nodelist\endcsname}%
-%      \fi%
-%   \fi%
-%}
-%
-%\def\yquant@circuit@subcircuit@nodecallback#1{%
-%   \listcsxadd{\yquant@prefix circuit@subcircuit@nodelist}{#1}%
-%}
-
-%\protected\def\yquant@circuit@subcircuit@shiftnodes#1{%
-%   \expandafter\unless\expandafter\ifx\csname\yquant@circuit@subcircuit@nodelist\endcsname\empty{%
-%      \pgftransformreset%
-%      \pgf@process{\pgfpointanchor{#1}{text}}%
-%      \edef\yquant@circuit@subcircuit@offset{%
-%         \noexpand\pgfqpoint{\the\dimexpr\pgf@x+\yquant@circuit@subcircuit@shiftx\relax}%
-%                            {\the\dimexpr\pgf@y\relax}%
-%      }%
-%      \def\do##1{%
-%         \pgf@shift@node{##1}\yquant@circuit@subcircuit@offset%
-%      }%
-%      \dolistcsloop\yquant@circuit@subcircuit@nodelist%
-%   }\fi%
-%}
-% END_FOLD
+% creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
+\protected\def\yquant@circuit@subcircuit{%
+   \numdef\yquant@circuit@subcircuit@id{\yquant@env+1}%
+   \listcsxadd{\yquant@prefix subcircuits}{\yquant@circuit@subcircuit@id}%
+   % execute the subcircuit
+   \expandafter%
+   \yquant@env@begin@noarg%
+      \yquant@lang@attr@value% this contains the subcircuit's content
+      \expandafter\unless\expandafter\ifx\csname\yquant@prefix parameters\endcsname\empty%
+         \PackageError{yquant.sty}{Invalid subcircuit parameters count}%
+                      {Too many parameters given.}%
+      \fi%
+      \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
+      \dimen0=\yquant@config@register@sep%
+      % the first input must count all its height plus everything that is above it in the subcircuit as the height of the outer wire it is attached to
+      \edef\firstinput{%
+         \expandafter\expandafter\expandafter%
+            \@firstoftwo\csname\yquant@prefix firstinput\endcsname%
+      }%
+      \edef\outerfirst{%
+         \expandafter\expandafter\expandafter%
+            \@secondoftwo\csname\yquant@prefix firstinput\endcsname%
+      }%
+      \dimen2=\yquant@register@get@height\firstinput\relax%
+      \ifnum\firstinput>1 %
+         \yquant@fordown \i := \the\numexpr\firstinput-1\relax downto 1 {%
+            \advance\dimen2 by \dimexpr\yquant@register@get@height\i+%
+                                       \yquant@register@get@depth\i+\dimen0\relax%
+         }%
+      \fi%
+      % the last input must count all its depth plus everything that is below it in the subcircuit as the depth of the outer wire it is attached to
+      \edef\lastinput{%
+         \expandafter\expandafter\expandafter%
+            \@firstoftwo\csname\yquant@prefix lastinput\endcsname%
+      }%
+      \edef\outerlast{%
+         \expandafter\expandafter\expandafter%
+            \@secondoftwo\csname\yquant@prefix lastinput\endcsname%
+      }%
+      \dimen4=\yquant@register@get@depth\lastinput\relax%
+      \ifnum\lastinput<\csname\yquant@prefix registers\endcsname%
+         \yquant@for \i := \the\numexpr\lastinput+1\relax to \csname\yquant@prefix registers\endcsname {%
+            \advance\dimen4 by \dimexpr\yquant@register@get@height\i+%
+                                       \yquant@register@get@depth\i+\dimen0\relax%
+         }%
+      \fi%
+      \begingroup%
+         \let\yquant@prefix=\yquant@parent%
+         \yquant@register@update@height\outerfirst{\the\dimen2}%
+         \yquant@register@update@depth\outerlast{\the\dimen4}%
+      \endgroup%
+      % we cannot make more precise statements about the inputs in between - for example, if input 1 is mapped to outer wire 1 and input 2 to outer wire 5, how to split the heights/depth appropriately between the outer wires 1-5?
+   \yquant@env@end%
+}
 
 % BEGIN_FOLD Helpers for operator callbacks
 % turn a wire into a different type
@@ -358,67 +339,42 @@
 }
 
 \protected\long\def\yquant@circuit@output@do#1#2#3{%
-   % this must only be called at the end of an environment, where \yquant@env@end@xpos is
-   % set up properly!
+   % this must only be called at the end of an environment, where \yquant@env@end@xpos is set up properly! It not only has to provide the appropriate drawing commands for later, but also has to measure the actual width of the outputs, which is required for proper subcircuit positioning.
    \def\do##1{%
-      \ifyquant@firsttoken\yquant@register@multi{##1}{%
-         \csxappto{\yquant@prefix draw}%
-                  {\noexpand\yquant@circuit@output@do@multi%
-                   \yquant@circuit@output@do@multi@@extract##1{\unexpanded{#3}}}%
-      }{%
-         \csgappto{\yquant@prefix draw}%
-                  {\yquant@circuit@output@do@single{##1}{#3}}%
+      \pgfinterruptboundingbox%
+         \yquant@env@virtualize@path%
+         \ifyquant@firsttoken\yquant@register@multi{##1}{%
+            \csxappto{\yquant@prefix draw}%
+                     {\yquant@draw@output@multi%
+                      \yquant@circuit@output@do@multi@@extract##1{\unexpanded{#3}}}%
+            \yquant@draw@@output@multi{#3}%
+         }{%
+            \csgappto{\yquant@prefix draw}%
+                     {\yquant@draw@output@single{##1}{#3}}%
+            \yquant@draw@@output@single{##1}{#3}%
+            \yquant@register@update@height{##1}{\the\pgf@picmaxy}%
+            \yquant@register@update@depth{##1}{\the\dimexpr-\pgf@picminy\relax}%
+         }%
+         \ifdim\pgf@picmaxx>\csname\yquant@prefix xmax\endcsname%
+            \csxdef{\yquant@prefix xmax}{\the\pgf@picmaxx}%
+         \fi%
+      \endpgfinterruptboundingbox%
+   }%
+   \yquant@draw@output@group{#2}%
+      \csgappto{\yquant@prefix draw}{%
+         \yquant@draw@output@group{#2}%
       }%
-   }%
-   \csgappto{\yquant@prefix draw}{%
-      \yquant@circuit@output@group{#2}%
-   }
-   % \dolistloop will carry out one \expandafter on the argument; but this expansion step
-   % is already done. If #1 starts with \yquant@register@multi, this will be expanded once
-   % despite \protected, so insert some expand-to-nothing token first.
-   \dolistloop{\empty#1}%
-   \csgappto{\yquant@prefix draw}{%
-      \yquant@circuit@output@endgroup%
-   }%
+      % \dolistloop will carry out one \expandafter on the argument; but this expansion step
+      % is already done. If #1 starts with \yquant@register@multi, this will be expanded once
+      % despite \protected, so insert some expand-to-nothing token first.
+      \dolistloop{\empty#1}%
+      \csgappto{\yquant@prefix draw}{%
+         \yquant@draw@output@endgroup%
+      }%
+   \yquant@draw@output@endgroup%
 }
 
 \def\yquant@circuit@output@do@multi@@extract#1#2#3#4#5{%
    {#2}{#3}{#5}%
-}
-
-\protected\long\def\yquant@circuit@output@group#1{%
-   \begingroup%
-      \def\idx{0}%
-      \yquant@set{#1}%
-}
-
-\let\yquant@circuit@output@endgroup=\endgroup%
-
-\long\def\yquant@circuit@output@do@single#1#2{%
-   \path
-      (\yquant@env@end@xpos, \yquant@register@get@y{#1})
-      node[/yquant/every output,
-           /yquant/every \ifcase\yquant@register@get@type{#1} nobit\or qubit\or cbit\or qubits\fi\space output] {#2};
-   \numdef\idx{\idx+1}%
-}
-
-\long\def\yquant@circuit@output@do@multi#1#2#3#4{%
-   % extremely similar to \yquant@draw@multiinit
-   \@tempdima=-.5\dimexpr\yquant@config@register@sep\relax%
-   \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
-   \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
-   \dimdef\yquant@draw@multiinit@@total{%
-      \yquant@draw@multiinit@@max-\yquant@draw@multiinit@@min%
-   }%
-   \def\pgfdecorationsegmentaspect{0}%
-   \let\yquant@register@multi@contiguous=\yquant@draw@multiinit@contiguous%
-   \let\pgfdecorationsegmentfromto=\empty%
-   #3%
-   \edef\pgfdecorationsegmentfromto{\expandafter\@gobble\pgfdecorationsegmentfromto}%
-   \path[/yquant/every multi output]
-      (\yquant@env@end@xpos, \yquant@draw@multiinit@@min) --
-      (\yquant@env@end@xpos, \yquant@draw@multiinit@@max)
-      node {#4};%
-   \numdef\idx{\idx+1}%
 }
 % END_FOLD

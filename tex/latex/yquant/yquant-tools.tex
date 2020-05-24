@@ -21,9 +21,25 @@
    \let\@eattoken= %
 }
 
+% a bit faster than nested \@firstoftwo/\@secondoftwo
+% note \@thirdofthree is defined in the latex kernel already.
+\long\def\@firstofthree#1#2#3{#1}%
+\long\def\@secondofthree#1#2#3{#2}%
+\long\def\@firstoffour#1#2#3#4{#1}%
+\long\def\@secondoffour#1#2#3#4{#2}%
+\long\def\@thirdoffour#1#2#3#4{#3}%
+\long\def\@fourthoffour#1#2#3#4{#4}%
+\long\def\@thirdandfourthoffour#1#2#3#4{#3#4}%
+\long\def\@fifthoffive#1#2#3#4#5{#5}
+
 % Loop #1 from min(#2, #3) to max(#2, #3), executing #4
 \protected\def\yquant@for #1:=#2to#3#{%
    \yquant@for@aux#1{#2}{#3}%
+}
+
+% Loop #1 from max(#2, #3) down to min(#2, #3), executing #4
+\protected\def\yquant@fordown #1:=#2downto#3#{%
+   \yquant@fordown@aux#1{#2}{#3}%
 }
 
 \long\def\yquant@for@aux#1#2#3#4{%
@@ -37,11 +53,30 @@
    \fi%
 }
 
+\long\def\yquant@fordown@aux#1#2#3#4{%
+   \ifnum#2>#3\relax%
+      \numdef#1{#2}%
+      % to allow for things like \yquant@for \i := \i to ..., expand the boundaries
+      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#3-1\relax}{#4}%
+   \else%
+      \numdef#1{#3}%
+      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#2-1\relax}{#4}%
+   \fi%
+}
+
 \long\def\yquant@for@loop#1#2#3{%
    \loop%
       \ifnum#1<#2\relax%
          #3%
          \numdef#1{#1+1}%
+   \repeat%
+}
+
+\long\def\yquant@fordown@loop#1#2#3{%
+   \loop%
+      \ifnum#1>#2\relax%
+         #3%
+         \numdef#1{#1-1}%
    \repeat%
 }
 
@@ -219,7 +254,7 @@
                \expandafter\iffalse@hidden%
             \fi%
          \repeat%
-         \expandafter
+         \expandafter%
       }%
       \expandafter\count\expandafter2\expandafter=\the\count2\relax%
       \ifnum\count0<\count2 %
@@ -235,15 +270,21 @@
    \cslet{yquant@sort@item#2}\tmp%
 }
 
+% Add an internal etoolbox list to the sorted items
+\def\yquant@sort@addlist#1{%
+   \forlistloop\yquant@sort@addlist@aux#1%
+}
+
+\protected\def\yquant@sort@addlist@aux#1{%
+   \csdef{yquant@sort@item\the\yquant@sort@count}{#1}%
+   \advance\yquant@sort@count by 1 %
+}
+
 % Sorts an internal etoolbox list #1 using macro #2
 \protected\def\yquant@sort@list#1#2{%
    \begingroup%
       \yquant@sort@count=0 %
-      \def\do##1{%
-         \csdef{yquant@sort@item\the\yquant@sort@count}{##1}%
-         \advance\yquant@sort@count by 1 %
-      }%
-      \dolistloop#1%
+      \yquant@sort@addlist#1%
       \yquant@sort#2%
       \let#1=\empty%
       \count0=0 %
@@ -268,7 +309,33 @@
          \expandafter\expandafter\expandafter\do%
          \expandafter\expandafter\expandafter{%
             \csname yquant@sort@item\the\count0\endcsname%
-         }
+         }%
          \advance\count0 by 1 %
    \repeat%
 }
+
+\begingroup
+\catcode`\|=3
+\gdef\yquant@list@delim{|}
+
+\protected\gdef\yquant@list@dequeue#1#2{%
+   \expandafter\ifblank\expandafter{#1}{%
+      \let#2=\empty%
+   }{%
+      \expandafter\yquant@list@dequeue@i#1\etb@lst@q@end{#1}{#2}\def%
+   }%
+}%
+
+\protected\gdef\yquant@list@dequeue@i#1|#2\etb@lst@q@end#3#4#5{%
+   \def#4{#1}%
+   #5#3{#2}%
+}
+
+\protected\gdef\yquant@list@gdequeue#1#2{%
+   \expandafter\ifblank\expandafter{#1}{%
+      \let#2=\empty%
+   }{%
+      \expandafter\yquant@list@dequeue@i#1\etb@lst@q@end{#1}{#2}\gdef%
+   }%
+}
+\endgroup

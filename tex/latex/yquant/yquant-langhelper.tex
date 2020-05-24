@@ -45,7 +45,7 @@
             }%
          \fi%
       \endpgfkeysinterruptkeyfilter%
-   },
+   },%
    /pgf/key filters/attr filter/.code={%
       % we need to capture every non-attribute (which means filtering them out).
       \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/attrs/}{%
@@ -84,9 +84,9 @@
             \pgfkeysfiltercontinuefalse%
          }%
       }%
-   },
-   /yquant/attr filter/.style={
-      /pgf/key filters/attr filter/.install key filter,
+   },%
+   /yquant/attr filter/.style={%
+      /pgf/key filters/attr filter/.install key filter,%
       /yquant/attr filter handler/.install key filter handler=\yquant@attrs@remaining%
    }%
 }
@@ -112,7 +112,7 @@
                   \pgfkeysinterruptkeyfilter%
                      \pgfkeys{/yquant/all attrs/##1={####1}}%
                   \endpgfkeysinterruptkeyfilter%
-               }
+               }%
             }%
          }%
          \eappto\keysset{%

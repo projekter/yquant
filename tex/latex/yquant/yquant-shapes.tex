@@ -21,7 +21,7 @@
    {\PackageError{yquant.sty}%
                  {Failed to patch \string\pgfdeclareshape}%
                  {yquant could not provide a necessary extension to pgf.}}%
-% Every shape additionally provides information about how it should clip the wires. The clipping softpath instructions of shape #1 are stored into \pgfshapeclippathresult. The path is drawn with the tikz options #2 in place.
+% Every shape additionally provides information about how it should clip the wires. The clipping softpath instructions of shape #1 are stored into \pgfshapeclippath[horz|vert]result. The path is drawn with the tikz options #2 in place.
 \protected\def\pgfshapeclippath#1#2{%
    % Ok, check whether #1 is known!
    \ifcsname pgf@sh@ns@#1\endcsname%
@@ -56,7 +56,8 @@
       \end{pgfinterruptpath}%
    \else%
       \pgferror{No shape named #1 is known}%
-      \pgfpointorigin%
+      \global\let\pgfshapeclippathhorzresult=\empty%
+      \global\let\pgfshapeclippathvertresult=\empty%
    \fi%
 }
 
@@ -81,7 +82,7 @@
          {\southwest%
           \advance\pgf@x by \@tempdima%
           \advance\pgf@y by \@tempdimb%
-         }
+         }%
          {\northeast%
           \advance\pgf@x by -\@tempdima%
           \advance\pgf@y by -\@tempdimb%
@@ -441,7 +442,7 @@
       % we only draw the meter symbol if this is the main part of a multi-register (or there is no text)
       \ifyquant@config@operator@multi@main%
          % Make sure the meter does not extend beyond the box (we are in a scope here)
-         \path [clip]
+         \path [clip]%
             (-\xradius, \yradius) rectangle (\xradius, -\yradius);%
          % The position of the meter symbol depends on the presence of the text. If there is no text, we just vertically center. If there is some text, we shift the symbol upwards from the text until there is no overlap any more.
          \csname pgf@anchor@yquant-measure@text\endcsname%
@@ -451,10 +452,10 @@
          \else%
             \@tempdima=\dimexpr\pgf@y+2pt\relax%
          \fi%
-         \path [/yquant/operators/every measure meter]
+         \path [/yquant/operators/every measure meter]%
             (-2.25mm, \@tempdima) arc[start angle=160, end angle=20,%
-                                      x radius=2.25mm, y radius=1.4mm]
-            (0, \@tempdima) -- ++(1.6mm, 2.3mm);
+                                      x radius=2.25mm, y radius=1.4mm]%
+            (0, \@tempdima) -- ++(1.6mm, 2.3mm);%
       \fi%
    }%
 }
@@ -553,7 +554,7 @@
       \shorten%
       \@tempdima=\dimexpr\yradius+\pgf@x\relax%
       \@tempdimb=\dimexpr\yradius+\pgf@y\relax%
-      \pgfpathrectanglecorners
+      \pgfpathrectanglecorners%
          {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
          {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
    }%
