@@ -169,6 +169,8 @@
    \let\yquant@circuit@operator@mintarget=\yquant@register@get@ids@min%
    \let\yquant@circuit@operator@maxtarget=\yquant@register@get@ids@max%
    \let\yquant@circuit@operator@numtarget=\yquant@register@get@ids@count%
+   % make sure to reset this for subcircuits
+   \yquant@circuit@operator@hasControlsfalse%
    % For the targets, multi-qubit registers might have been allowed, but certainly not for
    % the controls!
    \yquant@register@get@allowmultifalse%
