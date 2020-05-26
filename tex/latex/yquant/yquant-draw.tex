@@ -251,7 +251,7 @@
          \pgfsys@endpicture%
       }}%
       \global\setbox\yquant@draw@subcircuit@box=\hbox to \dimexpr\xmax-\xmin\relax {%
-         \hskip-\pgf@picminx%
+         \hskip-\dimexpr\yquant@draw@@x-.5\dimexpr\xmax-\xmin\relax\relax%
          \lower\pgf@picmaxy%
          \box\yquant@draw@subcircuit@box%
       }%
