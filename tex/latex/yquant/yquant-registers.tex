@@ -113,12 +113,10 @@
 
 % same as before, but resolves to the _index_ of the last register
 \protected\def\yquant@register@get@id@high#1#2{%
-   \ifcsname\yquant@prefix registerhigh@#2\endcsname%
-      \letcs#1{\yquant@prefix registerhigh@#2}%
-   \else%
+   \unless\ifcsname\yquant@prefix registerhigh@#2\endcsname%
       \yquant@register@get@id@lazycreate{#2}%
-      \letcs#1{\yquant@prefix registers}%
    \fi%
+   \letcs#1{\yquant@prefix registerhigh@#2}%
 }
 
 % In the lazy mode, we create all unknown registers on-the-fly.
