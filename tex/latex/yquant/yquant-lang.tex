@@ -375,13 +375,11 @@
 
 % sub-circuit: This is a nested circuit.
 \yquant@langhelper@declare@command{subcircuit}\yquant@lang@@subcircuit
-\yquant@langhelper@setup@attrs{subcircuit}{value}{params}
+\yquant@langhelper@setup@attrs{subcircuit}{value}{}
 \protected\def\yquant@lang@@subcircuit#1#2#3{%
    \yquant@register@get@multiaslist%
    \yquant@circuit@operator{#1}{#2}{#3}%
    \yquant@draw@@subcircuit%
-      {}%
-      {/yquant/operators/every subcircuit}%
 }
 % END_FOLD
 

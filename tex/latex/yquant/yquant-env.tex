@@ -62,7 +62,7 @@
       \csgdef{\yquant@prefix registers}{0}%
       \global\cslet{\yquant@prefix draw}\relax%
       \global\cslet{\yquant@prefix outputs}\relax%
-      \global\cslet{\yquant@prefix xmin}\yquant@env@create@x%
+      \csdimgdef{\yquant@prefix xmin}{\yquant@env@create@x+\yquant@config@operator@sep}%
       \global\cslet{\yquant@prefix subcircuits}\empty%
       \global\cslet{\yquant@prefix inonly}\empty%
       \csxdef{\yquant@prefix cleanup}{%
@@ -83,9 +83,16 @@
          \ifnum\yquant@env@end@registers>0 %
             % draw all wires
             \yquant@register@get@maxxrange\yquant@env@end@xpos{1}{\yquant@env@end@registers}%
-            % to have a symmetric situation, we extend again one separation at the end
-            \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
-            \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
+            \ifdim\csname\yquant@prefix xmin\endcsname<%
+                  \dimexpr\yquant@env@create@x+\yquant@config@operator@sep\relax%
+               % to have a symmetric situation, we extend again one separation at the end
+               \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
+               \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
+            \else%
+               % while the outputs need this, the subcircuit doesn't if there are no outputs.
+               \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
+               \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
+            \fi%
             \yquant@cleanup@csadd{xmax}%
             \csxappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires{\yquant@env@end@xpos}%

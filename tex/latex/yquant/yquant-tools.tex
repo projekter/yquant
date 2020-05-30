@@ -339,3 +339,248 @@
    }%
 }
 \endgroup
+
+\def\ifyquant@OR#1#2{%
+   #1%
+      \expandafter\@firstoftwo%
+   \else%
+      #2%
+         \expandafter\expandafter\expandafter\@firstoftwo%
+      \else%
+         \expandafter\expandafter\expandafter\@secondoftwo%
+      \fi%
+   \fi%
+}
+
+% #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \dimen0.
+\protected\def\yquant@softpath@extractmaxxat#1#2{%
+   \begingroup%
+      \dimen0=-16000pt %
+      \dimen2=#2 %
+      \let\pgfsyssoftpath@movetotoken=\yquant@softpath@extractmaxxat@moveto%
+      \let\pgfsyssoftpath@linetotoken=\yquant@softpath@extractmaxxat@lineto%
+      \let\pgfsyssoftpath@curvetosupportatoken=\yquant@softpath@extractmaxxat@curveto%
+      \let\pgfsyssoftpath@rectcornertoken=\yquant@softpath@extractmaxxat@rectto%
+      \let\pgfsyssoftpath@closepath=\@gobbletwo%
+      % the specialroundtoken (undocumented) is \@gobbletwo by default.
+      #1%
+      \expandafter%
+   \endgroup%
+   \expandafter\dimen\expandafter0\expandafter=\the\dimen0  %
+}
+
+\protected\def\yquant@softpath@extractmaxxat@update#1{%
+   \ifdim\dimen0<#1 %
+      \dimen0=#1 %
+   \fi%
+}
+
+\protected\def\yquant@softpath@extractmaxxat@moveto#1#2{%
+   \dimen4=#1 %
+   \dimen6=#2 %
+}
+
+\protected\def\yquant@softpath@extractmaxxat@lineto#1#2{%
+   \ifyquant@OR{\ifdim\dimen4>\dimen0 }{\ifdim#1>\dimen0 }{%
+      \ifdim\dimen6=\dimen2 %
+         \yquant@softpath@extractmaxxat@update{\dimen4}%
+      \else%
+         \ifdim\dimen6<\dimen2 %
+            \unless\ifdim#2<\dimen2 %
+               \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
+                  \dimen4+% x0
+                  \dimexpr#1-\dimen4\relax*% (x1-x0)
+                  \dimexpr\dimen2-\dimen6\relax/\dimexpr#2-\dimen6\relax% (y-y0)/(y1-y0)
+               \relax}%
+            \fi%
+         \else%
+            \unless\ifdim#2>\dimen2 %
+               \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
+                  \dimen4+% x0
+                  \dimexpr#1-\dimen4\relax*% (x1-x0)
+                  \dimexpr\dimen2-\dimen6\relax/\dimexpr#2-\dimen6\relax% (y-y0)/(y1-y0)
+               \relax}%
+            \fi%
+         \fi%
+      \fi%
+   }\relax%
+   \dimen4=#1 %
+   \dimen6=#2 %
+}
+
+\protected\def\yquant@softpath@extractmaxxat@curveto@checkx#1#2#3{%
+   % \dimen11 holds our only candidate for t. Is it within the curve?
+   \unless\ifdim\dimen11<0pt %
+      \unless\ifdim\dimen11>1pt %
+         % it is. \dimen4: x0, #1: xa, #2: xb, #3: x1
+         \begingroup%
+            \dimen12=\dimexpr1pt-\dimen11\relax% 1 - t
+            \dimen13=\dimexpr\dimen11*\dimen11/65535\relax% t^2
+            \dimen14=\dimexpr\dimen12*\dimen12/65535\relax% (1 - t)^2
+            \dimen255=\dimexpr\dimen13*\dimen11/65535*\dimexpr#3\relax/65535+% t^3 x1
+                              3\dimen13*\dimen12/65535*\dimexpr#2\relax/65535+% t^2(1 - t) xb
+                              \dimen14*\dimen12/65535*\dimen4/65535+% (1 - t)^3 x0
+                              3\dimen11*\dimen14/65535*\dimexpr#1\relax/65535% 3t(1 - t)^2 xa
+                      \relax%
+            \expandafter%
+         \endgroup%
+         \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimen255}%
+      \fi%
+   \fi%
+}
+
+\protected\def\yquant@softpath@extractmaxxat@curveto#1#2\pgfsyssoftpath@curvetosupportbtoken#3#4\pgfsyssoftpath@curvetotoken#5#6{%
+   % There's really no good way to do this apart from solving the Bézier curve (a third-order polynomial). Let's do it. (Yes, this is inefficient, but if someone substitutes the rectangular box of a subcircuit by a more fancy design, this is not our fault).
+   % Parametrized by t, the x coordinates of the curve are
+   % x0 + 3 (xa - x0) t + 3 (x0 - 2xa + xb) t^2 + (3xa - 3xb + x1 - x0) t^3
+   % where x0 = \dimen4 (the moveto point), xa = #1, xb = #3, x1 = #5.
+   % Likewise for y:
+   %       y0 = \dimen6 (the moveto point), ya = #2, yb = #4, y1 = #6.
+   % We first solve the third-order polynomial for t using the y value, then plug it back into the x value.
+   % TODO: this is accurate to approx. 3 digits. Can this be improved by reformulating Cardanos formula to involve less divisions?
+   \begingroup%
+      % We need so may dimensions that we break with TeX's convention for their use.
+      % for the multiplications with and divisions by dimensions, we exploit that eTeX fuses muldiv to 64 bits. Further note that each dimension has a scaling factor of 65535 for sp<->pt conversion. This is why don't factor out divisions (which would be more efficient, but not give the benefit of 64bit accuracy).
+      % a = 3(ya - yb) + (y1 - y0)
+      \dimen1=\dimexpr3\dimexpr#2-#4\relax+#6-\dimen6\relax%
+      \ifdim\dimen1=0pt %
+         % this is only a quadratic curve!
+         % b = 3(y0 - 2ya + yb)
+         \dimen3=\dimexpr3\dimexpr\dimen6-2\dimexpr#2\relax+#4\relax*65535\relax%
+         % c: 3(ya - y0)
+         \dimen5=\dimexpr3\dimexpr#2-\dimen6\relax*65535\relax%
+         % d: y0 - <desired y>
+         \dimen7=\dimexpr\dimexpr\dimen6-\dimen2\relax*65535\relax%
+         % check the discriminant of the equation
+         \dimen8=\dimexpr\dimen3*\dimen3/65535-4\dimen3*\dimen7/65535\relax%
+         \unless\ifdim\dimen8<0pt%
+            % there are two potential candidates, (-c +- sqrt(c^2 - 4b d))/2b
+            \pgfmathsqrt@{\the\dimen8\@gobbletwo}%
+            \dimen11=\dimexpr\dimexpr-\dimen5+\pgfmathresult pt\relax*65535/%
+                             \dimexpr2\dimen3\relax\relax%
+            \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+            \dimen11=\dimexpr\dimexpr-\dimen5-\pgfmathresult pt\relax*65535/%
+                             \dimexpr2\dimen3\relax\relax%
+            \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+         \fi%
+      \else%
+         % We will simplify by directly dividing all coefficients by a
+         % b = 3(y0 - 2ya + yb)
+         \dimen3=\dimexpr3\dimexpr\dimen6-2\dimexpr#2\relax+#4\relax*65535/\dimen1\relax%
+         % c: 3(ya - y0)
+         \dimen5=\dimexpr3\dimexpr#2-\dimen6\relax*65535/\dimen1\relax%
+         % d: y0 - <desired y>
+         \dimen7=\dimexpr\dimexpr\dimen6-\dimen2\relax*65535/\dimen1\relax%
+         % Note that now our a value (\dimen1) is no longer needed, it is one.
+         % check the discriminant of the equation
+         % Q = (3c - b^2)/9
+         \dimen8=\dimexpr\dimexpr3\dimen5-\dimen3*\dimen3/65535\relax/9\relax%
+         % R = (9bc - 27d - 2b^3)/54 = bc/6 - d/2 - b^3/27
+         \dimen9=\dimexpr\dimen3*\dimen5/393210-% 6*65535
+                          .5\dimen7-%
+                          \dimen3*\dimen3/65535*\dimen3/1769445% 27*65535
+                  \relax%
+         % D = Q^3 + R^2
+         \dimen10=\dimexpr\dimen8*\dimen8/65535*\dimen8/65535+\dimen9*\dimen9/65535\relax%
+         \ifdim\dimen10>0pt %
+            % only one real root: y_1 = S + T - b/3a
+            % S = cbrt(R + sqrt(Q^3 + R^2))
+            % T = cbrt(R - sqrt(Q^3 + R^2))
+            \pgfmathsqrt@{\the\dimen10\@gobbletwo}%
+            \dimen12=\dimexpr\dimen9+\pgfmathresult pt\relax%
+            \dimen13=\dimexpr\dimen9-\pgfmathresult pt\relax%
+            \ifdim\dimen12>0pt %
+               \pgfmathpow@{\the\dimen12\@gobbletwo}{.3333333333}%
+               \dimen11=\pgfmathresult pt %
+            \else%
+               \pgfmathpow@{\the\dimexpr-\dimen12\relax\@gobbletwo}{.3333333333}%
+               \dimen11=-\pgfmathresult pt %
+            \fi%
+            \ifdim\dimen13>0pt %
+               \pgfmathpow@{\the\dimen13\@gobbletwo}{.3333333333}%
+               \dimen11=\dimexpr\dimen11+\pgfmathresult pt-.33333333333\dimen3\relax%
+            \else%
+               \pgfmathpow@{\the\dimexpr-\dimen13\relax\@gobbletwo}{.3333333333}%
+               \dimen11=\dimexpr\dimen11-\pgfmathresult pt-.33333333333\dimen3\relax%
+            \fi%
+            \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+         \else%
+            \ifdim\dimen10=0pt %
+               % easiest case, three real roots, two of which are equal:
+               % y_1 = 2cbrt(R) - b/3a
+               % y_2, x_3 = -cbrt(R) - b/3a
+               \ifdim\dimen9>0pt %
+                  \pgfmathpow@{\the\dimen9\@gobbletwo}{.3333333333}%
+                  \dimen15=\pgfmathresult pt %
+               \else%
+                  \pgfmathpow@{\the\dimexpr-\dimen9\relax\@gobbletwo}{.3333333333}%
+                  \dimen15=-\pgfmathresult pt %
+               \fi%
+               \dimen11=\dimexpr2\dimen15-.33333333333\dimen3\relax%
+               \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+               % check the next candidate
+               \dimen11=\dimexpr-\dimen15-.33333333333\dimen3\relax%
+               \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+            \else%
+               % nastiest case, three distinct real roots which we can find only by taking a complex-valued cube root.
+               % p + i q = cbrt(R + i sqrt(|D|))
+               \pgfmathsqrt@{\the\dimexpr-\dimen10\relax\@gobbletwo}%
+               \dimen10=\pgfmathresult pt %
+               % Let us first find the absolute value
+               \dimen12=\dimexpr\dimen9*\dimen9/65535+\dimen10*\dimen10/65535\relax%
+               \pgfmathpow@{\the\dimen12\@gobbletwo}{.1666666667}%
+               \dimen12=\pgfmathresult pt%
+               % then we need 1/3 the argument of R + i sqrt(|D|).
+               \pgfmathatantwo@{\the\dimen10\@gobbletwo}{\the\dimen9\@gobbletwo}%
+               \dimen13=.3333333333\dimexpr\pgfmathresult pt\relax%
+               % and then the real and imaginary parts as cosine and sine.
+               \pgfmathcos@{\the\dimen13\@gobbletwo}%
+               \dimen14=\dimexpr\pgfmathresult\dimen12\relax%
+               \pgfmathsin@{\the\dimen13\@gobbletwo}%
+               \dimen15=\dimexpr\pgfmathresult\dimen12\relax%
+               % Now the candidates are
+               % y_1 = 2p - b/3a
+               % y_2 = -p - sqrt(3)q - b/3a
+               % y_3 = -p + sqrt(3)q - b/3a
+               \dimen11=\dimexpr2\dimen14-.33333333333\dimen3\relax%
+               \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+               \dimen11=\dimexpr-\dimen14-1.732050808\dimen15-.33333333333\dimen3\relax%
+               \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+               \dimen11=\dimexpr-\dimen14+1.732050808\dimen15-.33333333333\dimen3\relax%
+               \yquant@softpath@extractmaxxat@curveto@checkx{#1}{#3}{#5}%
+            \fi%
+         \fi%
+      \fi%
+      % Now after all these calculations, \dimen0 was updated within the group. Make available outside.
+      \expandafter%
+   \endgroup%
+   \expandafter\dimen\expandafter0\expandafter=\the\dimen0  %
+   \dimen4=#5 %
+   \dimen6=#6 %
+}
+
+\protected\def\yquant@softpath@extractmaxxat@rectto#1#2\pgfsyssoftpath@rectsizetoken#3#4{%
+   % #1: lower left x, #2: lower left y, #3: width, #4: height
+   % note that neither width nor height need be positive!
+   \ifdim#4>0pt %
+      \unless\ifdim#2>\dimen2 %
+         \unless\ifdim\dimexpr#2+#4\relax<\dimen2 %
+            \ifdim#3>0pt %
+               \yquant@softpath@extractmaxxat@update{\dimexpr#1+#3\relax}%
+            \else%
+               \yquant@softpath@extractmaxxat@update{#1}%
+            \fi%
+         \fi%
+      \fi%
+   \else%
+      \unless\ifdim#2<\dimen2 %
+         \unless\ifdim\dimexpr#2+#4\relax>\dimen2 %
+            \ifdim#3>0pt %
+               \yquant@softpath@extractmaxxat@update{\dimexpr#1+#3\relax}%
+            \else%
+               \yquant@softpath@extractmaxxat@update{#1}%
+            \fi%
+         \fi%
+      \fi%
+   \fi%
+}

@@ -286,7 +286,9 @@
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
          node[/yquant/every operator, /yquant/operators/every subcircuit,%
-              /yquant/this operator, name prefix=, name suffix=, name=yquantbox]%
+              /yquant/operators/every subcircuit box, /yquant/this operator,%
+              /yquant/operators/this subcircuit box,%
+              name prefix=, name suffix=, name=yquantbox]%
          {\box\yquant@draw@subcircuit@box};%
    }%
    \cmd%
@@ -308,24 +310,31 @@
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
          node[/yquant/every operator, /yquant/operators/every subcircuit,%
-              /yquant/this operator,%
+              /yquant/operators/every subcircuit box, /yquant/this operator,%
+              /yquant/operators/this subcircuit box,
               /yquant/operator/multi main=true,%
               name prefix=, name suffix=, name=yquantbox]%
             {\box\yquant@draw@subcircuit@box};%
       \pgfshapeclippath{yquantbox}%
                        {/yquant/every operator, /yquant/operators/every subcircuit,%
-                        /yquant/this operator}%
+                        /yquant/operators/every subcircuit box, /yquant/this operator,%
+                        /yquant/operators/this subcircuit box}%
    }%
    \cmd%
    % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
    \let\nonaffectedpgfshapeclippathhorzresult=\pgfshapeclippathhorzresult%
    \yquant@for \i := #1 to #2 {%
       \xifinlist{\i}{#4}{%
+         % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but the allows to specify even more complicated ones) and place the wire at this position without clipping.
+         % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of thw operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
+         \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
+                                       {\yquant@register@get@y\i}%
          \let\pgfshapeclippathhorzresult=\empty%
+         \yquant@circuit@extendwire\i{*}%
       }{%
          \let\pgfshapeclippathhorzresult=\nonaffectedpgfshapeclippathhorzresult%
+         \yquant@circuit@extendwire\i{center}%
       }%
-      \yquant@circuit@extendwire\i{center}%
    }%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
       {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
@@ -813,7 +822,7 @@
               name prefix=, name suffix=, name=] {#1};%
 }
 
-\protected\long\def\yquant@draw@@subcircuit#1#2{%
+\protected\long\def\yquant@draw@@subcircuit{%
    \yquant@sort@clear%
    \def\idx{0}%
    \dimen2=\yquant@config@operator@minimum@width%
@@ -832,14 +841,17 @@
       \dimen0=\dimexpr%
          \csname yquant@env\yquant@circuit@subcircuit@id @xmax\endcsname-%
          \csname yquant@env\yquant@circuit@subcircuit@id @xmin\endcsname%
-      \relax%
+      \relax\relax%
       \pgfinterruptboundingbox%
          % There will still be some extra width taken by separations or other things related to the box itself.
          \yquant@env@virtualize@path%
          \path%
             (0pt, 0pt)%
-            node[/yquant/every operator, #2, /yquant/this operator,%
-                 name prefix=, name suffix=, name=] {\hbox to \dimen0{}};%
+            node[/yquant/every operator, /yquant/operators/every subcircuit,%
+                 /yquant/operators/every subcircuit box, /yquant/this operator,%
+                 /yquant/operators/this subcircuit box,%
+                 name prefix=, name suffix=, name=]%
+            {\hbox to \dimen0{}};%
          % We also don't update the height here, as the height of the subcircuit is undetermined as long as we did not match inner and outer wires.
          \expandafter%
       \endpgfinterruptboundingbox%
@@ -853,7 +865,7 @@
    \dolistloop\yquant@circuit@operator@targets%
    % END_FOLD
    \yquant@draw@@controls%
-   \yquant@draw@@finalize{#1}{#2}%
+   \yquant@draw@@finalize{}{/yquant/operators/every subcircuit}%
 }
 
 \protected\def\yquant@draw@@subcircuit@single#1{%

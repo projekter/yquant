@@ -105,7 +105,15 @@
    operators/every box/.style=%
       {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
    operators/every subcircuit/.style=%
+      {},%
+   operators/every subcircuit box/.style=%
       {/yquant/operators/every box},%
+   subcircuit box style/.style=%
+      {/yquant/operators/every subcircuit box/.append style={#1}},%
+   operators/this subcircuit box/.style=%
+      {},%
+   this subcircuit box style/.style=%
+      {/yquant/operators/this subcircuit box/.append style={#1}},%
    operators/every h/.style=%
       {/yquant/operators/every box},%
    operators/every pauli/.style=%
