@@ -279,7 +279,7 @@
          \path[overlay]%
             (\createxpos, \wireypos)%
             coordinate[name prefix=, name suffix=, name=yquantbox];%
-         \let\pgfshapeclippathresult=\empty%
+         \let\pgfshapeclippathhorzresult=\empty%
       }{%
          \edef\cmd{%
             \noexpand\path%
@@ -298,21 +298,21 @@
       }%
       \ifcsname\yquant@prefix registermap@#1\endcsname%
          % if this is an alias, the creation is just an extension
-%         \if\yquant@register@type@none\yquant@register@get@type{#1}%
-%            \ifstrequal{#3}{initial}{%
-%               \yquant@circuit@extendwire{#1}{east}%
-%            }{%
-%               % however, our inner wire is present, while the outer wire was discarded.
-%               \tikzset{/yquant/every wire}%
-%               \pgfpointanchor{yquantbox}{east}%
-%               \yquant@register@set@lastwire{#1}{%
-%                  {\the\pgf@x}{\the\pgf@x}{}%
-%                  {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
-%               }%
-%            }%
-%         \else%
+         \if\yquant@register@type@none\yquant@register@get@type{#1}%
+            \ifstrequal{#3}{initial}{%
+               \yquant@circuit@extendwire{#1}{east}%
+            }{%
+               % however, our inner wire is present, while the outer wire was discarded.
+               \tikzset{/yquant/every wire}%
+               \pgfpointanchor{yquantbox}{east}%
+               \yquant@register@set@lastwire{#1}{%
+                  {\the\pgf@x}{\the\pgf@x}{}%
+                  {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+               }%
+            }%
+         \else%
             \yquant@circuit@extendwire{#1}{east}%
-%         \fi%
+         \fi%
       \else%
          % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
          \tikzset{/yquant/every wire}%

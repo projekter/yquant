@@ -296,10 +296,16 @@
               /yquant/operators/this subcircuit box,%
               name prefix=, name suffix=, name=yquantbox]%
          {\box\yquant@draw@subcircuit@box};%
+      \pgfshapeclippath{yquantbox}%
+                       {/yquant/every operator, /yquant/operators/every subcircuit,%
+                        /yquant/operators/every subcircuit box, /yquant/this operator,%
+                        /yquant/operators/this subcircuit box}%
    }%
    \cmd%
+   % see comment in draw@subcircuit@multi
+   \yquant@softpath@extractmaxxat\pgfshapeclippathhorzresult{\yquant@register@get@y{#1}}%
    \let\pgfshapeclippathhorzresult=\empty%
-   \yquant@circuit@extendwire{#1}{center}%
+   \yquant@circuit@extendwire{#1}{*}%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
       {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
    % check for empty name parameter
@@ -324,7 +330,8 @@
       \pgfshapeclippath{yquantbox}%
                        {/yquant/every operator, /yquant/operators/every subcircuit,%
                         /yquant/operators/every subcircuit box, /yquant/this operator,%
-                        /yquant/operators/this subcircuit box}%
+                        /yquant/operators/this subcircuit box,%
+                        /yquant/operator/multi main=true}%
    }%
    \cmd%
    % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
