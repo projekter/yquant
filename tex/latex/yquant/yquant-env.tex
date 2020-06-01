@@ -417,3 +417,58 @@
    \afterassignment\yquant@env@contscan%
    \let\@eattoken= %
 }
+
+\def\yquantimport@now#1{%
+   \expandafter\yquant\@@input #1\relax%
+}
+
+\let\yquantimportcommand=\yquantimport@now%
+
+\AtBeginDocument{%
+   % do we have the import package?
+   \ifdefined\@doimport%
+      \providecommand\yquantimportpath{./}%
+      \def\yquantimportcommand{\@doimport\yquantimport@now{\yquantimportpath}}%
+   \fi%
+}
+
+\def\yquantimport{%
+   \@ifstar{\yquantimport@i{*}}{\yquantimport@i{}}%
+}
+
+\def\yquantimport@i#1{%
+   \@ifnextchar[{\yquantimport@ii{#1}}{\yquantimport@ii{#1}[]}%
+}%
+
+\def\yquantimport@ii#1[#2]#3{%
+   \ifpgfpicture%
+      \ifnum\yquant@env>0 %
+         \begingroup%
+            \ifstrequal{#1}{*}{%
+               \yquant@env@lazytrue%
+            }{%
+               \yquant@env@lazyfalse%
+            }%
+            \ifstrempty{#2}{%
+               \yquantimportcommand{#3}%
+            }{%
+               \scope%
+                  \yquantset{#2}%
+                  \yquantimportcommand{#3}%
+               \endscope%
+            }%
+         \endgroup%
+         \expandafter\expandafter\expandafter\yquant%
+      \else%
+         \begin{yquant#1}[{#2}]
+            \yquantimportcommand{#3}%
+         \end{yquant#1}%
+      \fi%
+   \else%
+      \begin{tikzpicture}%
+         \begin{yquant#1}[{#2}]
+            \yquantimportcommand{#3}%
+         \end{yquant#1}%
+      \end{tikzpicture}
+   \fi%
+}
