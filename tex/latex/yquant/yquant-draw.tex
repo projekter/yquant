@@ -232,6 +232,13 @@
          % bypass 'overlay' option
          \pgf@relevantforpicturesizetrue%
          \pgfsys@beginpicture%
+            % reset all styles to the expected defaults (similar, but extended to \pgfpicture, see pgf issue #870)
+            \pgfsetcolor{.}%
+            \pgfsetlinewidth{0.4pt}%
+            \pgfsetbuttcap%
+            \pgfsetmiterjoin%
+            \pgfsetmiterlimit{10}%
+            \pgfsetdash{}{0pt}%
             % The left outer position of our box will be \yquant@draw@@x-.5(xmax-xmin).
             % To compensate for, we perform a left shift of all commands that take explicit coordinates from the subcircuit.
             % The y positions, on the other hand, are exactly the ones as they should be integrated in the picture.
