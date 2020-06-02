@@ -218,11 +218,11 @@
 }
 
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
-\protected\def\yquant@circuit@subcircuit{%
+\protected\def\yquant@circuit@subcircuit#1{%
    \numdef\yquant@circuit@subcircuit@id{\yquant@env+1}%
    \listcsxadd{\yquant@prefix subcircuits}{\yquant@circuit@subcircuit@id}%
    \begingroup%
-      \tikzset{/yquant/every operator, /yquant/operators/every subcircuit,%
+      \tikzset{/yquant/every operator, #1,%
                /yquant/this operator, /yquant/operators/this subcircuit box/.style={}}%
       % execute the subcircuit
       \expandafter%

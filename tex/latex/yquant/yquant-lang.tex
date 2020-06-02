@@ -379,7 +379,7 @@
 \protected\def\yquant@lang@@subcircuit#1#2#3{%
    \yquant@register@get@multiaslist%
    \yquant@circuit@operator{#1}{#2}{#3}%
-   \yquant@draw@@subcircuit%
+   \yquant@draw@@subcircuit{/yquant/operators/every subcircuit}%
 }
 % END_FOLD
 
@@ -650,5 +650,49 @@
       \yquant@circuit@addstyle%
       \yquant@register@get@ids@list%
       {{\yquant@lang@attr@value}}%
+}
+% END_FOLD
+
+% BEGIN_FOLD Define own gates
+\def\yquantdefinegate#1{%
+   \ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Gate redefined}%
+                   {The gate `#1' already exists. Use \string\yquantredefinegate\space if you really want to redefine it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinegate@i{#1}}%
+                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
+}
+
+% while this command is provided to redefine gates, we do not clear the attributes that were once assigned to the previous one, so gate redefinition is discouraged!
+\def\yquantredefinegate#1{%
+   \unless\ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown gate redefined}%
+                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinegate\space to define it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinegate@i{#1}}%
+                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
+}
+
+\protected\long\def\yquantdefinegate@i#1[#2]#3{%
+   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+   \protected@edef\yquantdefinegate@do{%
+      \yquant@langhelper@declare@command%
+         {#1}%
+         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
+      % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
+      \yquant@langhelper@setup@attrs{#1}{}{}%
+      % Now define the gate's content as a macro
+      \def\expandafter\noexpand\csname yquant@lang@@@#1\endcsname{%
+         #3%
+      }%
+      % And provide the implementation
+      \protected\def\expandafter\noexpand\csname yquant@lang@@#1\endcsname####1####2####3{%
+         \yquant@register@get@multiaslist%
+         \yquant@circuit@operator{####1}{####2}{####3}%
+         \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@@#1\endcsname%
+         \yquant@draw@@subcircuit{/yquant/operators/every #1}%
+      }%
+   }%
+   \yquantdefinegate@do%
 }
 % END_FOLD

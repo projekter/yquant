@@ -291,13 +291,13 @@
    \yquant@draw@subcircuit@prepare{#2}{#3}%
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
-         node[/yquant/every operator, /yquant/operators/every subcircuit,%
+         node[/yquant/every operator, \yquant@draw@@style,%
               /yquant/operators/every subcircuit box, /yquant/this operator,%
               /yquant/operators/this subcircuit box,%
               name prefix=, name suffix=, name=yquantbox]%
          {\box\yquant@draw@subcircuit@box};%
       \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, /yquant/operators/every subcircuit,%
+                       {/yquant/every operator, \yquant@draw@@style,%
                         /yquant/operators/every subcircuit box, /yquant/this operator,%
                         /yquant/operators/this subcircuit box}%
    }%
@@ -321,14 +321,14 @@
    % We need to somehow extract the y radius
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
-         node[/yquant/every operator, /yquant/operators/every subcircuit,%
+         node[/yquant/every operator, \yquant@draw@@style,%
               /yquant/operators/every subcircuit box, /yquant/this operator,%
               /yquant/operators/this subcircuit box,
               /yquant/operator/multi main=true,%
               name prefix=, name suffix=, name=yquantbox]%
             {\box\yquant@draw@subcircuit@box};%
       \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, /yquant/operators/every subcircuit,%
+                       {/yquant/every operator, \yquant@draw@@style,%
                         /yquant/operators/every subcircuit box, /yquant/this operator,%
                         /yquant/operators/this subcircuit box,%
                         /yquant/operator/multi main=true}%
@@ -835,7 +835,7 @@
               name prefix=, name suffix=, name=] {#1};%
 }
 
-\protected\long\def\yquant@draw@@subcircuit{%
+\protected\long\def\yquant@draw@@subcircuit#1{%
    \yquant@sort@clear%
    \def\idx{0}%
    \dimen2=\yquant@config@operator@minimum@width%
@@ -847,9 +847,9 @@
          \edef\nodename{\yquant@lang@attr@name-\idx}%
       \fi%
       \ifyquant@firsttoken\yquant@register@multi{##1}{%
-         \yquant@draw@@subcircuit@multi{##1}%
+         \yquant@draw@@subcircuit@multi{#1}{##1}%
       }{%
-         \yquant@draw@@subcircuit@single{##1}%
+         \yquant@draw@@subcircuit@single{#1}{##1}%
       }%
       \dimen0=\dimexpr%
          \csname yquant@env\yquant@circuit@subcircuit@id @xmax\endcsname-%
@@ -860,7 +860,7 @@
          \yquant@env@virtualize@path%
          \path%
             (0pt, 0pt)%
-            node[/yquant/every operator, /yquant/operators/every subcircuit,%
+            node[/yquant/every operator, #1,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
                  name prefix=, name suffix=, name=]%
@@ -878,27 +878,27 @@
    \dolistloop\yquant@circuit@operator@targets%
    % END_FOLD
    \yquant@draw@@controls%
-   \yquant@draw@@finalize{}{/yquant/operators/every subcircuit}%
+   \yquant@draw@@finalize{}{#1}%
 }
 
-\protected\def\yquant@draw@@subcircuit@single#1{%
-   \edef\yquant@circuit@subcircuit@param{#1\yquant@list@delim}%
-   \yquant@circuit@subcircuit%
+\protected\def\yquant@draw@@subcircuit@single#1#2{%
+   \edef\yquant@circuit@subcircuit@param{#2\yquant@list@delim}%
+   \yquant@circuit@subcircuit{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@single%
-         {#1}% register index
+         {#2}% register index
          {\yquant@circuit@subcircuit@id}%
          {\nodename}%
    }%
 }
 
-\protected\def\yquant@draw@@subcircuit@multi#1{%
-   \edef\yquant@circuit@subcircuit@param{\@fifthoffive#1}%
+\protected\def\yquant@draw@@subcircuit@multi#1#2{%
+   \edef\yquant@circuit@subcircuit@param{\@fifthoffive#2}%
    \yquant@sort@list\yquant@circuit@subcircuit@param\yquant@sort@ascending%
-   \yquant@circuit@subcircuit%
+   \yquant@circuit@subcircuit{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@multi%
-         #1%
+         #2%
          {\yquant@circuit@subcircuit@id}%
          {\nodename}%
    }

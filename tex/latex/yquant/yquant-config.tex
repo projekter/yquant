@@ -114,6 +114,9 @@
       {},%
    this subcircuit box style/.style=%
       {/yquant/operators/this subcircuit box/.append style={#1}},%
+   operators/every custom gate/.style=%
+      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt},%
+       /yquant/register/default name=},
    operators/every h/.style=%
       {/yquant/operators/every box},%
    operators/every pauli/.style=%
