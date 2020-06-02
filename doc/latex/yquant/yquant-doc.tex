@@ -197,7 +197,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is not yet available on CTAN.
-      This alpha version~0.1.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This alpha version~0.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -209,7 +209,8 @@
          Then, have a look at \cref{sec:tikz} (or \cref{sec:alt}).
       
       \subsection{Installation}
-         At the moment, clone this repository or download a copy and extract the files to a path visible to your \TeX{} compiler.
+         \Yquant{} is available on the CTAN.
+         A direct installation from this Git repository is possible by just cloning it to a path visible to your \TeX{} compiler.
          For example, you may put them in the same directory as your document (if you just want to give a try), or you may extract them to \texttt{tex/latex/yquant} in your local \texttt{texmf} (followed by an update of the file name database).
       
       \subsection{Purpose of \Yquant, alternatives}\label{sec:alt}
@@ -243,7 +244,7 @@
                      It also reduces burdens of the \pkg{xy} syntax.
                      However, the disadvantages of the grid\hyp based syntax still remain.
                      
-                     Maintenance status: last update in 2019; the underlying \TikZ{} is actively maintained again by now.
+                     Maintenance status: last update in 2020; the underlying \TikZ{} is actively maintained again by now.
                   \item \pkg{qpic} follows the approach of \pkg{qasm}: It makes use of an external Python program that reads the quantum circuits in an own language and converts them into \TikZ{} commands.
                      The language \pkg{qpic} follows is much more powerful than \pkg{qasm}'s.
                      The disadvantage that modifications in the output code will not remain after running the Python script again is mitigated by the possibility to define own \TeX{} macros.
@@ -292,7 +293,7 @@
             The optional arguments for the \tex!yquant! environment have to appear \emph{on the same line} as the environment itself.
             If you want to put the arguments into a new line, it is crucial to mask the line break by putting a comment symbol after the environment: \tex!\begin{yquant}%!.
             Without this comment, \Yquant{} will detect your line break (this is one of the few places in \TeX{} where line breaks and spaces are different) and assume that the expression in square brackets instead provides arguments for the following operation! \\
-            Finally note that in (non\hyp fragile) \texttt{beamer} frames, this discrimination between spaces and new lines does not work; the optional arguments will always be counted for the environment, not for the gate.
+            Finally note that in (non\hyp fragile) \pkg{beamer} frames, this discrimination between spaces and new lines does not work; the optional arguments will always be counted for the environment, not for the gate.
             In this case, you can either declare the frame as fragile or (recommended) introduce a blank line between the environment and the options for the first gate.
          \end{warning}
       
@@ -302,6 +303,7 @@
          
          The starred form additionally supports the use of undeclared registers: it basically declares a registers upon its first usage.
          This will always be a \texttt{qubit} register; but if you use the corresponding option and the first usage is an \gate{init} command, you may overwrite this.
+         Subcircuits always use the unstarred form.
          
          Additionally, if you refer to the index $i$ of a vector register of length $L < i$, this register will automatically be enlarged to $i \coloneq L$.
          It is also possible to convert a scalar register into a vector register in this manner.
@@ -435,6 +437,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          It will draw a \emph{main} part of the gate at the first contiguous slice of registers in the target list---you may select another register for this part by preceding the name or index with a star (which, contrary to the simplified grammar, may only occur \emph{once} in a target specification).
          All other contiguous slices of target registers will be drawn in a \emph{subordinate style} for this gate.
          Finally, all slices will be connected by a single vertical line with the style \style{/yquant/every multi line}.
+         Subcircuits, supported as of version~0.2, will always span the full region from the first to the last register specified in a multi\hyp qubit gate.
+         This is due to the fact that they may contain arbitrary ancilla registers which may be positioned somewhere in between the parts that actually constitute the subcircuit---so this whole region must not have wires of other registers crossing.
          \begin{warning}[Discontiguous targets and control lines]
             A control line extends from the very first to the very last affected register in an operation.
             A sub\hyp gate line that is used for discontiguous registers will only span the range of a multi\hyp register.
@@ -477,6 +481,64 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          If there are no positive controls, the list may be empty or, together with the pipe, omitted.
          Preceded by a tilde (``\yquant!~!''), the list of negative controls then follows; this mimics the syntax of many programming languages that denote logical negation by a tilde.
          If there are no negative controls, the list may be empty or, together with the pipe, omitted.
+         
+      \clearpage
+      \subsection{Importing circuits from files}\label{sec:import}
+         Since version~0.2, \Yquant{} provides a simple way to import circuits that are stored in external files.
+         The macro \tex!\yquantimport! can be used in three different contexts:
+         \begin{itemize}
+            \item Outside of a \TikZ{} picture environment. \\
+               In this case, \tex!\yquantimport[<options>]{<filename>}! will be equivalent to
+               \begin{minted}{tex}
+\begin{tikzpicture}
+   \begin{yquant}[<options>]
+      % the content of <filename> goes here
+   \end{yquant}
+\end{tikzpicture}
+               \end{minted}
+               The starred form, \tex!\yquantimport*[<options>]{<filename>}!, instead inserts the starred \Yquant{} environment.
+               Note that the options are always \Yquant{} options; if you want to pass \TikZ{} options, you will have to create the picture environment by yourself or change the option path to the correct one (\texttt{/tikz/.cd}).
+            \item Inside a \TikZ{} picture environment, but outside of a \Yquant{} environment. \\
+               This is the same as before, just that no extra picture environment will be added.
+            \item Inside both a \TikZ{} picture environment and a \Yquant{} environment. \\
+               The file will be inserted directly into the environment.
+               \Yquant's parser is automatically restarted after this.
+               The content will always be put in a \TeX{} group; if additional options are provided, \Yquant{} also inserts a \TikZ{} \tex!scope! and executes \tex!\yquantset{<options>}! directly after the scope.
+               If \tex!\yquantimport! is used, the content will be read as if the containing environment was an unstarred one; if \tex!\yquantimport*! is used, the content will be read as if the containing environment was a starred one.
+         \end{itemize}
+         Note that \Yquant{} internally uses plain \TeX's \tex!\import! command (i.e., \tex!\@@import! in \LaTeX).
+         However, when the \pkg{import} package is loaded, it uses \\ \tex!\subimport{\yquantimportpath}{<filename>}!, where \tex!\yquantimportpath! defaults to \texttt{./}---so by changing this, files from other folders may be imported which by themselves again include other files, and the relative path resolution will work.
+         
+         Note that you may in particular import the content of a \gate{subcircuit}.
+      
+      \subsection{Defining own gates}
+         Since version~0.2, \Yquant{} provides a simple macro that allows the definition of own gates.
+         The macro \tex!\yquantdefinegate{<name>}[<style>]{<content>}! works in the following way:
+         \begin{itemize}
+            \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other built\hyp in gates.
+               Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
+               Special characters are allowed if \TeX{} can cope with them (i.e., no comment signs, no unbalanced braces, no backslashes...).
+            \item It creates a style \style{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
+               If no style is provided, the default style will inherit from \style{/yquant/operators/every custom gate}.
+               This will make the gate ``seamless,'' i.e., avoid highlighting the fact that this is a custom gate.
+            \item It defines a macro that contains \texttt{<content>} and that will be inserted as a subcircuit whenever this gate is invoked.
+               This in particular means that if you use \hyperref[sec:import]{\tex!\yquantimport!} within the gate, the file will only be loaded once at the time of declaration.
+         \end{itemize}
+         When the gate is later drawn, the styles are invoked in the following order---remember custom gates are implemented by means of subcircuits---:
+         \begin{enumerate}
+            \item \style{/yquant/every operator}
+            \item \style{/yquant/operators/every <name>}
+            \item \style{/yquant/operators/every subcircuit box}
+            \item \style{/yquant/this operator}
+            \item \style{/yquant/operators/this subcircuit box}
+         \end{enumerate}
+         Gates defined in this way can only make use of the default gates or other custom gates.
+         They do not accept custom arguments, and it is not possible to declare own, custom shapes in this way (though other predefined shapes may be used).
+         If they are used in a multi\hyp qubit manner, they will never be split into contiguous slices (but their content will be, so if you use the default style that turns off the box, the only way to notice this is that intermediate unaffected gates will not be allowed to place gates within the custom gate).
+         
+         More advanced declaration of custom gates requires the use of backend macros.
+         Refer to \texttt{yquant-lang.tex} for this.
+         For the declaration of custom shapes, see \texttt{yquant-shapes.tex} for examples.
       
    \section{Configuration}\label{sec:config}
       \Yquant{} uses \pkg{pgfkeys} to control its options, which are located in the path \texttt{/yquant}.
@@ -559,6 +621,10 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The default style turns this line into a brace and places the description at the appropriate position.
             The decoration \texttt{gapped brace} allows to additionally specify the regions in which a line should be drawn by using the \texttt{/tikz/decoration/from to} key, which expects a comma\hyp separated list of dimension ranges, and which is automatically populated by \Yquant.
             Since it may happen that the arch of the brace needs to be shifted from the value specified in \texttt{/tikz/decoration/aspect} (else, it would be drawn into a gap), the special key \texttt{/yquant/gapped brace/apply shift} is installed, which transforms the \texttt{pos=-1} specification into a position that corresponds to the actual \texttt{aspect} value.
+         \end{option}
+         
+         \begin{option}{every input label}!!
+            This style is installed for every register name label in a \gate{subcircuit} when the register is an input (or input and output) register.
          \end{option}
       
       \subsection{Register outputs}\unskipOpt
@@ -671,6 +737,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{box} operator.
          \end{option}
          
+         \begin{option}{operators/every custom gate}!/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}, /yquant/register/default name=!
+            This style is by default installed for every user\hyp defined gate (since version~0.2).
+            User\hyp defined gates are implemented via subcircuits; this style suppresses the box that surrounds the subcircuit and by default suppresses all register names.
+            This allows a seamless integration of the gate/subcircuit into the main circuit, without putting particular emphasis to the fact that what was defined as the custom gate indeed belongs together.
+         \end{option}
+         
          \begin{option}{operators/every dmeter}!shape=yquant-dmeter, x radius=2mm, y radius=2mm, fill=white, draw!
             This style is installed for every \gate{dmeter} gate.
             The \texttt{yquant-dmeter} shape consists of a rectangle whose right side is replaced by a circle, resembling the letter ``D.''
@@ -706,6 +778,28 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          
          \begin{option}{operators/every slash}!shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw!
             This style is installed for every \gate{slash} pseudo\hyp gate, i.e., the one that is used to indicate that a single register line actually denotes multiple registers.
+         \end{option}
+         
+         \begin{option}{operators/every subcircuit}!!
+            This style is installed for every \gate{subcircuit}.
+         \end{option}
+         
+         \begin{option}{operators/every subcircuit box}!/yquant/operators/every box!
+            This style is installed for every \gate{subcircuit}.
+            Note that in contrast to all other styles such as \style{/yquant/operators/every subcircuit} or \style{/yquant/this operator}, this style is only applied to the ``container'' node of the subcircuit, but not to the elements in the subcircuit themselves.
+         \end{option}
+         
+         \begin{option}{subcircuit box style}!/yquant/operators/every subcircuit box/.append style={#1}!
+            This is a shorthand to apply styles to the subcircuit box only.
+         \end{option}
+         
+         \begin{option}{operators/this subcircuit box}!!
+            This style is appended to the current style installed for the \gate{subcircuit}, but will not apply to its contents.
+            Additionally, this style will be reset to an empty style at the beginning of each subcircuit, so that it really only applies to exactly the subcircuit box it is explicitly specified on, not to nested subcircuit boxes.
+         \end{option}
+         
+         \begin{option}{this subcircuit box style}!/yquant/operators/this subcircuit box/.append style={#1}!
+            This is a shorthand to apply styles to the current subcircuit box only.
          \end{option}
          
          \begin{option}{operators/every swap}!shape=yquant-swap, radius=.75mm, draw!
@@ -755,6 +849,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       Multiple slices in a discontiguous multi\hyp register are additionally suffixed by \texttt{-s\textit{<slice index>}}.
       All controls are also named, suffixed by \tex!-p\idx! or \tex!-n\idx! for positive and negative controls (i.e., the topmost positive control of the previous operator will be available as \texttt{op-p0}).
       Counters for target registers, positive, and negative controls are all independent.
+      Finally, you can even access names within a subcircuit, provided you give a name to the subcircuit.
+      All nodes in the subcircuit will then have the name \texttt{\textit{<subcircuit name>}-\textit{<name specified in the subcircuits>}}.
+      For nested subcircuits, you will get multiple prefixes.
       
       All \Yquant{} shapes have the anchors available you would typically expect from a \TikZ{} shape of the given outline.
       Before version~0.1.2, \Yquant{} shapes needed to provide a \texttt{circuit} anchor and projection anchors.
@@ -786,9 +883,6 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                \item Remove the clipping paths stored so far on this register, apart from the clipping on the last gate (which will be needed again if this was not the end of the circuit).
             \end{itemize}
       \end{itemize}
-      
-%      The current version of \Yquant{} does not implement subcircuits yet.
-%      However, this is planned in a future version; by naming a subcircuit, all named operations inside should then also become available (prefixed by the subcircuit's name).
    
    \section{Reference: Gates and operations}\label{sec:gates}
       This section lists all operations \Yquant{} currently understands.
@@ -943,7 +1037,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Names are case\hyp insensitive.
          The register can be made into a vector register by specifying \texttt{<len>} (default \tex!1!).
          
-         \emph{Possible attributes:} none
+         \clearpage
+         \emph{Possible attributes:}
+         \begin{itemize}
+            \item \yquant![out]! or \yquant![ancilla]! (required in subcircuits) \\
+               \emph{see \gate{qubit}}
+         \end{itemize}
       
       \subsection{\texorpdfstring{\yquant!not!}{not}}\label{gate:not}
          Syntax: \yquant!not <target> | <pcontrol> ~ <ncontrol>;! \\
@@ -994,6 +1093,21 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{itemize}
             \item \yquant![after=<regname>]! \\
                If given, the register will start not at the left of the circuit but instead at the position at which the last gate in the register \texttt{<regname>} ended.
+               
+               This attribute may not be given in combination with \yquant![in]! or \yquant![inout]!.
+            \item \yquant![in]!, \yquant![out]!, \yquant![inout]!, or \yquant![ancilla]! \\
+               Default: \yquant![ancilla]! for top\hyp level circuits (do not change there); \yquant![inout]! for subcircuits.
+               
+               Determines how a subcircuit interacts with its parent circuit.
+               
+               Registers declared with the \yquant![ancilla]! attribute are available only to the subcircuit; they cannot be connected to an outside wire.
+               
+               Registers declared with the \yquant![in]! or \yquant![inout]! attribute will expect an outer wire of the same type to be present and will then be identical with this outer wire.
+               Any changes applied to the wire within the subcircuit automatically also happen on the associated outer wire.
+               If the attribute is \yquant![in]!, the wire will automatically be discarded at the end of the subcircuit (and hence also in the outer circuit, where it may be re\hyp initialized).
+               This is different from applying the \gate{discard} gate in that the wire will still extend until the end of the subcircuit and may thus receive proper \gate{output}s.
+               
+               Registers declared with the \yquant![out]! attribute will expect a discarded outer wire to be present, which will be initialized to a \texttt{qubit} at the beginning of the subcircuit, and from then on be identical with the outer wire.
             \item \yquant![value=<value>]! \\
                Denotes the label that is printed to the left of the wire.
                If the value is omitted, the default is used (\style{/yquant/register/default name}, preinitialized to \tex!\regidx!).
@@ -1043,6 +1157,36 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          The style \style{/yquant/operators/every slash} is installed.
          
          \emph{Possible attributes:} none
+      
+      \subsection{\texorpdfstring{\yquant!subcircuit!}{subcircuit}}\label{gate:subcircuit}
+         Syntax: \yquant!subcircuit <target>;! \\
+         This is a subcircuit gate which inserts independent quantum circuits at the current position within the circuit.
+         It may span multiple registers, but is never split into contiguous slices.
+         It allows for controls and may change the type of any target involved, depending on the particular subcircuit.
+         The style \style{/yquant/operators/every subcircuit} is installed.
+         
+         \emph{Possible attributes:}
+         \begin{itemize}
+            \item \yquant!value=<subcircuit>! (required) \\
+               Denotes the content of the subcircuit.
+               It is specified in the usual syntax of \Yquant.
+               Note that, regardless of the outer environment, a subcircuit always implicitly uses the unstarred form, i.e., you must declare every register explicitly before its first usage.
+               This is to make sure that the interface of the circuit, i.e., which registers are taken as input and/or output parameters and in which order, is not accidentally mistaken.
+               
+               The mapping between input and output registers is trivial for single\hyp qubit uses.
+               For multi\hyp qubit uses, it works in the following way---in short, it matches in visual order.
+               You declare input and output registers by using the appropriate attributes on the \gate{qubit}, \gate{cbit}, \gate{qubits} (or even \gate{nobit}) gates.
+               The list of all non\hyp ancillas, from the topmost to the bottom\hyp most, forms the list of parameter registers of the subcircuit.
+               This is exactly the number of registers that must be supplied within one multi\hyp qubit target.
+               Also within the multi\hyp qubit target, we sort all registers from the topmost to the bottom\hyp most (in the order as they visually appear, not the order in which they are entered).
+               Those two lists of equal length are then mapped $1:1$ to each other.
+               Intermixing with ancillas is possible at every position and will lead to a vertical shift of the wires, until all registers, inner and outer, can be displayed flawlessly.
+               
+               As subcircuits follow the same rules as ordinary circuits, it is possible to mix them with arbitrary \TeX{} code, and also to access named gates within the subcircuit---but note that named gates in the outer circuit cannot be accessed (at least unless you play with the \texttt{name prefix} key in \TikZ).
+               In order to access inner nodes from the outer circuit, the subcircuit itself must be named; the inner nodes are then prefixed by the name of the subcircuit and a dash.
+               
+               It is possible to nest subcircuits arbitrarily.
+         \end{itemize}
       
       \subsection{\texorpdfstring{\yquant!swap!}{swap}}\label{gate:swap}
          Syntax: \yquant!swap <targets> | <pcontrol> ~ <ncontrol>;! \\
@@ -2201,7 +2345,7 @@ $=$
    \node[inner, anchor=east] at (a-3 -| u.east) {\smash{$y \oplus f(x)$}};
 \end{tikzpicture}
                \end{codeexample*}
-               There is no simple way to draw \emph{within} a gate, though this is probably something that will be easier using subcircuits (planned feature).
+               There is no simple way to draw \emph{within} a gate, unless this gate is a proper quantum circuit itself.
                Instead, here the intricate parts were reproduced using \TikZ: first, we make sure we assign a name to every relevant coordinate.
                Then we use some \TikZ{} styles to draw the braces and nodes at the intersection of these coordinates.
                Here, we also make use of the \texttt{moveto} decoration transformation that comes with \Yquant{} and that allows to enlarge the braces slightly for a good overall appearance.
@@ -2481,7 +2625,7 @@ $=$
    \end{yquant}
 \end{tikzpicture}
                      \end{codeexample*}
-                     While here, we opted for the most logical choice to name the declaration of the register, a name put to any operation on the desired register would also serve the purpose.
+                     While here, we opted for the most logical choice to name the declaration of the register, a name put to any operation on the desired register would also serve the purpose (as long as this operation is vertically symmetrical, which subcircuits may not be).
                   \end{example}
                   
                   \clearpage
@@ -2646,32 +2790,51 @@ $=$
          draw, inner sep=6pt, "reversed c-\textsc{not}"] {};
 \end{tikzpicture}
                   \end{codeexample*}
+                  In this case, since version~0.2, a subcircuit may provide a similar experience:
+                  \begin{codeexample*}
+% \usetikzlibrary{quotes}
+\begin{tikzpicture}
+   \begin{yquant*}
+      h a;
+      cnot b | a;
+      [this subcircuit box style={inner sep=6pt, "reversed c-\textsc{not}"}]
+      subcircuit {
+         qubit {} x;
+         qubit {} y;
+         h -;
+         cnot y | x;
+         h -;
+      } (-);
+      cnot b | a;
+      h b;
+   \end{yquant*}
+\end{tikzpicture}
+                  \end{codeexample*}
+                  Here, we used the key \style{/yquant/this subcircuit box style} to influence only the style of the subcircuit box itself instead of providing global options that apply to every object in the subcircuit (you wouldn't want the label be assigned to every single gate).
                \end{example}
                
                \clearpage
                \begin{example}
                   \begin{codeexample*}
-% \usetikzlibrary{quotes, backgrounds}
+% \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
-      [name=left]
-      cnot b | a;
-      cnot a | b;
-      [name=right]
-      cnot b | a;
+      [this subcircuit box style={draw, dashed, rounded corners, fill=blue!20, inner xsep=6pt, inner ysep=10pt, "\textsc{swap}" below}, register/default name=]
+      subcircuit {
+         qubit a;
+         qubit b;
+         cnot b | a;
+         cnot a | b;
+         cnot b | a;
+      } (a-b);
       h b;
    \end{yquant*}
-   \scoped[on background layer]
-      \node[fit=(left-0) (left-p0) (right-0) (right-p0),
-            draw, dashed, rounded corners, fill=blue!20,
-            inner xsep=6pt, inner ysep=10pt,
-            "\textsc{swap}" below] {};
 \end{tikzpicture}
                   \end{codeexample*}
-                  In this example, we need to refer to names, but want to fill the background before those nodes are actually available.
-                  Hence, we use the layering mechanism of \TikZ{} and put the node on the background layer.
-                  Alternatively, we could have drawn on top and used opacity to still make visible what is behind; but in general, whenever you can avoid to use opacities, do avoid it; it adds overhead at the renderer and may give sub\hyp optimal result when printing since the viewer has to reduce all elements to non\hyp overlapping parts.
+                  Since version~0.2, fully enclosing a bunch of operations (with no controls extending to some inner component) is possible by means of \gate{subcircuit}s.
+                  Before, this had to be done using named operations and layers.
+                  Note that here we used the style \style{/yquant/this subcircuit box style} to assign a styling that only applies to the box containing the subcircuit, but not to the inner gates---which would have happened had we just given the arguments to the subcircuit directly.
                \end{example}
                
                \Yquant{} does not support the fancy nearest\hyp neighbor swap gate that \pkg{quantikz} has.
@@ -2729,18 +2892,6 @@ $=$
    \section{Wishlist}
       This section contains some thoughts on future improvements and features.
       \begin{itemize}
-         \item Subcircuit support. \\
-            A subcircuit is a quantum circuit on its own that is put into a box within other circuits.
-            It has input, output, and also internal wires.
-            Subcircuits may be declared on\hyp the\hyp fly if they are used only once, but there should also be the option to globally declare subcircuits and use them at any time.
-            As with ordinary quantum circuits, everything in a subcircuit should be allowed to have a name.
-            If the subcircuit itself is then also named, those inner names should be made available (prefixed with the subcircuit's name), to the outer circuit.
-            Subcircuits may also contain subcircuits.
-            While the number of input registers should match, a subcircuit may have more, less or different output registers.
-            The language needs to be extended to somehow allow for this.
-            Subcircuits will typically be multi\hyp qubit elements that, at least if internal wires are used, may significantly increase the required height for an individual register.
-            Hence, the internal height calculations must be adapted.
-            This will be particularly problematic if the subcircuit targets non\hyp adjacent wires.
          \item Support for other languages. \\
             It would be particularly nice to introduce a language mode.
             While the \Yquant{} language will always provide the set of everything \Yquant{} can do at the moment, it would be nice if \Yquant{} can automatically detect \texttt{OpenQASM} and parse its content correctly.
@@ -2773,5 +2924,9 @@ $=$
          \Yquant{} now also properly draws non\hyp contiguous multi\hyp qubit operations. \\
          New gate: \gate{correlate}.
          Various bug fixes.
+      
+      \subsection{2020-06-02: Version 0.2}
+         Introduce \gate{subcircuit}; required rewriting how \Yquant{} internally positions vertically.
+         Provide simple macros to load circuits (or parts) from a file and to declare own custom gates.
 %END_FOLD
 \end{document}
