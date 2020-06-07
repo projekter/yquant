@@ -196,8 +196,8 @@
    \section{Introduction}
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
-      \Yquant{} is a package that makes typesetting quantum circuits easy; the package is not yet available on CTAN.
-      This alpha version~0.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
+      This alpha version~0.2.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -209,8 +209,9 @@
          Then, have a look at \cref{sec:tikz} (or \cref{sec:alt}).
       
       \subsection{Installation}
-         \Yquant{} is available on the CTAN.
-         A direct installation from this Git repository is possible by just cloning it to a path visible to your \TeX{} compiler.
+         The recommended way of installation is through CTAN.
+         A direct installation from this Git repository to obtain the latest additions and features is be possible by just cloning it to a path visible to your \TeX{} compiler.
+         While the repository may contain new additions, they are not thoroughly tested until they end up on CTAN; features that are not documented in this manual are entirely unreliable.
          For example, you may put them in the same directory as your document (if you just want to give a try), or you may extract them to \texttt{tex/latex/yquant} in your local \texttt{texmf} (followed by an update of the file name database).
       
       \subsection{Purpose of \Yquant, alternatives}\label{sec:alt}
@@ -512,7 +513,26 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Note that you may in particular import the content of a \gate{subcircuit}.
       
       \subsection{Defining own gates}
-         Since version~0.2, \Yquant{} provides a simple macro that allows the definition of own gates.
+         \begin{warning}[Scope]
+            All gate declarations are always global.
+         \end{warning}
+         
+         Since version~0.2.1, if you want to define a gate that corresponds to a single \gate{box} gate with a certain pre\hyp defined content, you may use the macro\\
+         \tex!\yquantdefinebox{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \tex!\yquantdefinegate! introduced below.
+         It works in the following way:
+         \begin{itemize}
+            \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other build\hyp in gates.
+               Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
+               Special characters are allowed if \TeX{} can cope with them (i.e., no comment signs, no unbalanced braces, no backslashes...).
+            \item It creates a style \style{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
+               If no style is provided, the default style will inherit from \style{/yquant/operators/every box}.
+            \item It defines \texttt{<content>} to be the value that is written into the box.
+               This \texttt{<content>} is expanded in a protected manner at the time of gate declaration.
+               You may need to prefix fragile macros by \tex!\protect!.
+         \end{itemize}
+         
+         Sometimes, you may wish to define gates that are more than just a single box---perhaps a succession of multiple gates or even multi\hyp register gates with individual operations on the input registers. \\
+         Since version~0.2, \Yquant{} provides a simple macro that allows this.
          The macro \tex!\yquantdefinegate{<name>}[<style>]{<content>}! works in the following way:
          \begin{itemize}
             \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other built\hyp in gates.
@@ -521,7 +541,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item It creates a style \style{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \style{/yquant/operators/every custom gate}.
                This will make the gate ``seamless,'' i.e., avoid highlighting the fact that this is a custom gate.
-            \item It defines a macro that contains \texttt{<content>} and that will be inserted as a subcircuit whenever this gate is invoked.
+            \item It defines a macro that contains \texttt{<content>} (expanded in a protected manner) and that will be inserted as a subcircuit whenever this gate is invoked.
                This in particular means that if you use \hyperref[sec:import]{\tex!\yquantimport!} within the gate, the file will only be loaded once at the time of declaration.
          \end{itemize}
          When the gate is later drawn, the styles are invoked in the following order---remember custom gates are implemented by means of subcircuits---:
@@ -535,6 +555,20 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Gates defined in this way can only make use of the default gates or other custom gates.
          They do not accept custom arguments, and it is not possible to declare own, custom shapes in this way (though other predefined shapes may be used).
          If they are used in a multi\hyp qubit manner, they will never be split into contiguous slices (but their content will be, so if you use the default style that turns off the box, the only way to notice this is that intermediate unaffected gates will not be allowed to place gates within the custom gate).
+         
+         \begin{warning}[Redefining existing gates]
+            The above macros will issue an error if the gate already exists.
+            You can use \tex!\yquantredefinebox! or \tex!\yquantredefinegate! to overwrite existing gate definitions.
+            Note that this will overwrite \emph{any} gate, even the built\hyp in ones.
+            
+            Generally, it is discouraged to make use of this possibility.
+            For custom gates, if you redefine a gate as a box which was previously a general subcircuit\hyp based gate, the macro that contains the subcircuit will still be held in memory.
+            Overwriting built\hyp in gates will not clear the attributes associated to this gate (though required attributes will no longer be required afterwards).
+            Again, this is not a problem but prevents \Yquant{} from issuing potentially helpful error message if such a---now meaningless---attribute is used.
+            
+            Finally, once a built\hyp in gate is overwritten, it cannot be restored.
+            In particular, the register creation pseudo\hyp gates \gate{qubit}, \gate{cbit}, \gate{qubits}, and \gate{nobit} perform some magic that cannot be mimicked with custom gates.
+         \end{warning}
          
          More advanced declaration of custom gates requires the use of backend macros.
          Refer to \texttt{yquant-lang.tex} for this.
@@ -2928,5 +2962,8 @@ $=$
       \subsection{2020-06-02: Version 0.2}
          Introduce \gate{subcircuit}; required rewriting how \Yquant{} internally positions vertically.
          Provide simple macros to load circuits (or parts) from a file and to declare own custom gates.
+      
+      \subsection{2020-06-07: Version 0.2.1}
+         Introduce a macro to declare a lightweight custom gate, which is only a single box with custom content.
 %END_FOLD
 \end{document}

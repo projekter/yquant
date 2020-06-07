@@ -695,4 +695,39 @@
    }%
    \yquantdefinegate@do%
 }
+
+\def\yquantdefinebox#1{%
+   \ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Gate redefined}%
+                   {The gate `#1' already exists. Use \string\yquantredefinebox\space if you really want to redefine it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinebox@i{#1}}%
+                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+}
+
+\def\yquantredefinebox#1{%
+   \unless\ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown gate redefined}%
+                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinebox\space to define it.}%
+   \fi%
+   \yquantdefinebox@i{#1}%
+   \@ifnextchar[{\yquantdefinebox@i{#1}}%
+                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+}
+
+\protected\long\def\yquantdefinebox@i#1[#2]#3{%
+   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+   \protected@edef\yquantdefinebox@do{%
+      \yquant@langhelper@declare@command%
+         {#1}%
+         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
+      \yquant@langhelper@setup@attrs{#1}{}{}%
+      \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
+         \yquant@draw%
+            {#3}%
+            {/yquant/operators/every #1}%
+      }%
+   }%
+   \yquantdefinebox@do%
+}
 % END_FOLD
