@@ -326,6 +326,85 @@
 }
 % END_FOLD
 
+% BEGIN_FOLD Define own gates
+\def\yquantdefinegate#1{%
+   \ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Gate redefined}%
+                   {The gate `#1' already exists. Use \string\yquantredefinegate\space if you really want to redefine it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinegate@i{#1}}%
+                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
+}
+
+% while this command is provided to redefine gates, we do not clear the attributes that were once assigned to the previous one, so gate redefinition is discouraged!
+\def\yquantredefinegate#1{%
+   \unless\ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown gate redefined}%
+                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinegate\space to define it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinegate@i{#1}}%
+                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
+}
+
+\protected\long\def\yquantdefinegate@i#1[#2]#3{%
+   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+   \protected@edef\yquantdefinegate@do{%
+      \yquant@langhelper@declare@command%
+         {#1}%
+         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
+      % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
+      \yquant@langhelper@setup@attrs{#1}{}{}%
+      % Now define the gate's content as a macro
+      \def\expandafter\noexpand\csname yquant@lang@@@#1\endcsname{%
+         #3%
+      }%
+      % And provide the implementation
+      \protected\def\expandafter\noexpand\csname yquant@lang@@#1\endcsname####1####2####3{%
+         \yquant@register@get@multiaslist%
+         \yquant@circuit@operator{####1}{####2}{####3}%
+         \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@@#1\endcsname%
+         \yquant@draw@@subcircuit{/yquant/operators/every #1}%
+      }%
+   }%
+   \yquantdefinegate@do%
+}
+
+\def\yquantdefinebox#1{%
+   \ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Gate redefined}%
+                   {The gate `#1' already exists. Use \string\yquantredefinebox\space if you really want to redefine it.}%
+   \fi%
+   \@ifnextchar[{\yquantdefinebox@i{#1}}%
+                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+}
+
+\def\yquantredefinebox#1{%
+   \unless\ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown gate redefined}%
+                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinebox\space to define it.}%
+   \fi%
+   \yquantdefinebox@i{#1}%
+   \@ifnextchar[{\yquantdefinebox@i{#1}}%
+                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+}
+
+\protected\long\def\yquantdefinebox@i#1[#2]#3{%
+   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+   \protected@edef\yquantdefinebox@do{%
+      \yquant@langhelper@declare@command%
+         {#1}%
+         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
+      \yquant@langhelper@setup@attrs{#1}{}{}%
+      \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
+         \yquant@draw%
+            {#3}%
+            {/yquant/operators/every #1}%
+      }%
+   }%
+   \yquantdefinebox@do%
+}
+% END_FOLD
+
 % BEGIN_FOLD Box registers
 % all-purpose box with arbitrary text
 \yquant@langhelper@declare@command{box}\yquant@lang@@box
@@ -338,40 +417,16 @@
 }
 
 % Hadamard
-\yquant@langhelper@declare@command{h}\yquant@lang@@h
-\yquant@langhelper@setup@attrs{h}{}{}
-\def\yquant@lang@@h{%
-   \yquant@draw%
-      {$H$}%
-      {/yquant/operators/every h}%
-}
+\yquantdefinebox{h}{$H$}
 
 % Pauli X (or NOT)
-\yquant@langhelper@declare@command{x}\yquant@lang@@x
-\yquant@langhelper@setup@attrs{x}{}{}
-\def\yquant@lang@@x{%
-   \yquant@draw%
-      {$X$}%
-      {/yquant/operators/every x}%
-}
+\yquantdefinebox{x}[/yquant/operators/every pauli]{$X$}
 
 % Pauli Y
-\yquant@langhelper@declare@command{y}\yquant@lang@@y
-\yquant@langhelper@setup@attrs{y}{}{}
-\def\yquant@lang@@y{%
-   \yquant@draw%
-      {$Y$}%
-      {/yquant/operators/every y}%
-}
+\yquantdefinebox{y}[/yquant/operators/every pauli]{$Y$}
 
 % Pauli Z
-\yquant@langhelper@declare@command{z}\yquant@lang@@z
-\yquant@langhelper@setup@attrs{z}{}{}
-\def\yquant@lang@@z{%
-   \yquant@draw%
-      {$Z$}%
-      {/yquant/operators/every z}%
-}
+\yquantdefinebox{z}[/yquant/operators/every pauli]{$Z$}
 
 % sub-circuit: This is a nested circuit.
 \yquant@langhelper@declare@command{subcircuit}\yquant@lang@@subcircuit
@@ -650,84 +705,5 @@
       \yquant@circuit@addstyle%
       \yquant@register@get@ids@list%
       {{\yquant@lang@attr@value}}%
-}
-% END_FOLD
-
-% BEGIN_FOLD Define own gates
-\def\yquantdefinegate#1{%
-   \ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Gate redefined}%
-                   {The gate `#1' already exists. Use \string\yquantredefinegate\space if you really want to redefine it.}%
-   \fi%
-   \@ifnextchar[{\yquantdefinegate@i{#1}}%
-                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
-}
-
-% while this command is provided to redefine gates, we do not clear the attributes that were once assigned to the previous one, so gate redefinition is discouraged!
-\def\yquantredefinegate#1{%
-   \unless\ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Unknown gate redefined}%
-                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinegate\space to define it.}%
-   \fi%
-   \@ifnextchar[{\yquantdefinegate@i{#1}}%
-                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
-}
-
-\protected\long\def\yquantdefinegate@i#1[#2]#3{%
-   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
-   \protected@edef\yquantdefinegate@do{%
-      \yquant@langhelper@declare@command%
-         {#1}%
-         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
-      % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
-      \yquant@langhelper@setup@attrs{#1}{}{}%
-      % Now define the gate's content as a macro
-      \def\expandafter\noexpand\csname yquant@lang@@@#1\endcsname{%
-         #3%
-      }%
-      % And provide the implementation
-      \protected\def\expandafter\noexpand\csname yquant@lang@@#1\endcsname####1####2####3{%
-         \yquant@register@get@multiaslist%
-         \yquant@circuit@operator{####1}{####2}{####3}%
-         \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@@#1\endcsname%
-         \yquant@draw@@subcircuit{/yquant/operators/every #1}%
-      }%
-   }%
-   \yquantdefinegate@do%
-}
-
-\def\yquantdefinebox#1{%
-   \ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Gate redefined}%
-                   {The gate `#1' already exists. Use \string\yquantredefinebox\space if you really want to redefine it.}%
-   \fi%
-   \@ifnextchar[{\yquantdefinebox@i{#1}}%
-                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
-}
-
-\def\yquantredefinebox#1{%
-   \unless\ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Unknown gate redefined}%
-                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinebox\space to define it.}%
-   \fi%
-   \yquantdefinebox@i{#1}%
-   \@ifnextchar[{\yquantdefinebox@i{#1}}%
-                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
-}
-
-\protected\long\def\yquantdefinebox@i#1[#2]#3{%
-   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
-   \protected@edef\yquantdefinebox@do{%
-      \yquant@langhelper@declare@command%
-         {#1}%
-         \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
-      \yquant@langhelper@setup@attrs{#1}{}{}%
-      \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
-         \yquant@draw%
-            {#3}%
-            {/yquant/operators/every #1}%
-      }%
-   }%
-   \yquantdefinebox@do%
 }
 % END_FOLD

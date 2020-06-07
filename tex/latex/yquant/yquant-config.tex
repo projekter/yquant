@@ -117,16 +117,9 @@
    operators/every custom gate/.style=%
       {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt},%
        /yquant/register/default name=},
-   operators/every h/.style=%
-      {/yquant/operators/every box},%
+   % every h, every x, every y, every z are implicitly defined during gate declaration
    operators/every pauli/.style=%
       {/yquant/operators/every box},%
-   operators/every x/.style=%
-      {/yquant/operators/every pauli},%
-   operators/every y/.style=%
-      {/yquant/operators/every pauli},%
-   operators/every z/.style=%
-      {/yquant/operators/every pauli},%
    operators/every phase/.style=%
       {shape=yquant-circle, radius=.5mm, fill},%
    operators/every zz/.style=%
