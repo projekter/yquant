@@ -1,0 +1,681 @@
+% yquantlanguage-qasm.sty
+%  Extend yquant to understand qasm syntax.
+%
+% Copyright 2020 Benjamin Desef
+%
+% This work may be distributed and/or modified under the conditions of the LaTeX Project
+% Public License, either version 1.3c of this license or (at your option) any later
+% version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3c or later is part of all distributions of LaTeX version 2005/12/01 or
+% later.
+%
+% This work has the LPPL maintenance status `author-maintained'.
+%
+% The Current Maintainer of this work is Benjamin Desef.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{yquantlanguage-qasm}[2020/06/12 v0.3 yquant-qasm]
+
+\RequirePackage{yquant}[2020/06/12]
+
+% BEGIN_FOLD Environment definitions
+\begingroup
+   \catcode`\{=12 \global\let\qasm@env@charbgroup={
+   \catcode`\#=12 \global\let\qasm@env@charhashtag=#
+\endgroup
+{\catcode`\^^M=12 \protected\gdef\qasm@defwithnewline#1#{\def#1^^M}}
+{\catcode`\|=0 \catcode`\\=12 |global|let|qasm@env@charbackslash=\ |gdef|qasm@env@charend{\endqasm}}
+\protected\def\qasm@env@begin{%
+   \begingroup%
+      \qasm@env@setcatcodes%
+      \@ifnextchar[\qasm@env@begin@arg{\qasm@env@begin@arg[]}%
+}
+
+\protected\def\qasm@env@setcatcodes{%
+   % make most TeX specials ordinary - not \dospecials, we want to keep spaces
+   \catcode`\\=12 %
+   \catcode`\{=12 %
+   \catcode`\}=12 %
+   \catcode`\$=12 %
+   \catcode`\&=12 %
+   \catcode`\#=12 %
+   \catcode`\^=12 \catcode`\^^K=12 %
+   \catcode`\_=12 \catcode`\^^A=12 %
+   \catcode`\%=12 %
+   \catcode`\~=12 %
+   \catcode`\^^M=12 %
+}
+
+\def\qasm@env@begin@arg{%
+   \yquant@env@lazyfalse%
+   \let\yquant@env@check=\qasm@env@check%
+   \let\yquant@register@get@ids=\qasm@register@get@ids%
+   \let\yquant@attrs@remaining=\empty% we don't have attributes, but the backend requires this to be set up
+   \let\tikz@ensure@dollar@catcode=\relax% this check will fail, but it does not make sense in our case. Every tikz command will be read with the appropriate dollar catcode.
+   % provide some commands that might be used during gate construction
+   \let\m=\qasm@cmd@m%
+   \let\txt=\qasm@cmd@txt%
+   \let\meter=\qasm@cmd@meter%
+   \let\dmeter=\qasm@cmd@dmeter%
+   \let\dmeterwide=\qasm@cmd@dmeterwide%
+   \yquant@env@begin@generic\qasm%
+}
+
+\def\qasm@env@end{%
+      \yquant@env@end%
+   \endgroup%
+}
+
+% since the backslash is just an `other' character, we cannot leave our environment. Hence, we manually check for \endqasm and \end{qasm}.
+\def\qasm@env@checkend#1#2#3#4#5{%
+   \ifstrequal{#1#2#3#4 }{\end}{% for us, \end is a macro so that TeX will insert another space
+      \ifx q#5%
+         \expandafter\qasm@env@checkend@plain%
+      \else%
+         \ifx\qasm@env@charbgroup#5%
+            \expandafter\expandafter\expandafter\qasm@env@checkend@latex%
+         \else%
+            \PackageError{yquant.sty}%
+                         {Invalid qasm syntax: `\meaning#1'}%
+                         {Adhere to the specs!}%
+         \fi%
+      \fi%
+   }{%
+      \PackageError{yquant.sty}%
+                   {Invalid qasm syntax: `\meaning#1'}%
+                   {Adhere to the specs!}%
+   }%
+}
+
+\def\qasm@env@checkend@plain#1#2#3{%
+   \ifstrequal{#1#2#3}{asm}{%
+         \endgroup% we initially thought this was a normal command, so exit the group
+      \endqasm%
+      \futurelet\qasm@env@checkend@plain@delimiter\qasm@env@checkend@plain@validate%
+   }{%
+      \PackageError{yquant.sty}%
+                   {Invalid qasm syntax: `\meaning\qasm@env@charbackslash'}%
+                   {Adhere to the specs!}%
+   }%
+}
+
+\def\qasm@env@checkend@plain@validate{%
+   % we already ended the qasm environment, based on the assumption that what followed was not a letter
+   \ifcat\qasm@env@checkend@plain@delimiter A%
+      % we were wrong and should never have left the environment. Now it's too late
+      \PackageError{yquant.sty}%
+                   {Invalid qasm syntax: `\meaning\qasm@env@charbackslash'}%
+                   {Adhere to the specs!}%
+   \fi%
+}
+
+\begingroup
+   \catcode`\[=1 \catcode`\]=2 \catcode`\}=12 % we set [ just for editors that scan for matching parenthesis, though we don't need it
+   \gdef\qasm@env@checkend@latex#1#2#3#4#5[%
+      \ifstrequal[#1#2#3#4#5][qasm}][%
+            \endgroup% we initially thought this was a normal command, so exit the group
+         \end[qasm]%
+      ][%
+         \PackageError[yquant.sty]%
+                      [Invalid qasm syntax: `\meaning\qasm@env@charbackslash']%
+                      [Adhere to the specs!]%
+      ]%
+   ]%
+\endgroup
+
+\protected\def\qasm@env@restorecatcodes{%
+   % restore standard catcodes (hopefully they were standard before entering the environment)
+   \catcode`\\=0 % backslash is TeX escape character
+   \catcode`\{=1 % left brace is begin-group character
+   \catcode`\}=2 % right brace is end-group character
+   \catcode`\$=3 % dollar sign is math shift
+   \catcode`\&=4 % ampersand is alignment tab
+   \catcode`\#=6 % hash mark is macro parameter character
+   \catcode`\^=7 \catcode`\^^K=7 % circumflex and uparrow are for superscripts
+   \catcode`\_=8 \catcode`\^^A=8 % underline and downarrow are for subscripts
+   \catcode`\%=14 % percent sign is comment character
+   \catcode`\~=\active % tilde is active
+%   \catcode`\^^M=5 % ascii return is end-line - not needed, is done manually
+}
+
+\tikzaddtikzonlycommandshortcutlet\qasm\qasm@env@begin
+\tikzaddtikzonlycommandshortcutlet\endqasm\qasm@env@end
+
+\protected\def\qasm@env@check{%
+   \let\next=\relax%
+   \ifx\yquant@env@nextchar\qasm@env@charhashtag% comment
+      \let\next=\qasm@env@gobblecomment%
+   \else%
+      % Here we assume standard catcodes for A
+      \ifcat\noexpand\yquant@env@nextchar A% letter
+         \let\next=\qasm@langhelper@check@name%
+      \else%
+         \ifx\yquant@env@nextchar\yquant@env@linebreak% linebreaks are no longer end-of-line characters, but have catcode 12 (other).
+            \let\next=\yquant@env@gobblepar%
+         \else%
+            \ifx\yquant@env@nextchar\par%
+               \let\next=\yquant@env@gobblepar%
+            \else%
+               \ifx\yquant@env@nextchar\qasm@env@charbackslash% backslash might end the environment
+                  \let\next=\qasm@env@checkend%
+               \else%
+                  \PackageError{yquant.sty}%
+                     {Invalid qasm syntax: `\meaning\yquant@env@nextchar'}%
+                     {Adhere to the specs!}%
+               \fi%
+            \fi%
+         \fi%
+      \fi%
+   \fi%
+   \next%
+}
+
+\qasm@defwithnewline\qasm@env@gobblecomment#1{%
+   \yquant@env@contscan%
+}
+
+\def\qasmimport#1{%
+   \ifpgfpicture%
+      \ifnum\yquant@env>0 %
+         \PackageError{yquant.sty}{You cannot use qasm circuits as subcircuits}{}%
+      \else%
+         \begingroup%
+            \let\yquantimport@now=\qasmimport@now%
+            \everyeof{\noexpand}%
+            \qasm@env@setcatcodes%
+            \yquantimportcommand{#1}%
+            \expandafter\expandafter\expandafter\qasm%
+               \expandafter\qasmimport@file%
+            \qasm@env@charend%
+         \endgroup%
+      \fi%
+   \else%
+      \begin{tikzpicture}%
+         \begingroup%
+            \let\yquantimport@now=\qasmimport@now%
+            \everyeof{\noexpand}%
+            \qasm@env@setcatcodes%
+            \yquantimportcommand{#1}%
+            \expandafter\expandafter\expandafter\qasm%
+               \expandafter\qasmimport@file%
+            \qasm@env@charend%
+         \endgroup%
+      \end{tikzpicture}
+   \fi%
+}
+
+\def\qasmimport@now#1{%
+   \edef\qasmimport@file{\@@input #1 }%
+}
+% END_FOLD
+
+% BEGIN_FOLD Langhelper definitions
+% Parsing command itself
+\protected\qasm@defwithnewline\qasm@langhelper@check@name#1 #2{%
+   \lowercase{\edef\cmd{#1}}%
+   \unless\ifcsname qasm@lang@\cmd\endcsname%
+      \PackageError{yquant.sty}{Unsupported qasm command: `#1'}%
+         {You used a command that is unknown to qasm.}%
+   \fi%
+   \catcode`\^^M=5 % this catcode is required for scantokens, which we almost always need (because we use yquant's extensive register name facilities)
+   \csname qasm@lang@\cmd\endcsname#2 \qasm@end%
+}
+
+% Defining commands that accept registers and take an optional value
+% #1: name of the argument
+% #2: command that is to be called
+% #3: number of controls
+% #4: number of targets
+\protected\def\qasm@langhelper@declare@command#1#2#3#4{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      % everything after the next space is just gobbled
+      \protected\long\csgdef{qasm@lang@\cmd}##1 ##2\qasm@end{%
+         \qasm@langhelper@declare@command@@fetchargs{#3}{#4}{##1}{#2}%
+         \yquant@env@rescan%
+      }%
+   \endgroup%
+}
+
+\protected\def\qasm@langhelper@declare@command@@fetchargs#1#2#3#4{%
+   \let\targets=\empty%
+   \let\controls=\empty%
+   \count0=0 %
+   \count2=#1 %
+   \forcsvlist%
+      \qasm@langhelper@declare@command@@fetchargs@%
+      {#3}%
+   \unless\ifnum\count0=\numexpr\count2+#2\relax %
+      \PackageError{yquant.sty}{Invalid command use}%
+         {This gate requires #2 target\unless\ifnum#2=1 s\fi\space and #1 control\unless\ifnum#1=1 s\fi.}%
+   \fi%
+   \edef\cmd{%
+      \unexpanded{#4}%
+         {\expandafter\@gobble\controls\empty}{}%
+         {\expandafter\@gobble\targets\empty}%
+   }%
+   \cmd%
+}
+
+\protected\def\qasm@langhelper@declare@command@@fetchargs@#1{%
+   \advance\count0 by 1 %
+   \unless\ifnum\count0>\count2 %
+      % we are at the beginning
+      \appto\controls{,#1}%
+   \else%
+      \appto\targets{,#1}%
+   \fi%
+}
+
+% converts names to indices
+\protected\def\qasm@register@get@ids#1{%
+   \begingroup%
+      \let\yquant@register@get@ids@list=\empty%
+      \count0=2147483647 % minimal id
+      \count2=0 % maximal id
+      \count4=0 % number of total registers
+      \forcsvlist\qasm@register@get@ids@outerlist{#1}%
+      \global\let\yquant@register@get@ids@list=\yquant@register@get@ids@list%
+      \xdef\yquant@register@get@ids@min{\the\count0}%
+      \xdef\yquant@register@get@ids@max{\the\count2}%
+      \xdef\yquant@register@get@ids@count{\the\count4}%
+      % this is very simple: if multi-registers are allowed and we have more than one, then we are in a multi-register; else not.
+      \ifyquant@register@get@allowmulti%
+         \ifnum\count4> 1%
+            \count6=\count0 % no way to chain the main register
+            \yquant@register@multi@splitparts%
+            \xdef\yquant@register@get@ids@list{%
+               \noexpand\yquant@register@multi%
+                  {\the\count0}{\the\count2}{\the\count4}{\yquant@register@get@ids@list}%
+               \yquant@list@delim%
+            }%
+            \count4=1 %
+         \fi%
+      \fi%
+   \endgroup%
+}
+
+\protected\def\qasm@register@get@ids@outerlist#1{%
+   \yquant@register@get@id\idx{#1[0]}%
+   \listeadd\yquant@register@get@ids@list{\idx}%
+   \ifnum\count0>\idx %
+      \count0=\idx %
+   \fi%
+   \ifnum\count2<\idx %
+      \count2=\idx %
+   \fi%
+   \advance\count4 by 1 %
+}
+% END_FOLD
+
+% BEGIN_FOLD Configuration
+\pgfkeys{%
+   /yquant/operators/every s/.style={%
+      /yquant/operators/every box%
+   },%
+   /yquant/operators/every t/.style={%
+      /yquant/operators/every box%
+   },%
+   /yquant/operators/every utwo/.style={%
+      /yquant/operators/every box%
+   },
+   /qasm/zero/.store in=%
+      \qasm@config@zero,%
+   /qasm/register/default qubit name/.store in=%
+      \qasm@config@qubit@nameonly,%
+   /qasm/register/default qubit name value/.store in=%
+      \qasm@config@qubit@namevalue%
+}
+\def\qasm@config@zero{$\mathopen|0\rangle$}
+\def\qasm@ket#1{\mathopen|\mathinner{#1}\rangle}
+\let\qasm@config@qubit@nameonly=\qasm@ket
+\def\qasm@config@qubit@namevalue#1#2{\ket{#1} = \ket{#2}}
+% END_FOLD
+
+% BEGIN_FOLD Automagically convert names
+% if ([A-z]+)(\d+) matches, replace by $1_{$2}, else let unchanged, fully expandable
+\def\qasmname#1{%
+   \expandafter\qasmname@entry\expandafter{#1}%
+}
+
+\def\qasmname@entry#1{%
+   \ifstrempty{#1}{}{%
+      \qasmname@checkletter#1\relax\qasmname@end{}%
+   }%
+}
+
+\def\qasmname@checkletter#1#2\qasmname@end#3{%
+   \ifstrempty{#2}{%
+      % done, and we didn't get a number, so regex doesn't match (#1 is \relax)
+      #3%
+   }{%
+      \ifnum`#1>64 %
+         \ifnum`#1<123 %
+            \expandafter\expandafter\expandafter\@firstoftwo%
+         \else%
+            \expandafter\expandafter\expandafter\@secondoftwo%
+         \fi%
+      \else%
+         \expandafter\@secondoftwo%
+      \fi%
+      {%
+         \qasmname@checkletter#2\qasmname@end{#3#1}%
+      }{%
+         % not in A-z, move to the number part - but only if there was something matching before!
+         \ifstrempty{#3}{%
+            \qasmname@droprelax#1#2\qasmname@end%
+         }{%
+            \qasmname@checknumber#1#2\qasmname@end{#3}{}%
+         }%
+      }%
+   }%
+}
+
+\def\qasmname@checknumber#1#2\qasmname@end#3#4{%
+   \ifstrempty{#2}{%
+      % done - was there a number?
+      \ifstrempty{#4}{%
+         #3%
+      }{%
+         #3_{#4}%
+      }%
+   }{%
+      \ifnum`#1>47 %
+         \ifnum`#1<58 %
+            \expandafter\expandafter\expandafter\@firstoftwo%
+         \else%
+            \expandafter\expandafter\expandafter\@secondoftwo%
+         \fi%
+      \else%
+         \expandafter\@secondoftwo%
+      \fi%
+      {%
+         \qasmname@checknumber#2\qasmname@end{#3}{#4#1}%
+      }{%
+         \qasmname@droprelax#3#4#1#2\qasmname@end%
+      }%
+   }%
+}
+
+\def\qasmname@droprelax#1\relax#2\qasmname@end{%
+   \ifstrempty{#2}{%
+      #1%
+   }{%
+      \qasmname@droprelax{#1\relax}#2\qasmname@end%
+   }%
+}
+% END_FOLD
+
+% BEGIN_FOLD Language definitions
+\protected\def\qasm@lang@qubit#1 #2\qasm@end{%
+   \let\yquant@lang@create@type=\yquant@register@type@q%
+   \def\yquant@lang@create@style{qubit}%
+   \qasm@lang@create#1,,,,\qasm@end%
+}
+
+\protected\def\qasm@lang@cbit#1 #2\qasm@end{%
+   \let\yquant@lang@create@type=\yquant@register@type@c%
+   \def\yquant@lang@create@style{cbit}%
+   \qasm@lang@create#1,,,,\qasm@end%
+}
+
+\protected\def\qasm@lang@create#1,#2,#3,#4,#5\qasm@end{%
+   \ifstrempty{#4}\relax{%
+      \PackageError{yquant.sty}{Invalid number of arguments}%
+                   {Register creation in qasm expects at most three arguments.}%
+   }%
+   \ifstrequal{#5}{,,}{%
+      % we have a third parameter which defines the TeX name - retokenize it
+      \begingroup%
+         \qasm@env@restorecatcodes%
+         \everyeof{\noexpand}%
+         \endlinechar=-1 %
+         \edef\process{%
+            \def\noexpand\yquant@lang@attr@value{%
+               \scantokens{\unexpanded{#3}}%
+            }%
+         }
+         \expandafter%
+      \endgroup%
+      \process%
+   }{%
+      % make num subscript if name = alpha+numbers
+      \edef\yquant@lang@attr@value{\qasmname{#1}}%
+   }%
+   \ifx\yquant@lang@create@type\yquant@register@type@c%
+      \ifstrempty{#2}{% cbit has initial value?
+         \edef\yquant@lang@attr@value{%
+            $\unexpanded\expandafter{\yquant@lang@attr@value}$%
+         }%
+      }{%
+         \begingroup%
+            \qasm@env@restorecatcodes%
+            \everyeof{\noexpand}%
+            \endlinechar=-1 %
+            \edef\process{%
+               \def\noexpand\yquant@lang@attr@value{%
+                  $\unexpanded\expandafter{\yquant@lang@attr@value} = %
+                   \scantokens{\unexpanded{#2}}$%
+               }%
+            }
+            \expandafter%
+         \endgroup%
+         \process%
+      }%
+   \else%
+      \ifstrempty{#2}{% qubit has initial value?
+         \edef\yquant@lang@attr@value{%
+            \unexpanded\expandafter{\expandafter$%
+                \expandafter\qasm@config@qubit@nameonly%
+                \expandafter{\yquant@lang@attr@value}%
+             $}%
+         }%
+      }{%
+         \begingroup%
+            \qasm@env@restorecatcodes%
+            \everyeof{\noexpand}%
+            \endlinechar=-1 %
+            \edef\process{%
+               \def\noexpand\yquant@lang@attr@value{%
+                  $\noexpand\qasm@config@qubit@namevalue%
+                   {\unexpanded\expandafter{\yquant@lang@attr@value}}%
+                   {\scantokens{\unexpanded{#2}}}$%
+               }%
+            }
+            \expandafter%
+         \endgroup%
+         \process%
+      }%
+   \fi%
+   \yquant@lang@create@do{#1}[1][;%
+   \yquant@env@rescan%
+}
+
+\protected\def\qasm@lang@def#1,#2,'#3' #4\qasm@end{%
+      \lowercase{\def\cmd{#1}}%
+      % we need to do a couple of case distictions (it might seem crazy to look for the existence of a particular macro in #3, but this is what qasm does)
+      \ifstrequal{#3}{bullet}{%
+         \edef\process{%
+            \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+               \let\noexpand\yquant@lang@attr@value=\noexpand\empty%
+               \noexpand\yquant@lang@@phase%
+            }%
+         }%
+      }{%
+         % re-tokenize the code
+         \begingroup%
+            \qasm@env@restorecatcodes%
+            \everyeof{\noexpand}%
+            \endlinechar=-1 %
+            \edef\process{%
+               \def\noexpand\texcode{%
+                  \scantokens{\unexpanded{#3}}%
+               }%
+            }%
+            \expandafter%
+         \endgroup%
+         \process%
+         % now check whether the text begins with \meter, \dmeter or \dmeterwide. This is not 100% equivalent to qasm, which only checks whether these macros are present, not whether they are at the beginning. But due to our node approach, anything different from the whole content being this macro does not make sense.
+         \expandafter\ifyquant@firsttoken\expandafter\meter\expandafter{\texcode}{%
+            \edef\process{%
+               \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
+                  \noexpand\yquant@lang@@measure%
+               }%
+            }%
+         }{%
+            \expandafter\ifyquant@firsttoken\expandafter\dmeter\expandafter{\texcode}{%
+               \protected@edef\process{%
+                  \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
+                     \def\noexpand\yquant@lang@attr@value{\texcode}%
+                     \noexpand\yquant@lang@@dmeter%
+                  }%
+               }%
+            }{%
+               \expandafter\ifyquant@firsttoken\expandafter\dmeterwide\expandafter{\texcode}{%
+                  \protected@edef\process{%
+                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
+                        \def\noexpand\yquant@lang@attr@value{\texcode}%
+                        \noexpand\yquant@lang@@dmeter%
+                     }%
+                  }%
+               }{%
+                  \edef\process{%
+                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+                        \yquant@draw%
+                           {$\unexpanded\expandafter{\texcode}$}%
+                           {/yquant/operators/every box}%
+                     }%
+                  }%
+               }%
+            }%
+         }%
+      }%
+      \eappto\process{%
+         % we don't use \qasm@langhelper@declare@command here, since it works globally
+         \protected\long\def\expandafter\noexpand\csname qasm@lang@\cmd\endcsname####1 ####2\noexpand\qasm@end{%
+            \qasm@langhelper@declare@command@@fetchargs{#2}1{####1}\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname%
+            \noexpand\yquant@env@rescan%
+         }%
+      }%
+      \expandafter%
+   \endgroup%
+   \process%
+   \yquant@env@scan%
+}
+
+\protected\def\qasm@lang@defbox#1,#2,#3,'#4' #5\qasm@end{%
+      \ifnum#2<#3 %
+         \PackageError{yquant.sty}{Invalid box definition}%
+                      {You need at least as many total qubits as controls.}%
+      \fi%
+      \lowercase{\def\cmd{#1}}%
+      % no special cases here
+      \begingroup%
+         \qasm@env@restorecatcodes%
+         \everyeof{\noexpand}%
+         \endlinechar=-1 %
+         \edef\process{%
+            \def\noexpand\texcode{%
+               \scantokens{\unexpanded{#4}}%
+            }%
+         }%
+         \expandafter%
+      \endgroup%
+      \process%
+      \edef\process{%
+         \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+            \noexpand\yquant@register@get@allowmultitrue%
+            \yquant@draw%
+               {$\unexpanded\expandafter{\texcode}$}%
+               {/yquant/operators/every box}%
+         }%
+         % we don't use \qasm@langhelper@declare@command here, since it works globally
+         \protected\long\def\expandafter\noexpand\csname qasm@lang@\cmd\endcsname####1 ####2\noexpand\qasm@end{%
+            \qasm@langhelper@declare@command@@fetchargs{#3}{\the\numexpr#2-#3\relax}{####1}\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname%
+            \noexpand\yquant@env@rescan%
+         }%
+      }%
+      \expandafter%
+   \endgroup%
+   \process%
+   \yquant@env@scan%
+}
+
+\qasm@langhelper@declare@command{measure}{\expandafter\yquant@lang@@measure\@gobbletwo}01
+
+\qasm@langhelper@declare@command{H}\yquant@lang@@h01
+
+\qasm@langhelper@declare@command{X}\yquant@lang@@x01
+
+\qasm@langhelper@declare@command{Y}\yquant@lang@@y01
+
+\qasm@langhelper@declare@command{Z}\yquant@lang@@z01
+
+\qasm@langhelper@declare@command{S}\qasm@lang@@s01
+\def\qasm@lang@@s{%
+   \yquant@draw%
+      {$S$}%
+      {/yquant/operators/every s}%
+}
+
+\qasm@langhelper@declare@command{T}\qasm@lang@@t01
+\def\qasm@lang@@t{%
+   \yquant@draw%
+      {$T$}%
+      {/yquant/operators/every t}%
+}
+
+\qasm@langhelper@declare@command{nop}\qasm@lang@@nop01
+\def\qasm@lang@@nop#1#2#3{%
+   \dimdef\yquant@lang@attr@value{\yquant@config@operator@minimum@width+\yquant@config@operator@sep}%
+   \yquant@lang@@hspace{#3}%
+   % we don't use a grid-based layout, so a nop really does nothing
+}
+
+\qasm@langhelper@declare@command{zero}\qasm@lang@@zero01
+\def\qasm@lang@@zero#1#2#3{%
+   \let\yquant@lang@attr@value=\qasm@config@zero%
+   \yquant@lang@@init{#3}%
+}
+
+\qasm@langhelper@declare@command{discard}{\expandafter\yquant@lang@@discard\@gobbletwo}01
+
+\qasm@langhelper@declare@command{slash}{\expandafter\yquant@lang@@slash\@gobbletwo}01
+
+\qasm@langhelper@declare@command{dmeter}{\expandafter\yquant@lang@@dmeter\@gobbletwo}01
+
+\qasm@langhelper@declare@command{cnot}\yquant@lang@@not11
+
+\qasm@langhelper@declare@command{c-z}\yquant@lang@@z11
+
+\qasm@langhelper@declare@command{c-x}\yquant@lang@@x11
+
+\qasm@langhelper@declare@command{toffoli}\yquant@lang@@not21
+
+\qasm@langhelper@declare@command{ZZ}{\expandafter\yquant@lang@@zz\@gobbletwo}02
+
+\qasm@langhelper@declare@command{XX}\yquant@lang@@xx02
+
+\qasm@langhelper@declare@command{swap}\yquant@lang@@swap02
+
+\qasm@langhelper@declare@command{Utwo}\qasm@lang@@Utwo02
+\def\qasm@lang@@Utwo{%
+   \yquant@register@get@allowmultitrue%
+   \yquant@draw%
+      {$U$}%
+      {/yquant/operators/every utwo}%
+}
+
+% space is a hspace _without_ wire - in priciple, we would have to discard and then re-initialize
+\qasm@langhelper@declare@command{space}\qasm@lang@@nop01
+% END_FOLD
+
+% some commands that might be used in boxes
+\def\qasm@cmd@m#1{\begin{pmatrix}#1\end{pmatrix}}
+\def\qasm@cmd@txt#1{$#1$}% do not use \text{...}, but exit math mode - in this way, TikZ can still handle linebreak
+\def\qasm@cmd@meter{}%
+\def\qasm@cmd@dmeterwide#1#2{$#1$}%
+\def\qasm@cmd@dmeter#1{$#1$}%
+
+\endinput

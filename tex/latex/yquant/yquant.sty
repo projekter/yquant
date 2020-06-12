@@ -11,11 +11,11 @@
 % and version 1.3c or later is part of all distributions of LaTeX version 2005/12/01 or
 % later.
 %
-% This work has the LPPL maintenance status `maintained'.
+% This work has the LPPL maintenance status `author-maintained'.
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquant}[2020/06/07 v0.2.1 Yet another quantum circuit library for LaTeX]
+\ProvidesPackage{yquant}[2020/06/12 v0.3 Yet another quantum circuit library for LaTeX]
 
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
@@ -35,6 +35,10 @@
 
 % usually, \\ is robust; but when using \centering, it is \let to \@centercr, which is not robust (probably because this happens only when not protecting). Fix this, so that \\ does not require \protect if a centered circuit is drawn.
 \robustify\@centercr
+
+\outer\def\useyquantlanguage#1{%
+   \RequirePackage{yquantlanguage-#1}
+}
 
 \endinput
 %%

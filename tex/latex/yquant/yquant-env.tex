@@ -42,13 +42,18 @@
    \yquant@env@begin@arg[]%
 }
 
-\long\protected\def\yquant@env@begin@arg[#1]{%
+\def\yquant@env@begin@arg{%
+   \let\yquant@env@check=\yquant@env@check@%
+   \yquant@env@begin@generic\yquant%
+}
+
+\long\protected\def\yquant@env@begin@generic#1[#2]{
    \begingroup%
       \let\yquant@parent=\yquant@prefix%
       \global\advance\yquant@env by 1 %
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
-         \yquant@env@substikz%
+         \yquant@env@substikz#1%
          \def\yquant@env@create@x{0pt}%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
@@ -57,7 +62,7 @@
          \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
          \yquant@env@lazyfalse% forbid lazy register creation in subcircuits. We need a proper and in-order declaration of the subcircuit's interface.
       \fi%
-      \let\yquant=\yquant@env@scan%
+      \let#1=\yquant@env@scan%
       \yquant@env@reset@commands%
       \csgdef{\yquant@prefix registers}{0}%
       \global\cslet{\yquant@prefix draw}\relax%
@@ -75,7 +80,7 @@
          \expandafter\noexpand\csname\yquant@prefix inonly\endcsname%
          \expandafter\noexpand\csname\yquant@prefix cleanup\endcsname%
       }%
-      \scope[{/yquant/.cd, #1, /tikz/.cd, /yquant/every circuit}]%
+      \scope[{/yquant/.cd, #2, /tikz/.cd, /yquant/every circuit}]%
 }
 
 \protected\def\yquant@env@end{%
@@ -110,7 +115,9 @@
                \PackageWarning{yquant.sty}{Empty quantum circuit}%
             \fi%
          \fi%
-      \endscope% this triggers a re-scan (which then terminates directly due to the following macro), but it would be more painful to avoid it.
+         \global\let\yquant@env@scan=\relax% don't rescan after the scope
+      \endscope% this will exit five to seven groups (depending on the transparency group state, and it might even be driver-dependent, though it is not at the moment), so better make the relax global
+      \global\let\yquant@env@scan=\yquant@env@scan@%
       \ifdefined\yquant@parent%
          % We are in a subcircuit. The drawing and cleanup is delayed until the end.
          \csxappto{\yquant@parent cleanup}%
@@ -299,12 +306,12 @@
 }
 
 % substitute the tikz commands (defined in \tikz@installcommands) so that they can be arbitrarily interleaved with yquant code. We patch \path, \scope, \endscope, \stopscope, their internal complements, and also patch \yquantset.
-\protected\def\yquant@env@substikz{%
+\protected\def\yquant@env@substikz#1{%
    % \tikz@path@do@at@end is called after a path. Hence, it is an ideal candidate to re-invoke \yquant@env@scan. However, it is by default defined to be \tikz@lib@scope@check, and we need this definition for the scopes library to work correctly. But since \tikz@lib@scope@check is also called after a scope and the end of a scope, this is even better. Yet, we need to check whether the scopes library is present or not.
    \let\yquant@env@substikz@scopecheck=\tikz@lib@scope@check%
    \ifx\tikz@lib@scope@check\pgfutil@empty%
       % no, it is not. This is simple.
-      \let\tikz@lib@scope@check=\yquant@env@scan%
+      \def\tikz@lib@scope@check{\yquant@env@scan}%
    \else%
       % yes, it is. Call it after the special behavior is done.
       \patchcmd\tikz@lib@scope@check{{}}{\yquant@env@scan}\relax{%
@@ -316,7 +323,7 @@
       \protected@csxappto{\yquant@prefix draw}{%
          \noexpand\path##1;%
       }%
-      \yquant%
+      #1%
    }%
    % no need for \scoped, because it internally calls \scope.
    % We need to hack into \scope, but this is a bit tricky due to its argument handling. In order to get all optional arguments, including the possible animations library, correct, we change \tikz@scope@opt.
@@ -351,6 +358,7 @@
    \begingroup%
       \yquant@env@contscan%
 }
+\let\yquant@env@scan@=\yquant@env@scan
 
 \protected\def\yquant@env@contscan{%
    \yquant@futurenonspacelet\yquant@env@nextchar\yquant@env@check%
@@ -361,7 +369,7 @@
    \yquant@env@scan%
 }
 
-\protected\def\yquant@env@check{%
+\protected\def\yquant@env@check@{%
    \let\next=\relax%
    % Here we assume standard catcodes for A and [, but our language specification also requires this implicitly.
    \ifx\yquant@env@nextchar[%
@@ -422,7 +430,7 @@
    \expandafter\yquant\@@input #1\relax%
 }
 
-\let\yquantimportcommand=\yquantimport@now%
+\def\yquantimportcommand{\yquantimport@now}%
 
 \AtBeginDocument{%
    % do we have the import package?

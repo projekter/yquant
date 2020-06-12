@@ -206,7 +206,10 @@
             \catcode`(=\active%
             \def[##1]{\yquant@register@get@ids@@index{##1}}%
             \def(##1){\yquant@register@get@ids@@multi{##1}}%
-            \edef\yquant@register@get@ids@retokenized{\scantokens{#1\noexpand}}%
+            % this is also invoked by other languages which might have completely redefined all catcodes (qasm redefines the backslash), so don't just add \noexpand at the end of the \scantokens...
+            \everyeof{\noexpand}%
+            \endlinechar=-1 %
+            \edef\yquant@register@get@ids@retokenized{\scantokens{#1}}%
             \expandafter%
          \endgroup%
          \expandafter\docsvlist\expandafter{\yquant@register@get@ids@retokenized}%
