@@ -7,6 +7,8 @@ It builds on and interacts with TiKZ, which brings an enourmous flexibility for 
 
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
+Now yquant also understands circuits written in the qasm language!
+
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
 - ![Bitcoin](https://img.shields.io/badge/donate-BTC-blue.svg?style=flat) 3KBFpoJuA4eSPLGXEf3jicqaV1czhK36fH
