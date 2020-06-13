@@ -2929,11 +2929,11 @@ $=$
             \end{example}
       \endgroup
    
-   \section{Foreign language support}
+   \section{Foreign language support}\label{sec:foreign}
       \Yquant{} is built in various modules, so that it is not hard to use the quantum circuit rendering backend, but expose a different language frontend.
       Since version~0.3, \Yquant{} not only understands its own language, but also others.
       
-      \subsection{qasm}
+      \subsection{qasm}\label{sec:foreign:qasm}
          By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \pkg{qasm} (not OpenQASM) is loaded.
          It provides the environment \tex!qasm! as well as the macro \tex!\qasmimport!, which works similarly to \tex!\yquantimport! (but does not accept additional options).
          
