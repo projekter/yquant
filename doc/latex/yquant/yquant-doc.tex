@@ -14,8 +14,9 @@
 \definecolor{darkblue}{RGB}{5, 10, 122}
 \usepackage[english]{babel}
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
-\usepackage{yquant,braket,hyphenat,microtype,hologo,minted}
+\usepackage{yquant,braket,hyphenat,microtype,hologo,minted,import}
 \usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
+\useyquantlanguage{qasm}
 \usepackage{amsmath,adjustbox,cleveref}
 \usepackage[framemethod=tikz]{mdframed}
 % END_FOLD
@@ -52,16 +53,17 @@
    \endgroup\vskip-\parskip%
    \noindent\ignorespaces%
 }
-\newenvironment{option}[1]{\vskip5mm%
+\newenvironment{option*}[2]{\vskip5mm%
    \noindent\begin{minipage}[t]{\linewidth}%
       \begingroup%
          \let\minted@inline@iii=\patched@minted@inline@iii%
          \raggedleft%
          \hspace*{-1cm}%
-         \phantomsection\label{style:/yquant/#1}%
-         \texttt{\textcolor{gray}{/yquant/}\textcolor{mintgreen}{#1}}\hfill default: %
+         \phantomsection\label{style:/#1/#2}%
+         \texttt{\textcolor{gray}{/#1/}\textcolor{mintgreen}{#2}}\hfill default: %
          \tex}{%
    \end{minipage}}
+\newenvironment{option}{\csname option*\endcsname{yquant}}{\csname endoption*\endcsname}
 
 \newsavebox\codeexamplebox
 \newenvironment{codeexample}{%
@@ -197,7 +199,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This alpha version~0.2.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This alpha version~0.3 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -230,6 +232,8 @@
                      Consequently, the user is restricted to the set of features that \pkg{qasm} directly offers (which is small).
                      Changes to the output, while possible, will be overwritten if \texttt{qasm2circ} is run again.
                      \pkg{qasm} output often looks sub\hyp optimal do to the fact that, e.g., rectangles are made up of four lines that do not properly connect and give a crumbly general feeling.
+                     
+                     Note that since version~0.3, \Yquant{} understands \pkg{qasm} syntax, see \cref{sec:foreign:qasm}.
                      
                      Maintenance status: last update of \pkg{qasm} in 2005. Also, \pkg{xy} was last updated in 2013, and the script is not compatible out\hyp of\hyp the\hyp box with Python~3, though an automatic conversion should work.
                   \item \pkg{qcircuit} is probably the most\hyp widely used package.
@@ -1297,6 +1301,8 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
          \end{minted}
          in the preamble, as is done here.
+         
+         Note that since version~0.3, \Yquant{} supports the \pkg{qasm} syntax, see \cref{sec:foreign:qasm}
          
          \begin{example}[test1 (create an EPR pair)]
             \begin{codeexample}
@@ -2923,18 +2929,97 @@ $=$
             \end{example}
       \endgroup
    
+   \section{Foreign language support}
+      \Yquant{} is built in various modules, so that it is not hard to use the quantum circuit rendering backend, but expose a different language frontend.
+      Since version~0.3, \Yquant{} not only understands its own language, but also others.
+      
+      \subsection{qasm}
+         By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \pkg{qasm} (not OpenQASM) is loaded.
+         It provides the environment \tex!qasm! was well as the macro \tex!\qasmimport!, which works similarly to \tex!\yquantimport! (but does not accept additional options).
+         
+         \subsubsection{Language specification}
+            The \pkg{qasm} language is not formally defined, but an overview is provided at \href{https://web.archive.org/web/20050410022847/https://www.media.mit.edu/quanta/qasm2circ/#spec}{the archived website of \texttt{qasm2circ}}.
+            The \Yquant{} implementation is designed to be compatible with the original parser, with the following exceptions:
+            \begin{itemize}
+               \item In \pkg{qasm}, lines could begin in an arbitrary manner; the first whitespace followed by the first valid command were then the instruction.
+                  Contrary to this, \Yquant's parser always expects a line to start with a valid gate (preceded by arbitrary whitespaces), a comment, or to be empty.
+               \item In \pkg{qasm}, user\hyp defined gates will be drawn in a box unless they contain the text \texttt{\textbackslash dmeter}!, and they will be recognized as measurement gates if they contain \texttt{\textbackslash meter} or \texttt{\textbackslash dmeter}.
+                  Contrary to this, \Yquant's parser expect the gates to \emph{start} with one of the \emph{macros} \tex!\meter!, \tex!\dmeter!, or \tex!\dmeterwide!.
+                  Using these macros \emph{within} the content of a gate does not make sense from the point of view that in \Yquant, gates are nodes with shapes, so either the full gate has a particular shape or it does not, but not only parts of it.
+               \item The \texttt{space} gate is supposed to produce a horizontal whitespace without a gate.
+                  In \Yquant's implementation, you have to discard the wire if you want to reproduce this behavior; \texttt{space} and \texttt{nop} are equivalent.
+            \end{itemize}
+            
+            The default \pkg{qasm} style defines several macros that can be used in gates.
+            \Yquant{} makes \tex!\m! (matrix; requires \pkg{amsmath}) and \tex!\txt! (switch to text mode) available within the \pkg{qasm} environment.
+            
+            Do not expect \Yquant's output to match the one of \pkg{qasm} exactly.
+            \Yquant{} is not grid based, so that commands such as \texttt{nop} don't even make sense.
+            They are implemented for compatibility reasons and will produce a fixed horizontal space of the operator minimum width plus one separation, which might or might not be accurate.
+            
+            Note that whatever you write between \tex!\begin{qasm}! and \tex!\end{qasm}! is essentially treated as verbatim; only where the specification says so (in the definition of a new gate and in the optional third command to the register definition), it is interpreted as \TeX{} markup.
+            Consequently, in \pkg{beamer}, any frame containing these environments must be given the \texttt{verbatim} option.
+         
+         \subsubsection{Configuration}
+            Loading the \pkg{qasm} language interpreter will define several new configuration keys.
+            For all the gates, it will use the keys defined in \cref{sec:config}, and it additionally provides the following:
+            
+            \begin{option}{operators/every s}!/yquant/operators/every box!
+               This style is installed for every \texttt{s} operator.
+            \end{option}
+            
+            \begin{option}{operators/every t}!/yquant/operators/every box!
+               This style is installed for every \texttt{t} operator.
+            \end{option}
+            
+            \begin{option}{operators/every utwo}!/yquant/operators/every box!
+               This style is installed for every \texttt{Utwo} operators.
+            \end{option}
+            
+            \begin{option*}{qasm}{zero}!\qasm@ket0!
+               The content of this macro is used as the initialization content whenever the \texttt{zero} gate is invoked.
+            \end{option*}
+            
+            \begin{option*}{qasm}{register/default qubit name}!\qasm@ket{#1}!
+               This macro is invoked with a single parameter (the name of a qubit register) and gives back what is printed as the name of the register (will be in math mode automatically).
+            \end{option*}
+            
+            \begin{option*}{qasm}{register/default qubit name value}!\qasm@ket{#1} = \qasm@ket{#2}!
+               This macro is invoked with two parameters (the name of a qubit register and its initial value) and gives back what is printed as the name of the register (will be in math mode automatically).
+            \end{option*}
+         
+         \subsubsection{Examples}
+            The unaltered\footnote{Only in \texttt{test14.qasm}, \tex!\cal! was replaced by \tex!\symcal!---and this is only necessary as this manual was set with \pkg{unicode-math}. In traditional mode, even this would not be necessary.} \texttt{.qasm} files provided from \href{https://www.media.mit.edu/quanta/qasm2circ/}{the \texttt{qasm2circ} page} were stored in the subfolder \texttt{qasm} relative to this manual's \TeX{} file.
+            The following command is then used to print all of them:
+            \begin{minted}{tex}
+% preamble:
+% \usepackage{yquant,import}
+% \useyquantlanguage{qasm}
+\def\yquantimportpath{qasm/}
+\foreach \circuitno in {1, ..., 18} {
+   \paragraph{Circuit \#\circuitno}
+      \begin{center}
+         \qasmimport{test\circuitno.qasm}
+      \end{center}
+}
+            \end{minted}
+            
+            \def\yquantimportpath{qasm/}
+            \foreach \circuitno in {1, ..., 18} {
+               \paragraph{Circuit \#\circuitno}\leavevmode\nopagebreak\par\nopagebreak
+                  \begin{adjustbox}{center}
+                     \qasmimport{test\circuitno.qasm}
+                  \end{adjustbox}
+            }
+      
    \section{Wishlist}
       This section contains some thoughts on future improvements and features.
       \begin{itemize}
-         \item Support for other languages. \\
-            It would be particularly nice to introduce a language mode.
-            While the \Yquant{} language will always provide the set of everything \Yquant{} can do at the moment, it would be nice if \Yquant{} can automatically detect \texttt{OpenQASM} and parse its content correctly.
-            \texttt{OpenQASM} is much more limited than \Yquant{} and, being a language designed for actual execution of the circuits, does not provide means to change visual appearance.
-            Probably some \Yquant{} additions to \texttt{OpenQASM} would be ok, as long as they only complement the original language?
-            Also, \texttt{OpenQASM} support would probably require subcircuits.
-            
-            Another nice feature would be to support \pkg{qasm}.
-            Also here, the feature set is much more limited and it would probably be hard to implement an automatic detection, the user would have to specify the language by hand.
+         \item Support for more other languages. \\
+            Since version~0.3, \Yquant{} understands \pkg{qasm}.
+            It would be nice if \Yquant{} could also understand \texttt{OpenQASM} correctly.
+            The way \texttt{OpenQASM} treats operations is a bit different from \Yquant{} and also \pkg{qasm}.
+            Some machinery would be required to automatically carry out transversal gates; apart from that everything should be available in \Yquant.
          \item Vertical layout. \\
             Sometimes, long quantum circuits on a portrait page can be better represented in a vertical layout.
             Also if lots of explanations are to be added, this becomes problematic in the horizontal version.
@@ -2965,5 +3050,8 @@ $=$
       
       \subsection{2020-06-07: Version 0.2.1}
          Introduce a macro to declare a lightweight custom gate, which is only a single box with custom content.
+         
+      \subsection{2020-06-13: Version 0.3}
+         Introduce support for the \pkg{qasm} language.
 %END_FOLD
 \end{document}

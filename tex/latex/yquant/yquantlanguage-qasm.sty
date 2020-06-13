@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-qasm}[2020/06/12 v0.3 yquant-qasm]
+\ProvidesPackage{yquantlanguage-qasm}[2020/06/13 v0.3 yquant-qasm]
 
-\RequirePackage{yquant}[2020/06/12]
+\RequirePackage{yquant}[2020/06/13]
 
 % BEGIN_FOLD Environment definitions
 \begingroup
@@ -327,10 +327,10 @@
    /qasm/register/default qubit name value/.store in=%
       \qasm@config@qubit@namevalue%
 }
-\def\qasm@config@zero{$\mathopen|0\rangle$}
 \def\qasm@ket#1{\mathopen|\mathinner{#1}\rangle}
+\def\qasm@config@zero{$\qasm@ket0$}
 \let\qasm@config@qubit@nameonly=\qasm@ket
-\def\qasm@config@qubit@namevalue#1#2{\ket{#1} = \ket{#2}}
+\def\qasm@config@qubit@namevalue#1#2{\qasm@ket{#1} = \qasm@ket{#2}}
 % END_FOLD
 
 % BEGIN_FOLD Automagically convert names
