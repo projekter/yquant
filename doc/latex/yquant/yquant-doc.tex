@@ -199,7 +199,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This alpha version~0.3 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This alpha version~0.3.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -696,6 +696,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Since version 0.1.2, the style's default path is, as with all other styles, \texttt{/tikz}.
             The default style will make all nodes (which in particular means, all gates) respect outer canvas transformations.
             Due to \TikZ{} bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843}, this must be undone for \texttt{label}s.
+            % TODO Note that unless you use a very recent version of \TikZ{} in which bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843} was fixed, you might need to add \tex!every label/.prefix style={transform shape=false}! to this style, which undoes the effect for \texttt{label}s.
          \end{option}
          
          \begin{option}{every wire}!draw!
@@ -2706,6 +2707,7 @@ $=$
                   Here, we first scaled the circuit itself.
                   The default style for \style{/yquant/every circuit} sets the \texttt{transform shape} key for every node (which means any gate), so that those are also scaled.
                   This is explicitly undone for \texttt{label}s due to \TikZ{} bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843}, so the scaling must be specified explicitly for the \texttt{label}s.
+                  % TODO Note that unless you use a very recent version of \TikZ{} in which bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843} was fixed, you might need to add \tex!every label/.prefix style={transform shape=false}! to this style, which undoes the effect for \texttt{label}s.
                \end{example}
          
          \subsubsection{VII. Typesetting}
@@ -3053,5 +3055,8 @@ $=$
          
       \subsection{2020-06-13: Version 0.3}
          Introduce support for the \pkg{qasm} language.
+         
+      \subsection{2020-07-11: Version 0.3.1}
+         Add legacy support for very old \TikZ{} versions such as the one used on the arXiv.
 %END_FOLD
 \end{document}

@@ -327,13 +327,24 @@
    }%
    % no need for \scoped, because it internally calls \scope.
    % We need to hack into \scope, but this is a bit tricky due to its argument handling. In order to get all optional arguments, including the possible animations library, correct, we change \tikz@scope@opt.
-   \let\yquant@env@substikz@scope=\tikz@scope@opt%
-   \def\tikz@scope@opt[##1]{%
-      \protected@csxappto{\yquant@prefix draw}{%
-         \noexpand\tikz@scope@env[{##1}]%
+   \ifdefined\tikz@scope@opt%
+      \let\yquant@env@substikz@scope=\tikz@scope@opt%
+      \def\tikz@scope@opt[##1]{%
+         \protected@csxappto{\yquant@prefix draw}{%
+            \noexpand\tikz@scope@env[{##1}]%
+         }%
+         \yquant@env@substikz@scope[{##1}]%
       }%
-      \yquant@env@substikz@scope[{##1}]%
-   }%
+   \else%
+      % this is for the arXiv, which has a very outdated version of TikZ
+      \let\yquant@env@substikz@scope=\tikz@@scope@env%
+      \def\tikz@@scope@env[##1]{%
+         \protected@csxappto{\yquant@prefix draw}{%
+            \noexpand\tikz@@scope@env[{##1}]%
+         }%
+         \yquant@env@substikz@scope[{##1}]%
+      }%
+   \fi%
    \let\yquant@env@substikz@endscope=\endtikz@scope@env%
    \def\endtikz@scope@env{%
       \csgappto{\yquant@prefix draw}{%
