@@ -941,7 +941,7 @@
 
 \protected\def\yquant@draw@@finalize@ctrl@single#1#2{%
    \unless\ifyquant@circuit@operator@hasControls%
-      \yquant@register@set@x#1{\the\dimen2}%
+      \yquant@register@set@x{#1}{\the\dimen2}%
    \fi%
    \eappto\yquant@draw@append{%
       \yquant@draw@callback@wire{#1}%
