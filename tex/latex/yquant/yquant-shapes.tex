@@ -545,15 +545,15 @@
    \inheritanchorborder[from=yquant-rectangle]%
    \backgroundpath{%
       \shorten%
-      \pgf@xa=\dimexpr\yradius+\pgf@x\relax%
-      \pgf@ya=\dimexpr\yradius+\pgf@y\relax%
+      \pgf@xa=\dimexpr\yradius-\pgf@x\relax%
+      \pgf@ya=\dimexpr\yradius-\pgf@y\relax%
       \pgfpathmoveto{\pgfqpoint{0pt}{\pgf@xa}}%
       \pgfpathlineto{\pgfqpoint{0pt}{-\pgf@ya}}%
    }%
    \clippath{%
       \shorten%
-      \@tempdima=\dimexpr\yradius+\pgf@x\relax%
-      \@tempdimb=\dimexpr\yradius+\pgf@y\relax%
+      \@tempdima=\dimexpr\yradius-\pgf@x\relax%
+      \@tempdimb=\dimexpr\yradius-\pgf@y\relax%
       \pgfpathrectanglecorners%
          {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
          {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
