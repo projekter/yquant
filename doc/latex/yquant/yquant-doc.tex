@@ -199,7 +199,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This alpha version~0.3.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This alpha version~0.3.3 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       Please do report all issues and desirable additions.
       
       \subsection{How to read the manual}
@@ -2488,7 +2488,7 @@ $=$
                \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}[label distance=4mm]
-   \begin{yquant}[operators/every barrier/.append style={red, thick, shorten <= -2.5mm, shorten >= -2.5mm}]
+   \begin{yquant}[operators/every barrier/.append style={red, thick, shorten <= -2mm, shorten >= -2mm}]
       qubit {$\ket0$} a;
       h a;
       ["1"]
@@ -2507,7 +2507,9 @@ $=$
                However, the \texttt{yquant-line} shape explicitly takes care of correctly handling them.
                It is the only one that does so.
                Since barriers usually end quite closely to the wires---and the default \texttt{dashed} style may make this worse---the \texttt{shorten}ing may often prove useful.
-               Note that if the barriers are enlarged by means of negative \texttt{shorten}ings, this will not affect the bounding box or internal register height calculations, and you must take care of appropriately shifting labels.
+               Note that if the barriers are enlarged by means of negative \texttt{shorten}ings, this will not affect the bounding box and you must take care of appropriately shifting labels.
+               The internal register height calculations might be inconsistent for multi\hyp register barriers with \texttt{shorten}ing: While \Yquant{} takes care of enlarging the registers so that there is enough space for placing the \gate{barrier} with its \emph{original} (single\hyp register) height, it actual height of the registers is only known at the second stage in calculation; but applying \texttt{shorten}ings after this stage would require another iteration of height calculation.
+               Hence, multi\hyp register barriers that are enlarged by a lot will probably look bad unless you add manual spacing to the appropriate registers.
                Also note that we used much larger magnitudes in order to achieve a similar appearance as in \pkg{quantikz}.
                To avoid that the large distance also affects the \gate{phase} gate badly, we locally reset the distance; for this, there are two ways.
                The easiest one is to make use of the fact that the value of the \gate{phase} gate is passed directly as \texttt{label} argument, so that we can locally reset the distance.
@@ -3030,15 +3032,15 @@ $=$
       \end{itemize}
    
    \section{Changelog}
-      \subsection{2020-03-15: Version 0.1}
+      \subsection*{2020-03-15: Version 0.1}
          Initial release
       
-      \subsection{2020-03-22: Version 0.1.1}
+      \subsection*{2020-03-22: Version 0.1.1}
          Complete rewrite of the register name parser.
          \Yquant{} now understands comma\hyp separated lists and ranges in indices, and also is far more tolerant with respect to whitespaces. \\
          \Yquant{} now also supports non\hyp contiguous vector registers and allows to add new registers into an already existing vector that is not the last register, and also in the unstarred mode.
       
-      \subsection{2020-04-11: Version 0.1.2}
+      \subsection*{2020-04-11: Version 0.1.2}
          Introduce \gate{setstyle} and \gate{addstyle} pseudo\hyp gates that allow to style individual wires; rename \gate{setwire} to \gate{settype} (the old name is still available and shows a deprecation warning). \\
          Complete rewrite of the way \Yquant{} draws wires; projection anchors are removed in favor of clipping paths.
          This allows perfect connections between gates and wires, even if the (rather rectangular) wire lines meets with nonplanar shapes, while still preserving the possibility of transparent wires. \\
@@ -3046,20 +3048,23 @@ $=$
          New gate: \gate{correlate}.
          Various bug fixes.
       
-      \subsection{2020-06-02: Version 0.2}
+      \subsection*{2020-06-02: Version 0.2}
          Introduce \gate{subcircuit}; required rewriting how \Yquant{} internally positions vertically.
          Provide simple macros to load circuits (or parts) from a file and to declare own custom gates.
       
-      \subsection{2020-06-07: Version 0.2.1}
+      \subsection*{2020-06-07: Version 0.2.1}
          Introduce a macro to declare a lightweight custom gate, which is only a single box with custom content.
          
-      \subsection{2020-06-13: Version 0.3}
+      \subsection*{2020-06-13: Version 0.3}
          Introduce support for the \pkg{qasm} language.
          
-      \subsection{2020-07-11: Version 0.3.1}
+      \subsection*{2020-07-11: Version 0.3.1}
          Add legacy support for very old \TikZ{} versions such as the one used on the arXiv.
       
-      \subsection{2020-08-24: Version 0.3.2}
+      \subsection*{2020-08-24: Version 0.3.2}
          Fix \href{https://github.com/projekter/yquant/issues/5}{\#5}: Can't draw circuits with more than 9 qubits.
+      
+      \subsection*{2020-10-27: Version 0.3.3}
+         Fix \href{https://github.com/projekter/yquant/issues/6}{\#6}: shorten doesn't work for 2-qubit barriers. This fixes a bug in how the \texttt{shorten} keyword worked on \gate{barrier}s, which may require re\hyp assessing your chosen values.
 %END_FOLD
 \end{document}
