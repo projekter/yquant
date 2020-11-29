@@ -48,8 +48,8 @@
    \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
       {#1}% type
       {#2}% x pos
-      {{\the\dimexpr.5\dimexpr\yquant@config@register@minimum@height\relax\relax}%
-       {\the\dimexpr.5\dimexpr\yquant@config@register@minimum@height\relax\relax}}% height and depth; at the end, the y position
+      {{\yquant@config@register@minimum@height}%
+       {\yquant@config@register@minimum@depth}}% height and depth; at the end, the y position
       {{\yquant@env@create@x}{\yquant@env@create@x}{}{}}% wire start positions and clipping
       {}% wire style
    }%
