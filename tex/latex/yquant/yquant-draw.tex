@@ -226,6 +226,7 @@
       }{%
          \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}#2-}}%
       }%
+      \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
       \letcs\xmin{\yquant@prefix xmin}%
       \letcs\xmax{\yquant@prefix xmax}%
       \global\setbox\yquant@draw@subcircuit@box=\hbox to 0pt {{%
@@ -234,7 +235,8 @@
          \pgfsys@beginpicture%
             % reset all styles to the expected defaults (similar, but extended to \pgfpicture, see pgf issue #870)
             \pgfsetcolor{.}%
-            \pgfsetlinewidth{0.4pt}%
+            \pgfsetlinewidth{\pgflinewidth}%
+            % for the others, pgf does not keep track of the state, so we cannot do much
             \pgfsetbuttcap%
             \pgfsetmiterjoin%
             \pgfsetmiterlimit{10}%
@@ -838,6 +840,26 @@
 \protected\long\def\yquant@draw@@subcircuit#1{%
    \yquant@sort@clear%
    \def\idx{0}%
+   % before going into the subcircuits, we globally determine the extra height due to inner separation of the subcircuit box
+   \pgfinterruptboundingbox%
+      % There will still be some extra width taken by separations or other things related to the box itself.
+      \yquant@env@virtualize@path%
+      \tikz@command@path%
+         (0pt, 0pt)%
+         node[/yquant/every operator, #1,%
+              /yquant/operators/every subcircuit box, /yquant/this operator,%
+              /yquant/operators/this subcircuit box,%
+              name prefix=, name suffix=, name=, y radius=0pt]%
+         {\vbox to 1sp{}};%
+      \pgfpointtransformed{\pgfpointorigin}%
+      \edef\tmp{%
+         \def\noexpand\yquant@draw@@subcircuit@extent{%
+            {\the\dimexpr\pgf@picmaxy-\pgf@y\relax}{\the\dimexpr\pgf@y-\pgf@picminy\relax}%
+         }%
+      }%
+      \expandafter%
+   \endpgfinterruptboundingbox%
+   \tmp%
    \dimen2=\yquant@config@operator@minimum@width%
    % BEGIN_FOLD register
    \def\do##1{%
@@ -883,7 +905,7 @@
 
 \protected\def\yquant@draw@@subcircuit@single#1#2{%
    \edef\yquant@circuit@subcircuit@param{#2\yquant@list@delim}%
-   \yquant@circuit@subcircuit{#1}%
+   \expandafter\yquant@circuit@subcircuit\expandafter{\yquant@draw@@subcircuit@extent}{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@single%
          {#2}% register index
@@ -895,7 +917,7 @@
 \protected\def\yquant@draw@@subcircuit@multi#1#2{%
    \edef\yquant@circuit@subcircuit@param{\@fifthoffive#2}%
    \yquant@sort@list\yquant@circuit@subcircuit@param\yquant@sort@ascending%
-   \yquant@circuit@subcircuit{#1}%
+   \expandafter\yquant@circuit@subcircuit\expandafter{\yquant@draw@@subcircuit@extent}{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@multi%
          #2%

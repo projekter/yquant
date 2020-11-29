@@ -17,6 +17,7 @@
    every circuit/.style={%
       every node/.prefix style={transform shape}
    },%
+   circuit/seamless/.is if=yquant@config@circuit@seamless,
    % register settings
    register/default name/.store in=%
       \yquant@config@register@default@name
@@ -120,16 +121,19 @@
    operators/every subcircuit/.style=%
       {},%
    operators/every subcircuit box/.style=%
-      {/yquant/operators/every box},%
+      {/yquant/operators/every box, inner xsep=0pt},%
    subcircuit box style/.style=%
       {/yquant/operators/every subcircuit box/.append style={#1}},%
    operators/this subcircuit box/.style=%
       {},%
    this subcircuit box style/.style=%
       {/yquant/operators/this subcircuit box/.append style={#1}},%
+   operators/subcircuit/seamless/.code=%
+      {\pgfkeys{/yquant/operators/this subcircuit box/.append style={draw=none, inner ysep=0pt}}%
+       \letcs\yquant@prevseamless{\yquant@prefix seamless}%
+       \yquant@config@circuit@seamlesstrue},
    operators/every custom gate/.style=%
-      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt},%
-       /yquant/register/default name=},
+      {/yquant/operators/subcircuit/seamless, /yquant/register/default name=},
    % every h, every x, every y, every z are implicitly defined during gate declaration
    operators/every pauli/.style=%
       {/yquant/operators/every box},%
@@ -182,6 +186,7 @@
 \yquant@config@operator@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
+\newif\ifyquant@config@circuit@seamless
 \def\pgfdecorationsegmentfromto{0-1}%
 
 \protected\def\yquant@gappedbrace@extract#1-#2\yquant@sep{%

@@ -216,17 +216,29 @@
       \yquant@circuit@operator@x%
       \yquant@circuit@operator@minctrl%
       \yquant@circuit@operator@maxctrl%
-   \dimdef\yquant@circuit@operator@x{%
-      \yquant@circuit@operator@x+\yquant@config@operator@sep%
+   \ifyquant@env@seamless{%
+      \ifdim\yquant@circuit@operator@x>0pt %
+         \dimdef\yquant@circuit@operator@x{%
+            % we need the separation for the initial gate only if there was a label; for this we assign the dummy value of 1sp in this case. Just to be extra meticulous, we remove it here again.
+            \ifdim\yquant@circuit@operator@x=1sp 0pt\else\yquant@circuit@operator@x\fi+%
+            \yquant@config@operator@sep%
+         }%
+      \fi%
+   }{%
+      \dimdef\yquant@circuit@operator@x{%
+         \yquant@circuit@operator@x+\yquant@config@operator@sep%
+      }%
    }%
 }
 
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
-\protected\def\yquant@circuit@subcircuit#1{%
+% #1: {additional height of subcircuit box}{additional depth of subcircuit box}
+% #2: style
+\protected\def\yquant@circuit@subcircuit#1#2{%
    \numdef\yquant@circuit@subcircuit@id{\yquant@env+1}%
    \listcsxadd{\yquant@prefix subcircuits}{\yquant@circuit@subcircuit@id}%
    \begingroup%
-      \tikzset{/yquant/every operator, #1,%
+      \tikzset{/yquant/every operator, #2,%
                /yquant/this operator, /yquant/operators/this subcircuit box/.style={}}%
       % execute the subcircuit
       \expandafter%
@@ -248,6 +260,7 @@
                \@secondoftwo\csname\yquant@prefix firstinput\endcsname%
          }%
          \dimen2=\yquant@register@get@height\firstinput\relax%
+         \advance\dimen2 by \@firstoftwo#1 %
          \ifnum\firstinput>1 %
             \yquant@fordown \i := \the\numexpr\firstinput-1\relax downto 1 {%
                \advance\dimen2 by \dimexpr\yquant@register@get@height\i+%
@@ -264,6 +277,7 @@
                \@secondoftwo\csname\yquant@prefix lastinput\endcsname%
          }%
          \dimen4=\yquant@register@get@depth\lastinput\relax%
+         \advance\dimen4 by \@secondoftwo#1 %
          \ifnum\lastinput<\csname\yquant@prefix registers\endcsname%
             \yquant@for \i := \the\numexpr\lastinput+1\relax to \csname\yquant@prefix registers\endcsname {%
                \advance\dimen4 by \dimexpr\yquant@register@get@height\i+%

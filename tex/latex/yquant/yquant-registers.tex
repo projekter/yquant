@@ -50,7 +50,7 @@
       {#2}% x pos
       {{\yquant@config@register@minimum@height}%
        {\yquant@config@register@minimum@depth}}% height and depth; at the end, the y position
-      {{\yquant@env@create@x}{\yquant@env@create@x}{}{}}% wire start positions and clipping
+      {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
    }%
    \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
@@ -164,7 +164,7 @@
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
          \yquant@register@define%
             \yquant@register@type@q%
-            {\yquant@env@create@x}%
+            {0pt}%
             \reg\idx%
          % Prepare to shipout
          \csxappto{\yquant@prefix draw}{%

@@ -54,11 +54,9 @@
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
          \yquant@env@substikz#1%
-         \def\yquant@env@create@x{0pt}%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
          \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
-         \let\yquant@env@create@x=\yquant@circuit@operator@x%
          \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
          \yquant@env@lazyfalse% forbid lazy register creation in subcircuits. We need a proper and in-order declaration of the subcircuit's interface.
       \fi%
@@ -67,9 +65,14 @@
       \csgdef{\yquant@prefix registers}{0}%
       \global\cslet{\yquant@prefix draw}\relax%
       \global\cslet{\yquant@prefix outputs}\relax%
-      \csdimgdef{\yquant@prefix xmin}{\yquant@env@create@x+\yquant@config@operator@sep}%
+      \global\csdef{\yquant@prefix xmin}{0pt}%
       \global\cslet{\yquant@prefix subcircuits}\empty%
       \global\cslet{\yquant@prefix inonly}\empty%
+      \csletcs{\yquant@prefix seamless}{ifyquant@config@circuit@seamless}%
+      \ifdefined\yquant@prevseamless%
+         \cslet{ifyquant@config@circuit@seamless}\yquant@prevseamless%
+         \undef\yquant@prevseamless%
+      \fi%
       \csxdef{\yquant@prefix cleanup}{%
          \expandafter\noexpand\csname\yquant@prefix registers\endcsname%
          \expandafter\noexpand\csname\yquant@prefix draw\endcsname%
@@ -88,16 +91,15 @@
          \ifnum\yquant@env@end@registers>0 %
             % draw all wires
             \yquant@register@get@maxxrange\yquant@env@end@xpos{1}{\yquant@env@end@registers}%
-            \ifdim\csname\yquant@prefix xmin\endcsname<%
-                  \dimexpr\yquant@env@create@x+\yquant@config@operator@sep\relax%
-               % to have a symmetric situation, we extend again one separation at the end
+            % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
+            \ifyquant@env@seamless{%
+               \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+                  \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
+               \fi%
+            }{%
                \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
-               \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
-            \else%
-               % while the outputs need this, the subcircuit doesn't if there are no outputs.
-               \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
-               \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
-            \fi%
+            }%
+            \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
             \yquant@cleanup@csadd{xmax}%
             \csxappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires{\yquant@env@end@xpos}%
@@ -147,6 +149,14 @@
          \global\yquant@env=0 %
       \fi%
    \endgroup%
+}
+
+\protected\def\ifyquant@env@seamless{%
+   \csname\yquant@prefix seamless\endcsname%
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
 }
 
 \protected\def\yquant@env@end@calcypositions{%

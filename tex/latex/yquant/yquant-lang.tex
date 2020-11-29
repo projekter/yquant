@@ -143,7 +143,7 @@
          \PackageError{yquant.sty}{An input register cannot be created with `after` attribute}{}%
       \fi%
    \else%
-      \let\yquant@lang@create@x=\yquant@env@create@x%
+      \def\yquant@lang@create@x{0pt}%
    \fi%
    \begingroup%
       \ifx\yquant@lang@attr@name\empty%
@@ -244,6 +244,14 @@
                \fi%
             \fi%
          }%
+         % normally, we don't have to add a separation, this is done in the next step; however, if the circuit is seamless and we put a text at the very beginning, this separation will be missing
+         \ifyquant@env@seamless{%
+            \ifdim\yquant@lang@create@x=0pt %
+               \unless\ifx\empty\trimmedvalue%
+                  \yquant@register@set@x{\csname\yquant@prefix registers\endcsname}{1sp}%
+               \fi%
+            \fi%
+         }\relax%
       }%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
