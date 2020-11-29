@@ -674,11 +674,13 @@
       {}1%
 }
 
-\def\yquant@lang@setwire{%
-   \PackageWarning{yquant.sty}{`setwire' gate is deprecated as of yquant 0.1.2. Use `settype' instead.}%
-   \yquant@lang@settype%
-}
-\yquant@langhelper@setup@attrs{setwire}{value}{}
+\ifnum\yquant@compat<2 
+   \def\yquant@lang@setwire{%
+      \PackageWarning{yquant.sty}{`setwire' gate is deprecated as of yquant 0.1.2. Use `settype' instead.}%
+      \yquant@lang@settype%
+   }
+   \yquant@langhelper@setup@attrs{setwire}{value}{}
+\fi
 
 \yquant@langhelper@declare@command@uncontrolled{setstyle}\yquant@lang@@setstyle
 \yquant@langhelper@setup@attrs{setstyle}{value}{}
