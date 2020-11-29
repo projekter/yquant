@@ -79,7 +79,7 @@
 \yquant@langhelper@setup@attrs{cbit}{}{after,value,ancilla,in,out,inout}
 \def\yquant@lang@@cbit#1{%
    \let\yquant@lang@create@type=\yquant@register@type@c%
-   \def\yquant@lang@create@style{qubit}%
+   \def\yquant@lang@create@style{cbit}%
    \unless\ifdefined\yquant@lang@attr@value%
       \let\yquant@lang@attr@value=\yquant@config@register@default@name%
    \fi%
@@ -159,10 +159,14 @@
                \PackageError{yquant.sty}{Invalid subcircuit parameter count}%
                             {No outer register available for input register `\reg[\idx]`.}%
             \fi%
-            \csxappto{\yquant@prefix draw}{%
-               \yquant@lang@create@check@input{\outermap}{\yquant@lang@create@type}%
-                                              {\reg[\idx]}%
-            }%
+            \begingroup%
+               \let\yquant@prefix=\yquant@parent %
+               \unless\if\yquant@lang@create@type\yquant@register@get@type\outermap%
+                  \PackageError{yquant.sty}%
+                               {Subcircuit expects wire of type `\yquant@register@type@tostring\yquant@lang@create@type', but got `\yquant@register@type@tostring{\yquant@register@get@type\outermap}'}%
+                               {Outer and inner wire types must match for input wire `\detokenize\expandafter\expandafter\expandafter{\expandafter\reg\expandafter[\idx]}`.}%
+               \fi%
+            \endgroup%
             \unless\ifdefined\yquant@lang@attr@output%
                \listcsxadd{\yquant@prefix inonly}%
                           {\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}%
@@ -178,9 +182,14 @@
                   \PackageError{yquant.sty}{Invalid subcircuit parameter count}%
                                {No outer register available for output register `\reg`.}%
                \fi%
-               \csxappto{\yquant@prefix draw}{%
-                  \yquant@lang@create@check@output{\outermap}{\reg[\idx]}%
-               }%
+               \begingroup%
+                  \let\yquant@prefix=\yquant@parent%
+                  \unless\if\yquant@register@type@none\yquant@register@get@type\outermap%
+                     \PackageError{yquant.sty}%
+                                  {Subcircuit expects discarded wire, got `\yquant@register@type@tostring{\yquant@register@get@type\outermap}'}%
+                                  {Outer wire must be discarded before being acceptable for output-only register `\detokenize\expandafter\expandafter\expandafter{\expandafter\reg\expandafter[\idx]}`.}%
+                  \fi%
+               \endgroup%
                \yquant@register@alias%
                   \yquant@lang@create@type%
                   \yquant@lang@create@x%
@@ -245,27 +254,6 @@
    \endgroup%
 }
 
-\protected\def\yquant@lang@create@check@input#1#2#3{%
-   \begingroup%
-      \let\yquant@prefix=\yquant@parent%
-      \unless\if#2\yquant@register@get@type{#1}%
-         \PackageError{yquant.sty}{Subcircuit expects wire of type `\yquant@register@type@tostring{#2}', but got `\yquant@register@type@tostring{\yquant@register@get@type{#1}}'}%
-                      {Outer and inner wire types must match for input wire `\detokenize{#3}`.}%
-      \fi%
-   \endgroup%
-}
-
-\protected\def\yquant@lang@create@check@output#1#2{%
-   \begingroup%
-      \let\yquant@prefix=\yquant@parent%
-      \unless\if\yquant@register@type@none\yquant@register@get@type{#1}%
-         \PackageError{yquant.sty}%
-                      {Subcircuit expects discarded wire, got `\yquant@register@type@tostring{\yquant@register@get@type{#1}}'}%
-                      {Outer wire must be discarded before being acceptable for output-only register `\detokenize{#2}`.}%
-      \fi%
-   \endgroup%
-}
-
 \protected\def\yquant@lang@create@draw#1#2#3#4#5#6{%
    \begingroup%
       \dimdef\wireypos{\yquant@register@get@y{#1}}%
@@ -317,7 +305,12 @@
          % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
          \tikzset{/yquant/every wire}%
          \pgfpointanchor{yquantbox}{east}%
-         \yquant@register@set@lastwire{#1}{{\the\pgf@x}{\the\pgf@x}{}{}}%
+         \ifstrequal{#3}{initial}{%
+            \let\newtype=\yquant@register@type@none%
+         }{%
+            \yquant@register@type@fromstring{#3}\newtype%
+         }%
+         \yquant@register@set@typelastwire{#1}{\newtype{{\the\pgf@x}{\the\pgf@x}{}{}}}%
       \fi%
       \ifstrempty{#6}\relax{%
          \pgfnodealias{\tikz@pp@name{#6}}{yquantbox}%
@@ -601,7 +594,7 @@
    \yquant@circuit@actonwires%
       \yquant@circuit@settype%
       \yquant@register@get@ids@list%
-      \yquant@register@type@none%
+      {}1%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{init}\yquant@lang@@init
@@ -678,7 +671,7 @@
    \yquant@circuit@actonwires%
       \yquant@circuit@settype%
       \yquant@register@get@ids@list%
-      {}%
+      {}1%
 }
 
 \def\yquant@lang@setwire{%
@@ -694,7 +687,7 @@
    \yquant@circuit@actonwires%
       \yquant@circuit@setstyle%
       \yquant@register@get@ids@list%
-      {{\yquant@lang@attr@value}}%
+      {{\yquant@lang@attr@value}}0%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{addstyle}\yquant@lang@@addstyle
@@ -704,6 +697,6 @@
    \yquant@circuit@actonwires%
       \yquant@circuit@addstyle%
       \yquant@register@get@ids@list%
-      {{\yquant@lang@attr@value}}%
+      {{\yquant@lang@attr@value}}0%
 }
 % END_FOLD

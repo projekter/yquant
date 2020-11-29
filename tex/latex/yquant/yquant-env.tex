@@ -103,6 +103,9 @@
                \yquant@circuit@endwires{\yquant@env@end@xpos}%
             }%
             \csname\yquant@prefix outputs\endcsname%
+            \csappto{\yquant@prefix draw}{%
+               \yquant@circuit@endwires@finalize%
+            }%
             % also calculate the true y positions
             \unless\ifdefined\yquant@parent%
                \yquant@env@end@calcypositions%

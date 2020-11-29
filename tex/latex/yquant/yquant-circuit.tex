@@ -37,6 +37,7 @@
    \else%
       \def\yquant@env@end@xpos{#1}%
    \fi%
+   \let\yquant@circuit@endwires@finalize=\relax%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
       % we only extend the wire if it does not come from the outer circuit - this one would be responsible for the extension.
       \ifcsname\yquant@prefix registermap@\yquant@circuit@endwires@i\endcsname%
@@ -45,7 +46,10 @@
             \edef\storedleft{\the\pgf@picminx}%
             \yquant@draw@wire\yquant@circuit@endwires@i1%
             \global\pgf@picminx=\storedleft%
-            \yquant@register@set@type\yquant@circuit@endwires@i\yquant@register@type@none%
+            \eappto\yquant@circuit@endwires@finalize{%
+               \yquant@register@set@type%
+                  \yquant@circuit@endwires@i\noexpand\yquant@register@type@none%
+            }%
          }\relax%
       \else%
          \yquant@draw@wire\yquant@circuit@endwires@i1%
@@ -323,7 +327,8 @@
 % #1: action
 % #2: arbitrary register list
 % #3: parameter(s)
-\protected\def\yquant@circuit@actonwires#1#2#3{%
+% #4: 0/1 if this is to be applied also now
+\protected\def\yquant@circuit@actonwires#1#2#3#4{%
    \begingroup%
       \let\tmp=\empty%
       \def\do##1{%
@@ -334,6 +339,9 @@
       }%
       \dolistloop{#2}%
       \csxappto{\yquant@prefix draw}{\tmp}%
+      \ifx1#4 %
+         \tmp%
+      \fi%
    \endgroup%
 }
 

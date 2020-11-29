@@ -95,8 +95,8 @@
    \fi%
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
-      \yquant@register@set@x@aux%
-      {#2}%
+      \yquant@register@set@typex@aux%
+      {{#1}{#2}}%
 }
 % END_FOLD
 
@@ -880,6 +880,10 @@
    \unexpanded{{#1}}{#6}\unexpanded{{#3}{#4}{#5}}%
 }
 
+\long\def\yquant@register@set@typex@aux#1#2#3#4#5#6{%
+   #6\unexpanded{{#3}{#4}{#5}}%
+}
+
 \protected\def\yquant@register@update@height#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
       \ifdim#2>%
@@ -978,6 +982,20 @@
 
 \long\def\yquant@register@set@lastwire@aux#1#2#3#4#5#6{%
    \unexpanded{{#1}{#2}{#3}}{#6}\unexpanded{{#5}}%
+}
+
+\protected\def\yquant@register@set@typelastwire#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \PackageError{yquant.sty}{Internal inconsistency detected}%
+                   {Setting type and lastwire was requested for a subcircuit.}%
+   \fi%
+   \expandafter\yquant@register@set@@aux%
+      \csname\yquant@prefix register@#1\endcsname%
+      \yquant@register@set@typelastwire@aux%
+}
+
+\long\def\yquant@register@set@typelastwire@aux#1#2#3#4#5#6{%
+   {\@firstoftwo#6}\unexpanded{{#2}{#3}}{\@secondoftwo#6}\unexpanded{{#5}}%
 }
 
 \protected\def\yquant@register@set@style#1{%
