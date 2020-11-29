@@ -150,9 +150,20 @@
    operators/every measure meter/.style=%
       {draw, -{Latex[length=2.5pt]}},%
    operators/every dmeter/.style=%
-      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},%
-   operators/every barrier/.style=%
-      {shape=yquant-line, dashed, draw},%
+      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw}
+}
+\ifnum\yquant@compat<2 
+   \pgfqkeys{/yquant}{%
+      operators/every barrier/.style=%
+         {shape=yquant-line, dashed, draw}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      operators/every barrier/.style=%
+         {shape=yquant-line, dashed, draw, shorten <= -1mm, shorten >= -1mm}
+   }
+\fi
+\pgfqkeys{/yquant}{%
    operators/every wave/.style=%
       {shape=yquant-circle, radius=.5mm, fill},%
    /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,%
