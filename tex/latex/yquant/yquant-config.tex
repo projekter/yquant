@@ -15,8 +15,7 @@
 }
 \pgfqkeys{/yquant}{%
    every circuit/.style={%
-      every node/.prefix style={transform shape},%
-      every label/.prefix style={transform shape=false}% TODO: no, we don't really want this, but pgf bug #843 requires this if we still want to have `label position` available
+      every node/.prefix style={transform shape}
    },%
    % register settings
    register/default name/.store in=%
