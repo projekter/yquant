@@ -851,10 +851,9 @@
               /yquant/operators/this subcircuit box,%
               name prefix=, name suffix=, name=, y radius=0pt]%
          {\vbox to 1sp{}};%
-      \pgfpointtransformed{\pgfpointorigin}%
       \edef\tmp{%
          \def\noexpand\yquant@draw@@subcircuit@extent{%
-            {\the\dimexpr\pgf@picmaxy-\pgf@y\relax}{\the\dimexpr\pgf@y-\pgf@picminy\relax}%
+            {\the\pgf@picmaxy}{\the\dimexpr-\pgf@picminy\relax}%
          }%
       }%
       \expandafter%
