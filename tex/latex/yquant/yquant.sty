@@ -20,7 +20,21 @@
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
 \RequirePackage{trimspaces}[2009/09/17]
+\RequirePackage{xkeyval}[2005/05/07]
 \usetikzlibrary{arrows.meta,decorations.pathreplacing,decorations.pathmorphing}
+
+\define@choicekey+{yquant.sty}{compat}[\val\yquant@compat]{newest,0.3,0.4}{
+   \ifnum\yquant@compat=0 %
+      \def\yquant@compat{2} % current version
+   \fi%
+}{
+   \PackageWarning{yquant.sty}{Invalid value for `compat` key specified. Using `0.3`.}
+}
+\ProcessOptionsX
+\unless\ifdefined\yquant@compat
+   \PackageWarning{yquant.sty}{Please specify the `compat` key for yquant. Using `0.3`. Current version is `0.4`.}
+   \def\yquant@compat{1}
+\fi
 
 \newif\ifyquantdebug
 \input yquant-config.tex
