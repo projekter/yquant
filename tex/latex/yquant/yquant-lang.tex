@@ -154,7 +154,7 @@
       % pre-set y position
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
          \ifdefined\yquant@lang@attr@input%
-            \expandafter\yquant@list@gdequeue\csname \yquant@prefix parameters\endcsname\outermap%
+            \expandafter\yquant@list@gdequeue\csname\yquant@prefix parameters\endcsname\outermap%
             \ifx\outermap\empty%
                \PackageError{yquant.sty}{Invalid subcircuit parameter count}%
                             {No outer register available for input register `\reg[\idx]`.}%
