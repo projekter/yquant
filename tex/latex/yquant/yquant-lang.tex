@@ -25,6 +25,9 @@
       \let\yquant@lang@attr@output=\relax%
    }%
    inout/.default=\regidx,%
+   seamless/.code={%
+      \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/seamless}%
+   }%
 }
 \yquant@langhelper@declare@attr@global{%
    name/.store in=\yquant@lang@attr@name%
@@ -440,7 +443,7 @@
 
 % sub-circuit: This is a nested circuit.
 \yquant@langhelper@declare@command{subcircuit}\yquant@lang@@subcircuit
-\yquant@langhelper@setup@attrs{subcircuit}{value}{}
+\yquant@langhelper@setup@attrs{subcircuit}{value}{seamless}
 \protected\def\yquant@lang@@subcircuit#1#2#3{%
    \yquant@register@get@multiaslist%
    \yquant@circuit@operator{#1}{#2}{#3}%
