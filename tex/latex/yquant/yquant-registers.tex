@@ -988,13 +988,24 @@
    % We enforce subcircuits to have registers, so no check needed.
    \expandafter\yquant@register@set@@aux%
       \csname yquant@env\the\yquant@env @register@1\endcsname%
-      \yquant@register@inject@extents@aux{{#1}{#2}}%
+      \yquant@register@inject@height@aux{#1}%
+   \expandafter\yquant@register@set@@aux%
+      \csname yquant@env\the\yquant@env @register@\csname yquant@env\the\yquant@env @registers\endcsname\endcsname%
+      \yquant@register@inject@depth@aux{#2}%
 }
 
-\long\def\yquant@register@inject@extents@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@inject@height@aux#1#2#3#4#5#6{%
    \unexpanded{{#1}{#2}}%
-   {{\the\dimexpr\@firstofthree#3+\@firstoftwo#6\relax}%
-    {\the\dimexpr\@secondofthree#3+\@secondoftwo#6\relax}%
+   {{\the\dimexpr\@firstofthree#3+#6\relax}%
+    {\unexpanded\expandafter{\@secondofthree#3}}%
+    {\unexpanded\expandafter{\@thirdofthree#3}}}%
+   \unexpanded{{#4}{#5}}%
+}
+
+\long\def\yquant@register@inject@depth@aux#1#2#3#4#5#6{%
+   \unexpanded{{#1}{#2}}%
+   {{\unexpanded\expandafter{\@firstofthree#3}}%
+    {\the\dimexpr\@secondofthree#3+#6\relax}%
     {\unexpanded\expandafter{\@thirdofthree#3}}}%
    \unexpanded{{#4}{#5}}%
 }
