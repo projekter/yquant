@@ -194,14 +194,16 @@
       \letcs#2{yquant@sort@item0}%
       \count0=1 %
       \loop%
-         \ifnum\count0<\yquant@sort@count%
+         \ifnum\count0<\yquant@sort@count\relax%
             \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter#1%
-            \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
-            \expandafter\expandafter\expandafter#2%
-            \expandafter\expandafter\expandafter}%
-            \expandafter\expandafter\expandafter%
+               \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
+               \expandafter\expandafter\expandafter#2%
+               \expandafter\expandafter\expandafter}%
+               \expandafter\expandafter\expandafter{%
+                  \csname yquant@sort@item\the\count0\endcsname%
+               }%
                \relax{%
-               \letcs\yquant@sort@min{yquant@sort@item\the\count0}%
+               \letcs#2{yquant@sort@item\the\count0}%
             }%
             \advance\count0 by 1 %
       \repeat%
