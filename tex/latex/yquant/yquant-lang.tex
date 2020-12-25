@@ -271,11 +271,20 @@
          \dimdef\createxpos{#2}%
       \fi%
       \ifstrempty{#5}{%
-         % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate.
+         % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate. However, we manually take care of extending the vertical bounding box appropriately, so that if this wire is the last or first one, contains no text and no gates, it is not clipped away.
          \path[overlay]%
             (\createxpos, \wireypos)%
             coordinate[name prefix=, name suffix=, name=yquantbox];%
          \let\pgfshapeclippathhorzresult=\empty%
+         \tikzset{/yquant/every wire}%
+         \pgfpointanchor{yquantbox}{east}%
+         % 2 \pgflinewidth is the separation of cbit and qubits lines, and .5 for the line itself
+         \ifdim\dimexpr\pgf@y-2.5\pgflinewidth\relax<\pgf@picminy%
+            \global\pgf@picminy=\dimexpr\pgf@y-2.5\pgflinewidth\relax%
+         \fi%
+         \ifdim\dimexpr\pgf@y+2.5\pgflinewidth\relax>\pgf@picmaxy%
+            \global\pgf@picmaxy=\dimexpr\pgf@y+2.5\pgflinewidth\relax%
+         \fi%
       }{%
          \edef\cmd{%
             \noexpand\path%
