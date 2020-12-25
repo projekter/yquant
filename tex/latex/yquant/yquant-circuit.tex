@@ -232,13 +232,12 @@
 }
 
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
-% #1: {additional height of subcircuit box}{additional depth of subcircuit box}
-% #2: style
-\protected\def\yquant@circuit@subcircuit#1#2{%
+% #1: style
+\protected\def\yquant@circuit@subcircuit#1{%
    \numdef\yquant@circuit@subcircuit@id{\yquant@env+1}%
    \listcsxadd{\yquant@prefix subcircuits}{\yquant@circuit@subcircuit@id}%
    \begingroup%
-      \tikzset{/yquant/every operator, #2,%
+      \tikzset{/yquant/every operator, #1,%
                /yquant/this operator, /yquant/operators/this subcircuit box/.style={}}%
       % execute the subcircuit
       \expandafter%
@@ -248,48 +247,6 @@
             \PackageError{yquant.sty}{Invalid subcircuit parameters count}%
                          {Too many parameters given.}%
          \fi%
-         \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
-         \dimen0=\yquant@config@register@sep%
-         % the first input must count all its height plus everything that is above it in the subcircuit as the height of the outer wire it is attached to
-         \edef\firstinput{%
-            \expandafter\expandafter\expandafter%
-               \@firstoftwo\csname\yquant@prefix firstinput\endcsname%
-         }%
-         \edef\outerfirst{%
-            \expandafter\expandafter\expandafter%
-               \@secondoftwo\csname\yquant@prefix firstinput\endcsname%
-         }%
-         \dimen2=\yquant@register@get@height\firstinput\relax%
-         \advance\dimen2 by \@firstoftwo#1 %
-         \ifnum\firstinput>1 %
-            \yquant@fordown \i := \the\numexpr\firstinput-1\relax downto 1 {%
-               \advance\dimen2 by \dimexpr\yquant@register@get@height\i+%
-                                          \yquant@register@get@depth\i+\dimen0\relax%
-            }%
-         \fi%
-         % the last input must count all its depth plus everything that is below it in the subcircuit as the depth of the outer wire it is attached to
-         \edef\lastinput{%
-            \expandafter\expandafter\expandafter%
-               \@firstoftwo\csname\yquant@prefix lastinput\endcsname%
-         }%
-         \edef\outerlast{%
-            \expandafter\expandafter\expandafter%
-               \@secondoftwo\csname\yquant@prefix lastinput\endcsname%
-         }%
-         \dimen4=\yquant@register@get@depth\lastinput\relax%
-         \advance\dimen4 by \@secondoftwo#1 %
-         \ifnum\lastinput<\csname\yquant@prefix registers\endcsname%
-            \yquant@for \i := \the\numexpr\lastinput+1\relax to \csname\yquant@prefix registers\endcsname {%
-               \advance\dimen4 by \dimexpr\yquant@register@get@height\i+%
-                                          \yquant@register@get@depth\i+\dimen0\relax%
-            }%
-         \fi%
-         \begingroup%
-            \let\yquant@prefix=\yquant@parent%
-            \yquant@register@update@height\outerfirst{\the\dimen2}%
-            \yquant@register@update@depth\outerlast{\the\dimen4}%
-         \endgroup%
-         % we cannot make more precise statements about the inputs in between - for example, if input 1 is mapped to outer wire 1 and input 2 to outer wire 5, how to split the heights/depth appropriately between the outer wires 1-5?
       \yquant@env@end%
    \endgroup%
 }

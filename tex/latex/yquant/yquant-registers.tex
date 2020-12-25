@@ -49,7 +49,8 @@
       {#1}% type
       {#2}% x pos
       {{\yquant@config@register@minimum@height}%
-       {\yquant@config@register@minimum@depth}}% height and depth; at the end, the y position
+       {\yquant@config@register@minimum@depth}%
+       {}}% height, depth, and multi-space parts; at the end, the y position
       {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
    }%
@@ -76,28 +77,31 @@
       \csxdef{\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
              {\yquant@parent register@#5}%
    \fi%
-   % even though this is an alias, we still need to keep track of its internal dimensions
-   \csgdef{\yquant@prefix registerdim@\csname\yquant@prefix registers\endcsname}%
-          {{0pt}{0pt}}%
-   \yquant@cleanup@csadd{\yquant@prefix registerdim@\csname\yquant@prefix registers\endcsname}%
+   % we still store height, depth, and multi-space parts. To keep the same macros, we create a full register structure, but "abuse" the type component to contain the direct parent
+   \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
+      {{\expandafter\yquant@register@alias@extract\yquant@parent}{#5}}% direct parent (circuit id, register id)
+      {}% unused
+      {{\yquant@config@register@minimum@height}%
+       {\yquant@config@register@minimum@depth}%
+       {}}% height, depth, and multi-space parts
+      {}% unused
+      {}% unused
+   }%
    \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#3}{#4}%
+   \yquant@cleanup@csadd{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registername@#3[#4]}%
    \ifnum0=#4\relax%
       \yquant@cleanup@csadd{\yquant@prefix registerhigh@#3}%
-   \fi%
-   \csxdef{\yquant@prefix lastinput}{{\csname\yquant@prefix registers\endcsname}{#5}}%
-   \unless\ifcsname\yquant@prefix firstinput\endcsname%
-      \csxdef{\yquant@prefix firstinput}{{\csname\yquant@prefix registers\endcsname}{#5}}%
-      \yquant@cleanup@csadd{\yquant@prefix firstinput}%
-      \yquant@cleanup@csadd{\yquant@prefix lastinput}%
    \fi%
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
       \yquant@register@set@typex@aux%
       {{#1}{#2}}%
 }
+
+\def\yquant@register@alias@extract yquant@env#1@{#1}%
 % END_FOLD
 
 % BEGIN_FOLD Converter: convert a register name to its id
@@ -680,6 +684,16 @@
    \fi%
 }
 
+\def\yquant@register@get@parent#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@type@aux\csname\yquant@prefix register@#1\endcsname%
+   \else%
+      \PackageError{yquant.sty}{Internal inconsistency detected}%
+                   {Tried to get parent of a non-connected wire.}%
+   \fi%
+}
+
 \def\yquant@register@get@type@aux#1#2#3#4#5{#1}
 
 \def\yquant@register@get@x#1{%
@@ -695,28 +709,35 @@
 \def\yquant@register@get@x@aux#1#2#3#4#5{#2}
 
 \def\yquant@register@get@height#1{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \expandafter\expandafter\expandafter%
-      \@firstoftwo\csname\yquant@prefix registerdim@#1\endcsname%
-   \else%
-      \expandafter\expandafter\expandafter%
-      \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
-   \fi%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@height@aux#1#2#3#4#5{\@firstoftwo#3}
+\def\yquant@register@peek@height#1#2{%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@height@aux\csname yquant@env#1@register@#2\endcsname%
+}
+
+\def\yquant@register@get@height@aux#1#2#3#4#5{\@firstofthree#3}
 
 \def\yquant@register@get@depth#1{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \expandafter\expandafter\expandafter%
-      \@secondoftwo\csname\yquant@prefix registerdim@#1\endcsname%
-   \else%
-      \expandafter\expandafter\expandafter%
-      \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
-   \fi%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@depth@aux#1#2#3#4#5{\@secondoftwo#3}
+\def\yquant@register@peek@depth#1#2{%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@depth@aux\csname yquant@env#1@register@#2\endcsname%
+}
+
+\def\yquant@register@get@depth@aux#1#2#3#4#5{\@secondofthree#3}
+
+\def\yquant@register@get@multispace#1{%
+   \expandafter\expandafter\expandafter%
+   \yquant@register@get@multispace@aux\csname\yquant@prefix register@#1\endcsname%
+}
+
+\def\yquant@register@get@multispace@aux#1#2#3#4#5{\@thirdofthree#3}
 
 % The y parameter get macros exist in two forms: The protected one is used during the storage to the draw macro; it should never be executed. The env environment then maps them to their proper expandable forms.
 \protected\def\yquant@register@get@y{%
@@ -885,62 +906,96 @@
 }
 
 \protected\def\yquant@register@update@height#1#2{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \ifdim#2>%
-         \expandafter\expandafter\expandafter%
-            \@firstoftwo\csname\yquant@prefix registerdim@#1\endcsname%
-         \relax%
-         \csxdef{\yquant@prefix registerdim@#1}{%
-            {#2}%
-            {\expandafter\expandafter\expandafter%
-                \@secondoftwo\csname\yquant@prefix registerdim@#1\endcsname}%
-         }%
-      \fi%
-   \else%
-      \ifdim#2>%
-         \expandafter\expandafter\expandafter%
-            \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
-         \relax%
-         \expandafter\yquant@register@set@@aux%
-            \csname\yquant@prefix register@#1\endcsname%
-            \yquant@register@set@height@aux{#2}%
-      \fi%
+   \ifdim#2>%
+      \expandafter\expandafter\expandafter%
+         \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
+      \relax%
+      \expandafter\yquant@register@set@@aux%
+         \csname\yquant@prefix register@#1\endcsname%
+         \yquant@register@set@height@aux{#2}%
    \fi%
+}
+
+\protected\def\yquant@register@set@height@remote#1#2#3{%
+   \expandafter\yquant@register@set@@aux%
+      \csname yquant@env#1@register@#2\endcsname%
+      \yquant@register@set@height@aux{#3}%
 }
 
 \long\def\yquant@register@set@height@aux#1#2#3#4#5#6{%
    \unexpanded{{#1}{#2}}%
-   {{#6}{\unexpanded\expandafter{\@secondoftwo#3}}}%
+   {{#6}%
+    {\unexpanded\expandafter{\@secondofthree#3}}%
+    {\unexpanded\expandafter{\@thirdofthree#3}}}%
    \unexpanded{{#4}{#5}}%
 }
 
 \protected\def\yquant@register@update@depth#1#2{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \ifdim#2>%
-         \expandafter\expandafter\expandafter%
-            \@secondoftwo\csname\yquant@prefix registerdim@#1\endcsname%
-         \relax%
-         \csxdef{\yquant@prefix registerdim@#1}{%
-            {\expandafter\expandafter\expandafter%
-                \@firstoftwo\csname\yquant@prefix registerdim@#1\endcsname}%
-            {#2}%
-         }%
-      \fi%
-   \else%
-      \ifdim#2>%
-         \expandafter\expandafter\expandafter%
-            \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
-         \relax%
-         \expandafter\yquant@register@set@@aux%
-            \csname\yquant@prefix register@#1\endcsname%
-            \yquant@register@set@depth@aux{#2}%
-      \fi%
+   \ifdim#2>%
+      \expandafter\expandafter\expandafter%
+         \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
+      \relax%
+      \expandafter\yquant@register@set@@aux%
+         \csname\yquant@prefix register@#1\endcsname%
+         \yquant@register@set@depth@aux{#2}%
    \fi%
+}
+
+\protected\def\yquant@register@set@depth@remote#1#2#3{%
+   \expandafter\yquant@register@set@@aux%
+      \csname yquant@env#1@register@#2\endcsname%
+      \yquant@register@set@depth@aux{#3}%
 }
 
 \long\def\yquant@register@set@depth@aux#1#2#3#4#5#6{%
    \unexpanded{{#1}{#2}}%
-   {{\unexpanded\expandafter{\@firstoftwo#3}}{#6}}%
+   {{\unexpanded\expandafter{\@firstofthree#3}}%
+    {#6}%
+    {\unexpanded\expandafter{\@thirdofthree#3}}}%
+   \unexpanded{{#4}{#5}}%
+}
+
+\protected\def\yquant@register@update@multispace#1#2#3{%
+   \unless\ifnum#1<#2 %
+      \PackageError{yquant.sty}{Internal inconsistency detected}%
+                   {Setting multispace part in wrong order.}%
+   \fi%
+   \begingroup%
+      \edef\tmp{%
+         \expandafter\expandafter\expandafter%
+         \yquant@register@get@multispace@aux\csname\yquant@prefix register@#1\endcsname%
+      }%
+      \let\old=\tmp%
+      \yquant@list@eupdateorinsert\tmp{#2}{#3}%
+      \unless\ifx\old\tmp%
+         \expandafter\yquant@register@set@@aux%
+            \csname\yquant@prefix register@#1\endcsname%
+            \yquant@register@set@multispace@aux\tmp%
+      \fi%
+   \endgroup%
+}
+
+\long\def\yquant@register@set@multispace@aux#1#2#3#4#5#6{%
+   \unexpanded{{#1}{#2}}%
+   {{\unexpanded\expandafter{\@firstofthree#3}}%
+    {\unexpanded\expandafter{\@secondofthree#3}}%
+    {#6}}%
+   \unexpanded{{#4}{#5}}%
+}
+
+\protected\def\yquant@register@inject@extents#1#2{%
+   % enlarge the last subcircuit that was created previously by height #1 and depth #2.
+   % We enforce subcircuits to have registers, so no check needed.
+   \expandafter\yquant@register@set@@aux%
+      \csname yquant@env\the\yquant@env @register@1\endcsname%
+      \yquant@register@inject@extents@aux{{#1}{#2}}%
+}
+
+\long\def\yquant@register@inject@extents@aux#1#2#3#4#5#6{%
+   \unexpanded{{#1}{#2}}%
+   {{\the\dimexpr\@firstofthree#3+\@firstoftwo#6\relax}%
+    {\the\dimexpr\@secondofthree#3+\@secondoftwo#6\relax}%
+    {\unexpanded\expandafter{\@thirdofthree#3}}}%
    \unexpanded{{#4}{#5}}%
 }
 

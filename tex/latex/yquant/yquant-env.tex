@@ -159,128 +159,334 @@
    \fi%
 }
 
+\newif\ifyquant@env@end@calcypositions@godeep
 \protected\def\yquant@env@end@calcypositions{%
    \begingroup%
       \dimen4=\yquant@config@register@sep %
-      % We know the heights of most gates, but subcircuits are tricky. Since the position of their inner wires depends on the heights of the outer wires, we could not make any assumption about their heights yet. So we now need multiple iterations: First, we fix the positions of our own wires preliminarily. Then, we iterate through all subcircuits at the first level, place their wires appropriately and try to align input and output. In doing so, we recognize when there's not enough space at an outer wire. If this is the case, we enlarge the outer wire's height appropriately and restart alignment from the outmost level. If everything is proper, we start aligning at the next level.
-      \yquant@env@end@calcypositions@toplevel1%
+      \yquant@sort@clear%
+      % Setup...
+      \yquant@env@end@calcypositions@setup1%
+      % and go!
+      \let\redolist=\empty%
+      \yquant@env@end@calcypositions@godeeptrue%
+      \yquant@env@end@calcypositions@run1%
+      \yquant@env@end@calcypositions@godeepfalse%
+      \yquant@env@end@calcypositions@redo%
+%      % The macros now set up performed all the proper and unambiguous justification. After that, we will also need to take care of the multi gates. We expect that for most of all multi gates, we already have enough space. But sometimes, this may not be the case, so we need to increase overall spacing and re-evaluate all spacing. In order to get a proper balanced layout, we start with the largest enlargement that is required. Every enlargement step will equally distribute the registers in between. Starting with the largest one, this is likely to also solve issues with smaller ones.
+      \yquant@env@end@calcypositions@multi%
       % Turn the preliminary positions into true ones at every level.
       \yquant@env@end@setypositions1%
    \endgroup%
 }
 
-\protected\def\yquant@env@end@calcypositions@loop#1{%
-   % \yquant@parent has to be set already
+\protected\def\yquant@env@end@calcypositions@setup#1{%
    \def\yquant@prefix{yquant@env#1@}%
-   % #1 now holds the id of the subcircuit. Find the first input.
-   \edef\firstinput{%
-      \expandafter\expandafter\expandafter%
-         \@firstoftwo\csname\yquant@prefix firstinput\endcsname%
-   }%
-   \edef\lastinput{%
-      \expandafter\expandafter\expandafter%
-         \@firstoftwo\csname\yquant@prefix lastinput\endcsname%
-   }%
-   % we already made sure during in \yquant@circuit@subcircuit that there is enough space above and below the subcircuit. Still, the wires need to be positioned. However, we will first deal with all intermediate wires, which need to be placed by means of shifts - there is no direct correspondence to heights or depths of parent wires any more.
-   \ifnum\firstinput<\numexpr\lastinput-1\relax%
-      \dimen0=\dimexpr%
-         \csname y@\csname\yquant@prefix registermap@\firstinput\endcsname\endcsname+%
-         \yquant@register@get@depth\firstinput+\dimen4%
-      \relax%
-      \yquant@for \i := \numexpr\firstinput+1\relax to \lastinput {%
-         \advance\dimen0 by \yquant@register@get@height\i\relax%
-         \ifcsname\yquant@prefix registermap@\i\endcsname%
-            % this is an input: do we have enough space by using the outer position?
-            \letcs\outername{\yquant@prefix registermap@\i}%
-            \letcs\outery{y@\outername}%
-            \ifdim\dimen0>\outery\relax%
-               % re-aligning the outer positions is required
-               \ifcsname y+@\outername\endcsname%
-                  \csdimdef{y+@\outername}%
-                           {\csname y+@\outername\endcsname+\dimen0-\outery}%
-               \else%
-                  \csdimdef{y+@\outername}{\dimen0-\outery}%
-               \fi%
-               \let\yquant@env@end@calcypositions@redo=\relax%
-            \fi%
-         \else%
-            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
+   % Our problem is a linear program. To solve it, we proceed iteratively: We define macros for each subcircuit that, based on the current positions, calculate the allowed positions.
+   \letcs\max{\yquant@prefix registers}%
+   % BEGIN_FOLD find out about the first and last register with maps
+   \let\firstinout=\relax%
+   \let\lastinout=\relax%
+   \yquant@for \i := 1 to \max {%
+      \ifcsname\yquant@prefix registermap@\i\endcsname%
+         \ifx\firstinout\relax%
+            \let\firstinout=\i%
          \fi%
-         \ifdefined\yquant@env@end@calcypositions@redo%
-            \expandafter\yquant@for@break%
-         \else%
-            \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
+         \let\lastinout=\i%
+      \fi%
+   }%
+   % END_FOLD
+   % BEGIN_FOLD Take care with internal registers before the first inout
+   % We could in principle merge the loop to define \firstinout/\lastinout, but nested for loops are problematic.
+   \ifx\firstinout\relax%
+      \dimen0=\yquant@register@get@height1 %
+      \def\i{1}%
+   \else%
+      \edef\outerlevel{\yquant@register@get@parent{\firstinout}}%
+      \dimen0=\csname yquant@env\expandafter\@firstoftwo\outerlevel @env@endy@\expandafter\@secondoftwo\outerlevel\endcsname\relax%
+      \ifnum\firstinout>1 %
+         % We need to take special care with internal registers if the first one is not a connected one. In this case, the internal registers will grow upwards instead... Since the y position may change in both upward and downward direction, we need to have an additional bookkeeping value that stores the last y position of the first item in this subcircuit.
+         \csedef{\yquant@prefix env@endyprev}{\the\dimen0}%
+         \yquant@fordown \i := \numexpr\firstinout-1\relax downto 1 {%
+            \advance \dimen0 by -\dimexpr%
+               \expandafter\yquant@register@get@height\expandafter{\the\numexpr\i+1\relax}+%
+               \dimen4+%
+               \yquant@register@get@depth\i%
+            \relax%
+            % We know for sure there's none with a parent in this loop
+            \csedef{\yquant@prefix env@endy@\i}{\the\dimen0}%
+            \csedef{yquant@env@end@calcypositions@#1@\i}{%
+               \advance\dimen0 by -\dimexpr%
+                  \noexpand\yquant@register@get@height{\the\numexpr\i+1\relax}+%
+                  \dimen4+%
+                  \noexpand\yquant@register@get@depth{\i}%
+               \relax%
+               % The first connected wire might have been re-aligned, which destroys all our knowledge. \dimen2 will contain the relative shift that we must take into account.
+               % Make sure the current y position is at most the previous y position + previous depth + separation + current height.
+               \noexpand\ifdim\dimexpr\dimen0-\dimen2\relax<\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\space%
+                  \edef\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname{\noexpand\the\dimen0}%
+                  \ifinlist{#1}\noexpand\redolist\relax{%
+                     \listadd\noexpand\redolist{#1}%
+                  }%
+               \noexpand\else%
+                  \noexpand\ifdim\dimen2=0pt %
+                     % No change at all
+                     \dimen0=\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\space%
+                  \noexpand\else%
+                     % We must still overwrite the position macro due to the shift
+                     \dimen0=\dimexpr\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname+\dimen2\relax%
+                     \edef\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname{\noexpand\the\dimen0}%
+                     \ifinlist{#1}\noexpand\redolist\relax{%
+                        \listadd\noexpand\redolist{#1}%
+                     }%
+                  \noexpand\fi
+               \noexpand\fi%
+               \unless\ifx\i1%
+                  \expandafter\noexpand\csname yquant@env@end@calcypositions@#1@\the\numexpr\i-1\relax\endcsname%
+               \fi%
+            }%
+         }%
+      \fi%
+      \let\i=\firstinout%
+   \fi%
+   % END_FOLD
+   % BEGIN_FOLD Define initial macro
+   \csedef{yquant@env@end@calcypositions@#1}{%
+      \def\noexpand\yquant@prefix{\yquant@prefix}%
+      \dimen0=\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\relax%
+      \listremove\noexpand\redolist{#1}%
+      \expandafter\noexpand\csname yquant@env@end@calcypositions@#1@\i\endcsname%
+      \expandafter\unless\expandafter\ifx\csname\yquant@prefix subcircuits\endcsname\empty%
+         \ifinlist{#1}\noexpand\redolist{%
+            \noexpand\forlistloop%
+               \yquant@env@end@calcypositions@run%
+               \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
+         }{%
+            \noexpand\ifyquant@env@end@calcypositions@godeep%
+               \noexpand\forlistloop%
+                  \yquant@env@end@calcypositions@run%
+                  \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
+            \noexpand\fi%
+         }%
+      \fi%
+   }%
+   % END_FOLD
+   % BEGIN_FOLD Set up chain of other macros
+   % We set up a chain of position evaluation macros. We start with the first [external] register in the outermost circuit; it is supposed to call the evaluation macro of its successor. Next, we iterate through all subcircuits (recursively). Whenever we find a register that is mapped to an outer one, we take appropriate measures.
+   \yquant@for \i := \i to \max {%
+      \ifcsname\yquant@prefix registermap@\i\endcsname%
+         % \outery = env@endy macro of parent wire
+         \edef\outerlevel{\yquant@register@get@parent{\i}}%
+         \edef\outery{%
+            \expandafter\noexpand\csname yquant@env\expandafter\@firstoftwo\outerlevel @env@endy@\expandafter\@secondoftwo\outerlevel\endcsname%
+         }%
+         % in this initialization step, we only check in one direction
+         \ifdim\dimen0<\outery\space%
+            \dimen0=\outery\space%
+         \fi%
+      \fi%
+      \csedef{\yquant@prefix env@endy@\i}{\the\dimen0}%
+      \unless\ifx\i\max%
+         \advance \dimen0 by \dimexpr%
+            \yquant@register@get@depth\i+%
+            \dimen4+%
+            \expandafter\yquant@register@get@height\expandafter{\the\numexpr\i+1\relax}%
+         \relax%
+      \fi%
+      \csedef{yquant@env@end@calcypositions@#1@\i}{%
+         % make sure the current y position is at least the previous y position + previous depth + separation + current height
+         \noexpand\ifdim\dimen0>\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\space%
+            \edef\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname{\noexpand\the\dimen0}%
+            \ifinlist{#1}\noexpand\redolist\relax{%
+               \listadd\noexpand\redolist{#1}%
+            }%
+         \noexpand\else%
+            \dimen0=\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\space%
+         \noexpand\fi%
+         % now \dimen0 holds the current y position of register \i
+         % BEGIN_FOLD map
+         \ifcsname\yquant@prefix registermap@\i\endcsname%
+            % if this is an in/out register, put it at the same position as the outer one
+            \noexpand\ifdim\dimen0<\expandafter\noexpand\outery\space%
+               \dimen0=\expandafter\noexpand\outery\space%
+               \let\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname\expandafter\noexpand\outery%
+               \ifinlist{#1}\noexpand\redolist\relax{%
+                  \listadd\noexpand\redolist{#1}%
+               }%
+            \noexpand\fi%
+            \noexpand\ifdim\dimen0>\expandafter\noexpand\outery\space%
+               \let\expandafter\noexpand\outery\expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname%
+               \ifinlist{\expandafter\@firstoftwo\outerlevel}\noexpand\redolist\relax{%
+                  \listadd\noexpand\redolist{\expandafter\@firstoftwo\outerlevel}%
+               }%
+            \noexpand\fi%
+            \ifx\i\firstinout%
+               % This is the first in/out register. Find all previous internal registers and make sure the parent has enough height.
+               \ifnum\i>1 %
+                  % Here, we must now call the (backwards-running) alignment macros of the previous registers. First fill \dimen2 with the relative shift of this wire's position with respect to the last iteration.
+                  \dimen2=\dimexpr\dimen0-\expandafter\noexpand\csname\yquant@prefix env@endyprev\endcsname\relax%
+                  % Store \dimen0...
+                  \dimen6=\dimen0 %
+                  % ...call previous calculations...
+                  \expandafter\noexpand\csname yquant@env@end@calcypositions@#1@\the\numexpr\i-1\relax\endcsname%
+                  % ...restore...
+                  \dimen0=\dimen6 %
+                  % ...and backup its value for the next iteration.
+                  \edef\expandafter\noexpand\csname\yquant@prefix env@endyprev\endcsname{\noexpand\the\dimen0}%
+                  \expandafter\noexpand\csname ifdim\endcsname\noexpand\yquant@register@peek@height\outerlevel<\dimexpr%
+                     \noexpand\yquant@register@get@height1+%
+                     \expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname-%
+                     \expandafter\noexpand\csname\yquant@prefix env@endy@1\endcsname%
+                  \relax%
+                     \yquant@register@set@height@remote\outerlevel{\noexpand\the\dimexpr%
+                        \noexpand\yquant@register@get@height1+%
+                        \expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname-%
+                        \expandafter\noexpand\csname\yquant@prefix env@endy@1\endcsname%
+                     }%
+               \else%
+                  \expandafter\noexpand\csname ifdim\endcsname\noexpand\yquant@register@peek@height\outerlevel<%
+                     \noexpand\yquant@register@get@height1 %
+                     \yquant@register@set@height@remote\outerlevel{%
+                        \noexpand\yquant@register@get@height1%
+                     }%
+               \fi%
+                     \ifinlist{\expandafter\@firstoftwo\outerlevel}\noexpand\redolist\relax{%
+                        \listadd\noexpand\redolist{\expandafter\@firstoftwo\outerlevel}%
+                     }%
+                  \expandafter\noexpand\csname fi\endcsname%
+            \fi%
+            \ifx\i\lastinout%
+               % this is the last in/out register. Find all following internal registers and make sure the parent has enough depth.
+               \ifnum\i<\max\space%
+                  \expandafter\noexpand\csname ifdim\endcsname\noexpand\yquant@register@peek@depth\outerlevel<\dimexpr%
+                     \noexpand\yquant@register@get@depth{\max}+%
+                     \expandafter\noexpand\csname\yquant@prefix env@endy@\max\endcsname-%
+                     \expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname%
+                  \relax%
+                     \yquant@register@set@depth@remote\outerlevel{\noexpand\the\dimexpr%
+                        \noexpand\yquant@register@get@depth{\max}+%
+                        \expandafter\noexpand\csname\yquant@prefix env@endy@\max\endcsname-%
+                        \expandafter\noexpand\csname\yquant@prefix env@endy@\i\endcsname%
+                     }%
+               \else%
+                  \expandafter\noexpand\csname ifdim\endcsname\noexpand\yquant@register@peek@depth\outerlevel<%
+                     \noexpand\yquant@register@get@depth{\max} %
+                     \yquant@register@set@depth@remote\outerlevel{%
+                        \noexpand\yquant@register@get@depth{\max}%
+                     }%
+               \fi%
+                     \ifinlist{\expandafter\@firstoftwo\outerlevel}\noexpand\redolist\relax{%
+                        \listadd\noexpand\redolist{\expandafter\@firstoftwo\outerlevel}%
+                     }%
+                  \expandafter\noexpand\csname fi\endcsname%
+            \fi%
+         \fi%
+         % END_FOLD
+         \unless\ifx\i\max%
+            \advance\dimen0 by \dimexpr%
+               \noexpand\yquant@register@get@depth{\i}+%
+               \dimen4+%
+               \noexpand\yquant@register@get@height{\the\numexpr\i+1\relax}%
+            \relax%
+            \expandafter\noexpand\csname yquant@env@end@calcypositions@#1@\the\numexpr\i+1\relax\endcsname%
          \fi%
       }%
-   \fi%
-   \unless\ifdefined\yquant@env@end@calcypositions@redo%
-      % sounds good, no readjustments necessary. Now transfer the wires above and below in the appropriate macros.
-      \ifnum\firstinput>1 %
-         \dimen0=\dimexpr%
-            \csname y@\csname\yquant@prefix registermap@\firstinput\endcsname\endcsname-%
-            \yquant@register@get@height\firstinput-\dimen4%
-         \relax%
-         \yquant@fordown \i := \numexpr\firstinput-1\relax downto 1 {%
-            \advance\dimen0 by -\yquant@register@get@depth\i\relax%
-            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
-            \advance\dimen0 by -\dimexpr\yquant@register@get@height\i+\dimen4\relax%
-         }%
-      \fi%
-      \ifnum\lastinput<\csname\yquant@prefix registers\endcsname%
-         \dimen0=\dimexpr%
-            \csname y@\csname\yquant@prefix registermap@\lastinput\endcsname\endcsname+%
-            \yquant@register@get@depth\lastinput+\dimen4%
-         \relax%
-         \yquant@for \i := \numexpr\lastinput+1\relax to \csname\yquant@prefix registers\endcsname {%
-            \advance\dimen0 by \yquant@register@get@height\i\relax%
-            \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
-            \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
-         }%
-      \fi%
-   \fi%
-   \ifdefined\yquant@env@end@calcypositions@redo%
-      % forget every plan about going deeper, restart.
-      \expandafter\listbreak%
-   \else%
-      \expandafter\yquant@env@end@calcypositions@subcircuits%
-   \fi%
-}
-
-\protected\def\yquant@env@end@calcypositions@subcircuits{%
-   \let\yquant@parent=\yquant@prefix%
-   \forlistcsloop\yquant@env@end@calcypositions@loop{\yquant@prefix subcircuits}%
-   \ifdefined\yquant@env@end@calcypositions@redo%
-      \expandafter\listbreak%
-   \fi%
-}
-
-\protected\def\yquant@env@end@calcypositions@toplevel{%
-   \def\yquant@prefix{yquant@env1@}%
-   \dimen0=0pt %
-   \yquant@for \i := 1 to \yquant@env@end@registers {%
-      % we do not care if the wire is present for the y position
-      \advance\dimen0 by \yquant@register@get@height\i\relax%
-      \ifcsname y+@\yquant@prefix register@\i\endcsname%
-         \advance\dimen0 by \csname y+@\yquant@prefix register@\i\endcsname\relax%
-      \fi%
-      \csedef{y@\yquant@prefix register@\i}{\the\dimen0}%
-      \advance\dimen0 by \dimexpr\yquant@register@get@depth\i+\dimen4\relax%
+      % for every multi-register space requirement, install the requirement in the sortlist
+      \edef\multidata{\yquant@register@get@multispace\i}%
+      \forlistloop{\yquant@env@end@calcypositions@setupmulti{#1}}\multidata%
    }%
-   \undef\yquant@env@end@calcypositions@redo%
-   \let\yquant@parent=\yquant@prefix%
-   \forlistcsloop\yquant@env@end@calcypositions@loop{\yquant@prefix subcircuits}%
-   \ifdefined\yquant@env@end@calcypositions@redo%
-      \expandafter\yquant@env@end@calcypositions@toplevel%
+   % END_FOLD
+   \forlistcsloop\yquant@env@end@calcypositions@setup{\yquant@prefix subcircuits}%
+}
+
+\protected\def\yquant@env@end@calcypositions@setupmulti#1#2{%
+   \yquant@sort@eadd{%
+      {#1}%
+      {\i}%
+      {\expandafter\@firstoftwo\yquant@env@end@calcypositions@setupmulti@group#2}%
+      {\expandafter\@secondoftwo\yquant@env@end@calcypositions@setupmulti@group#2}%
+   }%
+}
+
+\def\yquant@env@end@calcypositions@setupmulti@group#1#{{#1}}
+
+\protected\def\yquant@env@end@calcypositions@run#1{%
+   \csname yquant@env@end@calcypositions@#1\endcsname%
+}
+
+\protected\def\yquant@env@end@calcypositions@redo{%
+   \forlistloop\yquant@env@end@calcypositions@run\redolist%
+   \unless\ifx\redolist\empty%
+      \expandafter\yquant@env@end@calcypositions@redo%
+   \fi%
+}
+
+\def\yquant@env@end@calcypositions@multiheight#1#2#3#4{%
+   \dimexpr%
+      \csname yquant@env#1@env@endy@#3\endcsname-
+      \csname yquant@env#1@env@endy@#2\endcsname+%
+      \yquant@register@peek@height{#1}{#2}+%
+      \yquant@register@peek@depth{#1}{#3}%
+   \relax%
+}
+
+\def\yquant@env@end@calcypositions@sortmulti#1#2{%
+   % sort, in descending order, by the amount of missing space
+   \ifdim\dimexpr\@fourthoffour#2-\yquant@env@end@calcypositions@multiheight#2\relax>%
+      \dimexpr\@fourthoffour#1-\yquant@env@end@calcypositions@multheight#1\relax%
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+}
+
+\protected\def\yquant@env@end@calcypositions@multi{%
+   % We will always only operate on the first item in the sortlist, which is determined anew in each iteration - as changes due to this first item will potentially affect all others, including which one is the next...
+   \yquant@sort@findfirst\yquant@env@end@calcypositions@sortmulti\first%
+   \unless\ifx\first\empty%
+      \dimdef\missing{%
+         \expandafter\@fourthoffour\first-%
+         \expandafter\yquant@env@end@calcypositions@multiheight\first%
+      }%
+      % maybe this was already resolved?
+      \ifdim\missing>0pt %
+         \edef\yquant@prefix{yquant@env\expandafter\@firstoffour\first @}%
+         \numdef\divisor{\expandafter\@thirdoffour\first-\expandafter\@secondoffour\first}% not +1, since we will not move the first element
+         \dimdef\add{1sp+\dimexpr\missing-1sp\relax/\divisor}%
+         \let\inc=\add%
+         \edef\max{\expandafter\@thirdoffour\first}%
+         \ifnum\expandafter\@secondoffour\first<\max\relax%
+            \yquant@for \i := \numexpr\expandafter\@secondoffour\first+1\relax to \max {%
+               \csdimdef{\yquant@prefix env@endy@\i}{\csname\yquant@prefix env@endy@\i\endcsname+\add}%
+               \dimdef\add{\add+\inc}%
+            }%
+         \fi%
+         \yquant@env@end@calcypositions@godeeptrue%
+         \csname yquant@env@end@calcypositions@\expandafter\@firstoffour\first\endcsname%
+         \yquant@env@end@calcypositions@godeepfalse%
+         \yquant@env@end@calcypositions@redo%
+         \expandafter\expandafter\expandafter\yquant@env@end@calcypositions@multi%
+      \fi%
    \fi%
 }
 
 \protected\def\yquant@env@end@setypositions#1{%
    \def\yquant@prefix{yquant@env#1@}%
-   \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-      \unless\ifcsname\yquant@prefix registermap@\i\endcsname%
-         \yquant@register@set@y\i{-\csname y@\yquant@prefix register@\i\endcsname}%
-      \fi%
-   }%
+   \ifyquantdebug%
+      \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+         \ifcsname\yquant@prefix registermap@\i\endcsname%
+            \message{^^J y(#1, \i): external}%
+         \else%
+            \message{^^J y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
+            \yquant@register@set@y\i{-\csname\yquant@prefix env@endy@\i\endcsname}%
+         \fi%
+      }%
+   \else%
+      \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+         \unless\ifcsname\yquant@prefix registermap@\i\endcsname%
+            \yquant@register@set@y\i{-\csname\yquant@prefix env@endy@\i\endcsname}%
+         \fi%
+      }%
+   \fi%
    \forlistcsloop\yquant@env@end@setypositions{\yquant@prefix subcircuits}%
 }
 

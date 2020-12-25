@@ -788,7 +788,6 @@
          #3%
          {\nodename}%
    }%
-   % Determining the actual height is a problem - where to store its value? If there are single-register parts, we update the height accordingly; else we just assume that there is always enough space for such a control, since it anyways already spans multiple registers. (TODO?)
    \pgfinterruptboundingbox%
       \yquant@env@virtualize@path%
       \def\yquant@draw@@content{#1}%
@@ -805,20 +804,22 @@
 }
 
 \protected\def\yquant@draw@@multi@contiguous#1#2#3{%
+   \global\pgf@picmaxy=-16000pt %
+   \global\pgf@picminy=16000pt %
+   \edef\cmd{%
+      \noexpand\path (0pt, 0pt)%
+         node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
+              /yquant/operator/multi main=\ifnum#3=1 true\else false\fi,%
+              name prefix=, name suffix=, name=]%
+            {\unexpanded\expandafter{\yquant@draw@@content}};%
+   }%
+   \cmd%
    \ifnum#1=#2 %
-      % we only care about single-register parts
-      \global\pgf@picmaxy=-16000pt %
-      \global\pgf@picminy=16000pt %
-      \edef\cmd{%
-         \noexpand\path (0pt, 0pt)%
-            node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
-                 /yquant/operator/multi main=\ifnum#3=1 true\else false\fi,%
-                 name prefix=, name suffix=, name=]%
-               {\unexpanded\expandafter{\yquant@draw@@content}};%
-      }%
-      \cmd%
+      % this is a single register in disguise
       \yquant@register@update@height{#1}{\the\pgf@picmaxy}%
       \yquant@register@update@depth{#1}{\the\dimexpr-\pgf@picminy\relax}%
+   \else%
+      \yquant@register@update@multispace{#1}{#2}{\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
    \fi%
 }
 
@@ -828,7 +829,7 @@
          #3%
          {\nodename}%
    }%
-   % Determining the actual height is a problem - where to store its value? We just assume that there is always enough space for such a control, since it anyway already spans multiple registers. (TODO?)
+   % TODO: what to do with the height here?
    \pgfinterruptboundingbox%
       \yquant@env@virtualize@path%
       \path%
@@ -840,25 +841,6 @@
 \protected\long\def\yquant@draw@@subcircuit#1{%
    \yquant@sort@clear%
    \def\idx{0}%
-   % before going into the subcircuits, we globally determine the extra height due to inner separation of the subcircuit box
-   \pgfinterruptboundingbox%
-      % There will still be some extra width taken by separations or other things related to the box itself.
-      \yquant@env@virtualize@path%
-      \tikz@command@path%
-         (0pt, 0pt)%
-         node[/yquant/every operator, #1,%
-              /yquant/operators/every subcircuit box, /yquant/this operator,%
-              /yquant/operators/this subcircuit box,%
-              name prefix=, name suffix=, name=, y radius=0pt]%
-         {\vbox to 1sp{}};%
-      \edef\tmp{%
-         \def\noexpand\yquant@draw@@subcircuit@extent{%
-            {\the\pgf@picmaxy}{\the\dimexpr-\pgf@picminy\relax}%
-         }%
-      }%
-      \expandafter%
-   \endpgfinterruptboundingbox%
-   \tmp%
    \dimen2=\yquant@config@operator@minimum@width%
    % BEGIN_FOLD register
    \def\do##1{%
@@ -877,20 +859,23 @@
          \csname yquant@env\yquant@circuit@subcircuit@id @xmin\endcsname%
       \relax\relax%
       \pgfinterruptboundingbox%
-         % There will still be some extra width taken by separations or other things related to the box itself.
+         % There will still be some extra width and height taken by separations or other things related to the box itself.
          \yquant@env@virtualize@path%
          \path%
             (0pt, 0pt)%
             node[/yquant/every operator, #1,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
-                 name prefix=, name suffix=, name=]%
-            {\hbox to \dimen0{}};%
-         % We also don't update the height here, as the height of the subcircuit is undetermined as long as we did not match inner and outer wires.
+                 name prefix=, name suffix=, name=, y radius=0pt]%
+            {\vbox to 1sp{\hbox to \dimen0{}}};%
+         % the extra height is taken care for by manually inserting it to the height of the first and last register in the subcircuit
+         \yquant@register@inject@extents{\pgf@picmaxy}{-\pgf@picminy}%
+         \edef\tmp{%
+            \dimen0=\the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+         }%
          \expandafter%
       \endpgfinterruptboundingbox%
-      \expandafter\dimen\expandafter0\expandafter=%
-         \the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+      \tmp%
       \ifdim\dimen0>\dimen2 %
          \dimen2=\dimen0 %
       \fi%
@@ -904,7 +889,7 @@
 
 \protected\def\yquant@draw@@subcircuit@single#1#2{%
    \edef\yquant@circuit@subcircuit@param{#2\yquant@list@delim}%
-   \expandafter\yquant@circuit@subcircuit\expandafter{\yquant@draw@@subcircuit@extent}{#1}%
+   \expandafter\yquant@circuit@subcircuit{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@single%
          {#2}% register index
@@ -916,7 +901,7 @@
 \protected\def\yquant@draw@@subcircuit@multi#1#2{%
    \edef\yquant@circuit@subcircuit@param{\@fifthoffive#2}%
    \yquant@sort@list\yquant@circuit@subcircuit@param\yquant@sort@ascending%
-   \expandafter\yquant@circuit@subcircuit\expandafter{\yquant@draw@@subcircuit@extent}{#1}%
+   \expandafter\yquant@circuit@subcircuit{#1}%
    \yquant@sort@eadd{%
       \yquant@draw@subcircuit@multi%
          #2%
