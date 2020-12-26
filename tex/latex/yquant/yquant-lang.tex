@@ -25,8 +25,12 @@
       \let\yquant@lang@attr@output=\relax%
    }%
    inout/.default=\regidx,%
+   frameless/.code={%
+      \pgfkeysalso{/yquant/operators/subcircuit/frameless}%
+      \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/frameless}%
+   },%
    seamless/.code={%
-      \pgfkeys{/yquant/operators/subcircuit/seamless}%
+      \pgfkeysalso{/yquant/operators/subcircuit/seamless}%
       \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/seamless}%
    }%
 }
@@ -481,7 +485,7 @@
 
 % sub-circuit: This is a nested circuit.
 \yquant@langhelper@declare@command{subcircuit}\yquant@lang@@subcircuit
-\yquant@langhelper@setup@attrs{subcircuit}{value}{seamless}
+\yquant@langhelper@setup@attrs{subcircuit}{value}{frameless,seamless}
 \protected\def\yquant@lang@@subcircuit#1#2#3{%
    \yquant@register@get@multiaslist%
    \yquant@circuit@operator{#1}{#2}{#3}%
