@@ -30,8 +30,41 @@
    }%
 }
 \yquant@langhelper@declare@attr@global{%
-   name/.store in=\yquant@lang@attr@name%
+   name/.store in=\yquant@lang@attr@name,%
+   overlay/.code={%
+      \ifstrequal{#1}{true}{%
+         \yquant@lang@attr@overlay@multitrue%
+         \yquant@lang@attr@overlay@heighttrue%
+         \yquant@lang@attr@overlay@depthtrue%
+      }{%
+         \ifstrequal{#1}{false}{%
+            % Why??? This is the default and should always be reset automatically!
+            \yquant@lang@attr@overlay@multifalse%
+            \yquant@lang@attr@overlay@heightfalse%
+            \yquant@lang@attr@overlay@depthfalse%
+         }{%
+            \pgfqkeys{/yquant/global attrs/overlay}{#1}%
+         }%
+      }%
+   },
+   overlay/.default=true,
+   overlay/multi/.is if=yquant@lang@attr@overlay@multi,
+   overlay/m/.forward to=/yquant/global attrs/overlay/multi,
+   overlay/height/.is if=yquant@lang@attr@overlay@height,
+   overlay/ht/.forward to=/yquant/global attrs/overlay/height,
+   overlay/h/.forward to=/yquant/global attrs/overlay/height,
+   overlay/depth/.is if=yquant@lang@attr@overlay@depth,
+   overlay/dp/.forward to=/yquant/global attrs/overlay/depth,
+   overlay/d/.forward to=/yquant/global attrs/overlay/depth,
+   overlay/single/.code={\pgfkeysalso{%
+      /yquant/global attrs/overlay/height={#1},%
+      /yquant/global attrs/overlay/depth={#1}%
+   }},
+   overlay/single/.default=true
 }
+\newif\ifyquant@lang@attr@overlay@multi%
+\newif\ifyquant@lang@attr@overlay@height%
+\newif\ifyquant@lang@attr@overlay@depth%
 
 \protected\def\yquant@lang@reset@attrs{%
    \undef\yquant@lang@attr@value%
@@ -39,6 +72,9 @@
    \undef\yquant@lang@attr@type%
    \yquant@lang@reset@attrs@inputoutput%
    \let\yquant@lang@attr@name=\empty%
+   \yquant@lang@attr@overlay@multifalse%
+   \yquant@lang@attr@overlay@heightfalse%
+   \yquant@lang@attr@overlay@depthfalse%
 }
 
 \protected\def\yquant@lang@reset@attrs@inputoutput{%
