@@ -906,13 +906,15 @@
 }
 
 \protected\def\yquant@register@update@height#1#2{%
-   \ifdim#2>%
-      \expandafter\expandafter\expandafter%
-         \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
-      \relax%
-      \expandafter\yquant@register@set@@aux%
-         \csname\yquant@prefix register@#1\endcsname%
-         \yquant@register@set@height@aux{#2}%
+   \unless\ifyquant@lang@attr@overlay@height%
+      \ifdim#2>%
+         \expandafter\expandafter\expandafter%
+            \yquant@register@get@height@aux\csname\yquant@prefix register@#1\endcsname%
+         \relax%
+         \expandafter\yquant@register@set@@aux%
+            \csname\yquant@prefix register@#1\endcsname%
+            \yquant@register@set@height@aux{#2}%
+      \fi%
    \fi%
 }
 
@@ -931,13 +933,15 @@
 }
 
 \protected\def\yquant@register@update@depth#1#2{%
-   \ifdim#2>%
-      \expandafter\expandafter\expandafter%
-         \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
-      \relax%
-      \expandafter\yquant@register@set@@aux%
-         \csname\yquant@prefix register@#1\endcsname%
-         \yquant@register@set@depth@aux{#2}%
+   \unless\ifyquant@lang@attr@overlay@depth%
+      \ifdim#2>%
+         \expandafter\expandafter\expandafter%
+            \yquant@register@get@depth@aux\csname\yquant@prefix register@#1\endcsname%
+         \relax%
+         \expandafter\yquant@register@set@@aux%
+            \csname\yquant@prefix register@#1\endcsname%
+            \yquant@register@set@depth@aux{#2}%
+      \fi%
    \fi%
 }
 
@@ -960,19 +964,21 @@
       \PackageError{yquant.sty}{Internal inconsistency detected}%
                    {Setting multispace part in wrong order.}%
    \fi%
-   \begingroup%
-      \edef\tmp{%
-         \expandafter\expandafter\expandafter%
-         \yquant@register@get@multispace@aux\csname\yquant@prefix register@#1\endcsname%
-      }%
-      \let\old=\tmp%
-      \yquant@list@eupdateorinsert\tmp{#2}{#3}%
-      \unless\ifx\old\tmp%
-         \expandafter\yquant@register@set@@aux%
-            \csname\yquant@prefix register@#1\endcsname%
-            \yquant@register@set@multispace@aux\tmp%
-      \fi%
-   \endgroup%
+   \unless\ifyquant@lang@attr@overlay@multi%
+      \begingroup%
+         \edef\tmp{%
+            \expandafter\expandafter\expandafter%
+            \yquant@register@get@multispace@aux\csname\yquant@prefix register@#1\endcsname%
+         }%
+         \let\old=\tmp%
+         \yquant@list@eupdateorinsert\tmp{#2}{#3}%
+         \unless\ifx\old\tmp%
+            \expandafter\yquant@register@set@@aux%
+               \csname\yquant@prefix register@#1\endcsname%
+               \yquant@register@set@multispace@aux\tmp%
+         \fi%
+      \endgroup%
+   \fi%
 }
 
 \long\def\yquant@register@set@multispace@aux#1#2#3#4#5#6{%

@@ -829,13 +829,25 @@
          #3%
          {\nodename}%
    }%
-   % TODO: what to do with the height here?
    \pgfinterruptboundingbox%
       \yquant@env@virtualize@path%
       \path%
          (0pt, 0pt)%
          node[/yquant/every operator, #2, /yquant/every multi label,%
-              name prefix=, name suffix=, name=] {#1};%
+              /yquant/this operator, name prefix=, name suffix=, name=] {#1};%
+      \ifnum\@secondoffive#3=\@thirdoffive#3 %
+         % this is a single register in disguise
+         \yquant@register@update@height{#1}{\the\pgf@picmaxy}%
+         \yquant@register@update@depth{#1}{\the\dimexpr-\pgf@picminy\relax}%
+      \else%
+         % this may not be sufficient. Since the text position need not necessarily be at the center (if the register corresponding to the visual center is excluded), we may require some space here which we will later only use in parts, but then extend where we should not. However, resolving this would require a special handling when calculating the y positions at the end, meaning we could not use the multispace facility. Let's assume discontiguous init registers are so scarce that this does not matter (disable the acquiration by using the operator/overlay key).
+         \edef\upd{%
+            \yquant@register@update@multispace%
+               {\@secondoffive#3}{\@thirdoffive#3}%
+               {\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
+         }%
+         \upd%
+      \fi%
 }
 
 \protected\long\def\yquant@draw@@subcircuit#1{%
