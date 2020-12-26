@@ -26,6 +26,7 @@
    }%
    inout/.default=\regidx,%
    seamless/.code={%
+      \pgfkeys{/yquant/operators/subcircuit/seamless}%
       \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/seamless}%
    }%
 }
