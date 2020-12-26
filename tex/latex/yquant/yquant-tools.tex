@@ -367,27 +367,33 @@
 }
 
 \protected\gdef\yquant@list@eupdateorinsert#1#2#3{%
-   % the list items are of the form <number>{<value>}. If an item is present where <number> = #2, then set its <value> to #3, if #3 is greater. If no item is present, add it.
+   % the list items are of the form <number>:<value>. If an item is present where <number> = #2, then set its <value> to #3, if #3 is greater. If no item is present, add it.
    \begingroup%
-      \def\etb@tempa##1|#2##2|##3&{%
+      \def\etb@tempa##1|#2:##2|##3&{%
          \endgroup%
          \ifstrempty{##3}{%
-            \eappto#1{#2{#3}|}%
+            \eappto#1{#2:#3|}%
          }{%
             \ifdim##2<#3 %
-               \yquant@list@ereplace#1{#2{##2}}{#2{#3}}%
+               \yquant@list@ereplace#1{#2:##2}{#2:#3}%
             \fi%
          }%
       }%
-   \expandafter\etb@tempa\expandafter|#1|#2|&%
+   \expandafter\etb@tempa\expandafter|#1|#2:#3|&%
 }
 
 \protected\gdef\yquant@list@ereplace#1#2#3{%
    \begingroup%
       \def\etb@tempa##1|#2|##2&{%
          \endgroup%
-         \edef#1{%
-            \unexpanded\expandafter{\@gobble##1}|#3|\unexpanded{##2}%
+         \ifstrempty{##1}{%
+            \edef#1{%
+               \unexpanded{##1}|#3|\unexpanded{##2}%
+            }%
+         }{%
+            \edef#1{%
+               \unexpanded\expandafter{\@gobble##1}|#3|\unexpanded{##2}%
+            }%
          }%
       }%
    \expandafter\etb@tempa\expandafter|#1&

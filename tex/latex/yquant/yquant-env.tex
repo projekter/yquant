@@ -402,12 +402,12 @@
    \yquant@sort@eadd{%
       {#1}%
       {\i}%
-      {\expandafter\@firstoftwo\yquant@env@end@calcypositions@setupmulti@group#2}%
-      {\expandafter\@secondoftwo\yquant@env@end@calcypositions@setupmulti@group#2}%
+      {\expandafter\@firstoftwo\yquant@env@end@calcypositions@setupmulti@group#2\yquant@end}%
+      {\expandafter\@secondoftwo\yquant@env@end@calcypositions@setupmulti@group#2\yquant@end}%
    }%
 }
 
-\def\yquant@env@end@calcypositions@setupmulti@group#1#{{#1}}
+\def\yquant@env@end@calcypositions@setupmulti@group#1:#2\yquant@end{{#1}{#2}}
 
 \protected\def\yquant@env@end@calcypositions@run#1{%
    \csname yquant@env@end@calcypositions@#1\endcsname%
