@@ -131,7 +131,7 @@
    operators/subcircuit/frameless/.style=
       {/yquant/operators/this subcircuit box/.append style={draw=none, inner ysep=0pt}},
    operators/subcircuit/seamless/.code=%
-      {\pgfkeysalso{/yquant/subcircuit/frameless}%
+      {\pgfkeysalso{/yquant/operators/subcircuit/frameless}%
        \letcs\yquant@prevseamless{\yquant@prefix seamless}%
        \yquant@config@circuit@seamlesstrue},
    operators/every custom gate/.style=%
