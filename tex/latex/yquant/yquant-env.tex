@@ -104,7 +104,14 @@
             \csxappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires{\yquant@env@end@xpos}%
             }%
-            \csname\yquant@prefix outputs\endcsname%
+            \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+               \begingroup%
+                  \def\yquant@config@operator@minimum@width{0pt}%
+                  \let\yquant@draw@@single=\yquant@draw@@output@single%
+                  \let\yquant@draw@@multi=\yquant@draw@@output@multi%
+                  \csname\yquant@prefix outputs\endcsname%
+               \endgroup%
+            \fi%
             \csappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires@finalize%
             }%

@@ -41,7 +41,7 @@
       {\dimdef\yquant@config@register@sep{#1}},%
    % register label style
    every label/.style=%
-      {shape=yquant-text, anchor=center, align=right},%
+      {shape=yquant-init, anchor=center, align=right, outer xsep=2pt},%
    every initial label/.style=%
       {anchor=east},%
    every qubit label/.style=%
@@ -51,13 +51,12 @@
    every qubits label/.style=%
       {},%
    every multi label/.style=%
-      {shift={(-.075, 0)}, draw, decoration={gapped brace, mirror}, decorate, /yquant/gapped brace/apply shift,%
-       every node/.append style={shape=yquant-text, anchor=east, align=right, shift={(-.05, 0)}, pos=-1}},%
+      {draw, decoration={gapped brace, mirror, raise=2pt}, decorate},%
    every input label/.style=%
       {},%
    % output label styles
    every output/.style=%
-      {shape=yquant-text, anchor=west, align=left},%
+      {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
    every qubit output/.style=%
       {},%
    every cbit output/.style=%
@@ -65,8 +64,7 @@
    every qubits output/.style=%
       {},%
    every multi output/.style=%
-      {shift={(.075, 0)}, draw, decoration={gapped brace}, decorate, /yquant/gapped brace/apply shift,%
-       every node/.append style={shape=yquant-text, anchor=west, align=left, shift={(.05, 0)}, pos=-1}},%
+      {draw, decoration={gapped brace, raise=2pt}, decorate},%
    % wire style
    every wire/.style=%
       {draw},%
@@ -121,7 +119,7 @@
    operators/every subcircuit/.style=%
       {},%
    operators/every subcircuit box/.style=%
-      {/yquant/operators/every box, inner xsep=0pt},%
+      {/yquant/operators/every box},%
    subcircuit box style/.style=%
       {/yquant/operators/every subcircuit box/.append style={#1}},%
    operators/this subcircuit box/.style=%
@@ -129,7 +127,7 @@
    this subcircuit box style/.style=%
       {/yquant/operators/this subcircuit box/.append style={#1}},%
    operators/subcircuit/frameless/.style=
-      {/yquant/operators/this subcircuit box/.append style={draw=none, inner ysep=0pt}},
+      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}},
    operators/subcircuit/seamless/.code=%
       {\pgfkeysalso{/yquant/operators/subcircuit/frameless}%
        \letcs\yquant@prevseamless{\yquant@prefix seamless}%
@@ -171,11 +169,7 @@
 \fi
 \pgfqkeys{/yquant}{%
    operators/every wave/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},%
-   /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,%
-   gapped brace/apply shift/.code={%
-      \let\tikz@timer@line=\yquant@gappedbrace@timer%
-   },%
+      {shape=yquant-circle, radius=.5mm, fill}%
 }
 
 \def\yquant@config@register@default@name{\regidx}
@@ -189,138 +183,3 @@
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
 \newif\ifyquant@config@circuit@seamless
-\def\pgfdecorationsegmentfromto{0-1}%
-
-\protected\def\yquant@gappedbrace@extract#1-#2\yquant@sep{%
-   \dimdef\from{#1\pgfdecoratedremainingdistance}%
-   \dimdef\to{#2\pgfdecoratedremainingdistance}%
-}
-% This function is set to replace the transformation that changes the fraction value specified in the node property pos by a computation of the correct value for the gappedbrace decoration. It thus requires \pgfdecorationsegmentfromto to be already set up properly. Only if the special position -1 is given, these transformations are applied; else, the default behavior is reproduced (\tikz@timer@line).
-\protected\def\yquant@gappedbrace@timer{%
-   \ifdim\tikz@time pt=-1pt %
-      % first set \pgfdecoratedremainingdistance appropriately
-      \pgfpointdiff\tikz@timer@start\tikz@timer@end%
-      \pgfmathsqrt@{\dimexpr\pgf@x*\pgf@x/65536+\pgf@y*\pgf@y/65536\relax\@gobbletwo}%
-      \pgfdecoratedremainingdistance=\pgfmathresult pt %
-      % now perform the transformation
-      \pgf@xc=\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance%
-      \expandafter\forcsvlist\expandafter\yquant@gappedbrace@shiftloop%
-         \expandafter{\pgfdecorationsegmentfromto}%
-      % and finally let us return the desired position, just ignoring \tikz@time...
-      \pgftransformlineattime{\pgfdecorationsegmentaspect}{\tikz@timer@start}{\tikz@timer@end}%
-   \else%
-      \pgftransformlineattime{\tikz@time}{\tikz@timer@start}{\tikz@timer@end}%
-   \fi%
-}
-\def\yquant@gappedbrace@shiftloop#1{%
-   \yquant@gappedbrace@extract#1\yquant@sep%
-   \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance<\from %
-      \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance>\to %
-         % be careful about arch positions at the border
-         \ifdim\dimexpr\to-\from\relax<2\pgfdecorationsegmentamplitude %
-            % The arch is larger than the segment. We do not draw a line to it or an end line and place it in the mid of the segment, even if it is too short (this issues one extra \pgfpathmoveto command, but catching this rare case is not worth the effort).
-            \edef\pgfdecorationsegmentaspect{\pgfmath@tonumber{\dimexpr%
-               .5\dimexpr\from+\to\relax*65536/\pgfdecoratedremainingdistance%
-            \relax}}%
-         \else%
-            % The segment is large enough to cover the whole arch. But maybe we are too close at the border?
-            \ifdim\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax<\from %
-               \pgf@xc=\dimexpr\from+\pgfdecorationsegmentamplitude\relax%
-            \fi%
-            \ifdim\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax>\to %
-               \pgf@xc=\dimexpr\to-\pgfdecorationsegmentamplitude\relax%
-            \fi%
-            \edef\pgfdecorationsegmentaspect{\pgfmath@tonumber{\dimexpr%
-               \dimexpr\pgf@xc*65536/\pgfdecoratedremainingdistance%
-            \relax}}%
-         \fi%
-         \expandafter\expandafter\expandafter\listbreak%
-      \fi%
-   \fi%
-}
-\def\yquant@gappedbrace@loop#1{%
-   \yquant@gappedbrace@extract#1\yquant@sep%
-   \unless\ifdim\from=0pt %
-      \pgfpathmoveto{%
-         \pgfqpoint{\from}{.5\pgfdecorationsegmentamplitude}%
-      }%
-   \fi%
-   \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance<\from %
-      \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance>\to %
-         % be careful about arch positions at the border
-         \ifdim\dimexpr\to-\from\relax<2\pgfdecorationsegmentamplitude %
-            % The arch is larger than the segment. We do not draw a line to it or an end line and place it in the mid of the segment, even if it is too short (this issues one extra \pgfpathmoveto command, but catching this rare case is not worth the effort).
-            \pgfpathmoveto{%
-               \pgfqpoint{\dimexpr.5\dimexpr\from+\to\relax-\pgfdecorationsegmentamplitude\relax}%
-                         {.5\pgfdecorationsegmentamplitude}%
-            }%
-            \edef\to{\the\pgfdecoratedremainingdistance}% to prevent the final line, we do not need "to" any more
-         \else%
-            % The segment is large enough to cover the whole arch. But maybe we are too close at the border?
-            \ifdim\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax<\from %
-               \pgf@xc=\dimexpr\from+\pgfdecorationsegmentamplitude\relax%
-            \fi%
-            \ifdim\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax>\to %
-               \pgf@xc=\dimexpr\to-\pgfdecorationsegmentamplitude\relax%
-            \fi%
-            % Both cases can't occur at the same time in this \else clause.
-            \pgfpathlineto{%
-               \pgfqpoint{\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax}%
-                         {.5\pgfdecorationsegmentamplitude}%
-            }%
-         \fi%
-         \pgfpathcurveto{%
-            \pgfqpoint{\dimexpr\pgf@xc-.5\pgfdecorationsegmentamplitude\relax}%
-                      {.5\pgfdecorationsegmentamplitude}%
-         }{%
-            \pgfqpoint{\dimexpr\pgf@xc-.15\pgfdecorationsegmentamplitude\relax}%
-                      {.7\pgfdecorationsegmentamplitude}%
-         }{%
-            \pgfqpoint{\pgf@xc}{\pgfdecorationsegmentamplitude}%
-         }%
-         \pgfpathcurveto{%
-            \pgfqpoint{\dimexpr\pgf@xc+.15\pgfdecorationsegmentamplitude\relax}%
-                      {.7\pgfdecorationsegmentamplitude}%
-         }{%
-            \pgfqpoint{\dimexpr\pgf@xc+.5\pgfdecorationsegmentamplitude\relax}%
-                      {.5\pgfdecorationsegmentamplitude}%
-         }{%
-            \pgfqpoint{\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax}%
-                      {.5\pgfdecorationsegmentamplitude}%
-         }%
-      \fi%
-   \fi%
-   \unless\ifdim\to=\pgfdecoratedremainingdistance %
-      \pgfpathlineto{%
-         \pgfqpoint{\to}{.5\pgfdecorationsegmentamplitude}%
-      }%
-   \fi%
-}
-% This is a variant of the brace in pathreplacing that allows for holes
-\pgfdeclaredecoration{gapped brace}{final}{%
-   \state{final}{%
-      \pgf@xc=\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance%
-      \pgfpathcurveto{%
-         \pgfqpoint{.15\pgfdecorationsegmentamplitude}{.3\pgfdecorationsegmentamplitude}%
-      }{%
-         \pgfqpoint{.5\pgfdecorationsegmentamplitude}{.5\pgfdecorationsegmentamplitude}%
-      }{%
-         \pgfqpoint{\pgfdecorationsegmentamplitude}{.5\pgfdecorationsegmentamplitude}%
-      }%
-      \expandafter\forcsvlist\expandafter\yquant@gappedbrace@loop%
-         \expandafter{\pgfdecorationsegmentfromto}%
-      \pgfpathlineto{%
-         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-\pgfdecorationsegmentamplitude\relax}%
-                   {.5\pgfdecorationsegmentamplitude}%
-      }%
-      \pgfpathcurveto{%
-         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-.5\pgfdecorationsegmentamplitude\relax}%
-                   {.5\pgfdecorationsegmentamplitude}%
-      }{%
-         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-.15\pgfdecorationsegmentamplitude\relax}%
-                   {.3\pgfdecorationsegmentamplitude}%
-      }{%
-         \pgfqpoint{\pgfdecoratedremainingdistance}{0pt}%
-      }%
-   }%
-}%

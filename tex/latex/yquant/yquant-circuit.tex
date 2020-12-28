@@ -8,24 +8,26 @@
          \pgfpointanchor{yquantbox}{#2}%
          \edef\wirexpos{\the\pgf@x}%
       \fi%
-      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
-      \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
-      \ifnum\wiretype=\yquant@register@type@none%
-         % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
-         \yquant@register@set@lastwire{#1}{%
-            {\wirexprevpos}{\wirexpos}{}%
-            {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
-         }%
-      \else%
-         % append the previous `last' clipping to the old list and insert the new one
-         \yquant@register@set@lastwire{#1}{%
-            {\wirexprevpos}{\wirexpos}%
-            {\unexpanded\expandafter\expandafter\expandafter{%
-                \expandafter\@thirdandfourthoffour\wirelast%
-             }%
+      \ifdim\wirexpos>0pt % may be negative for init gates
+         \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
+         \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
+         \ifnum\wiretype=\yquant@register@type@none%
+            % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
+            \yquant@register@set@lastwire{#1}{%
+               {\wirexprevpos}{\wirexpos}{}%
+               {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
             }%
-            {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
-         }%
+         \else%
+            % append the previous `last' clipping to the old list and insert the new one
+            \yquant@register@set@lastwire{#1}{%
+               {\wirexprevpos}{\wirexpos}%
+               {\unexpanded\expandafter\expandafter\expandafter{%
+                   \expandafter\@thirdandfourthoffour\wirelast%
+                }%
+               }%
+               {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+            }%
+         \fi%
       \fi%
    \endgroup%
 }
@@ -60,9 +62,12 @@
 % outputs the wire according to its previous instructions and prepares for a change in the wire style
 \protected\def\yquant@circuit@flushwire#1{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
-     % make sure drawing the wire does not affect our left bounding box position
+      % make sure drawing the wire does not affect our left bounding box position
       \edef\storedleft{\the\pgf@picminx}%
       \yquant@draw@wire{#1}0%
+      \ifdim\pgf@picminx<\yquant@draw@subcircuit@outermin%
+         \xdef\yquant@draw@subcircuit@outermin{\the\pgf@picminx}%
+      \fi%
       \global\pgf@picminx=\storedleft%
    \else%
       \yquant@draw@wire{#1}0%
@@ -216,19 +221,25 @@
       \yquant@circuit@operator@x%
       \yquant@circuit@operator@minctrl%
       \yquant@circuit@operator@maxctrl%
-   \ifyquant@env@seamless{%
-      \ifdim\yquant@circuit@operator@x>0pt %
-         \dimdef\yquant@circuit@operator@x{%
-            % we need the separation for the initial gate only if there was a label; for this we assign the dummy value of 1sp in this case. Just to be extra meticulous, we remove it here again.
-            \ifdim\yquant@circuit@operator@x=1sp 0pt\else\yquant@circuit@operator@x\fi+%
-            \yquant@config@operator@sep%
-         }%
-      \fi%
-   }{%
+   % if x > 1sp, everything is fine. We already had some gates.
+   \ifdim\yquant@circuit@operator@x>1sp %
       \dimdef\yquant@circuit@operator@x{%
          \yquant@circuit@operator@x+\yquant@config@operator@sep%
       }%
-   }%
+   \else%
+      % if x = 1sp, this means we insert the operator to a register that had no previous gates, but which has an initial text.
+      \ifdim\yquant@circuit@operator@x=1sp %
+         % just add the separation, drop this special 1sp marker
+         \let\yquant@circuit@operator@x=\yquant@config@operator@sep%
+      \else%
+         % there was no text and no operation before. For seamless circuits, start right at zero; for others, only the init gate will start at zero.
+         \ifyquant@env@seamless\relax{%
+            \unless\ifx\yquant@draw@@multi\yquant@draw@@multiinit%
+               \let\yquant@circuit@operator@x=\yquant@config@operator@sep%
+            \fi%
+         }%
+      \fi%
+   \fi%
 }
 
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
@@ -318,52 +329,35 @@
 
 % sets the output of wires
 % #1: arbitrary register list
-\protected\def\yquant@circuit@output#1{%
+\protected\def\yquant@circuit@output{%
    \csxappto{\yquant@prefix outputs}%
-            {\noexpand\yquant@circuit@output@do%
-               {\noexpand#1}% there is nothing to expand - except the first token, which might be \yquant@register@multi, and we need to preserve this.
-               {\yquant@attrs@remaining}%
+            {\yquant@circuit@output@draw%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
+               {\unexpanded\expandafter{\yquant@attrs@remaining}}%
+               {\unexpanded\expandafter{\yquant@register@get@ids@list}}%
+               {\yquant@register@get@ids@min}{\yquant@register@get@ids@min}%
+               {\yquant@register@get@ids@count}%
             }%
 }
 
-\protected\long\def\yquant@circuit@output@do#1#2#3{%
-   % this must only be called at the end of an environment, where \yquant@env@end@xpos is set up properly! It not only has to provide the appropriate drawing commands for later, but also has to measure the actual width of the outputs, which is required for proper subcircuit positioning.
-   \def\do##1{%
-      \pgfinterruptboundingbox%
-         \yquant@env@virtualize@path%
-         \ifyquant@firsttoken\yquant@register@multi{##1}{%
-            \csxappto{\yquant@prefix draw}%
-                     {\yquant@draw@output@multi%
-                      \yquant@circuit@output@do@multi@@extract##1{\unexpanded{#3}}}%
-            \yquant@draw@@output@multi{#3}%
-         }{%
-            \csgappto{\yquant@prefix draw}%
-                     {\yquant@draw@output@single{##1}{#3}}%
-            \yquant@draw@@output@single{##1}{#3}%
-            \yquant@register@update@height{##1}{\the\pgf@picmaxy}%
-            \yquant@register@update@depth{##1}{\the\dimexpr-\pgf@picminy\relax}%
-         }%
-         \ifdim\pgf@picmaxx>\csname\yquant@prefix xmax\endcsname%
-            \csxdef{\yquant@prefix xmax}{\the\pgf@picmaxx}%
-         \fi%
-      \endpgfinterruptboundingbox%
-   }%
-   \yquant@draw@output@group{#2}%
-      \csgappto{\yquant@prefix draw}{%
-         \yquant@draw@output@group{#2}%
-      }%
-      % \dolistloop will carry out one \expandafter on the argument; but this expansion step
-      % is already done. If #1 starts with \yquant@register@multi, this will be expanded once
-      % despite \protected, so insert some expand-to-nothing token first.
-      \dolistloop{\empty#1}%
-      \csgappto{\yquant@prefix draw}{%
-         \yquant@draw@output@endgroup%
-      }%
-   \yquant@draw@output@endgroup%
-}
-
-\def\yquant@circuit@output@do@multi@@extract#1#2#3#4#5{%
-   {#2}{#3}{#5}%
+\protected\def\yquant@circuit@output@draw#1#2#3#4#5#6{%
+   \def\yquant@attrs@remaining{#2}%
+   \def\yquant@circuit@operator@targets{#3}%
+   \def\yquant@circuit@operator@mintarget{#4}%
+   \def\yquant@circuit@operator@maxtarget{#5}%
+   \def\yquant@circuit@operator@numtarget{#6}%
+   \yquant@circuit@operator@hasControlsfalse%
+   \let\yquant@circuit@operator@pctrls=\empty%
+   \def\yquant@circuit@operator@minpctrl{2147483647}%
+   \def\yquant@circuit@operator@maxpctrl{0}%
+   \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@nctrls=\empty%
+   \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
+   \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
+   \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
+   \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+   \let\yquant@circuit@operator@x=\yquant@env@end@xpos%
+   \yquant@draw@{#1}{}%
 }
 % END_FOLD

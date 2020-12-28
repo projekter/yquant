@@ -289,14 +289,12 @@
                \fi%
             \fi%
          }%
-         % normally, we don't have to add a separation, this is done in the next step; however, if the circuit is seamless and we put a text at the very beginning, this separation will be missing
-         \ifyquant@env@seamless{%
-            \ifdim\yquant@lang@create@x=0pt %
-               \unless\ifx\empty\trimmedvalue%
-                  \yquant@register@set@x{\csname\yquant@prefix registers\endcsname}{1sp}%
-               \fi%
+         % normally, we don't have to add a separation, this is done in the next step. But for the init gate to correctly decide whether it can put text to the left, we need to be able to discriminate the two situations
+         \ifdim\yquant@lang@create@x=0pt %
+            \unless\ifx\empty\trimmedvalue%
+               \yquant@register@set@x{\csname\yquant@prefix registers\endcsname}{1sp}%
             \fi%
-         }\relax%
+         \fi%
       }%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
@@ -579,6 +577,7 @@
       \let\yquant@circuit@settype@to=\yquant@register@type@c%
    \fi%
    \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \yquant@draw@callback@nowtrue%
    \yquant@register@get@allowmultitrue%
    \unless\ifcsname yquant@lang@attr@value\endcsname%
       \let\yquant@lang@attr@value=\empty%
@@ -599,6 +598,7 @@
       \let\yquant@circuit@settype@to=\yquant@register@type@c%
    \fi%
    \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \yquant@draw@callback@nowtrue%
    \yquant@register@get@allowmultitrue%
    \unless\ifcsname yquant@lang@attr@value\endcsname%
       \let\yquant@lang@attr@value=\empty%
@@ -700,13 +700,14 @@
       }%
    \fi%
    \let\yquant@draw@callback@wire=\yquant@circuit@settype%
+   \yquant@draw@callback@nowtrue%
    \let\yquant@draw@@multi=\yquant@draw@@multiinit%
    \yquant@circuit@operator{}{}{#1}%
    % special case: if there were no operations at any affected wire before, we will replace the wire description
-   \ifdim\yquant@circuit@operator@x=\yquant@config@operator@sep\relax%
+   \ifdim\yquant@circuit@operator@x=0pt %
       \def\yquant@circuit@operator@x{-.5\dimen2}%
-      \let\yquant@draw@finalize@ctrl@single=\yquant@draw@finalize@ctrl@singleinit%
-      \let\yquant@draw@finalize@ctrl@multi=\yquant@draw@finalize@ctrl@multiinit%
+      \let\yquant@draw@@finalize@ctrl@single=\yquant@draw@@finalize@ctrl@singleinit%
+      \let\yquant@draw@@finalize@ctrl@multi=\yquant@draw@@finalize@ctrl@multiinit%
       \expandafter\yquant@draw@%
          \expandafter{\yquant@lang@attr@value}%
          {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@attr@type\space label}%
@@ -722,7 +723,7 @@
 \def\yquant@lang@@output#1{%
    \yquant@register@get@allowmultitrue%
    \yquant@register@get@ids{#1}%
-   \expandafter\yquant@circuit@output\expandafter{\yquant@register@get@ids@list}%
+   \yquant@circuit@output%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{settype}\yquant@lang@@settype

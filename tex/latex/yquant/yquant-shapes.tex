@@ -529,9 +529,6 @@
 }
 
 \pgfdeclareshape{yquant-line}{%
-   \savedanchor\shorten{%
-      \pgfqpoint\pgf@shorten@end@additional\pgf@shorten@start@additional%
-   }%
    \saveddimen\xradius{%
       % we only need this for the border anchor; the value is automatically correct in the paths.
       \pgf@x=.5\pgflinewidth%
@@ -544,18 +541,346 @@
    }%
    \inheritanchorborder[from=yquant-rectangle]%
    \backgroundpath{%
-      \shorten%
-      \pgf@xa=\dimexpr\yradius-\pgf@x\relax%
-      \pgf@ya=\dimexpr\yradius-\pgf@y\relax%
+      % manually shorten for the bounding box
+      \pgf@xa=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
+      \pgf@ya=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
+      \pgf@shorten@end@additional=0pt %
+      \pgf@shorten@start@additional=0pt %
       \pgfpathmoveto{\pgfqpoint{0pt}{\pgf@xa}}%
       \pgfpathlineto{\pgfqpoint{0pt}{-\pgf@ya}}%
    }%
    \clippath{%
-      \shorten%
-      \@tempdima=\dimexpr\yradius-\pgf@x\relax%
-      \@tempdimb=\dimexpr\yradius-\pgf@y\relax%
+      \@tempdima=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
+      \@tempdimb=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
       \pgfpathrectanglecorners%
          {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
          {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
    }%
+}
+
+% BEGIN_FOLD Gapped brace decoration
+\def\pgfdecorationsegmentfromto{0-1}%
+
+\protected\def\yquant@gappedbrace@extract#1-#2\yquant@sep{%
+   \dimdef\from{#1\pgfdecoratedremainingdistance}%
+   \dimdef\to{#2\pgfdecoratedremainingdistance}%
+}
+
+\def\yquant@gappedbrace@shiftloop#1{%
+   \yquant@gappedbrace@extract#1\yquant@sep%
+   \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance<\from %
+      \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance>\to %
+         % be careful about arch positions at the border
+         \ifdim\dimexpr\to-\from\relax<2\pgfdecorationsegmentamplitude %
+            % The arch is larger than the segment. We do not draw a line to it or an end line and place it in the mid of the segment, even if it is too short (this issues one extra \pgfpathmoveto command, but catching this rare case is not worth the effort).
+            \edef\pgfdecorationsegmentaspect{\pgfmath@tonumber{\dimexpr%
+               .5\dimexpr\from+\to\relax*65536/\pgfdecoratedremainingdistance%
+            \relax}}%
+         \else%
+            % The segment is large enough to cover the whole arch. But maybe we are too close at the border?
+            \ifdim\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax<\from %
+               \pgf@xc=\dimexpr\from+\pgfdecorationsegmentamplitude\relax%
+            \fi%
+            \ifdim\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax>\to %
+               \pgf@xc=\dimexpr\to-\pgfdecorationsegmentamplitude\relax%
+            \fi%
+            \edef\pgfdecorationsegmentaspect{\pgfmath@tonumber{\dimexpr%
+               \dimexpr\pgf@xc*65536/\pgfdecoratedremainingdistance%
+            \relax}}%
+         \fi%
+         \expandafter\expandafter\expandafter\listbreak%
+      \fi%
+   \fi%
+}
+
+% Assumes all decoration macros and lengths are filled. Checks whether the arch is too close at a corner and shifts it appropriately. Upon exit, \pgfdecorationsegmentaspect is modified.
+\protected\def\yquant@gappedbrace@calcshift{%
+   \pgf@xc=\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance%
+   \expandafter\forcsvlist\expandafter\yquant@gappedbrace@shiftloop%
+      \expandafter{\pgfdecorationsegmentfromto}%
+}
+
+\def\yquant@gappedbrace@loop#1{%
+   \yquant@gappedbrace@extract#1\yquant@sep%
+   \unless\ifdim\from=0pt %
+      \pgfpathmoveto{%
+         \pgfqpoint{\from}{.5\pgfdecorationsegmentamplitude}%
+      }%
+   \fi%
+   \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance<\from %
+      \unless\ifdim\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance>\to %
+         % be careful about arch positions at the border
+         \ifdim\dimexpr\to-\from\relax<2\pgfdecorationsegmentamplitude %
+            % The arch is larger than the segment. We do not draw a line to it or an end line and place it in the mid of the segment, even if it is too short (this issues one extra \pgfpathmoveto command, but catching this rare case is not worth the effort).
+            \pgfpathmoveto{%
+               \pgfqpoint{\dimexpr.5\dimexpr\from+\to\relax-\pgfdecorationsegmentamplitude\relax}%
+                         {.5\pgfdecorationsegmentamplitude}%
+            }%
+            \edef\to{\the\pgfdecoratedremainingdistance}% to prevent the final line, we do not need "to" any more
+         \else%
+            % The segment is large enough to cover the whole arch. But maybe we are too close at the border?
+            \ifdim\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax<\from %
+               \pgf@xc=\dimexpr\from+\pgfdecorationsegmentamplitude\relax%
+            \fi%
+            \ifdim\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax>\to %
+               \pgf@xc=\dimexpr\to-\pgfdecorationsegmentamplitude\relax%
+            \fi%
+            % Both cases can't occur at the same time in this \else clause.
+            \pgfpathlineto{%
+               \pgfqpoint{\dimexpr\pgf@xc-\pgfdecorationsegmentamplitude\relax}%
+                         {.5\pgfdecorationsegmentamplitude}%
+            }%
+         \fi%
+         \pgfpathcurveto{%
+            \pgfqpoint{\dimexpr\pgf@xc-.5\pgfdecorationsegmentamplitude\relax}%
+                      {.5\pgfdecorationsegmentamplitude}%
+         }{%
+            \pgfqpoint{\dimexpr\pgf@xc-.15\pgfdecorationsegmentamplitude\relax}%
+                      {.7\pgfdecorationsegmentamplitude}%
+         }{%
+            \pgfqpoint{\pgf@xc}{\pgfdecorationsegmentamplitude}%
+         }%
+         \pgfpathcurveto{%
+            \pgfqpoint{\dimexpr\pgf@xc+.15\pgfdecorationsegmentamplitude\relax}%
+                      {.7\pgfdecorationsegmentamplitude}%
+         }{%
+            \pgfqpoint{\dimexpr\pgf@xc+.5\pgfdecorationsegmentamplitude\relax}%
+                      {.5\pgfdecorationsegmentamplitude}%
+         }{%
+            \pgfqpoint{\dimexpr\pgf@xc+\pgfdecorationsegmentamplitude\relax}%
+                      {.5\pgfdecorationsegmentamplitude}%
+         }%
+      \fi%
+   \fi%
+   \unless\ifdim\to=\pgfdecoratedremainingdistance %
+      \pgfpathlineto{%
+         \pgfqpoint{\to}{.5\pgfdecorationsegmentamplitude}%
+      }%
+   \fi%
+}
+
+% This is a variant of the brace in pathreplacing that allows for holes
+\pgfdeclaredecoration{gapped brace}{final}{%
+   \state{final}{%
+      \pgf@xc=\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance%
+      \pgfpathmoveto\pgfpointorigin% required for "raise" key
+      \pgfpathcurveto{%
+         \pgfqpoint{.15\pgfdecorationsegmentamplitude}{.3\pgfdecorationsegmentamplitude}%
+      }{%
+         \pgfqpoint{.5\pgfdecorationsegmentamplitude}{.5\pgfdecorationsegmentamplitude}%
+      }{%
+         \pgfqpoint{\pgfdecorationsegmentamplitude}{.5\pgfdecorationsegmentamplitude}%
+      }%
+      \expandafter\forcsvlist\expandafter\yquant@gappedbrace@loop%
+         \expandafter{\pgfdecorationsegmentfromto}%
+      \pgfpathlineto{%
+         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-\pgfdecorationsegmentamplitude\relax}%
+                   {.5\pgfdecorationsegmentamplitude}%
+      }%
+      \pgfpathcurveto{%
+         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-.5\pgfdecorationsegmentamplitude\relax}%
+                   {.5\pgfdecorationsegmentamplitude}%
+      }{%
+         \pgfqpoint{\dimexpr\pgfdecoratedremainingdistance-.15\pgfdecorationsegmentamplitude\relax}%
+                   {.3\pgfdecorationsegmentamplitude}%
+      }{%
+         \pgfqpoint{\pgfdecoratedremainingdistance}{0pt}%
+      }%
+   }%
+}%
+
+\protected\def\yquant@gappedbrace@timer{%
+   \ifdim\tikz@time pt=-1pt %
+      % first set \pgfdecoratedremainingdistance appropriately
+      \pgfpointdiff\tikz@timer@start\tikz@timer@end%
+      \pgfmathsqrt@{\dimexpr\pgf@x*\pgf@x/65536+\pgf@y*\pgf@y/65536\relax\@gobbletwo}%
+      \pgfdecoratedremainingdistance=\pgfmathresult pt %
+      % now perform the transformation
+      \yquant@gappedbrace@calcshift%
+      % and finally let us return the desired position, just ignoring \tikz@time...
+      \pgftransformlineattime{\pgfdecorationsegmentaspect}{\tikz@timer@start}{\tikz@timer@end}%
+   \else%
+      \pgftransformlineattime{\tikz@time}{\tikz@timer@start}{\tikz@timer@end}%
+   \fi%
+}
+
+\pgfkeys{%
+   /pgf/decoration/from to/.store in=\pgfdecorationsegmentfromto,%
+   gapped brace/apply shift/.code={%
+      \let\tikz@timer@line=\yquant@gappedbrace@timer%
+   },%
+}
+% END_FOLD
+
+\pgfdeclareshape{yquant-init}{%
+   \saveddimen\xradius{%
+      \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
+      % inner xsep is between the brace tip and the right end of the text. Check if the decoration is raised (will define \def\tikz@dec@shift{\pgftransformyshift{#1}})
+      \iftikz@decoratepath%
+         \ifx\tikz@dec@shift\relax%
+            \pgf@xa=\pgfdecorationsegmentamplitude %
+         \else%
+            \pgfmathsetlength\pgf@xa{\expandafter\@secondoftwo\tikz@dec@shift+\pgfdecorationsegmentamplitude}%
+         \fi%
+         \pgfmathaddtolength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+      \else%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+      \fi%
+      % outer xsep is (a lower bound) from the left end of the border to the left end of the text
+      \pgfmathsetlength\pgf@xb{\pgfkeysvalueof{/pgf/outer xsep}}%
+      \@tempdima=.5\dimexpr\wd\pgfnodeparttextbox+\pgf@xa+\pgf@xb\relax%
+      \ifdim\@tempdima>\pgf@x%
+         \pgf@x=\@tempdima%
+      \fi%
+   }%
+   \saveddimen\yradius{%
+      \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}}%
+      \@tempdima=.5\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox\relax%
+      \ifdim\@tempdima>\pgf@x%
+         \pgf@x=\@tempdima%
+      \fi%
+      \iftikz@decoratepath%
+         \ifdim2\pgfdecorationsegmentamplitude>\pgf@x%
+            \pgf@x=2\pgfdecorationsegmentamplitude%
+         \fi%
+      \fi%
+   }%
+   \savedanchor\stext{%
+      \iftikz@decoratepath%
+         % \pgf@x is still \yradius...
+         % first set \pgfdecoratedremainingdistance appropriately
+         \pgfdecoratedremainingdistance=2\pgf@x%
+         % now perform the transformation
+         \yquant@gappedbrace@calcshift%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}+\pgfdecorationsegmentamplitude}%
+         \unless\ifx\tikz@dec@shift\relax%
+            \pgfmathaddtolength\pgf@xa{\expandafter\@secondoftwo\tikz@dec@shift}%
+         \fi%
+         \pgfqpoint%
+            {-\dimexpr\wd\pgfnodeparttextbox+\pgf@xa\relax}%
+            {\dimexpr.5\pgfdecoratedremainingdistance% = \yradius
+                     -\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance% - aspect
+                     -.5\ht\pgfnodeparttextbox+.5\dp\pgfnodeparttextbox% center there
+             \relax}%
+       \else%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+         \pgfqpoint%
+            {-\dimexpr\wd\pgfnodeparttextbox+\pgf@xa\relax}%
+            {-.5\dimexpr\ht\pgfnodeparttextbox-\dp\pgfnodeparttextbox\relax}%
+       \fi%
+   }%
+   % BEGIN_FOLD Operator anchors
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
+      \inheritanchor[from=yquant-rectangle]{\anc}%
+   }%
+   \anchor{text}{%
+      \stext%
+      \advance \pgf@x by \xradius\relax%
+   }%
+   \inheritanchorborder[from=yquant-rectangle]%
+   % END_FOLD
+   % BEGIN_FOLD Path
+   \backgroundpath{%
+      \pgfpathmoveto{\pgfqpoint{\xradius}{\yradius}}%
+      \pgfpathlineto{\pgfqpoint{\xradius}{-\yradius}}%
+      \pgfpointtransformed{\pgfqpoint{-\xradius}{\yradius}}%
+      \pgf@protocolsizes{\pgf@x}{\pgf@y}%
+      \pgfpointtransformed{\pgfqpoint{-\xradius}{-\yradius}}% for rotations
+      \pgf@protocolsizes{\pgf@x}{\pgf@y}%
+   }%
+   \clippath{%
+      \pgfpathrectanglecorners%
+         {\pgfqpoint{-\dimexpr\xradius\relax}%
+                    {\dimexpr\yradius\relax}}%
+         {\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth\relax}%
+                    {-\dimexpr\yradius\relax}}%
+   }%
+   % END_FOLD
+}
+
+\pgfdeclareshape{yquant-output}{%
+   % Almost the same as in yquant-input, only a minimal change in \stext's x position
+   \saveddimen\xradius{%
+      \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
+      % inner xsep is from the brace tip and the left end of the text. Check if the decoration is raised (will define \def\tikz@dec@shift{\pgftransformyshift{#1}})
+      \iftikz@decoratepath%
+         \ifx\tikz@dec@shift\relax%
+            \pgf@xa=\pgfdecorationsegmentamplitude %
+         \else%
+            \pgfmathsetlength\pgf@xa{\expandafter\@secondoftwo\tikz@dec@shift+\pgfdecorationsegmentamplitude}%
+         \fi%
+         \pgfmathaddtolength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+      \else%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+      \fi%
+      % outer xsep is (a lower bound) from the left end of the border to the left end of the text
+      \pgfmathsetlength\pgf@xb{\pgfkeysvalueof{/pgf/outer xsep}}%
+      \@tempdima=.5\dimexpr\wd\pgfnodeparttextbox+\pgf@xa+\pgf@xb\relax%
+      \ifdim\@tempdima>\pgf@x%
+         \pgf@x=\@tempdima%
+      \fi%
+   }%
+   \saveddimen\yradius{%
+      \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}}%
+      \@tempdima=.5\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox\relax%
+      \ifdim\@tempdima>\pgf@x%
+         \pgf@x=\@tempdima%
+      \fi%
+      \iftikz@decoratepath%
+         \ifdim2\pgfdecorationsegmentamplitude>\pgf@x%
+            \pgf@x=2\pgfdecorationsegmentamplitude%
+         \fi%
+      \fi%
+   }%
+   \savedanchor\stext{%
+      \iftikz@decoratepath%
+         % \pgf@x is still \yradius...
+         % first set \pgfdecoratedremainingdistance appropriately
+         \pgfdecoratedremainingdistance=2\pgf@x%
+         % now perform the transformation
+         \yquant@gappedbrace@calcshift%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}+\pgfdecorationsegmentamplitude}%
+         \unless\ifx\tikz@dec@shift\relax%
+            \pgfmathaddtolength\pgf@xa{\expandafter\@secondoftwo\tikz@dec@shift}%
+         \fi%
+         \pgfqpoint%
+            {\dimexpr\pgf@xa\relax}%
+            {\dimexpr.5\pgfdecoratedremainingdistance% = \yradius
+                     -\pgfdecorationsegmentaspect\pgfdecoratedremainingdistance% - aspect
+                     -.5\ht\pgfnodeparttextbox+.5\dp\pgfnodeparttextbox% center there
+             \relax}%
+       \else%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}}%
+         \pgfqpoint%
+            {\dimexpr\pgf@xa\relax}%
+            {-.5\dimexpr\ht\pgfnodeparttextbox-\dp\pgfnodeparttextbox\relax}%
+       \fi%
+   }%
+   % BEGIN_FOLD Operator anchors
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
+      \inheritanchor[from=yquant-init]{\anc}%
+   }%
+   \anchor{text}{%
+      \stext%
+      \advance \pgf@x by -\xradius\relax%
+   }%
+   \inheritanchorborder[from=yquant-init]%
+   % END_FOLD
+   % BEGIN_FOLD Path
+   \backgroundpath{%
+      \pgfpathmoveto{\pgfqpoint{-\xradius}{\yradius}}%
+      \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
+      \pgfpointtransformed{\pgfqpoint{\xradius}{\yradius}}%
+      \pgf@protocolsizes{\pgf@x}{\pgf@y}%
+      \pgfpointtransformed{\pgfqpoint{\xradius}{-\yradius}}% for rotations
+      \pgf@protocolsizes{\pgf@x}{\pgf@y}%
+   }%
+   \clippath{%
+      \pgfpathrectanglecorners%
+         {\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                    {\dimexpr\yradius\relax}}%
+         {\pgfqpoint{\dimexpr\xradius\relax}%
+                    {-\dimexpr\yradius\relax}}%
+   }%
+   % END_FOLD
 }
