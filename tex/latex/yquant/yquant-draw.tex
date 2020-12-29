@@ -650,6 +650,22 @@
    }%
    \cmd%
 }
+
+\protected\def\yquant@draw@move#1#2{%
+   \begingroup%
+      \ifcsname\yquant@prefix xshift\endcsname%
+         \dimen0=\dimexpr#2+\csname\yquant@prefix xshift\endcsname\relax%
+      \else%
+         \dimen0=#2 %
+      \fi%
+      \let\pgfshapeclippathhorzresult=\empty%
+      \forlistloop\yquant@draw@move@loop{#1}
+   \endgroup%
+}
+
+\def\yquant@draw@move@loop#1{%
+   \yquant@circuit@extendwire{#1}*%
+}
 % END_FOLD
 
 % BEGIN_FOLD Preparation of drawing a generic shape

@@ -288,6 +288,9 @@
          \yquant@register@set@x{##1}\x%
       }%
       \dolistloop{#1}%
+      \csxappto{\yquant@prefix draw}{%
+         \yquant@draw@move{#1}{\x}%
+      }%
    \endgroup%
 }
 
@@ -302,6 +305,9 @@
          \yquant@register@set@x{##1}\x%
       }%
       \dolistloop{#1}%
+      \csxappto{\yquant@prefix draw}{%
+         \yquant@draw@move{#1}{\x}%
+      }%
    \endgroup%
 }
 
