@@ -51,22 +51,22 @@
             \pgfqkeys{/yquant/global attrs/overlay}{#1}%
          }%
       }%
-   },
-   overlay/.default=true,
-   overlay/multi/.is if=yquant@lang@attr@overlay@multi,
-   overlay/m/.forward to=/yquant/global attrs/overlay/multi,
-   overlay/height/.is if=yquant@lang@attr@overlay@height,
-   overlay/ht/.forward to=/yquant/global attrs/overlay/height,
-   overlay/h/.forward to=/yquant/global attrs/overlay/height,
-   overlay/depth/.is if=yquant@lang@attr@overlay@depth,
-   overlay/dp/.forward to=/yquant/global attrs/overlay/depth,
-   overlay/d/.forward to=/yquant/global attrs/overlay/depth,
+   },%
+   overlay/.default=true,%
+   overlay/multi/.is if=yquant@lang@attr@overlay@multi,%
+   overlay/m/.forward to=/yquant/global attrs/overlay/multi,%
+   overlay/height/.is if=yquant@lang@attr@overlay@height,%
+   overlay/ht/.forward to=/yquant/global attrs/overlay/height,%
+   overlay/h/.forward to=/yquant/global attrs/overlay/height,%
+   overlay/depth/.is if=yquant@lang@attr@overlay@depth,%
+   overlay/dp/.forward to=/yquant/global attrs/overlay/depth,%
+   overlay/d/.forward to=/yquant/global attrs/overlay/depth,%
    overlay/single/.code={\pgfkeysalso{%
       /yquant/global attrs/overlay/height={#1},%
       /yquant/global attrs/overlay/depth={#1}%
-   }},
-   overlay/single/.default=true,
-   overlay/s/.forward to=/yquant/global attrs/overlay/single
+   }},%
+   overlay/single/.default=true,%
+   overlay/s/.forward to=/yquant/global attrs/overlay/single,%
 }
 \newif\ifyquant@lang@attr@overlay@multi%
 \newif\ifyquant@lang@attr@overlay@height%
@@ -427,8 +427,15 @@
       \PackageError{yquant.sty}{Gate redefined}%
                    {The gate `#1' already exists. Use \string\yquantredefinebox\space if you really want to redefine it.}%
    \fi%
-   \@ifnextchar[{\yquantdefinebox@i{#1}}%
-                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+   \yquantdefinebox@{#1}{}%
+}
+
+\def\yquantdefinemultibox#1{%
+   \ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Gate redefined}%
+                   {The gate `#1' already exists. Use \string\yquantredefinemultibox\space if you really want to redefine it.}%
+   \fi%
+   \yquantdefinebox@{#1}\yquant@register@get@allowmultitrue%
 }
 
 \def\yquantredefinebox#1{%
@@ -436,21 +443,33 @@
       \PackageError{yquant.sty}{Unknown gate redefined}%
                    {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinebox\space to define it.}%
    \fi%
-   \yquantdefinebox@i{#1}%
-   \@ifnextchar[{\yquantdefinebox@i{#1}}%
-                {\yquantdefinebox@i{#1}[/yquant/operators/every box]}%
+   \yquantdefinebox@{#1}{}%
 }
 
-\protected\long\def\yquantdefinebox@i#1[#2]#3{%
-   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+\def\yquantredefinemultibox#1{%
+   \unless\ifcsname yquant@lang@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown gate redefined}%
+                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinemultibox\space to define it.}%
+   \fi%
+   \yquantdefinebox@{#1}\yquant@register@get@allowmultitrue%
+}
+
+\def\yquantdefinebox@#1#2{%
+   \@ifnextchar[{\yquantdefinebox@i{#1}{#2}}%
+                {\yquantdefinebox@i{#1}{#2}[/yquant/operators/every box]}%
+}
+
+\protected\long\def\yquantdefinebox@i#1#2[#3]#4{%
+   \pgfkeys{/yquant/operators/every #1/.style={#3}}%
    \protected@edef\yquantdefinebox@do{%
       \yquant@langhelper@declare@command%
          {#1}%
          \expandafter\noexpand\csname yquant@lang@@#1\endcsname%
       \yquant@langhelper@setup@attrs{#1}{}{}%
       \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
+         \unexpanded{#2}%
          \yquant@draw%
-            {#3}%
+            {#4}%
             {/yquant/operators/every #1}%
       }%
    }%
