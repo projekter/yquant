@@ -65,10 +65,9 @@
       \csgdef{\yquant@prefix registers}{0}%
       \global\cslet{\yquant@prefix draw}\relax%
       \global\cslet{\yquant@prefix outputs}\relax%
-      \global\csdef{\yquant@prefix xmin}{0pt}%
       \global\cslet{\yquant@prefix subcircuits}\empty%
       \global\cslet{\yquant@prefix inonly}\empty%
-      \csletcs{\yquant@prefix seamless}{ifyquant@config@circuit@seamless}%
+      \global\csletcs{\yquant@prefix seamless}{ifyquant@config@circuit@seamless}%
       \ifdefined\yquant@prevseamless%
          \cslet{ifyquant@config@circuit@seamless}\yquant@prevseamless%
          \undef\yquant@prevseamless%
@@ -78,41 +77,28 @@
          \expandafter\noexpand\csname\yquant@prefix draw\endcsname%
          \expandafter\noexpand\csname\yquant@prefix outputs\endcsname%
          \expandafter\noexpand\csname\yquant@prefix parameters\endcsname%
-         \expandafter\noexpand\csname\yquant@prefix xmin\endcsname%
          \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
          \expandafter\noexpand\csname\yquant@prefix inonly\endcsname%
+         \expandafter\noexpand\csname\yquant@prefix seamless\endcsname%
          \expandafter\noexpand\csname\yquant@prefix cleanup\endcsname%
       }%
       \scope[{/yquant/.cd, #2, /tikz/.cd, /yquant/every circuit}]%
 }
 
 \protected\def\yquant@env@end{%
-         \letcs\yquant@env@end@registers{\yquant@prefix registers}%
-         \ifnum\yquant@env@end@registers>0 %
-            % draw all wires
-            \yquant@register@get@maxxrange\yquant@env@end@xpos{1}{\yquant@env@end@registers}%
-            % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
-            \ifyquant@env@seamless{%
-               \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
-                  \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
-               \fi%
-            }{%
-               \dimdef\yquant@env@end@xpos{\yquant@env@end@xpos+\yquant@config@operator@sep}%
-            }%
-            \global\cslet{\yquant@prefix xmax}\yquant@env@end@xpos%
-            \yquant@cleanup@csadd{xmax}%
-            \csxappto{\yquant@prefix draw}{%
-               \yquant@circuit@endwires{\yquant@env@end@xpos}%
+         \ifnum\csname\yquant@prefix registers\endcsname>0 %
+            \csgappto{\yquant@prefix draw}{%
+               \yquant@circuit@endwires%
             }%
             \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
                \begingroup%
                   \def\yquant@config@operator@minimum@width{0pt}%
-                  \let\yquant@draw@@single=\yquant@draw@@output@single%
-                  \let\yquant@draw@@multi=\yquant@draw@@output@multi%
+                  \let\yquant@prepare@single=\yquant@prepare@output@single%
+                  \let\yquant@prepare@multi=\yquant@prepare@output@multi%
                   \csname\yquant@prefix outputs\endcsname%
                \endgroup%
             \fi%
-            \csappto{\yquant@prefix draw}{%
+            \csgappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires@finalize%
             }%
             % also calculate the true y positions

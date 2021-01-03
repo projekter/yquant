@@ -488,7 +488,7 @@
          \process%
       }%
    \fi%
-   \yquant@lang@create@do{#1}[1][;%
+   \yquant@prepare@create{#1}0\yquant@lang@create@type{0pt}%
    \yquant@env@rescan%
 }
 
@@ -542,7 +542,7 @@
                }{%
                   \edef\process{%
                      \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
-                        \yquant@draw%
+                        \yquant@prepare%
                            {$\unexpanded\expandafter{\texcode}$}%
                            {/yquant/operators/every box}%
                      }%
@@ -586,7 +586,7 @@
       \edef\process{%
          \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
             \noexpand\yquant@register@get@allowmultitrue%
-            \yquant@draw%
+            \yquant@prepare%
                {$\unexpanded\expandafter{\texcode}$}%
                {/yquant/operators/every box}%
          }%
@@ -614,14 +614,14 @@
 
 \qasm@langhelper@declare@command{S}\qasm@lang@@s01
 \def\qasm@lang@@s{%
-   \yquant@draw%
+   \yquant@prepare%
       {$S$}%
       {/yquant/operators/every s}%
 }
 
 \qasm@langhelper@declare@command{T}\qasm@lang@@t01
 \def\qasm@lang@@t{%
-   \yquant@draw%
+   \yquant@prepare%
       {$T$}%
       {/yquant/operators/every t}%
 }
@@ -662,7 +662,7 @@
 \qasm@langhelper@declare@command{Utwo}\qasm@lang@@Utwo02
 \def\qasm@lang@@Utwo{%
    \yquant@register@get@allowmultitrue%
-   \yquant@draw%
+   \yquant@prepare%
       {$U$}%
       {/yquant/operators/every utwo}%
 }

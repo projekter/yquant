@@ -191,110 +191,13 @@
       \def\yquant@lang@create@x{0pt}%
    \fi%
    \begingroup%
-      \ifx\yquant@lang@attr@name\empty%
-         \let\yquant@lang@create@name=\empty%
-      \else%
-         \def\yquant@lang@create@name{\yquant@lang@attr@name-\idx}%
-      \fi%
       % pre-set y position
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
-         \ifdefined\yquant@lang@attr@input%
-            \expandafter\yquant@list@gdequeue\csname\yquant@prefix parameters\endcsname\outermap%
-            \ifx\outermap\empty%
-               \PackageError{yquant.sty}{Invalid subcircuit parameter count}%
-                            {No outer register available for input register `\reg[\idx]`.}%
-            \fi%
-            \begingroup%
-               \let\yquant@prefix=\yquant@parent %
-               \unless\if\yquant@lang@create@type\yquant@register@get@type\outermap%
-                  \PackageError{yquant.sty}%
-                               {Subcircuit expects wire of type `\yquant@register@type@tostring\yquant@lang@create@type', but got `\yquant@register@type@tostring{\yquant@register@get@type\outermap}'}%
-                               {Outer and inner wire types must match for input wire `\detokenize\expandafter\expandafter\expandafter{\expandafter\reg\expandafter[\idx]}`.}%
-               \fi%
-            \endgroup%
-            \unless\ifdefined\yquant@lang@attr@output%
-               \listcsxadd{\yquant@prefix inonly}%
-                          {\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}%
-            \fi%
-            \yquant@register@alias%
-               \yquant@lang@create@type%
-               \yquant@lang@create@x%
-               \reg\idx\outermap%
-         \else%
-            \ifdefined\yquant@lang@attr@output%
-               \expandafter\yquant@list@gdequeue\csname\yquant@prefix parameters\endcsname\outermap%
-               \ifx\outermap\empty%
-                  \PackageError{yquant.sty}{Invalid subcircuit parameter count}%
-                               {No outer register available for output register `\reg`.}%
-               \fi%
-               \begingroup%
-                  \let\yquant@prefix=\yquant@parent%
-                  \unless\if\yquant@register@type@none\yquant@register@get@type\outermap%
-                     \PackageError{yquant.sty}%
-                                  {Subcircuit expects discarded wire, got `\yquant@register@type@tostring{\yquant@register@get@type\outermap}'}%
-                                  {Outer wire must be discarded before being acceptable for output-only register `\detokenize\expandafter\expandafter\expandafter{\expandafter\reg\expandafter[\idx]}`.}%
-                  \fi%
-               \endgroup%
-               \yquant@register@alias%
-                  \yquant@lang@create@type%
-                  \yquant@lang@create@x%
-                  \reg\idx\outermap%
-            \else%
-               \yquant@register@define%
-                  \yquant@lang@create@type%
-                  \yquant@lang@create@x%
-                  \reg\idx%
-            \fi%
-         \fi%
-         % First determine the actual height by a virtual draw command
-         \protected@edef\trimmedvalue{\trim@spaces{\yquant@lang@attr@value}}%
-         \unless\ifx\empty\trimmedvalue%
-            \pgfinterruptboundingbox%
-               \yquant@env@virtualize@path%
-               \edef\cmd{%
-                  \noexpand\path%
-                     (\yquant@lang@create@x, 0pt)%
-                     node[/yquant/every label, /yquant/every initial label,%
-                          /yquant/every \yquant@lang@create@style\space label%
-                          \ifdefined\yquant@lang@attr@input, /yquant/every input label\fi]%
-                     {\unexpanded\expandafter{\trimmedvalue}};%
-               }%
-               \cmd%
-               \ifdim\pgf@picminx<\csname\yquant@prefix xmin\endcsname%
-                  \csxdef{\yquant@prefix xmin}{\the\pgf@picminx}%
-               \fi%
-               \expandafter\yquant@register@update@height%
-                  \csname\yquant@prefix registers\endcsname%
-                  {\the\pgf@picmaxy}%
-               \expandafter\yquant@register@update@depth%
-                  \csname\yquant@prefix registers\endcsname%
-                  {\the\dimexpr-\pgf@picminy\relax}%
-            \endpgfinterruptboundingbox%
-         \fi%
-         % Prepare to shipout
-         \csxappto{\yquant@prefix draw}{%
-            \yquant@lang@create@draw{\csname\yquant@prefix registers\endcsname}%
-                                    {\yquant@lang@create@x}%
-                                    {\yquant@lang@create@style}%
-                                    \ifdefined\yquant@lang@attr@input1\else0\fi%
-                                    {\unexpanded\expandafter{\trimmedvalue}}%
-                                    {\yquant@lang@create@name}%
-            \unless\ifdefined\yquant@lang@attr@input%
-               \ifdefined\yquant@lang@attr@output%
-                  \yquant@circuit@flushwire%
-                     {\csname\yquant@prefix registers\endcsname}%
-                  \yquant@register@set@type%
-                     {\csname\yquant@prefix registers\endcsname}%
-                     \yquant@lang@create@type%
-               \fi%
-            \fi%
+         \edef\tmp{%
+            \yquant@prepare@create{\reg}{\idx}%
+               {\yquant@lang@create@type}{\yquant@lang@create@x}%
          }%
-         % normally, we don't have to add a separation, this is done in the next step. But for the init gate to correctly decide whether it can put text to the left, we need to be able to discriminate the two situations
-         \ifdim\yquant@lang@create@x=0pt %
-            \unless\ifx\empty\trimmedvalue%
-               \yquant@register@set@x{\csname\yquant@prefix registers\endcsname}{1sp}%
-            \fi%
-         \fi%
+         \tmp%
       }%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
@@ -302,79 +205,6 @@
                      {\yquant@draw@alias{\yquant@lang@attr@name}}%
          \fi%
       \fi%
-   \endgroup%
-}
-
-\protected\def\yquant@lang@create@draw#1#2#3#4#5#6{%
-   \begingroup%
-      \dimdef\wireypos{\yquant@register@get@y{#1}}%
-      \ifcsname\yquant@prefix xshift\endcsname%
-         \dimdef\createxpos{#2+\csname\yquant@prefix xshift\endcsname}%
-      \else%
-         \dimdef\createxpos{#2}%
-      \fi%
-      \ifstrempty{#5}{%
-         % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate. However, we manually take care of extending the vertical bounding box appropriately, so that if this wire is the last or first one, contains no text and no gates, it is not clipped away.
-         \path[overlay]%
-            (\createxpos, \wireypos)%
-            coordinate[name prefix=, name suffix=, name=yquantbox];%
-         \let\pgfshapeclippathhorzresult=\empty%
-         \tikzset{/yquant/every wire}%
-         \pgfpointanchor{yquantbox}{east}%
-         % 2 \pgflinewidth is the separation of cbit and qubits lines, and .5 for the line itself
-         \ifdim\dimexpr\pgf@y-2.5\pgflinewidth\relax<\pgf@picminy%
-            \global\pgf@picminy=\dimexpr\pgf@y-2.5\pgflinewidth\relax%
-         \fi%
-         \ifdim\dimexpr\pgf@y+2.5\pgflinewidth\relax>\pgf@picmaxy%
-            \global\pgf@picmaxy=\dimexpr\pgf@y+2.5\pgflinewidth\relax%
-         \fi%
-      }{%
-         \edef\cmd{%
-            \noexpand\path%
-               (\createxpos, \wireypos)%
-               node[/yquant/every label, /yquant/every initial label,%
-                    /yquant/every #3 label\ifx1#4, /yquant/every input label\fi,%
-                    name prefix=, name suffix=, name=yquantbox]%
-                   {\unexpanded{#5}};%
-            \ifcsname\yquant@prefix registermap@#1\endcsname%
-               \pgfshapeclippath{yquantbox}%
-                                {/yquant/every label, /yquant/every initial label,%
-                                 /yquant/every #3 label\ifx1#4, /yquant/every input label\fi}%
-            \fi%
-         }%
-         \cmd%
-      }%
-      \ifcsname\yquant@prefix registermap@#1\endcsname%
-         % if this is an alias, the creation is just an extension
-         \if\yquant@register@type@none\yquant@register@get@type{#1}%
-            \ifstrequal{#3}{initial}{%
-               \yquant@circuit@extendwire{#1}{east}%
-            }{%
-               % however, our inner wire is present, while the outer wire was discarded.
-               \tikzset{/yquant/every wire}%
-               \pgfpointanchor{yquantbox}{east}%
-               \yquant@register@set@lastwire{#1}{%
-                  {\the\pgf@x}{\the\pgf@x}{}%
-                  {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
-               }%
-            }%
-         \else%
-            \yquant@circuit@extendwire{#1}{east}%
-         \fi%
-      \else%
-         % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
-         \tikzset{/yquant/every wire}%
-         \pgfpointanchor{yquantbox}{east}%
-         \ifstrequal{#3}{initial}{%
-            \let\newtype=\yquant@register@type@none%
-         }{%
-            \yquant@register@type@fromstring{#3}\newtype%
-         }%
-         \yquant@register@set@typelastwire{#1}{\newtype{{\the\pgf@x}{\the\pgf@x}{}{}}}%
-      \fi%
-      \ifstrempty{#6}\relax{%
-         \pgfnodealias{\tikz@pp@name{#6}}{yquantbox}%
-      }%
    \endgroup%
 }
 % END_FOLD
@@ -416,7 +246,7 @@
          \yquant@register@get@multiaslist%
          \yquant@circuit@operator{####1}{####2}{####3}%
          \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@@#1\endcsname%
-         \yquant@draw@@subcircuit{/yquant/operators/every #1}%
+         \yquant@prepare@subcircuit{/yquant/operators/every #1}%
       }%
    }%
    \yquantdefinegate@do%
@@ -468,7 +298,7 @@
       \yquant@langhelper@setup@attrs{#1}{}{}%
       \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
          \unexpanded{#2}%
-         \yquant@draw%
+         \yquant@prepare%
             {#4}%
             {/yquant/operators/every #1}%
       }%
@@ -483,7 +313,7 @@
 \yquant@langhelper@setup@attrs{box}{value}{}
 \def\yquant@lang@@box{%
    \yquant@register@get@allowmultitrue%
-   \expandafter\yquant@draw%
+   \expandafter\yquant@prepare%
       \expandafter{\yquant@lang@attr@value}%
       {/yquant/operators/every box}%
 }
@@ -506,7 +336,7 @@
 \protected\def\yquant@lang@@subcircuit#1#2#3{%
    \yquant@register@get@multiaslist%
    \yquant@circuit@operator{#1}{#2}{#3}%
-   \yquant@draw@@subcircuit{/yquant/operators/every subcircuit}%
+   \yquant@prepare@subcircuit{/yquant/operators/every subcircuit}%
 }
 % END_FOLD
 
@@ -516,7 +346,7 @@
 \yquant@langhelper@setup@attrs{phase}{value}{}%
 \def\yquant@lang@@phase{%
    \edef\cmd{%
-      \noexpand\yquant@draw%
+      \noexpand\yquant@prepare%
          {}%
          {/yquant/operators/every phase, label={\unexpanded\expandafter{\yquant@lang@attr@value}}}%
    }%
@@ -528,7 +358,7 @@
 \yquant@langhelper@setup@attrs{xx}{}{}
 \def\yquant@lang@@xx{%
    \yquant@register@get@multiassingle%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every xx}%
 }
@@ -538,7 +368,7 @@
 \yquant@langhelper@setup@attrs{zz}{}{}
 \def\yquant@lang@@zz{%
    \yquant@register@get@multiassingle%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every zz}%
       {}{}%
@@ -551,14 +381,9 @@
    % temporarily squeeze most into the separation
    \pgfkeys{%
       /yquant/operator/minimum width=0pt,%
-      /yquant/operator/separation=.5\dimexpr\yquant@config@operator@sep-\pgflinewidth\relax%
    }%
-   \def\yquant@draw@callback@wire##1{%
-      \yquant@register@set@x%
-         {##1}%
-         {\the\dimexpr\yquant@register@get@x{##1}-\yquant@config@operator@sep-\pgflinewidth\relax}%
-   }
-   \yquant@draw%
+   \preto\yquant@attrs@remaining{internal/squeeze slash,}%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every slash}%
       {}{}{#1}%
@@ -569,7 +394,7 @@
 \yquant@langhelper@setup@attrs{swap}{}{}
 \def\yquant@lang@@swap{%
    \yquant@register@get@multiassingle%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every swap}%
 }
@@ -578,7 +403,7 @@
 \yquant@langhelper@declare@command{not}\yquant@lang@@not
 \yquant@langhelper@setup@attrs{not}{}{}
 \def\yquant@lang@@not{%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every not}%
 }
@@ -595,13 +420,13 @@
    \else%
       \let\yquant@circuit@settype@to=\yquant@register@type@c%
    \fi%
-   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
-   \yquant@draw@callback@nowtrue%
+   \let\yquant@prepare@callback@wire=\yquant@circuit@settype%
+   \yquant@prepare@callback@nowtrue%
    \yquant@register@get@allowmultitrue%
    \unless\ifcsname yquant@lang@attr@value\endcsname%
       \let\yquant@lang@attr@value=\empty%
    \fi%
-   \expandafter\yquant@draw%
+   \expandafter\yquant@prepare%
       \expandafter{\yquant@lang@attr@value}%
       {/yquant/operators/every measure}%
       {}{}%
@@ -616,13 +441,13 @@
    \else%
       \let\yquant@circuit@settype@to=\yquant@register@type@c%
    \fi%
-   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
-   \yquant@draw@callback@nowtrue%
+   \let\yquant@prepare@callback@wire=\yquant@circuit@settype%
+   \yquant@prepare@callback@nowtrue%
    \yquant@register@get@allowmultitrue%
    \unless\ifcsname yquant@lang@attr@value\endcsname%
       \let\yquant@lang@attr@value=\empty%
    \fi%
-   \expandafter\yquant@draw%
+   \expandafter\yquant@prepare%
       \expandafter{\yquant@lang@attr@value}%
       {/yquant/operators/every dmeter}%
       {}{}%
@@ -634,7 +459,7 @@
 \yquant@langhelper@setup@attrs{barrier}{}{}
 \def\yquant@lang@@barrier{%
    \yquant@register@get@allowmultitrue%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every barrier}%
       {}{}%
@@ -646,7 +471,7 @@
    % do not call \yquant@register@get@multiassingle, we do not want to install a different multi line style!
    \yquant@register@get@allowmultitrue%
    \let\yquant@register@multi@splitparts=\yquant@register@multi@splitparts@sepall%
-   \yquant@draw%
+   \yquant@prepare%
       {}%
       {/yquant/operators/every wave}%
       {}{}%
@@ -718,23 +543,13 @@
          \yquant@register@type@tostring\yquant@circuit@settype@to%
       }%
    \fi%
-   \let\yquant@draw@callback@wire=\yquant@circuit@settype%
-   \yquant@draw@callback@nowtrue%
-   \let\yquant@draw@@multi=\yquant@draw@@multiinit%
-   \yquant@circuit@operator{}{}{#1}%
-   % special case: if there were no operations at any affected wire before, we will replace the wire description
-   \ifdim\yquant@circuit@operator@x=0pt %
-      \def\yquant@circuit@operator@x{-.5\dimen2}%
-      \let\yquant@draw@@finalize@ctrl@single=\yquant@draw@@finalize@ctrl@singleinit%
-      \let\yquant@draw@@finalize@ctrl@multi=\yquant@draw@@finalize@ctrl@multiinit%
-      \expandafter\yquant@draw@%
-         \expandafter{\yquant@lang@attr@value}%
-         {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@attr@type\space label}%
-   \else%
-      \expandafter\yquant@draw@%
-         \expandafter{\yquant@lang@attr@value}%
-         {/yquant/every label, /yquant/every \yquant@lang@attr@type\space label}%
-   \fi%
+   \let\yquant@prepare@callback@wire=\yquant@circuit@settype%
+   \yquant@prepare@callback@nowtrue%
+   \let\yquant@prepare@multi=\yquant@prepare@multiinit%
+   \preto\yquant@attrs@remaining{internal/move label,}%
+   \expandafter\yquant@prepare%
+      \expandafter{\yquant@lang@attr@value}%
+      {/yquant/every label, /yquant/every \yquant@lang@attr@type\space label}{}{}{#1}%
 }
 
 \yquant@langhelper@declare@command@uncontrolled{output}\yquant@lang@@output

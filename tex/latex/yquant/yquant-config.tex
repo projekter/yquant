@@ -17,6 +17,9 @@
    every circuit/.style={%
       every node/.prefix style={transform shape}
    },%
+   every group/.style={%
+      inner sep=0pt, outer sep=0pt, anchor=center%
+   },%
    circuit/seamless/.is if=yquant@config@circuit@seamless,
    % register settings
    register/default name/.store in=%
@@ -54,6 +57,16 @@
       {draw, decoration={gapped brace, mirror, raise=2pt}, decorate},%
    every input label/.style=%
       {},%
+   internal/move label/.code=%
+      {\ifdefined\yquant@draw@@x% only work in drawing mode
+          \ifdim\yquant@draw@@x=0pt %
+             \ifyquant@env@seamless\relax{%
+                \appto\yquant@draw@@style{,/yquant/every initial label}%
+                \yquant@config@operator@position@movelefttrue%
+             }%
+          \fi%
+       \fi%
+      },
    % output label styles
    every output/.style=%
       {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
@@ -145,6 +158,19 @@
       {shape=yquant-rectangle, radius=.75mm, draw},%
    operators/every slash/.style=%
       {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      internal/squeeze slash/.code=%
+         {\dimdef\yquant@config@operator@sep{.5\dimexpr\yquant@config@operator@sep-\pgflinewidth\relax}%
+          \yquant@config@operator@position@advancefalse},%
+   }
+\else%
+   \pgfqkeys{/yquant}{%
+      internal/squeeze slash/.code={}%
+   }
+\fi
+\pgfqkeys{/yquant}{%
    operators/every swap/.style=%
       {shape=yquant-swap, radius=.75mm, draw},%
    operators/every not/.style=%
@@ -156,7 +182,7 @@
    operators/every dmeter/.style=%
       {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw}
 }
-\ifnum\yquant@compat<2 
+\ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       operators/every barrier/.style=%
          {shape=yquant-line, dashed, draw}%
@@ -182,4 +208,7 @@
 \yquant@config@operator@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
+\newif\ifyquant@config@operator@position@moveleft
+\newif\ifyquant@config@operator@position@advance
+\yquant@config@operator@position@advancetrue
 \newif\ifyquant@config@circuit@seamless

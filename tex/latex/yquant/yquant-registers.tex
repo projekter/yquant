@@ -172,12 +172,12 @@
             \reg\idx%
          % Prepare to shipout
          \csxappto{\yquant@prefix draw}{%
-            \yquant@lang@create@draw{\csname\yquant@prefix registers\endcsname}%
-                                    {0pt}%
-                                    {qubit}%
-                                    0%
-                                    {}%
-                                    {}%
+            \yquant@draw@create{\csname\yquant@prefix registers\endcsname}%
+                               {0pt}%
+                               {qubit}%
+                               0%
+                               {}%
+                               {}%
          }%
       }%
    \endgroup%

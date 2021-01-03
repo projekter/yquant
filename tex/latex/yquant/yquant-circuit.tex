@@ -32,12 +32,22 @@
    \endgroup%
 }
 
-% finishes the wires of all registers until x position #1
-\protected\def\yquant@circuit@endwires#1{%
+% finishes the wires of all registers
+\protected\def\yquant@circuit@endwires{%
+   \expandafter\expandafter\expandafter\yquant@register@get@maxxrange%
+      \expandafter\expandafter\expandafter\yquant@circuit@endwires@x%
+      \expandafter\expandafter\expandafter1%
+      \expandafter\expandafter\expandafter{\csname\yquant@prefix registers\endcsname}%
+   % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
+   \ifyquant@env@seamless{%
+      \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+         \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\yquant@config@operator@sep}%
+      \fi%
+   }{%
+      \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\yquant@config@operator@sep}%
+   }%
    \ifcsname\yquant@prefix xshift\endcsname%
-      \dimdef\yquant@env@end@xpos{#1+\csname\yquant@prefix xshift\endcsname}%
-   \else%
-      \def\yquant@env@end@xpos{#1}%
+      \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\csname\yquant@prefix xshift\endcsname}%
    \fi%
    \let\yquant@circuit@endwires@finalize=\relax%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
@@ -216,30 +226,6 @@
       \yquant@circuit@operator@maxpctrl%
       \yquant@circuit@operator@maxnctrl%
       \relax%
-   % obtain the required minimal x position
-   \yquant@register@get@maxxrange%
-      \yquant@circuit@operator@x%
-      \yquant@circuit@operator@minctrl%
-      \yquant@circuit@operator@maxctrl%
-   % if x > 1sp, everything is fine. We already had some gates.
-   \ifdim\yquant@circuit@operator@x>1sp %
-      \dimdef\yquant@circuit@operator@x{%
-         \yquant@circuit@operator@x+\yquant@config@operator@sep%
-      }%
-   \else%
-      % if x = 1sp, this means we insert the operator to a register that had no previous gates, but which has an initial text.
-      \ifdim\yquant@circuit@operator@x=1sp %
-         % just add the separation, drop this special 1sp marker
-         \let\yquant@circuit@operator@x=\yquant@config@operator@sep%
-      \else%
-         % there was no text and no operation before. For seamless circuits, start right at zero; for others, only the init gate will start at zero.
-         \ifyquant@env@seamless\relax{%
-            \unless\ifx\yquant@draw@@multi\yquant@draw@@multiinit%
-               \let\yquant@circuit@operator@x=\yquant@config@operator@sep%
-            \fi%
-         }%
-      \fi%
-   \fi%
 }
 
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
@@ -282,33 +268,18 @@
 % performs an alignment of all registers specified in the argument; that is, the next operation on any of the listed registers will be after the maximum position of all of them
 % #1: arbitrary register list
 \protected\def\yquant@circuit@align#1{%
-   \begingroup%
-      \yquant@register@get@maxxlist\x{#1}%
-      \def\do##1{%
-         \yquant@register@set@x{##1}\x%
-      }%
-      \dolistloop{#1}%
-      \csxappto{\yquant@prefix draw}{%
-         \yquant@draw@move{#1}{\x}%
-      }%
-   \endgroup%
+   \csxappto{\yquant@prefix draw}{%
+      \yquant@draw@hspace{#1}{0pt}%
+   }%
 }
 
 % introduces a horizontal skip (= invisible operator of given width) among the registers; that is, those registers are first aligned, then skipped by the given amount.
 % #1: arbitrary register list
 % #2: skip width
 \protected\def\yquant@circuit@hspace#1#2{%
-   \begingroup%
-      \yquant@register@get@maxxlist\x{#1}%
-      \dimdef\x{\x+#2}%
-      \def\do##1{%
-         \yquant@register@set@x{##1}\x%
-      }%
-      \dolistloop{#1}%
-      \csxappto{\yquant@prefix draw}{%
-         \yquant@draw@move{#1}{\x}%
-      }%
-   \endgroup%
+   \csxappto{\yquant@prefix draw}{%
+      \yquant@draw@hspace{#1}{#2}%
+   }%
 }
 
 % applies an action to wires a list of registers and causes them to be redrawn
@@ -337,7 +308,7 @@
 % #1: arbitrary register list
 \protected\def\yquant@circuit@output{%
    \csxappto{\yquant@prefix outputs}%
-            {\yquant@circuit@output@draw%
+            {\yquant@circuit@output@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                {\unexpanded\expandafter{\yquant@attrs@remaining}}%
                {\unexpanded\expandafter{\yquant@register@get@ids@list}}%
@@ -346,7 +317,7 @@
             }%
 }
 
-\protected\def\yquant@circuit@output@draw#1#2#3#4#5#6{%
+\protected\def\yquant@circuit@output@prepare#1#2#3#4#5#6{%
    \def\yquant@attrs@remaining{#2}%
    \def\yquant@circuit@operator@targets{#3}%
    \def\yquant@circuit@operator@mintarget{#4}%
@@ -363,7 +334,6 @@
    \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
    \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
    \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
-   \let\yquant@circuit@operator@x=\yquant@env@end@xpos%
-   \yquant@draw@{#1}{}%
+   \yquant@prepare@{#1}{}%
 }
 % END_FOLD
