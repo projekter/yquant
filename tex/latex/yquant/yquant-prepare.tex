@@ -5,8 +5,7 @@
 % #1: register name
 % #2: register index
 % #3: register type
-% #4: x position
-\protected\def\yquant@prepare@create#1#2#3#4{%
+\protected\def\yquant@prepare@create#1#2#3{%
    \ifdefined\yquant@lang@attr@input%
       \expandafter\yquant@list@gdequeue\csname\yquant@prefix parameters\endcsname\outermap%
       \ifx\outermap\empty%
@@ -25,7 +24,7 @@
          \listcsxadd{\yquant@prefix inonly}%
                     {\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}%
       \fi%
-      \yquant@register@alias{#3}{#4}{#1}{#2}\outermap%
+      \yquant@register@alias{#3}{#1}{#2}\outermap%
    \else%
       \ifdefined\yquant@lang@attr@output%
          \expandafter\yquant@list@gdequeue\csname\yquant@prefix parameters\endcsname\outermap%
@@ -41,69 +40,15 @@
                             {Outer wire must be discarded before being acceptable for output-only register `#1[#2]`.}%
             \fi%
          \endgroup%
-         \yquant@register@alias{#3}{#4}{#1}{#2}\outermap%
+         \yquant@register@alias{#3}{#1}{#2}\outermap%
       \else%
-         \yquant@register@define{#3}{#4}{#1}{#2}%
+         \yquant@register@define{#3}{#1}{#2}%
       \fi%
    \fi%
-   % First determine the actual height by a virtual draw command
-   \protected@edef\trimmedvalue{\trim@spaces{\yquant@lang@attr@value}}%
-   \edef\style{%
-      \ifx#3\yquant@register@type@none%
-         initial%
-      \else%
-         \yquant@register@type@tostring{#3}%
-      \fi%
-   }%
-   \ifx\yquant@lang@attr@name\empty%
-      \let\nodename=\empty%
-   \else%
-      \def\nodename{\yquant@lang@attr@name-#2}%
-   \fi%
-   \unless\ifx\empty\trimmedvalue%
-      \pgfinterruptboundingbox%
-         \yquant@env@virtualize@path%
-         \edef\cmd{%
-            \noexpand\path%
-               (#4, 0pt)%
-               node[/yquant/every label, /yquant/every initial label,%
-                    /yquant/every \style\space label%
-                    \ifdefined\yquant@lang@attr@input, /yquant/every input label\fi]%
-               {\unexpanded\expandafter{\trimmedvalue}};%
-         }%
-         \cmd%
-         \expandafter\yquant@register@update@height%
-            \csname\yquant@prefix registers\endcsname%
-            {\the\pgf@picmaxy}%
-         \expandafter\yquant@register@update@depth%
-            \csname\yquant@prefix registers\endcsname%
-            {\the\dimexpr-\pgf@picminy\relax}%
-      \endpgfinterruptboundingbox%
-   \fi%
-   % Prepare to shipout
+   % we must be allowed to change the wire types during preparation for various reasons, so we need to reset it here (TODO: can we eliminate all those reasons?)
    \csxappto{\yquant@prefix draw}{%
-      \yquant@draw@create{\csname\yquant@prefix registers\endcsname}%
-                         {#4}%
-                         {\style}%
-                         \ifdefined\yquant@lang@attr@input1\else0\fi%
-                         {\unexpanded\expandafter{\trimmedvalue}}%
-                         {\nodename}%
-      \unless\ifdefined\yquant@lang@attr@input%
-         \ifdefined\yquant@lang@attr@output%
-            \yquant@circuit@flushwire%
-               {\csname\yquant@prefix registers\endcsname}%
-            \yquant@register@set@type%
-               {\csname\yquant@prefix registers\endcsname}%
-               \yquant@lang@create@type%
-         \fi%
-      \fi%
+      \yquant@register@set@type{\csname\yquant@prefix registers\endcsname}{#3}%
    }%
-   % normally, we don't have to add a separation, this is done in the next step. But for the init gate to correctly decide whether it can put text to the left, we need to be able to discriminate the two situations
-   \ifdim#4=0pt %
-      \unless\ifx\empty\trimmedvalue%
-         \yquant@register@set@x{\csname\yquant@prefix registers\endcsname}{1sp}%
-      \fi%
-   \fi%
 }
 
 % generic shape of an operator
@@ -473,11 +418,11 @@
       \message{^^J group: newx = \newx.}%
       % If the quotes library is loaded, activate it. (else, this is by default \relax)
       \tikz@enable@node@quotes%
-      \yquant@config@operator@position@moveleftfalse%
+      \yquant@config@operator@position@rightalignfalse%
       \yquant@config@operator@position@advancetrue%
       \yquant@set{#3}%
       \ifyquant@config@operator@position@advance%
-         \ifyquant@config@operator@position@moveleft%
+         \ifyquant@config@operator@position@rightalign%
             \def\newx{1sp}%
          \else%
             % 1sp: special marker = no gates, zero position, but initial text present

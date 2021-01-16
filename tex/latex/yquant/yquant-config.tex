@@ -58,14 +58,14 @@
    every input label/.style=%
       {},%
    internal/move label/.code=%
-      {\ifdefined\yquant@draw@@x% only work in drawing mode
-          \ifdim\yquant@draw@@x=0pt %
-             \ifyquant@env@seamless\relax{%
-                \appto\yquant@draw@@style{,/yquant/every initial label}%
-                \yquant@config@operator@position@movelefttrue%
-             }%
-          \fi%
-       \fi%
+      {%\ifdefined\yquant@draw@@x% only work in drawing mode
+       %   \ifdim\yquant@draw@@x=0pt %
+       %      \ifyquant@env@seamless\relax{%
+       %         \appto\yquant@draw@@style{,/yquant/every initial label}%
+                \yquant@config@operator@position@rightaligntrue%
+       %      }%
+       %   \fi%
+       %\fi%
       },
    % output label styles
    every output/.style=%
@@ -208,7 +208,7 @@
 \yquant@config@operator@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
-\newif\ifyquant@config@operator@position@moveleft
+\newif\ifyquant@config@operator@position@rightalign
 \newif\ifyquant@config@operator@position@advance
 \yquant@config@operator@position@advancetrue
 \newif\ifyquant@config@circuit@seamless

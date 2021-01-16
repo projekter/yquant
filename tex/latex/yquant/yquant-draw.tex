@@ -1,78 +1,5 @@
 \newcount\yquant@draw@@currentcontroltype%
 
-\protected\long\def\yquant@draw@create#1#2#3#4#5#6{%
-   \begingroup%
-      \dimdef\wireypos{\yquant@register@get@y{#1}}%
-      \ifcsname\yquant@prefix xshift\endcsname%
-         \dimdef\createxpos{#2+\csname\yquant@prefix xshift\endcsname}%
-      \else%
-         \dimdef\createxpos{#2}%
-      \fi%
-      \ifstrempty{#5}{%
-         % For empty labels, we still put the node at the appropriate position as it may needs to be referenced, but we will not let it effect the bounding box (so that the left end is not shifted), and we don't need an inner separation, so that the label is truely just a coordinate. However, we manually take care of extending the vertical bounding box appropriately, so that if this wire is the last or first one, contains no text and no gates, it is not clipped away.
-         \path[overlay]%
-            (\createxpos, \wireypos)%
-            coordinate[name prefix=, name suffix=, name=yquantbox];%
-         \let\pgfshapeclippathhorzresult=\empty%
-         \tikzset{/yquant/every wire}%
-         \pgfpointanchor{yquantbox}{east}%
-         % 2 \pgflinewidth is the separation of cbit and qubits lines, and .5 for the line itself
-         \ifdim\dimexpr\pgf@y-2.5\pgflinewidth\relax<\pgf@picminy%
-            \global\pgf@picminy=\dimexpr\pgf@y-2.5\pgflinewidth\relax%
-         \fi%
-         \ifdim\dimexpr\pgf@y+2.5\pgflinewidth\relax>\pgf@picmaxy%
-            \global\pgf@picmaxy=\dimexpr\pgf@y+2.5\pgflinewidth\relax%
-         \fi%
-      }{%
-         \edef\cmd{%
-            \noexpand\path%
-               (\createxpos, \wireypos)%
-               node[/yquant/every label, /yquant/every initial label,%
-                    /yquant/every #3 label\ifx1#4, /yquant/every input label\fi,%
-                    name prefix=, name suffix=, name=yquantbox]%
-                   {\unexpanded{#5}};%
-            \ifcsname\yquant@prefix registermap@#1\endcsname%
-               \pgfshapeclippath{yquantbox}%
-                                {/yquant/every label, /yquant/every initial label,%
-                                 /yquant/every #3 label\ifx1#4, /yquant/every input label\fi}%
-            \fi%
-         }%
-         \cmd%
-      }%
-      \ifcsname\yquant@prefix registermap@#1\endcsname%
-         % if this is an alias, the creation is just an extension
-         \if\yquant@register@type@none\yquant@register@get@type{#1}%
-            \ifstrequal{#3}{initial}{%
-               \yquant@circuit@extendwire{#1}{east}%
-            }{%
-               % however, our inner wire is present, while the outer wire was discarded.
-               \tikzset{/yquant/every wire}%
-               \pgfpointanchor{yquantbox}{east}%
-               \yquant@register@set@lastwire{#1}{%
-                  {\the\pgf@x}{\the\pgf@x}{}%
-                  {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
-               }%
-            }%
-         \else%
-            \yquant@circuit@extendwire{#1}{east}%
-         \fi%
-      \else%
-         % set the wire style to have the correct \pgflinewidth available (we don't allow individual line widths for different types of wires)
-         \tikzset{/yquant/every wire}%
-         \pgfpointanchor{yquantbox}{east}%
-         \ifstrequal{#3}{initial}{%
-            \let\newtype=\yquant@register@type@none%
-         }{%
-            \yquant@register@type@fromstring{#3}\newtype%
-         }%
-         \yquant@register@set@typelastwire{#1}{\newtype{{\the\pgf@x}{\the\pgf@x}{}{}}}%
-      \fi%
-      \ifstrempty{#6}\relax{%
-         \pgfnodealias{\tikz@pp@name{#6}}{yquantbox}%
-      }%
-   \endgroup%
-}
-
 \protected\long\def\yquant@draw@group#1#2#3#4#5#6{%
    \begingroup%
       \yquant@register@get@maxxlist\yquant@draw@@x{#6}%
@@ -93,45 +20,29 @@
       \def\yquant@draw@@idx@ncontrol{0}%
       % If the quotes library is loaded, activate it. (else, this is by default \relax)
       \tikz@enable@node@quotes%
-      \yquant@config@operator@position@moveleftfalse%
+      \yquant@config@operator@position@rightalignfalse%
       \yquant@config@operator@position@advancetrue%
       \yquant@set{#3}%
-      \ifyquant@config@operator@position@moveleft%
-         \ifcsname\yquant@prefix xshift\endcsname%
-            \dimdef\yquant@draw@@x{\csname\yquant@prefix xshift\endcsname}%
-            \letcs\newx{\yquant@prefix xshift}%
-         \else%
-            \dimdef\yquant@draw@@x{0pt}%
-            \def\newx{1sp}%
-         \fi%
-         \ifyquant@config@operator@position@advance%
-            \ifdim\newx=0pt %
-               \def\newx{1sp}%
-            \fi%
-            \forlistloop\yquant@draw@group@advance{#6}%
-         \fi%
+      % 1sp: special marker = no gates, zero position, but initial text present
+      \ifdim\yquant@draw@@x=1sp %
+         % just add the separation, drop this special 1sp marker
+         \let\yquant@draw@@x=\yquant@config@operator@sep%
       \else%
-         % 1sp: special marker = no gates, zero position, but initial text present
-         \ifdim\yquant@draw@@x=1sp %
-            % just add the separation, drop this special 1sp marker
-            \let\yquant@draw@@x=\yquant@config@operator@sep%
+         \ifdim\yquant@draw@@x>1sp %
+            \dimdef\yquant@draw@@x{%
+               \yquant@draw@@x+\yquant@config@operator@sep%
+            }%
          \else%
-            \ifdim\yquant@draw@@x>1sp %
-               \dimdef\yquant@draw@@x{%
-                  \yquant@draw@@x+\yquant@config@operator@sep%
-               }%
-            \else%
-               % there was no text and no operation before. For seamless circuits, start right at zero; else, add separation
-               \ifyquant@env@seamless{%
-                  \def\yquant@draw@@x{0pt}%
-               }{%
-                  \let\yquant@draw@@x=\yquant@config@operator@sep%
-               }%
-            \fi%
+            % there was no text and no operation before. For seamless circuits, start right at zero; else, add separation
+            \ifyquant@env@seamless{%
+               \def\yquant@draw@@x{0pt}%
+            }{%
+               \let\yquant@draw@@x=\yquant@config@operator@sep%
+            }%
          \fi%
-         \ifcsname\yquant@prefix xshift\endcsname%
-            \dimdef\yquant@draw@@x{\csname\yquant@prefix xshift\endcsname+\yquant@draw@@x}%
-         \fi%
+      \fi%
+      % if the operator is right-aligned, we will not advance, as we must assume that the x position is already chosen appropriately
+      \unless\ifyquant@config@operator@position@rightalign%
          \ifyquant@config@operator@position@advance%
             \dimdef\newx{\yquant@draw@@x+#1}%
             \forlistloop\yquant@draw@group@advance{#6}%

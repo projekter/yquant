@@ -39,47 +39,46 @@
 % BEGIN_FOLD Constructor: create single register and cleanup environment
 
 % #1: type
-% #2: x position
-% #3: name
-% #4: index
-\protected\def\yquant@register@define#1#2#3#4{%
+% #2: name
+% #3: index
+\protected\def\yquant@register@define#1#2#3{%
    \csnumgdef{\yquant@prefix registers}%
              {\csname\yquant@prefix registers\endcsname+1}%
    \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
       {#1}% type
-      {#2}% x pos
+      {0pt}% x pos
       {{\yquant@config@register@minimum@height}%
        {\yquant@config@register@minimum@depth}%
        {}}% height, depth, and multi-space parts; at the end, the y position
       {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
    }%
-   \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
-   \csxdef{\yquant@prefix registerhigh@#3}{#4}%
+   \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
+   \csxdef{\yquant@prefix registerhigh@#2}{#3}%
    \yquant@cleanup@csadd{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}%
-   \yquant@cleanup@csadd{\yquant@prefix registername@#3[#4]}%
-   \ifnum0=#4\relax%
-      \yquant@cleanup@csadd{\yquant@prefix registerhigh@#3}%
+   \yquant@cleanup@csadd{\yquant@prefix registername@#2[#3]}%
+   \ifnum0=#3\relax%
+      \yquant@cleanup@csadd{\yquant@prefix registerhigh@#2}%
    \fi%
 }
 
 % in a subcircuit, create a new register that is only an alias for an existing register in the outer circuit.
-% #5: id in the outer circuit
-\protected\def\yquant@register@alias#1#2#3#4#5{%
+% #4: id in the outer circuit
+\protected\def\yquant@register@alias#1#2#3#4{%
    \csnumgdef{\yquant@prefix registers}%
              {\csname\yquant@prefix registers\endcsname+1}%
-   \ifcsname\yquant@parent registermap@#5\endcsname%
+   \ifcsname\yquant@parent registermap@#4\endcsname%
       % the parent is already an alias itself, pass this on transparently
       \global\csletcs%
          {\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
-         {\yquant@parent registermap@#5}%
+         {\yquant@parent registermap@#4}%
    \else%
       \csxdef{\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
-             {\yquant@parent register@#5}%
+             {\yquant@parent register@#4}%
    \fi%
    % we still store height, depth, and multi-space parts. To keep the same macros, we create a full register structure, but "abuse" the type component to contain the direct parent
    \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
-      {{\expandafter\yquant@register@alias@extract\yquant@parent}{#5}}% direct parent (circuit id, register id)
+      {{\expandafter\yquant@register@alias@extract\yquant@parent}{#4}}% direct parent (circuit id, register id)
       {}% unused
       {{\yquant@config@register@minimum@height}%
        {\yquant@config@register@minimum@depth}%
@@ -87,18 +86,18 @@
       {}% unused
       {}% unused
    }%
-   \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
-   \csxdef{\yquant@prefix registerhigh@#3}{#4}%
+   \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
+   \csxdef{\yquant@prefix registerhigh@#2}{#3}%
    \yquant@cleanup@csadd{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
-   \yquant@cleanup@csadd{\yquant@prefix registername@#3[#4]}%
-   \ifnum0=#4\relax%
-      \yquant@cleanup@csadd{\yquant@prefix registerhigh@#3}%
+   \yquant@cleanup@csadd{\yquant@prefix registername@#2[#3]}%
+   \ifnum0=#3\relax%
+      \yquant@cleanup@csadd{\yquant@prefix registerhigh@#2}%
    \fi%
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
-      \yquant@register@set@typex@aux%
-      {{#1}{#2}}%
+      \yquant@register@set@x@aux%
+      {\csname\yquant@prefix xshift\endcsname}%
 }
 
 \def\yquant@register@alias@extract yquant@env#1@{#1}%
@@ -166,19 +165,7 @@
       \fi%
       % pre-set y position
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
-         \yquant@register@define%
-            \yquant@register@type@q%
-            {0pt}%
-            \reg\idx%
-         % Prepare to shipout
-         \csxappto{\yquant@prefix draw}{%
-            \yquant@draw@create{\csname\yquant@prefix registers\endcsname}%
-                               {0pt}%
-                               {qubit}%
-                               0%
-                               {}%
-                               {}%
-         }%
+         \yquant@prepare@create\reg\idx\yquant@register@type@q%
       }%
    \endgroup%
 }
@@ -899,10 +886,6 @@
 
 \long\def\yquant@register@set@x@aux#1#2#3#4#5#6{%
    \unexpanded{{#1}}{#6}\unexpanded{{#3}{#4}{#5}}%
-}
-
-\long\def\yquant@register@set@typex@aux#1#2#3#4#5#6{%
-   #6\unexpanded{{#3}{#4}{#5}}%
 }
 
 \protected\def\yquant@register@update@height#1#2{%

@@ -181,31 +181,78 @@
    \else%
       \def\regidx{\reg[\idx]}%
    \fi%
-   % determine x position
-   \ifdefined\yquant@lang@attr@after%
-      \yquant@register@get@maxxlist\yquant@lang@create@x\yquant@lang@attr@after%
-      \ifdefined\yquant@lang@attr@input%
-         \PackageError{yquant.sty}{An input register cannot be created with `after` attribute}{}%
-      \fi%
-   \else%
-      \def\yquant@lang@create@x{0pt}%
-   \fi%
+   \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
+   % create the registers
    \begingroup%
-      % pre-set y position
+      % if we have the after attribute, we start with a discarded wire
+      \ifdefined\yquant@lang@attr@after%
+         \ifdefined\yquant@lang@attr@input%
+            \PackageError{yquant.sty}{An input register cannot be created with `after` attribute}{}%
+         \fi%
+         \let\yquant@lang@create@type=\yquant@register@type@none%
+      \fi%
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
-         \edef\tmp{%
-            \yquant@prepare@create{\reg}{\idx}%
-               {\yquant@lang@create@type}{\yquant@lang@create@x}%
-         }%
-         \tmp%
+         \yquant@prepare@create\reg\idx\yquant@lang@create@type%
       }%
+   \endgroup%
+   % gather details aout about the created registers
+   \letcs\yquant@circuit@operator@maxtarget{\yquant@prefix registers}%
+   \numdef\yquant@circuit@operator@numtarget{\yquant@circuit@operator@maxtarget-\yquant@circuit@operator@mintarget+1}%
+   \edef\yquant@circuit@operator@targets{%
+      \yquant@list@range%
+         \yquant@circuit@operator@mintarget%
+         \yquant@circuit@operator@maxtarget%
+   }%
+   \let\yquant@circuit@operator@pctrls=\empty%
+   \def\yquant@circuit@operator@minpctrl{2147483647}%
+   \def\yquant@circuit@operator@maxpctrl{0}%
+   \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@nctrls=\empty%
+   \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
+   \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
+   \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
+   \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+   % if we have the after attribute, we fake an align gate
+   \ifdefined\yquant@lang@attr@after%
+      \edef\jointindices{\yquant@circuit@operator@targets\yquant@lang@attr@after}%
+      \yquant@circuit@align\jointindices%
+      % and we also need to change the wire after the alignment
+      \let\yquant@circuit@settype@to=\yquant@lang@create@type%
+      \let\yquant@prepare@callback@wire=\yquant@circuit@settype%
+      \yquant@prepare@callback@nowtrue%
+      \expandafter\@thirdofthree%
+   \else%
+      \expandafter\@firstofone%
+   \fi%
+   % unless there is no name, no text and no after attribute, we now need an init gate
+   {%
+      \ifx\yquant@lang@attr@value\empty%
+         \expandafter\@firstoftwo%
+      \else%
+         \expandafter\@secondoftwo%
+      \fi%
+   }%
+   {%
+      \ifx\yquant@lang@attr@name\empty%
+         \expandafter\@gobble%
+      \else%
+         \expandafter\@firstofone%
+      \fi%
+   }%
+   {%
+      % there are no multi inits in this context
+      \preto\yquant@attrs@remaining{internal/move label,}%
+      \expandafter\yquant@prepare@%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@create@style\space label}%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
             \csxappto{\yquant@prefix draw}%
                      {\yquant@draw@alias{\yquant@lang@attr@name}}%
          \fi%
       \fi%
-   \endgroup%
+   }%
 }
 % END_FOLD
 
