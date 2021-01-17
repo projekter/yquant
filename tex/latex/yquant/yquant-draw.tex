@@ -23,26 +23,12 @@
       \yquant@config@operator@position@rightalignfalse%
       \yquant@config@operator@position@advancetrue%
       \yquant@set{#3}%
-      % 1sp: special marker = no gates, zero position, but initial text present
-      \ifdim\yquant@draw@@x=1sp %
-         % just add the separation, drop this special 1sp marker
-         \let\yquant@draw@@x=\yquant@config@operator@sep%
-      \else%
-         \ifdim\yquant@draw@@x>1sp %
-            \dimdef\yquant@draw@@x{%
-               \yquant@draw@@x+\yquant@config@operator@sep%
-            }%
-         \else%
-            % there was no text and no operation before. For seamless circuits, start right at zero; else, add separation
-            \ifyquant@env@seamless{%
-               \def\yquant@draw@@x{0pt}%
-            }{%
-               \let\yquant@draw@@x=\yquant@config@operator@sep%
-            }%
-         \fi%
-      \fi%
       % if the operator is right-aligned, we will not advance, as we must assume that the x position is already chosen appropriately
       \unless\ifyquant@config@operator@position@rightalign%
+         % TODO: seamless?
+         \dimdef\yquant@draw@@x{%
+            \yquant@draw@@x+\yquant@config@operator@sep%
+         }%
          \ifyquant@config@operator@position@advance%
             \dimdef\newx{\yquant@draw@@x+#1}%
             \forlistloop\yquant@draw@group@advance{#6}%
