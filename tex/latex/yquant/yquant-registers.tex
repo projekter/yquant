@@ -52,7 +52,7 @@
        {}}% height, depth, and multi-space parts; at the end, the y position
       {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
-      {}% information about the last gate
+      {\yquant@register@get@clean@}% information about the last gate
    }%
    \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#2}{#3}%
@@ -98,8 +98,8 @@
    \fi%
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
-      \yquant@register@set@x@aux%
-      {\csname\yquant@prefix xshift\endcsname}%
+      \yquant@register@set@xlastgate@aux%
+      {{\csname\yquant@prefix xshift\endcsname}{\yquant@register@get@clean@}}%
 }
 
 \def\yquant@register@alias@extract yquant@env#1@{#1}%
@@ -792,29 +792,26 @@
 
 \def\yquant@register@get@style@aux#1#2#3#4#5#6{#5}
 
-\def\yquant@register@get@lastgate#1{%
+\long\def\yquant@register@execclear@lastgate#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \expandafter\expandafter\expandafter%
-      \yquant@register@get@lastgate@aux\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname%
+      \expandafter%
+      \yquant@register@execclear@lastgate@aux@i\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname{#2}%
    \else%
-      \expandafter\expandafter\expandafter%
-      \yquant@register@get@lastgate@aux\csname\yquant@prefix register@#1\endcsname%
+      \expandafter%
+      \yquant@register@get@lastgate@aux@i\csname\yquant@prefix register@#1\endcsname{#2}%
    \fi%
 }
 
-\def\yquant@register@get@lastgate@aux#1#2#3#4#5#6{#6}
-
-\def\ifyquant@register@lastgate@empty#1{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      \expandafter\expandafter\expandafter%
-      \ifyquant@register@lastgate@empty@aux\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname%
-   \else%
-      \expandafter\expandafter\expandafter%
-      \ifyquant@register@lastgate@empty@aux\csname\yquant@prefix register@#1\endcsname%
-   \fi%
+\def\yquant@register@execclear@lastgate@aux@i#1{%
+   \expandafter\yquant@register@execclear@lastgate@aux@ii#1#1%
 }
 
-\def\ifyquant@register@lastgate@empty@aux#1#2#3#4#5#6{\ifstrempty{#6}}
+\long\def\yquant@register@execclear@lastgate@aux@ii#1#2#3#4#5#6#7#8{%
+   \ifstrempty{#6}\relax{%
+      #6{#8}%
+      \xdef#7{\unexpanded{#1#2#3#4#5{\@gobble}}}%
+   }%
+}
 
 \def\yquant@register@get@typeywire#1{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
@@ -867,6 +864,25 @@
    \endgroup%
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
 }
+
+% Executes #2 if all registers in the list #1 are clean (= freshly created or aliased), else executes #3
+\protected\def\yquant@register@get@clean#1{%
+   \let\next=\@secondoftwo%
+   \forlistloop\yquant@register@get@clean@loop{#1}%
+   \next%
+}
+
+\protected\def\yquant@register@get@clean@loop#1{%
+   \let\next=\@secondoftwo%
+   \yquant@register@execclear@lastgate{#1}{}%
+   \ifx\next\@secondoftwo%
+      \expandafter\listbreak%
+   \fi%
+}
+
+\protected\def\yquant@register@get@clean@#1{%
+   \let\next=\@firstoftwo%
+}
 % END_FOLD
 
 % BEGIN_FOLD Setters: change register information
@@ -912,6 +928,10 @@
 
 \long\def\yquant@register@set@x@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}}{#7}\unexpanded{{#3}{#4}{#5}{#6}}%
+}
+
+\long\def\yquant@register@set@xlastgate@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}}{\@firstoftwo#7}\unexpanded{{#3}{#4}{#5}}{\@secondoftwo#7}%
 }
 
 \protected\def\yquant@register@update@height#1#2{%
