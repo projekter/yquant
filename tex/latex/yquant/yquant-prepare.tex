@@ -1,6 +1,6 @@
 % Most drawing operations will be realized through nodes
-\let\yquant@prepare@callback@wire=\@gobble
-\newif\ifyquant@prepare@callback@now
+\let\yquant@prepare@callback@prepare=\@gobble
+\let\yquant@prepare@callback@draw=\@gobble%
 
 % #1: register name
 % #2: register index
@@ -54,16 +54,7 @@
 % generic shape of an operator
 % #1: value
 % #2: tikz options that select the correct shape
-% #3: positive controls
-% #4: negative controls
-% #5: targets
-\protected\long\def\yquant@prepare#1#2#3#4#5{%
-   % setup the required macros
-   \yquant@circuit@operator{#3}{#4}{#5}%
-   \yquant@prepare@{#1}{#2}%
-}
-
-\protected\long\def\yquant@prepare@#1#2{%
+\protected\long\def\yquant@prepare#1#2{%
    \yquant@sort@clear%
    \def\idx{0}%
    \dimen2=\yquant@config@operator@minimum@width%
@@ -621,15 +612,9 @@
 
 \protected\def\yquant@prepare@finalize@ctrl@single#1#2{%
    \eappto\yquant@prepare@append{%
-      \yquant@prepare@callback@wire{#1}%
+      \yquant@prepare@callback@draw{#1}%
    }%
-   \ifyquant@prepare@callback@now%
-      \yquant@prepare@callback@wire{#1}%
-   \fi%
-}
-
-\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3{%
-   \yquant@prepare@finalize@ctrl@single{#1}{#3}%
+   \yquant@prepare@callback@prepare{#1}%
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@multi#1#2#3#4#5{%
@@ -649,22 +634,6 @@
    \csgundef{\yquant@prefix finalize@ctrl@prepare@appto}%
 }
 
-\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi@loop#1{%
-   \begingroup%
-      \edef\tmp{\yquant@prepare@callback@wire{#1}}%
-      \ifyquant@prepare@callback@now%
-         \tmp%
-      \fi%
-      \expandafter%
-   \endgroup%
-   \expandafter\appto\expandafter\yquant@prepare@append\expandafter{\tmp}%
-}
-
-\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6{%
-   % there are no contiguous parts here, don't call the normal @multi
-   \forlistloop\yquant@prepare@finalize@ctrl@subcircuit@multi@loop{#4}%
-}
-
 \protected\def\yquant@prepare@finalize@ctrl@multi@contiguous#1#2#3{%
    \ifnum\yquant@prepare@finalize@ctrl@multi@contiguous@warn=1 %
       \PackageWarning{yquant.sty}{Ambiguous operation: multiple discontiguous multi-register operations in combination with controls make it hard to visually determine on which registers the gates act on.}%
@@ -679,8 +648,25 @@
    {% save \body
       \yquant@for \yquant@i := #1 to #2 {{% let inner loop mess up with macros
          \csxappto{\yquant@prefix finalize@ctrl@prepare@appto}{%
-            \expandafter\yquant@prepare@callback@wire\expandafter{\yquant@i}%
+            \expandafter\yquant@prepare@callback@draw\expandafter{\yquant@i}%
          }%
+         \expandafter\yquant@prepare@callback@prepare\expandafter{\yquant@i}%
       }}%
    }%
+}
+
+\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3{%
+   \yquant@prepare@finalize@ctrl@single{#1}{#3}%
+}
+
+\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi@loop#1{%
+   \eappto\yquant@prepare@append{%
+      \yquant@prepare@callback@draw{#1}%
+   }%
+   \yquant@prepare@callback@prepare{#1}%
+}
+
+\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6{%
+   % there are no contiguous parts here, don't call the normal @multi
+   \forlistloop\yquant@prepare@finalize@ctrl@subcircuit@multi@loop{#4}%
 }

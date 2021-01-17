@@ -255,6 +255,10 @@
    \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
 }
 
+\protected\def\yquant@circuit@settype@prepare#1{%
+   \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+}
+
 \protected\long\def\yquant@circuit@setstyle#1#2{%
    \yquant@circuit@flushwire{#1}%
    \yquant@register@set@style{#1}{#2}%
@@ -283,10 +287,10 @@
 }
 
 % applies an action to wires a list of registers and causes them to be redrawn
-% #1: action
-% #2: arbitrary register list
-% #3: parameter(s)
-% #4: 0/1 if this is to be applied also now
+% #1: action for prepare
+% #2: action for draw
+% #3: arbitrary register list
+% #4: parameter(s)
 \protected\def\yquant@circuit@actonwires#1#2#3#4{%
    \begingroup%
       \let\tmp=\empty%
@@ -294,13 +298,11 @@
          % We do not extend the wire: a register that is discarded somewhere does not make
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
-         \appto\tmp{#1{##1}#3}%
+         \appto\tmp{#2{##1}#4}%
+         #2{##1}#4%
       }%
-      \dolistloop{#2}%
+      \dolistloop{#3}%
       \csxappto{\yquant@prefix draw}{\tmp}%
-      \ifx1#4 %
-         \tmp%
-      \fi%
    \endgroup%
 }
 
@@ -311,9 +313,9 @@
             {\yquant@circuit@output@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                {\unexpanded\expandafter{\yquant@attrs@remaining}}%
-               {\unexpanded\expandafter{\yquant@register@get@ids@list}}%
-               {\yquant@register@get@ids@min}{\yquant@register@get@ids@min}%
-               {\yquant@register@get@ids@count}%
+               {\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
+               {\yquant@circuit@operator@mintarget}{\yquant@circuit@operator@maxtarget}%
+               {\yquant@circuit@operator@numtarget}%
             }%
 }
 
@@ -334,6 +336,6 @@
    \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
    \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
    \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
-   \yquant@prepare@{#1}{}%
+   \yquant@prepare{#1}{}%
 }
 % END_FOLD

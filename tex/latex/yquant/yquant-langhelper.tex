@@ -1,4 +1,4 @@
-% Parsing attributes
+% BEGIN_FOLD Parsing attributes
 \let\yquant@langhelper@list@attrs=\empty
 
 \protected\long\def\yquant@langhelper@check@attrs[#1]{%
@@ -166,8 +166,9 @@
    \PackageError{yquant.sty}{Required attribute `#1' missing}%
       {You used a command that requires specifying the attribute `#1'.}%
 }%
+% END_FOLD
 
-% Parsing command itself
+% BEGIN_FOLD Parsing command itself
 \protected\def\yquant@langhelper@check@name#1 {%
    \lowercase{\edef\cmd{#1}}%
    \unless\ifcsname yquant@lang@\cmd\endcsname%
@@ -209,33 +210,75 @@
    % Check all necessary attributes were given.
    \csname yquant@langhelper@setup@attrs@check@\cmd\endcsname%
    % Finally execute the command
-   \csname yquant@lang@\cmd\endcsname%
+   \letcs\cmd{yquant@lang@\cmd}%
+   \yquant@langhelper@declare@command@@parse%
 }
+% END_FOLD
 
+% BEGIN_FOLD Declarations
 % Defining commands that accept registers and take an optional value
 % #1: name of the argument
-% #2: command that is to be called with three parameters: the indices of the positive and negative controls and registers, all as named lists
-\protected\def\yquant@langhelper@declare@command#1#2{%
+% #2: command (sequence) that is to be called before the target macros are filled
+% #3: command (sequence) that is to be called after the target macros are filled
+\protected\def\yquant@langhelper@declare@command#1#2#3{%
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
-      \long\protected\csgdef{yquant@lang@\cmd}{%
-         \let\cmd=#2%
-         \yquant@langhelper@declare@command@@parse%
+      \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
+         \unexpanded{#2}%
+         \yquant@circuit@operator{##1}{##2}{##3}%
+         \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+            \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+         }%
+         \unexpanded{#3}%
       }%
    \endgroup%
 }
 
-% Defining commands that accept registers and take an additional value
+% Defining commands that accept registers and take an optional value, but don't allow for controls
 % #1: name of the argument
-% #2: command that is to be called with three parameters: the indices of the positive and negative controls and registers, all as named lists
-\protected\def\yquant@langhelper@declare@command@uncontrolled#1#2{%
+% #2: command (sequence) that is to be called before the target macros are filled
+% #3: command (sequence) that is to be called after the target macros are filled
+\protected\def\yquant@langhelper@declare@command@uncontrolled#1#2#3{%
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
-      \long\protected\csgdef{yquant@lang@\cmd}{%
-         \def\cmd{\yquant@langhelper@declare@command@@uncontrolled{#2}}%
-         \yquant@langhelper@declare@command@@parse%
+      \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
+         \noexpand\ifstrempty{##1}\relax{%
+            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\cmd`}{}%
+         }%
+         \noexpand\ifstrempty{##2}\relax{%
+            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
+         }%
+         \unexpanded{#2}%
+         \yquant@circuit@operator{}{}{##3}%
+         \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+            \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+         }%
+         \unexpanded{#3}%
       }%
    \endgroup%
+}
+
+% Defining commands that accept an undefined register and take an optional value, but don't allow for controls
+% #1: name of the argument
+% #2: macro that is to be called with parameter #1 being the name of the register
+\protected\def\yquant@langhelper@declare@command@create#1#2{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      \long\protected\csxdef{yquant@lang@\cmd}##1##2{%
+         \noexpand\ifstrempty{##1}\relax{%
+            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\cmd`}{}%
+         }%
+         \noexpand\ifstrempty{##2}\relax{%
+            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
+         }%
+         \noexpand#2%
+      }%
+   \endgroup%
+}
+
+% make #1 an identical command to #2 (does not copy attributes)
+\protected\def\yquant@langhelper@declare@command@alias#1#2{%
+   \global\csletcs{yquant@lang@#1}{yquant@lang@#2}%
 }
 
 \long\def\yquant@langhelper@declare@command@@parse#1;{%
@@ -267,16 +310,7 @@
    }%
    \expandafter\cmd\params%
 }
-
-\protected\def\yquant@langhelper@declare@command@@uncontrolled#1#2#3{%
-   \ifstrempty{#2}\relax{%
-      \PackageError{yquant.sty}{Positive controls are not allowed for this command}{}%
-   }%
-   \ifstrempty{#3}\relax{%
-      \PackageError{yquant.sty}{Negative controls are not allowed for this command}{}%
-   }%
-   #1%
-}
+% END_FOLD
 
 % shorthands for validation of property values
 % #1: a macro that will contain the sanitized value

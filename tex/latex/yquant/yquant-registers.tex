@@ -52,7 +52,7 @@
        {}}% height, depth, and multi-space parts; at the end, the y position
       {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
-      {\yquant@register@get@clean@}% information about the last gate
+      {\yquant@register@flag@clean}% information about the last gate
    }%
    \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#2}{#3}%
@@ -99,7 +99,7 @@
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
       \yquant@register@set@xlastgate@aux%
-      {{\csname\yquant@prefix xshift\endcsname}{\yquant@register@get@clean@}}%
+      {{\csname\yquant@prefix xshift\endcsname}{\yquant@register@flag@clean}}%
 }
 
 \def\yquant@register@alias@extract yquant@env#1@{#1}%
@@ -792,13 +792,13 @@
 
 \def\yquant@register@get@style@aux#1#2#3#4#5#6{#5}
 
-\long\def\yquant@register@execclear@lastgate#1#2{%
+\protected\long\def\yquant@register@execclear@lastgate#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
       \expandafter%
       \yquant@register@execclear@lastgate@aux@i\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname{#2}%
    \else%
       \expandafter%
-      \yquant@register@get@lastgate@aux@i\csname\yquant@prefix register@#1\endcsname{#2}%
+      \yquant@register@execclear@lastgate@aux@i\csname\yquant@prefix register@#1\endcsname{#2}%
    \fi%
 }
 
@@ -809,7 +809,7 @@
 \long\def\yquant@register@execclear@lastgate@aux@ii#1#2#3#4#5#6#7#8{%
    \ifstrempty{#6}\relax{%
       #6{#8}%
-      \xdef#7{\unexpanded{#1#2#3#4#5{\@gobble}}}%
+      \xdef#7{\unexpanded{{#1}{#2}{#3}{#4}{#5}{}}}%
    }%
 }
 
@@ -865,23 +865,10 @@
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
 }
 
-% Executes #2 if all registers in the list #1 are clean (= freshly created or aliased), else executes #3
-\protected\def\yquant@register@get@clean#1{%
-   \let\next=\@secondoftwo%
-   \forlistloop\yquant@register@get@clean@loop{#1}%
-   \next%
-}
-
-\protected\def\yquant@register@get@clean@loop#1{%
-   \let\next=\@secondoftwo%
-   \yquant@register@execclear@lastgate{#1}{}%
-   \ifx\next\@secondoftwo%
-      \expandafter\listbreak%
-   \fi%
-}
-
-\protected\def\yquant@register@get@clean@#1{%
-   \let\next=\@firstoftwo%
+\protected\def\yquant@register@flag@clean#1{%
+   \ifstrequal{#1}{init}{%
+      \advance\count8 by 1 %
+   }\relax%
 }
 % END_FOLD
 
