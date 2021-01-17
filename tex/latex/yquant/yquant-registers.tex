@@ -53,6 +53,7 @@
        {}}% height, depth, and multi-space parts; at the end, the y position
       {{0pt}{0pt}{}{}}% wire start positions and clipping
       {}% wire style
+      {}% information about the last gate
    }%
    \global\csletcs{\yquant@prefix registername@#3[#4]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#3}{#4}%
@@ -84,6 +85,7 @@
       {{\yquant@config@register@minimum@height}%
        {\yquant@config@register@minimum@depth}%
        {}}% height, depth, and multi-space parts
+      {}% unused
       {}% unused
       {}% unused
    }%
@@ -694,7 +696,7 @@
    \fi%
 }
 
-\def\yquant@register@get@type@aux#1#2#3#4#5{#1}
+\def\yquant@register@get@type@aux#1#2#3#4#5#6{#1}
 
 \def\yquant@register@get@x#1{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
@@ -706,7 +708,7 @@
    \fi%
 }
 
-\def\yquant@register@get@x@aux#1#2#3#4#5{#2}
+\def\yquant@register@get@x@aux#1#2#3#4#5#6{#2}
 
 \def\yquant@register@get@height#1{%
    \expandafter\expandafter\expandafter%
@@ -718,7 +720,7 @@
    \yquant@register@get@height@aux\csname yquant@env#1@register@#2\endcsname%
 }
 
-\def\yquant@register@get@height@aux#1#2#3#4#5{\@firstofthree#3}
+\def\yquant@register@get@height@aux#1#2#3#4#5#6{\@firstofthree#3}
 
 \def\yquant@register@get@depth#1{%
    \expandafter\expandafter\expandafter%
@@ -730,14 +732,14 @@
    \yquant@register@get@depth@aux\csname yquant@env#1@register@#2\endcsname%
 }
 
-\def\yquant@register@get@depth@aux#1#2#3#4#5{\@secondofthree#3}
+\def\yquant@register@get@depth@aux#1#2#3#4#5#6{\@secondofthree#3}
 
 \def\yquant@register@get@multispace#1{%
    \expandafter\expandafter\expandafter%
    \yquant@register@get@multispace@aux\csname\yquant@prefix register@#1\endcsname%
 }
 
-\def\yquant@register@get@multispace@aux#1#2#3#4#5{\@thirdofthree#3}
+\def\yquant@register@get@multispace@aux#1#2#3#4#5#6{\@thirdofthree#3}
 
 % The y parameter get macros exist in two forms: The protected one is used during the storage to the draw macro; it should never be executed. The env environment then maps them to their proper expandable forms.
 \protected\def\yquant@register@get@y{%
@@ -760,7 +762,7 @@
    \fi%
 }
 
-\def\yquant@register@get@y@aux#1#2#3#4#5{#3}
+\def\yquant@register@get@y@aux#1#2#3#4#5#6{#3}
 
 % y distance between two registers.
 \def\yquant@register@get@ydist#1#2{%
@@ -787,8 +789,8 @@
    }%
 }
 
-\protected\def\yquant@register@get@lastwire@aux#1#2#3#4#5#6{%
-   \def#6{#4}%
+\protected\def\yquant@register@get@lastwire@aux#1#2#3#4#5#6#7{%
+   \def#7{#4}%
 }
 
 \def\yquant@register@get@style#1{%
@@ -801,7 +803,31 @@
    \fi%
 }
 
-\def\yquant@register@get@style@aux#1#2#3#4#5{#5}
+\def\yquant@register@get@style@aux#1#2#3#4#5#6{#5}
+
+\def\yquant@register@get@lastgate#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@lastgate@aux\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname%
+   \else%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@lastgate@aux\csname\yquant@prefix register@#1\endcsname%
+   \fi%
+}
+
+\def\yquant@register@get@lastgate@aux#1#2#3#4#5#6{#6}
+
+\def\ifyquant@register@lastgate@empty#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \expandafter\expandafter\expandafter%
+      \ifyquant@register@lastgate@empty@aux\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname%
+   \else%
+      \expandafter\expandafter\expandafter%
+      \ifyquant@register@lastgate@empty@aux\csname\yquant@prefix register@#1\endcsname%
+   \fi%
+}
+
+\def\ifyquant@register@lastgate@empty@aux#1#2#3#4#5#6{\ifstrempty{#6}}
 
 \def\yquant@register@get@typeywire#1{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
@@ -818,10 +844,10 @@
    }%
 }
 
-\protected\def\yquant@register@get@typeywire@aux#1#2#3#4#5#6#7#8{%
-   \def#6{#1}%
-   \def#7{#3}%
-   \def#8{#4}%
+\protected\def\yquant@register@get@typeywire@aux#1#2#3#4#5#6#7#8#9{%
+   \def#7{#1}%
+   \def#8{#3}%
+   \def#9{#4}%
 }%
 
 % Set #1 to the maximum x value found between #2 and #3
@@ -877,8 +903,8 @@
    \yquant@register@set@type@aux%
 }
 
-\long\def\yquant@register@set@type@aux#1#2#3#4#5#6{%
-   {#6}\unexpanded{{#2}{#3}{#4}{#5}}%
+\long\def\yquant@register@set@type@aux#1#2#3#4#5#6#7{%
+   {#7}\unexpanded{{#2}{#3}{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@set@x#1{%
@@ -897,12 +923,12 @@
    \yquant@register@set@x@aux%
 }
 
-\long\def\yquant@register@set@x@aux#1#2#3#4#5#6{%
-   \unexpanded{{#1}}{#6}\unexpanded{{#3}{#4}{#5}}%
+\long\def\yquant@register@set@x@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}}{#7}\unexpanded{{#3}{#4}{#5}{#6}}%
 }
 
-\long\def\yquant@register@set@typex@aux#1#2#3#4#5#6{%
-   #6\unexpanded{{#3}{#4}{#5}}%
+\long\def\yquant@register@set@typex@aux#1#2#3#4#5#6#7{%
+   #7\unexpanded{{#3}{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@update@height#1#2{%
@@ -924,12 +950,12 @@
       \yquant@register@set@height@aux{#3}%
 }
 
-\long\def\yquant@register@set@height@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@set@height@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}}%
-   {{#6}%
+   {{#7}%
     {\unexpanded\expandafter{\@secondofthree#3}}%
     {\unexpanded\expandafter{\@thirdofthree#3}}}%
-   \unexpanded{{#4}{#5}}%
+   \unexpanded{{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@update@depth#1#2{%
@@ -951,12 +977,12 @@
       \yquant@register@set@depth@aux{#3}%
 }
 
-\long\def\yquant@register@set@depth@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@set@depth@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}}%
    {{\unexpanded\expandafter{\@firstofthree#3}}%
-    {#6}%
+    {#7}%
     {\unexpanded\expandafter{\@thirdofthree#3}}}%
-   \unexpanded{{#4}{#5}}%
+   \unexpanded{{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@update@multispace#1#2#3{%
@@ -981,12 +1007,12 @@
    \fi%
 }
 
-\long\def\yquant@register@set@multispace@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@set@multispace@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}}%
    {{\unexpanded\expandafter{\@firstofthree#3}}%
     {\unexpanded\expandafter{\@secondofthree#3}}%
-    {#6}}%
-   \unexpanded{{#4}{#5}}%
+    {#7}}%
+   \unexpanded{{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@inject@extents#1#2{%
@@ -1000,20 +1026,20 @@
       \yquant@register@inject@depth@aux{#2}%
 }
 
-\long\def\yquant@register@inject@height@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@inject@height@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}}%
-   {{\the\dimexpr\@firstofthree#3+#6\relax}%
+   {{\the\dimexpr\@firstofthree#3+#7\relax}%
     {\unexpanded\expandafter{\@secondofthree#3}}%
     {\unexpanded\expandafter{\@thirdofthree#3}}}%
-   \unexpanded{{#4}{#5}}%
+   \unexpanded{{#4}{#5}{#6}}%
 }
 
-\long\def\yquant@register@inject@depth@aux#1#2#3#4#5#6{%
+\long\def\yquant@register@inject@depth@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}}%
    {{\unexpanded\expandafter{\@firstofthree#3}}%
-    {\the\dimexpr\@secondofthree#3+#6\relax}%
+    {\the\dimexpr\@secondofthree#3+#7\relax}%
     {\unexpanded\expandafter{\@thirdofthree#3}}}%
-   \unexpanded{{#4}{#5}}%
+   \unexpanded{{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@set@y#1{%
@@ -1032,8 +1058,8 @@
    \yquant@register@set@y@aux%
 }
 
-\long\def\yquant@register@set@y@aux#1#2#3#4#5#6{%
-   \unexpanded{{#1}{#2}}{#6}\unexpanded{{#4}{#5}}%
+\long\def\yquant@register@set@y@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}{#2}}{#7}\unexpanded{{#4}{#5}{#6}}%
 }
 
 \protected\def\yquant@register@set@lastwire#1{%
@@ -1052,8 +1078,8 @@
    \yquant@register@set@lastwire@aux%
 }
 
-\long\def\yquant@register@set@lastwire@aux#1#2#3#4#5#6{%
-   \unexpanded{{#1}{#2}{#3}}{#6}\unexpanded{{#5}}%
+\long\def\yquant@register@set@lastwire@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}{#2}{#3}}{#7}\unexpanded{{#5}{#6}}%
 }
 
 \protected\def\yquant@register@set@typelastwire#1{%
@@ -1066,8 +1092,8 @@
       \yquant@register@set@typelastwire@aux%
 }
 
-\long\def\yquant@register@set@typelastwire@aux#1#2#3#4#5#6{%
-   {\@firstoftwo#6}\unexpanded{{#2}{#3}}{\@secondoftwo#6}\unexpanded{{#5}}%
+\long\def\yquant@register@set@typelastwire@aux#1#2#3#4#5#6#7{%
+   {\@firstoftwo#7}\unexpanded{{#2}{#3}}{\@secondoftwo#7}\unexpanded{{#5}{#6}}%
 }
 
 \protected\def\yquant@register@set@style#1{%
@@ -1086,7 +1112,27 @@
    \yquant@register@set@style@aux%
 }
 
-\long\def\yquant@register@set@style@aux#1#2#3#4#5#6{%
-   \unexpanded{{#1}{#2}{#3}{#4}}{#6}%
+\long\def\yquant@register@set@style@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}{#2}{#3}{#4}}{#7}\unexpanded{{#6}}%
+}
+
+\protected\def\yquant@register@set@lastgate#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+   {%
+      \expandafter\yquant@register@set@@aux%
+         \csname\csname\yquant@prefix registermap@#1\endcsname\endcsname%
+   }{%
+      \expandafter\yquant@register@set@@aux%
+      \csname\yquant@prefix register@#1\endcsname%
+   }%
+   \yquant@register@set@lastgate@aux%
+}
+
+\long\def\yquant@register@set@lastgate@aux#1#2#3#4#5#6#7{%
+   \unexpanded{{#1}{#2}{#3}{#4}{#5}}{#7}%
 }
 % END_FOLD
