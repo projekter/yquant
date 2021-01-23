@@ -1,4 +1,5 @@
 \newif\ifyquant@env@lazy
+\newif\ifyquantmeasuring
 
 \protected\def\yquant@envunstar{%
    \yquant@env@lazyfalse%
@@ -47,12 +48,13 @@
    \yquant@env@begin@generic\yquant%
 }
 
-\long\protected\def\yquant@env@begin@generic#1[#2]{
+\long\protected\def\yquant@env@begin@generic#1[#2]{%
    \begingroup%
       \let\yquant@parent=\yquant@prefix%
       \global\advance\yquant@env by 1 %
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
+         \yquantmeasuringtrue%
          \yquant@env@substikz#1%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
@@ -137,6 +139,7 @@
          \ifyquantdebug%
             \csshow{\yquant@prefix draw}%
          \fi%
+         \yquantmeasuringfalse%
          \csname\yquant@prefix draw\endcsname%
          \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
          \global\yquant@env=0 %
