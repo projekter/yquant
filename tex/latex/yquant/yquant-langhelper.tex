@@ -216,6 +216,7 @@
 % END_FOLD
 
 % BEGIN_FOLD Declarations
+\newif\ifyquant@langhelper@execclear@lastgate
 % Defining commands that accept registers and take an optional value
 % #1: name of the argument
 % #2: command (sequence) that is to be called before the target macros are filled
@@ -224,11 +225,14 @@
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
       \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
+         \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{##1}{##2}{##3}%
-         \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
-            \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
-         }%
+         \noexpand\ifyquant@langhelper@execclear@lastgate%
+            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            }%
+         \noexpand\fi%
          \unexpanded{#3}%
       }%
    \endgroup%
@@ -248,11 +252,14 @@
          \noexpand\ifstrempty{##2}\relax{%
             \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
          }%
+         \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{}{}{##3}%
-         \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
-            \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
-         }%
+         \noexpand\ifyquant@langhelper@execclear@lastgate%
+            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            }%
+         \noexpand\fi%
          \unexpanded{#3}%
       }%
    \endgroup%

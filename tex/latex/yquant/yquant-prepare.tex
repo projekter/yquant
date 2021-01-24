@@ -47,7 +47,7 @@
    \fi%
    % we must be allowed to change the wire types during preparation for various reasons, so we need to reset it here (TODO: can we eliminate all those reasons?)
    \csxappto{\yquant@prefix draw}{%
-      \yquant@register@set@type{\csname\yquant@prefix registers\endcsname}{#3}%
+      \yquant@draw@init{\csname\yquant@prefix registers\endcsname}{#3}%
    }%
 }
 
@@ -309,6 +309,7 @@
          {#3}% register index
          {\nodename}%
    }%
+   \listadd\yquant@prepare@list{#3}%
    % determine the actual dimensions by a virtual draw command
    \pgfinterruptboundingbox%
       \yquant@env@virtualize@path%
@@ -330,6 +331,9 @@
       \yquant@draw@output@multi%
          #3%
          {\nodename}%
+   }%
+   \eappto\yquant@prepare@list{%
+      \expandafter\yquant@list@range\@secondandthirdoffive#3%
    }%
    \pgfinterruptboundingbox%
       \yquant@env@virtualize@path%
@@ -362,21 +366,9 @@
 }
 
 % BEGIN_FOLD replacement commands for draw actions that just keep track of the width
-\protected\long\def\yquant@prepare@subcircuit@create#1#2#3#4#5#6{%
-   \csdef{\yquant@prefix xpos@#1}{#2}%
-   \begingroup%
-      \ifstrempty{#5}\relax{%
-         \edef\cmd{%
-            \noexpand\path%
-               (#2, 0pt)%
-               node[/yquant/every label, /yquant/every initial label,%
-                    /yquant/every #3 label\ifx1#4, /yquant/every input label\fi,%
-                    name prefix=, name suffix=, name=]%
-                   {\unexpanded{#5}};%
-         }%
-         \cmd%
-      }%
-   \endgroup%
+\protected\long\def\yquant@prepare@subcircuit@init#1#2{%
+   \csdef{\yquant@prefix xpos@#1}{0pt}%
+   \yquant@register@set@type{#1}{#2}%
 }
 
 \protected\def\yquant@prepare@subcircuit@getmaxx#1{%
@@ -406,44 +398,30 @@
 \protected\long\def\yquant@prepare@subcircuit@group#1#2#3#4#5#6#7\yquant@draw@endgroup{%
    \begingroup%
       \yquant@prepare@subcircuit@getmaxx{#6}%
-      \message{^^J group: newx = \newx.}%
       % If the quotes library is loaded, activate it. (else, this is by default \relax)
       \tikz@enable@node@quotes%
       \yquant@config@operator@position@rightalignfalse%
       \yquant@config@operator@position@advancetrue%
       \yquant@set{#3}%
-      \ifyquant@config@operator@position@advance%
-         \ifyquant@config@operator@position@rightalign%
-            \def\newx{1sp}%
-         \else%
-            % 1sp: special marker = no gates, zero position, but initial text present
-            \ifdim\newx=1sp %
-               % just add the separation, drop this special 1sp marker
-               \let\newx=\yquant@config@operator@sep%
-            \else%
-               \ifdim\newx>1sp %
-                  \dimdef\newx{\newx+\yquant@config@operator@sep}%
-               \else%
-                  % there was no text and no operation before. For seamless circuits, start right at zero; else, add separation
-                  \ifyquant@env@seamless{%
-                     \def\newx{0pt}%
-                  }{%
-                     \let\newx=\yquant@config@operator@sep%
-                  }%
-               \fi%
-            \fi%
-            \dimdef\newx{\newx+#1}%
+      \let\next=\endgroup%
+      \ifyquant@config@operator@position@rightalign%
+         \ifdim#1>-\pgf@picminx%
+            \global\pgf@picminx=-\dimexpr#1\relax%
          \fi%
-         \ifdim\newx>\pgf@picmaxx %
-            \global\pgf@picmaxx=\newx %
-         \fi%
-         \edef\next{%
-            \endgroup%
-            \def\noexpand\newx{\newx}%
-            \noexpand\forlistloop\yquant@prepare@subcircuit@move@loop{#6}%
-         }%
       \else%
-         \let\next=\endgroup%
+         \dimdef\newx{%
+            \newx+\yquant@config@operator@sep+#1%
+         }%
+         \ifdim\newx>\pgf@picmaxx%
+            \global\pgf@picmaxx=\newx%
+         \fi%
+         \ifyquant@config@operator@position@advance%
+            \edef\next{%
+               \endgroup%
+               \def\noexpand\newx{\newx}%
+               \noexpand\forlistloop\yquant@prepare@subcircuit@move@loop{#6}%
+            }%
+         \fi%
       \fi%
    \next%
    \@gobblethree% three arguments for the endgroup
@@ -459,17 +437,38 @@
 }
 
 \protected\def\yquant@prepare@subcircuit@endwires{%
-   % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
-   \ifyquant@env@seamless{%
-      \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+   \expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+      % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
+      \ifyquant@env@seamless\relax{%
          \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
-      \fi%
-   }{%
-      \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
-   }%
+      }%
+   \else%
+      % if we have outputs, those will be realized as additional drawing groups following this macro, so increasing the picture at this point is rather pointless. Instead, we adjust the wire positions appropriately. The additional separation will be inserted by the outputs.
+      \begingroup%
+         \dimen0=-16383.99999pt %
+         \yquant@fordown \i := \csname\yquant@prefix registers\endcsname downto 1 {%
+            \ifcsname\yquant@prefix xpos@\i\endcsname%
+               \dimen2=\csname\yquant@prefix xpos@\i\endcsname\relax%
+               \ifdim\dimen0<\dimen2 %
+                  \dimen0=\dimen2 %
+               \fi%
+            \else%
+               \PackageError{yquant.sty}{Internal inconsistency detected}%
+                            {Undefined internal wire x position.}%
+            \fi%
+         }%
+         \expandafter%
+      \endgroup%
+      \expandafter\def\expandafter\newx\expandafter{\the\dimen0}%
+      \yquant@fordown \i := \csname\yquant@prefix registers\endcsname downto 1 {%
+         \cslet{\yquant@prefix xpos@\i}\newx%
+      }%
+   \fi%
    \let\yquant@circuit@endwires@finalize=\relax%
 }
 % END_FOLD
+
+\newbox\yquant@prepare@subcircuit@box
 
 \protected\long\def\yquant@prepare@subcircuit#1{%
    \yquant@sort@clear%
@@ -503,11 +502,15 @@
          \begingroup%
             \let\yquant@parent=\yquant@prefix%
             \edef\yquant@prefix{yquant@env\yquant@circuit@subcircuit@id @}%
-            \let\yquant@draw@create=\yquant@prepare@subcircuit@create%
+            \let\yquant@draw@init=\yquant@prepare@subcircuit@init%
             \let\yquant@draw@group=\yquant@prepare@subcircuit@group%
             \let\yquant@draw@alias=\@gobble%
             \let\yquant@draw@hspace=\yquant@prepare@subcircuit@hspace%
             \let\yquant@circuit@endwires=\yquant@prepare@subcircuit@endwires%
+            \let\yquant@circuit@flushwire=\@gobble%
+            \let\yquant@circuit@setstyle=\@gobbletwo%
+            \let\yquant@circuit@addstyle=\@gobbletwo%
+            % do not overwrite \yquant@register@set@type, which may also occur - we want to change the register type!
             % restore tikz commands... as in env@end
             \let\path=\tikz@command@path%
             \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
@@ -515,17 +518,22 @@
             \let\endtikz@scope@env=\yquant@env@substikz@endscope%
             \let\endscope=\endtikz@scope@env%
             \let\stopscope=\endscope%
-            \global\setbox\yquant@draw@subcircuit@box=\vbox to 1sp{%
+            \global\pgf@picmaxx=0pt %
+            \global\pgf@picminx=0pt %
+            \global\setbox\yquant@prepare@subcircuit@box=\vbox to 1sp{%
                \csname\yquant@prefix draw\endcsname%
             }%
-            \ifdim\pgf@picmaxx=-16000pt %
-               \global\pgf@picmaxx=0pt %
-               \global\pgf@picminx=0pt %
+            \ifdim\pgf@picmaxy=-16000pt %
                \global\pgf@picmaxy=0pt %
                \global\pgf@picminy=0pt %
             \fi%
-            \global\wd\yquant@draw@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
+            \global\wd\yquant@prepare@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
          \endgroup%
+         \edef\yquant@prepare@subcircuit@width{%
+            {\the\wd\yquant@prepare@subcircuit@box}% inner width
+            {\noexpand\the\dimexpr\pgf@picmaxx-\pgf@picminx\relax}% outer width
+            {\the\pgf@picminx}% left margin
+         }%
          \pgfresetboundingbox%
          \path%
             (0pt, 0pt)%
@@ -533,13 +541,16 @@
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
                  name prefix=, name suffix=, name=, y radius=0pt]%
-            {\box\yquant@draw@subcircuit@box};%
+            {\box\yquant@prepare@subcircuit@box};%
          % the extra height is taken care for by manually inserting it to the height of the first and last register in the subcircuit
          \yquant@register@inject@extents{\pgf@picmaxy}{-\pgf@picminy}%
+         \edef\cmd{%
+            \dimen0=\the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+            \yquant@prepare@subcircuit@add%
+         }%
          \expandafter%
       \endpgfinterruptboundingbox%
-      \expandafter\dimen\expandafter0\expandafter=%
-         \the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+      \cmd%
       \ifdim\dimen0>\dimen2 %
          \dimen2=\dimen0 %
       \fi%
@@ -548,6 +559,7 @@
    \dolistloop\yquant@circuit@operator@targets%
    % END_FOLD
    \yquant@prepare@controls%
+   \preto\yquant@attrs@remaining{internal/no advance,}%
    \yquant@prepare@finalize{}{#1}%
 }
 
@@ -557,15 +569,15 @@
    \unless\ifyquant@circuit@operator@hasControls%
       \listadd\yquant@prepare@list{#2}%
    \fi%
-   \yquant@sort@eadd{%
-      \yquant@draw@subcircuit@single%
-         {#2}% register index
-         {\yquant@circuit@subcircuit@id}%
-         {\nodename}%
+   \edef\yquant@prepare@subcircuit@add{%
+      \yquant@sort@eadd{%
+         \yquant@draw@subcircuit@single%
+            {#2}% register index
+            {\yquant@circuit@subcircuit@id}%
+            {\nodename}%
+            {\noexpand\yquant@prepare@subcircuit@width}%
+      }%
    }%
-   \unless\ifyquant@circuit@operator@hasControls%
-      \listadd\yquant@prepare@list{#2}%
-   \fi%
 }
 
 \protected\def\yquant@prepare@subcircuit@multi#1#2{%
@@ -577,17 +589,15 @@
          \expandafter\yquant@list@range\@secondandthirdoffive#2%
       }%
    \fi%
-   \yquant@sort@eadd{%
-      \yquant@draw@subcircuit@multi%
-         #2%
-         {\yquant@circuit@subcircuit@id}%
-         {\nodename}%
-   }
-   \unless\ifyquant@circuit@operator@hasControls%
-      \eappto\yquant@prepare@list{%
-         \expandafter\yquant@list@range\@secondandthirdoffive#2%
+   \edef\yquant@prepare@subcircuit@add{%
+      \yquant@sort@eadd{%
+         \yquant@draw@subcircuit@multi%
+            #2%
+            {\yquant@circuit@subcircuit@id}%
+            {\nodename}%
+            {\noexpand\yquant@prepare@subcircuit@width}%
       }%
-   \fi%
+   }%
 }
 
 \protected\def\yquant@prepare@finalize@ctrl#1{%
@@ -598,11 +608,15 @@
       \ifx\yquant@draw@multiinit#1%
          \let\next=\yquant@prepare@finalize@ctrl@multi%
       \else%
-         \ifx\yquant@draw@subcircuit@multi#1%
-            \let\next=\yquant@prepare@finalize@ctrl@subcircuit@multi%
+         \ifx\yquant@draw@output@multi#1%
+            \let\next=\yquant@prepare@finalize@ctrl@multi%
          \else%
-            \ifx\yquant@draw@subcircuit@single#1%
-               \let\next=\yquant@prepare@finalize@ctrl@subcircuit@single%
+            \ifx\yquant@draw@subcircuit@multi#1%
+               \let\next=\yquant@prepare@finalize@ctrl@subcircuit@multi%
+            \else%
+               \ifx\yquant@draw@subcircuit@single#1%
+                  \let\next=\yquant@prepare@finalize@ctrl@subcircuit@single%
+               \fi%
             \fi%
          \fi%
       \fi%
@@ -655,7 +669,7 @@
    }%
 }
 
-\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3{%
+\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3#4{%
    \yquant@prepare@finalize@ctrl@single{#1}{#3}%
 }
 
@@ -666,7 +680,7 @@
    \yquant@prepare@callback@prepare{#1}%
 }
 
-\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6{%
+\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6#7{%
    % there are no contiguous parts here, don't call the normal @multi
    \forlistloop\yquant@prepare@finalize@ctrl@subcircuit@multi@loop{#4}%
 }

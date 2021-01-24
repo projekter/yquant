@@ -58,15 +58,14 @@
    every input label/.style=%
       {},%
    internal/move label/.code=%
-      {%\ifdefined\yquant@draw@@x% only work in drawing mode
-       %   \ifdim\yquant@draw@@x=0pt %
-       %      \ifyquant@env@seamless\relax{%
-       %         \appto\yquant@draw@@style{,/yquant/every initial label}%
+      {%      \ifyquant@env@seamless\relax{%
                 \yquant@config@operator@position@rightaligntrue%
        %      }%
-       %   \fi%
-       %\fi%
       },
+   internal/no advance/.code=%
+      {\unless\ifyquantmeasuring% We don't draw subcircuits during measuring time, but we need their advancement
+          \yquant@config@operator@position@advancefalse%
+       \fi},
    % output label styles
    every output/.style=%
       {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%

@@ -1,5 +1,18 @@
 \newcount\yquant@draw@@currentcontroltype%
 
+\protected\def\yquant@draw@init#1#2{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      % for connected subcircuit wires, check if this actually changes the type and flush the wire if necessary
+      \unless\if\yquant@register@get@type{#1}#2\relax%
+         \yquant@circuit@flushwire{#1}%
+         \yquant@register@set@type{#1}{#2}%
+      \fi%
+   \else%
+      % for new wires, just reset the type. It might have changed from its initial value during preparation stage
+      \yquant@register@set@type{#1}{#2}%
+   \fi%
+}
+
 \protected\long\def\yquant@draw@group#1#2#3#4#5#6{%
    \begingroup%
       \yquant@register@get@maxxlist\yquant@draw@@x{#6}%
@@ -24,7 +37,10 @@
       \yquant@config@operator@position@advancetrue%
       \yquant@set{#3}%
       % if the operator is right-aligned, we will not advance, as we must assume that the x position is already chosen appropriately
-      \unless\ifyquant@config@operator@position@rightalign%
+      \ifyquant@config@operator@position@rightalign%
+         % for rightalign, we instead overwrite the lastx configurations, so that the outgoing wire starts after the operator. The wire should have been flushed before.
+         \forlistloop\yquant@draw@group@rightadvance{#6}%
+      \else%
          % TODO: seamless?
          \dimdef\yquant@draw@@x{%
             \yquant@draw@@x+\yquant@config@operator@sep%
@@ -39,6 +55,20 @@
 
 \protected\def\yquant@draw@group@advance#1{%
    \yquant@register@set@x{#1}\newx%
+}
+
+\protected\def\yquant@draw@group@rightadvance#1{%
+   \yquant@register@get@lastwire{#1}\wirelast%
+   \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
+      \expandafter\@thirdoffour\wirelast%
+   }{%
+      \yquant@register@set@lastwire{#1}{%
+         {\yquant@draw@@x}{\yquant@draw@@x}{}%
+         {\unexpanded\expandafter\expandafter\expandafter{%
+             \expandafter\@fourthoffour\wirelast%
+          }}%
+      }%
+   }\relax% else should not occur. It indicates the wire was not flushed properly before, so we won't remove the lastx content.
 }
 
 \protected\def\yquant@draw@endgroup#1#2#3{%
@@ -298,78 +328,84 @@
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
-\newbox\yquant@draw@subcircuit@box
-
 \protected\def\yquant@draw@subcircuit@nodecallback#1{%
    \ifstrequal{#1}{yquantbox}\relax{%
       \listcsxadd{\yquant@prefix draw@subcircuit@nodelist}{#1}%
    }%
 }
 
-\protected\long\def\yquant@draw@subcircuit@prepare#1#2{%
+% #1: id of subcircuit
+% #2: name
+% #3: {width of subcircuit (excluding outer box)}{including outer box}{left margin}
+% #4: affected wires
+\protected\long\def\yquant@draw@subcircuit@prepare#1#2#3#4{%
    \let\idx=\yquant@draw@@idx@content%
-   % In order to wrap the inner circuit in a proper box operator and clip outer paths appropriately (which was not possible yet, as we didn't know the exact vertical positions), we first place it within a box. During the setup time, we assumed that the subcircuit be placed at position #3; however, now, this has changed due to the additional box.
+   % In order to wrap the inner circuit in a proper box operator and clip outer paths appropriately (which was not possible yet, as we didn't know the exact vertical positions), we first place it within a box.
    % First, we anticipate the macro that is used by our subcircuit to store the node
    % names.
    \edef\yquant@draw@subcircuit@nodelist{yquant@env#1@draw@subcircuit@nodelist}%
    \global\cslet\yquant@draw@subcircuit@nodelist\empty%
-   % We must globally store the leftmost position, as perhaps no wire was drawn yet - so we'll miss something in the global bounding box
-   \unless\ifdefined\yquant@parent%
-      \edef\yquant@draw@subcircuit@outermin{\the\pgf@picminx}%
-   \fi%
    \pgfinterruptboundingbox%
-      \let\yquant@parent=\yquant@prefix%
-      \def\yquant@prefix{yquant@env#1@}%
-      \ifstrempty{#2}{%
-         % we make sure there are no conflicts by prefixing any named nodes in any case.
-         \pgfkeys{/tikz/name prefix/.expanded={sub\yquant@prefix-}}%
-         \let\pgf@nodecallback=\yquant@draw@subcircuit@nodecallback%
-      }{%
-         \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}#2-}}%
+      % now we must take care of extending all the wires appropriately until the beginning of the box. #3 contains width of this box, #4 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
+      \dimdef\newx{%
+         \yquant@draw@@x-.5\dimexpr\@secondofthree#3\relax%
       }%
-      \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
-      \cslet{\yquant@prefix xshift}\yquant@draw@@x%
-      \global\setbox\yquant@draw@subcircuit@box=\hbox to 0pt {{%
-         % bypass 'overlay' option
-         \pgf@relevantforpicturesizetrue%
-         \pgfsys@beginpicture%
-            % reset all styles to the expected defaults (similar, but extended to \pgfpicture, see pgf issue #870)
-            \pgfsetcolor{.}%
-            \pgfsetlinewidth{\pgflinewidth}%
-            % for the others, pgf does not keep track of the state, so we cannot do much
-            \pgfsetbuttcap%
-            \pgfsetmiterjoin%
-            \pgfsetmiterlimit{10}%
-            \pgfsetdash{}{0pt}%
-            \csname\yquant@prefix draw\endcsname%
-            \ifdim\pgf@picmaxx=-16000pt %
-               \global\pgf@picmaxx=0pt %
-               \global\pgf@picminx=0pt %
-               \global\pgf@picmaxy=0pt %
-               \global\pgf@picminy=0pt %
-            \fi%
-            \ifyquantdebug%
-               \pgf@relevantforpicturesizefalse%
-               \draw[green] (current bounding box.north east) rectangle (current bounding box.south west);%
-            \fi%
-         \pgfsys@endpicture%
-      }}%
-      \global\setbox\yquant@draw@subcircuit@box=\hbox to \dimexpr\pgf@picmaxx-\pgf@picminx\relax {%
-         \hskip-\pgf@picminx%
-         \lower\pgf@picmaxy%
-         \box\yquant@draw@subcircuit@box%
+      \dimen0=\newx%
+      \let\pgfshapeclippathhorzresult=\empty%
+      \forlistloop\yquant@draw@move@loop{#4}%
+      % but the new positions are not at the beginning of the box, but inside (with possible margin)
+      \dimdef\newx{%
+         \yquant@draw@@x-.5\dimexpr\@firstofthree#3\relax-\@thirdofthree#3%
       }%
-      \ht\yquant@draw@subcircuit@box=0pt%
-      \dp\yquant@draw@subcircuit@box=\dimexpr\pgf@picmaxy-\pgf@picminy\relax%
+      \forlistloop\yquant@draw@group@advance{#4}%
+      \begingroup%
+         \let\yquant@parent=\yquant@prefix%
+         \def\yquant@prefix{yquant@env#1@}%
+         \ifstrempty{#2}{%
+            % we make sure there are no conflicts by prefixing any named nodes in any case.
+            \pgfkeys{/tikz/name prefix/.expanded={sub\yquant@prefix-}}%
+            \let\pgf@nodecallback=\yquant@draw@subcircuit@nodecallback%
+         }{%
+            \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}#2-}}%
+         }%
+         \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
+         \edef\yquant@draw@subcircuit@style{%
+            /yquant/every operator, \yquant@draw@@style,%
+            /yquant/this operator, /yquant/operator/multi main=true,%
+         }
+         \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
+         \csname\yquant@prefix draw\endcsname%
+      \endgroup%
+      \edef\cmd{%
+         \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax)%
+            node[/yquant/every operator, \yquant@draw@@style,%
+                 /yquant/operators/every subcircuit box, /yquant/this operator,%
+                 /yquant/operators/this subcircuit box,%
+                 /yquant/operator/multi main=true,%
+                 name prefix=, name suffix=, name=yquantbox]%
+            {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#3 {}}};%
+      }%
+      \cmd%
+      \edef\restoredims{%
+         \noexpand\ifdim\pgf@picminx>\the\pgf@picminx%
+            \global\pgf@picminx=\the\pgf@picminx\space%
+         \noexpand\fi%
+         \noexpand\ifdim\pgf@picmaxx<\the\pgf@picmaxx%
+            \global\pgf@picmaxx=\the\pgf@picmaxx\space%
+         \noexpand\fi%
+         \noexpand\ifdim\pgf@picminy>\the\pgf@picminy%
+            \global\pgf@picminy=\the\pgf@picminy\space%
+         \noexpand\fi%
+         \noexpand\ifdim\pgf@picmaxy<\the\pgf@picmaxy%
+            \global\pgf@picmaxy=\the\pgf@picmaxy\space%
+         \noexpand\fi%
+      }%
       \expandafter%
    \endpgfinterruptboundingbox%
-   \expandafter\edef\expandafter\yquant@draw@subcircuit@y\expandafter{%
-      \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax%
-   }%
-   \unless\ifdefined\yquant@parent%
-      \global\pgf@picminx=\yquant@draw@subcircuit@outermin%
-      \gundef\yquant@draw@subcircuit@outermin%
-   \fi%
+   \restoredims%
+   % Now that the subcircuit is finished, we need advance all the wires
+   \dimdef\newx{\yquant@draw@@x+.5\dimexpr\yquant@draw@@width\relax}%
+   \forlistloop\yquant@draw@group@advance{#4}%
    \ifstrempty{#2}{%
       % However, if the outer node was not named, no access to the inner nodes is desired, so we delete all nodes again.
       \def\do##1{%
@@ -389,19 +425,14 @@
    }%
 }
 
-\protected\long\def\yquant@draw@subcircuit@single#1#2#3{%
-   \yquant@draw@subcircuit@prepare{#2}{#3}%
+\protected\long\def\yquant@draw@subcircuit@single#1#2#3#4{%
+   \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#1}%
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
-         node[/yquant/every operator, \yquant@draw@@style,%
-              /yquant/operators/every subcircuit box, /yquant/this operator,%
-              /yquant/operators/this subcircuit box,%
-              name prefix=, name suffix=, name=yquantbox]%
-         {\box\yquant@draw@subcircuit@box};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, \yquant@draw@@style,%
-                        /yquant/operators/every subcircuit box, /yquant/this operator,%
-                        /yquant/operators/this subcircuit box}%
+      \pgfshapeclippath{yquantbox}{%
+          /yquant/every operator, \yquant@draw@@style,%
+          /yquant/operators/every subcircuit box, /yquant/this operator,%
+          /yquant/operators/this subcircuit box,%
+      }%
    }%
    \cmd%
    % see comment in draw@subcircuit@multi
@@ -417,31 +448,24 @@
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
-\protected\long\def\yquant@draw@subcircuit@multi#1#2#3#4#5#6{%
+\protected\long\def\yquant@draw@subcircuit@multi#1#2#3#4#5#6#7{%
    % there is no contiguous slicing for subcircuits, as they may have all kinds of wire operations that can extend beyond the individual slices, let alone ancillas
-   \yquant@draw@subcircuit@prepare{#5}{#6}%
-   % We need to somehow extract the y radius
+   \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#4}%
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \yquant@draw@subcircuit@y)%
-         node[/yquant/every operator, \yquant@draw@@style,%
-              /yquant/operators/every subcircuit box, /yquant/this operator,%
-              /yquant/operators/this subcircuit box,
-              /yquant/operator/multi main=true,%
-              name prefix=, name suffix=, name=yquantbox]%
-            {\box\yquant@draw@subcircuit@box};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, \yquant@draw@@style,%
-                        /yquant/operators/every subcircuit box, /yquant/this operator,%
-                        /yquant/operators/this subcircuit box,%
-                        /yquant/operator/multi main=true}%
+      \pgfshapeclippath{yquantbox}{%
+          /yquant/every operator, \yquant@draw@@style,%
+          /yquant/operators/every subcircuit box, /yquant/this operator,%
+          /yquant/operators/this subcircuit box,%
+          /yquant/operator/multi main=true,%
+      }%
    }%
    \cmd%
    % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
    \let\nonaffectedpgfshapeclippathhorzresult=\pgfshapeclippathhorzresult%
    \yquant@for \i := #1 to #2 {%
       \xifinlist{\i}{#4}{%
-         % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but the allows to specify even more complicated ones) and place the wire at this position without clipping.
-         % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of thw operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
+         % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but allows to specify even more complicated ones) and place the wire at this position without clipping.
+         % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of the operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
          \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
                                        {\yquant@register@get@y\i}%
          \let\pgfshapeclippathhorzresult=\empty%
@@ -585,41 +609,43 @@
                }%
             }%
             \pgfscope%
-               % install the clipping
-               \pgfsyssoftpath@setcurrentpath\wireclipping%
-               % invert the clipping
-               \ifyquantdebug%
-                  \pgfsetfillcolor{orange}%
-                  \pgfsetfillopacity{.3}%
-                  \pgfusepathqfill%
-               \else%
-                  % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
-                  \begingroup%
-                     \pgftransforminvert%
-                     \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                     \global\@tempdima=\pgf@y%
-                     \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-                     \global\@tempdimb=\pgf@y%
-                  \endgroup%
-                  % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
-                  % This may be insufficient if there no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
-                  \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
-                     \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
-                     \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
+               \unless\ifx\wireclipping\empty% may happen if the style is altered to be invisible, though the type is not none
+                  % install the clipping
+                  \pgfsyssoftpath@setcurrentpath\wireclipping%
+                  % invert the clipping
+                  \ifyquantdebug%
+                     \pgfsetfillcolor{orange}%
+                     \pgfsetfillopacity{.3}%
+                     \pgfusepathqfill%
+                  \else%
+                     % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
+                     \begingroup%
+                        \pgftransforminvert%
+                        \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                        \global\@tempdima=\pgf@y%
+                        \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+                        \global\@tempdimb=\pgf@y%
+                     \endgroup%
+                     % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
+                     % This may be insufficient if there no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
+                     \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
+                        \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
+                        \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
+                     \fi%
+                     \ifdim\dimexpr\@tempdimb-\@tempdima\relax<1cm %
+                        \@tempdima=\dimexpr\wireypos-5mm\relax%
+                        \@tempdimb=\dimexpr\wireypos+5mm\relax%
+                     \fi%
+                     \pgfinterruptboundingbox%
+                        \pgfpathrectanglecorners%
+                           {\pgfqpoint{\dimexpr\wirexprevpos-2\pgflinewidth\relax}%
+                                      {\@tempdima}}%
+                           {\pgfqpoint{\dimexpr\wirexpos+2\pgflinewidth\relax}%
+                                      {\@tempdimb}}%
+                     \endpgfinterruptboundingbox%
+                     \pgfseteorule% even-odd to properly invert the clipping
+                     \pgfusepathqclip%
                   \fi%
-                  \ifdim\dimexpr\@tempdimb-\@tempdima\relax<1cm %
-                     \@tempdima=\dimexpr\wireypos-5mm\relax%
-                     \@tempdimb=\dimexpr\wireypos+5mm\relax%
-                  \fi%
-                  \pgfinterruptboundingbox%
-                     \pgfpathrectanglecorners%
-                        {\pgfqpoint{\dimexpr\wirexprevpos-2\pgflinewidth\relax}%
-                                   {\@tempdima}}%
-                        {\pgfqpoint{\dimexpr\wirexpos+2\pgflinewidth\relax}%
-                                   {\@tempdimb}}%
-                  \endpgfinterruptboundingbox%
-                  \pgfseteorule% even-odd to properly invert the clipping
-                  \pgfusepathqclip%
                \fi%
                % the clip inversion is left to the drawing commands (clip two \pgflinewidth more to avoid renderer artifacts)
                \csname yquant@draw@wire@\wiretype\endcsname{#1}%

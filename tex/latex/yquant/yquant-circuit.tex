@@ -46,9 +46,6 @@
    }{%
       \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\yquant@config@operator@sep}%
    }%
-   \ifcsname\yquant@prefix xshift\endcsname%
-      \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\csname\yquant@prefix xshift\endcsname}%
-   \fi%
    \let\yquant@circuit@endwires@finalize=\relax%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
       % we only extend the wire if it does not come from the outer circuit - this one would be responsible for the extension.
@@ -71,17 +68,7 @@
 
 % outputs the wire according to its previous instructions and prepares for a change in the wire style
 \protected\def\yquant@circuit@flushwire#1{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
-      % make sure drawing the wire does not affect our left bounding box position
-      \edef\storedleft{\the\pgf@picminx}%
-      \yquant@draw@wire{#1}0%
-      \ifdim\pgf@picminx<\yquant@draw@subcircuit@outermin%
-         \xdef\yquant@draw@subcircuit@outermin{\the\pgf@picminx}%
-      \fi%
-      \global\pgf@picminx=\storedleft%
-   \else%
-      \yquant@draw@wire{#1}0%
-   \fi%
+   \yquant@draw@wire{#1}0%
    \begingroup%
       \yquant@register@get@lastwire{#1}\wirelast%
       \yquant@register@set@lastwire{#1}{%

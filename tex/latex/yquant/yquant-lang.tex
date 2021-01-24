@@ -14,17 +14,14 @@
       \let\yquant@lang@attr@input=\relax%
       \undef\yquant@lang@attr@output%
    },%
-   in/.default=\regidx,%
    out/.code={%
       \undef\yquant@lang@attr@input%
       \let\yquant@lang@attr@output=\relax%
    },%
-   out/.default=\regidx,%
    inout/.code={%
       \let\yquant@lang@attr@input=\relax%
       \let\yquant@lang@attr@output=\relax%
-   }%
-   inout/.default=\regidx,%
+   },%
    frameless/.code={%
       \pgfkeysalso{/yquant/operators/subcircuit/frameless}%
       \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/frameless}%
@@ -627,7 +624,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {settype}%
-   {}%
+   {\yquant@langhelper@execclear@lastgatefalse}%
    {%
       \yquant@register@type@fromstring\yquant@lang@attr@value\yquant@circuit@settype@to%
       \yquant@circuit@actonwires%
@@ -648,7 +645,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {setstyle}%
-   {}%
+   {\yquant@langhelper@execclear@lastgatefalse}%
    {%
       \yquant@circuit@actonwires%
          \@gobbletwo%
@@ -660,7 +657,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {addstyle}%
-   {}%
+   {\yquant@langhelper@execclear@lastgatefalse}%
    {%
       \yquant@circuit@actonwires%
          \@gobbletwo%
