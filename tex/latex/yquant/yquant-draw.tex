@@ -2,7 +2,7 @@
 
 \protected\def\yquant@draw@init#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
-      % for connected subcircuit wires, check if this actually changes the type and flush the wire if necessary
+      % for connected subcircuit wires, check if this actually changes the type [happens for formerly discarded output wires] and flush the wire if necessary
       \unless\if\yquant@register@get@type{#1}#2\relax%
          \yquant@circuit@flushwire{#1}%
          \yquant@register@set@type{#1}{#2}%
@@ -38,7 +38,7 @@
       \yquant@set{#3}%
       % if the operator is right-aligned, we will not advance, as we must assume that the x position is already chosen appropriately
       \ifyquant@config@operator@position@rightalign%
-         % for rightalign, we instead overwrite the lastx configurations, so that the outgoing wire starts after the operator. The wire should have been flushed before.
+         % for rightalign, we instead overwrite the lastx configurations, so that the outgoing wire starts after the operator.
          \forlistloop\yquant@draw@group@rightadvance{#6}%
       \else%
          % TODO: seamless?
@@ -58,6 +58,10 @@
 }
 
 \protected\def\yquant@draw@group@rightadvance#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      % for connected subcircuit wires, make sure to flush the wire until the beginning.
+      \yquant@circuit@flushwire{#1}%
+   \fi%
    \yquant@register@get@lastwire{#1}\wirelast%
    \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
       \expandafter\@thirdoffour\wirelast%
@@ -345,7 +349,14 @@
    % names.
    \edef\yquant@draw@subcircuit@nodelist{yquant@env#1@draw@subcircuit@nodelist}%
    \global\cslet\yquant@draw@subcircuit@nodelist\empty%
-   \pgfinterruptboundingbox%
+   % \pgfinterruptboundingbox, but just for y
+   \begingroup%
+      \edef\pgf@interrupt@savemaxy{\the\pgf@picmaxy}%
+      \edef\pgf@interrupt@saveminy{\the\pgf@picminy}%
+      \pgf@picmaxy=-16000pt %
+      \pgf@picminy=16000pt %
+      \pgf@size@hookedfalse%
+      \let\pgf@path@size@hook=\pgfutil@empty%
       % now we must take care of extending all the wires appropriately until the beginning of the box. #3 contains width of this box, #4 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
       \dimdef\newx{%
          \yquant@draw@@x-.5\dimexpr\@secondofthree#3\relax%
@@ -386,23 +397,14 @@
             {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#3 {}}};%
       }%
       \cmd%
-      \edef\restoredims{%
-         \noexpand\ifdim\pgf@picminx>\the\pgf@picminx%
-            \global\pgf@picminx=\the\pgf@picminx\space%
-         \noexpand\fi%
-         \noexpand\ifdim\pgf@picmaxx<\the\pgf@picmaxx%
-            \global\pgf@picmaxx=\the\pgf@picmaxx\space%
-         \noexpand\fi%
-         \noexpand\ifdim\pgf@picminy>\the\pgf@picminy%
-            \global\pgf@picminy=\the\pgf@picminy\space%
-         \noexpand\fi%
-         \noexpand\ifdim\pgf@picmaxy<\the\pgf@picmaxy%
-            \global\pgf@picmaxy=\the\pgf@picmaxy\space%
-         \noexpand\fi%
-      }%
-      \expandafter%
-   \endpgfinterruptboundingbox%
-   \restoredims%
+   % \endpgfinterruptboundingbox + increase
+      \ifdim\pgf@interrupt@savemaxy>\pgf@picmaxy%
+         \global\pgf@picmaxy=\pgf@interrupt@savemaxy%
+      \fi%
+      \ifdim\pgf@interrupt@saveminy<\pgf@picminy%
+         \global\pgf@picminy=\pgf@interrupt@saveminy%
+      \fi%
+   \endgroup%
    % Now that the subcircuit is finished, we need advance all the wires
    \dimdef\newx{\yquant@draw@@x+.5\dimexpr\yquant@draw@@width\relax}%
    \forlistloop\yquant@draw@group@advance{#4}%
@@ -620,6 +622,15 @@
                   \else%
                      % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
                      \begingroup%
+                        \ifdim\pgf@picminx>\pgf@picmaxx%
+                           % nothing drawn yet (or bounding box reset)
+                           \pgf@picminx=0pt %
+                           \pgf@picmaxx=0pt %
+                        \fi%
+                        \ifdim\pgf@picminy>\pgf@picmaxy%
+                           \pgf@picminy=0pt %
+                           \pgf@picmaxy=0pt %
+                        \fi%
                         \pgftransforminvert%
                         \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
                         \global\@tempdima=\pgf@y%
@@ -636,13 +647,13 @@
                         \@tempdima=\dimexpr\wireypos-5mm\relax%
                         \@tempdimb=\dimexpr\wireypos+5mm\relax%
                      \fi%
-                     \pgfinterruptboundingbox%
+                     \pgf@relevantforpicturesizefalse%
                         \pgfpathrectanglecorners%
                            {\pgfqpoint{\dimexpr\wirexprevpos-2\pgflinewidth\relax}%
                                       {\@tempdima}}%
                            {\pgfqpoint{\dimexpr\wirexpos+2\pgflinewidth\relax}%
                                       {\@tempdimb}}%
-                     \endpgfinterruptboundingbox%
+                     \pgf@relevantforpicturesizetrue%
                      \pgfseteorule% even-odd to properly invert the clipping
                      \pgfusepathqclip%
                   \fi%

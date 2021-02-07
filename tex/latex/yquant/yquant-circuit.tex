@@ -238,8 +238,10 @@
 % BEGIN_FOLD Helpers for operator callbacks
 % turn a wire into a different type
 \def\yquant@circuit@settype#1{%
-   \yquant@circuit@flushwire{#1}%
-   \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+      \yquant@circuit@flushwire{#1}%
+      \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+   \fi%
 }
 
 \protected\def\yquant@circuit@settype@prepare#1{%
@@ -286,7 +288,7 @@
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
          \appto\tmp{#2{##1}#4}%
-         #2{##1}#4%
+         #1{##1}#4%
       }%
       \dolistloop{#3}%
       \csxappto{\yquant@prefix draw}{\tmp}%
