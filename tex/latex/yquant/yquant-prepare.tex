@@ -409,8 +409,20 @@
             \global\pgf@picminx=-\dimexpr#1\relax%
          \fi%
       \else%
-         \dimdef\newx{%
-            \newx+\yquant@config@operator@sep+#1%
+         \ifyquant@env@seamless{%
+            \ifdim\newx=0pt %
+               \dimdef\newx{%
+                  \newx+#1%
+               }%
+            \else%
+               \dimdef\newx{%
+                  \newx+\yquant@config@operator@sep+#1%
+               }%
+            \fi%
+         }{%
+            \dimdef\newx{%
+               \newx+\yquant@config@operator@sep+#1%
+            }%
          }%
          \ifdim\newx>\pgf@picmaxx%
             \global\pgf@picmaxx=\newx%
@@ -527,6 +539,12 @@
                \global\pgf@picmaxy=0pt %
                \global\pgf@picminy=0pt %
             \fi%
+            \ifyquant@env@seamless{%
+               % for seamless circuits, we do not have an initial separation. However, if there is an label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
+               \ifdim\pgf@picminx<0pt %
+                  \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
+               \fi%
+            }\relax%
             \global\wd\yquant@prepare@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
          \endgroup%
          \edef\yquant@prepare@subcircuit@width{%

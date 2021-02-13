@@ -41,9 +41,16 @@
          % for rightalign, we instead overwrite the lastx configurations, so that the outgoing wire starts after the operator.
          \forlistloop\yquant@draw@group@rightadvance{#6}%
       \else%
-         % TODO: seamless?
-         \dimdef\yquant@draw@@x{%
-            \yquant@draw@@x+\yquant@config@operator@sep%
+         \ifyquant@env@seamless{%
+            \unless\ifdim\yquant@draw@@x=\yquant@draw@subcircuit@leftpos%
+               \dimdef\yquant@draw@@x{%
+                  \yquant@draw@@x+\yquant@config@operator@sep%
+               }%
+            \fi%
+         }{%
+            \dimdef\yquant@draw@@x{%
+               \yquant@draw@@x+\yquant@config@operator@sep%
+            }%
          }%
          \ifyquant@config@operator@position@advance%
             \dimdef\newx{\yquant@draw@@x+#1}%
@@ -362,6 +369,7 @@
          \yquant@draw@@x-.5\dimexpr\@secondofthree#3\relax%
       }%
       \dimen0=\newx%
+      \let\yquant@draw@subcircuit@leftpos=\newx% seamless subcircuits: do not add another separation if we are there
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#4}%
       % but the new positions are not at the beginning of the box, but inside (with possible margin)

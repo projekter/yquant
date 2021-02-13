@@ -240,6 +240,7 @@
    {%
       % there are no multi inits in this context
       \preto\yquant@attrs@remaining{internal/move label,}%
+      \def\yquant@config@operator@minimum@width{0pt}%
       \expandafter\yquant@prepare%
          \expandafter{\yquant@lang@attr@value}%
          {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@create@style\space label}%
@@ -577,6 +578,7 @@
       \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
       \let\yquant@prepare@multi=\yquant@prepare@multiinit%
       \ifnum\count8=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
+         \def\yquant@config@operator@minimum@width{0pt}%
          \preto\yquant@attrs@remaining{internal/move label,}%
          \edef\cmd{%
             \yquant@prepare%

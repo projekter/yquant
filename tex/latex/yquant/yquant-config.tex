@@ -58,10 +58,7 @@
    every input label/.style=%
       {},%
    internal/move label/.code=%
-      {%      \ifyquant@env@seamless\relax{%
-                \yquant@config@operator@position@rightaligntrue%
-       %      }%
-      },
+      {\yquant@config@operator@position@rightaligntrue},
    internal/no advance/.code=%
       {\unless\ifyquantmeasuring% We don't draw subcircuits during measuring time, but we need their advancement
           \yquant@config@operator@position@advancefalse%
