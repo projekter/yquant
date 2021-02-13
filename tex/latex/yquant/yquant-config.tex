@@ -136,13 +136,28 @@
    this subcircuit box style/.style=%
       {/yquant/operators/this subcircuit box/.append style={#1}},%
    operators/subcircuit/frameless/.style=
-      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}},
-   operators/subcircuit/seamless/.code=%
-      {\pgfkeysalso{/yquant/operators/subcircuit/frameless}%
-       \letcs\yquant@prevseamless{\yquant@prefix seamless}%
-       \yquant@config@circuit@seamlesstrue},
-   operators/every custom gate/.style=%
-      {/yquant/operators/subcircuit/seamless, /yquant/register/default name=},
+      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}}%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      operators/subcircuit/seamless/.code=%
+         {\pgfkeysalso{/yquant/operators/subcircuit/frameless}%
+          \letcs\yquant@prevseamless{\yquant@prefix seamless}%
+          \yquant@config@circuit@seamlesstrue},
+      operators/every custom gate/.style=%
+         {/yquant/operators/subcircuit/seamless, /yquant/register/default name=}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      operators/subcircuit/seamless/.code=%
+         {\pgfkeysalso{/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
+          \letcs\yquant@prevseamless{\yquant@prefix seamless}%
+          \yquant@config@circuit@seamlesstrue},
+      operators/every custom gate/.style=%
+         {/yquant/operators/subcircuit/seamless}%
+   }
+\fi
+\pgfqkeys{/yquant}{%
    % every h, every x, every y, every z are implicitly defined during gate declaration
    operators/every pauli/.style=%
       {/yquant/operators/every box},%
