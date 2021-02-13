@@ -287,7 +287,7 @@
          % We do not extend the wire: a register that is discarded somewhere does not make
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
-         \appto\tmp{#2{##1}#4}%
+         \eappto\tmp{#2{##1}#4}%
          #1{##1}#4%
       }%
       \dolistloop{#3}%
