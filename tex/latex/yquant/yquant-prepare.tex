@@ -255,7 +255,7 @@
    \edef\cmd{%
       \noexpand\path (0pt, 0pt)%
          node[/yquant/every operator, \yquant@prepare@style, /yquant/this operator,%
-              /yquant/operator/multi main=\ifnum#3=1 true\else false\fi,%
+              /yquant/internal/multi main=\ifnum#3=1 true\else false\fi,%
               name prefix=, name suffix=, name=]%
             {\unexpanded\expandafter{\yquant@prepare@content}};%
    }%

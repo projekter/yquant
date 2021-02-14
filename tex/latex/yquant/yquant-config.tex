@@ -13,22 +13,8 @@
       \decoration{\pgfkeysvalueof{/pgf/decoration/post}}%
    }%
 }
-\pgfqkeys{/yquant}{%
-   every circuit/.style={%
-      every node/.prefix style={transform shape}
-   },%
-}
-\@ifpackagelater{pgf}{2020/09/31}\relax{
-   \pgfkeys{/yquant/every circuit/.append style={%
-      every label/.prefix style={transform shape=false}%
-   }}
-}
-\pgfqkeys{/yquant}{%
-   circuit/seamless/.is if=yquant@config@circuit@seamless,
-   % register settings
-   register/default name/.store in=%
-      \yquant@config@register@default@name
-}%
+
+% BEGIN_FOLD Circuit layout
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       register/minimum height/.code=%
@@ -46,7 +32,18 @@
 \pgfqkeys{/yquant}{%
    register/separation/.code=%
       {\dimdef\yquant@config@register@sep{#1}},%
-   % register label style
+   operator/minimum width/.code=%
+      {\dimdef\yquant@config@operator@minimum@width{#1}},%
+   operator/separation/.code=%
+      {\dimdef\yquant@config@operator@sep{#1}},%
+   operator/multi warning/.is if=%
+      yquant@config@operator@multi@warn%
+}%
+% END_FOLD
+% BEGIN_FOLD Register creation
+\pgfqkeys{/yquant}{%
+   register/default name/.store in=%
+      \yquant@config@register@default@name,
    every label/.style=%
       {shape=yquant-init, anchor=center, align=right, outer xsep=2pt},%
    every initial label/.style=%
@@ -66,14 +63,9 @@
          {}%
    }%
 \fi%
+% END_FOLD
+% BEGIN_FOLD Register outputs
 \pgfqkeys{/yquant}{%
-   internal/move label/.code=%
-      {\yquant@config@operator@position@rightaligntrue},
-   internal/no advance/.code=%
-      {\unless\ifyquantmeasuring% We don't draw subcircuits during measuring time, but we need their advancement
-          \yquant@config@operator@position@advancefalse%
-       \fi},
-   % output label styles
    every output/.style=%
       {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
    every qubit output/.style=%
@@ -83,8 +75,21 @@
    every qubits output/.style=%
       {},%
    every multi output/.style=%
-      {draw, decoration={gapped brace, raise=2pt}, decorate},%
-   % wire style
+      {draw, decoration={gapped brace, raise=2pt}, decorate}%
+}
+% END_FOLD
+% BEGIN_FOLD General styling
+\pgfqkeys{/yquant}{%
+   every circuit/.style={%
+      every node/.prefix style={transform shape}
+   }%
+}
+\@ifpackagelater{pgf}{2020/09/31}\relax{
+   \pgfkeys{/yquant/every circuit/.append style={%
+      every label/.prefix style={transform shape=false}%
+   }}
+}
+\pgfqkeys{/yquant}{%
    every wire/.style=%
       {draw},%
    every qubit wire/.style=%
@@ -93,14 +98,6 @@
       {},%
    every qubits wire/.style=%
       {},%
-   % operator settings
-   operator/separation/.code=%
-      {\dimdef\yquant@config@operator@sep{#1}},%
-   operator/minimum width/.code=%
-      {\dimdef\yquant@config@operator@minimum@width{#1}},%
-   operator/multi warning/.is if=%
-      yquant@config@operator@multi@warn,%
-   % operator style: control
    every control line/.style=%
       {draw},%
    every control/.style=%
@@ -109,16 +106,10 @@
       {fill=black},%
    every negative control/.style=%
       {draw},%
-   % operator style: main part
    every operator/.style=%
       {anchor=center},%
-   operator/multi main/.is if=%
-      yquant@config@operator@multi@main,%
-   operator/multi as single/.style=%
-      {/yquant/every multi line/.style=/yquant/every control line},%
    every multi line/.style=%
       {draw, decoration={snake, amplitude=.25mm, segment length=5pt}, decorate},%
-   % overwriting all styles
    this operator/.style=%
       {},%
    this control/.style=%
@@ -132,77 +123,12 @@
       {/yquant/this operator/.append style={#1},%
        /yquant/every control line/.append style={#1},%
        /yquant/this control/.append style={#1}},%
-   % different operator appearances
-   operators/every box/.style=%
-      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
-   operators/every subcircuit/.style=%
-      {},%
-   operators/every subcircuit box/.style=%
-      {/yquant/operators/every box},%
-   subcircuit box style/.style=%
-      {/yquant/operators/every subcircuit box/.append style={#1}},%
-   operators/this subcircuit box/.style=%
-      {},%
-   this subcircuit box style/.style=%
-      {/yquant/operators/this subcircuit box/.append style={#1}},%
-   operators/subcircuit/frameless/.style=
-      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}}%
+   operator/multi as single/.style=%
+      {/yquant/every multi line/.style=/yquant/every control line},%
+   circuit/seamless/.is if=yquant@config@circuit@seamless%
 }
-\ifnum\yquant@compat<2 %
-   \pgfqkeys{/yquant}{%
-      operators/subcircuit/seamless/.code=%
-         {\pgfkeysalso{/yquant/operators/subcircuit/frameless}%
-          \letcs\yquant@prevseamless{\yquant@prefix seamless}%
-          \yquant@config@circuit@seamlesstrue},
-      operators/every custom gate/.style=%
-         {/yquant/operators/subcircuit/seamless, /yquant/register/default name=}%
-   }
-\else
-   \pgfqkeys{/yquant}{%
-      operators/subcircuit/seamless/.code=%
-         {\pgfkeysalso{/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
-          \letcs\yquant@prevseamless{\yquant@prefix seamless}%
-          \yquant@config@circuit@seamlesstrue},
-      operators/every custom gate/.style=%
-         {/yquant/operators/subcircuit/seamless}%
-   }
-\fi
-\pgfqkeys{/yquant}{%
-   % every h, every x, every y, every z are implicitly defined during gate declaration
-   operators/every pauli/.style=%
-      {/yquant/operators/every box},%
-   operators/every phase/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},%
-   operators/every zz/.style=%
-      {shape=yquant-circle, radius=.5mm, fill},%
-   operators/every xx/.style=%
-      {shape=yquant-rectangle, radius=.75mm, draw},%
-   operators/every slash/.style=%
-      {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},%
-}
-\ifnum\yquant@compat<2 %
-   \pgfqkeys{/yquant}{%
-      internal/squeeze slash/.code=%
-         {\dimdef\yquant@config@operator@sep{.5\dimexpr\yquant@config@operator@sep-\pgflinewidth\relax}%
-          \yquant@config@operator@position@advancefalse},%
-   }
-\else%
-   \pgfqkeys{/yquant}{%
-      internal/squeeze slash/.code={}%
-   }
-\fi
-\pgfqkeys{/yquant}{%
-   operators/every swap/.style=%
-      {shape=yquant-swap, radius=.75mm, draw},%
-   operators/every not/.style=%
-      {shape=yquant-oplus, radius=1.3mm, draw},%
-   operators/every measure/.style=%
-      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
-   operators/every measure meter/.style=%
-      {draw, -{Latex[length=2.5pt]}},%
-   operators/every dmeter/.style=%
-      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw}
-}
+% END_FOLD
+% BEGIN_FOLD Styles for operators
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       operators/every barrier/.style=%
@@ -215,9 +141,88 @@
    }
 \fi
 \pgfqkeys{/yquant}{%
+   operators/every box/.style=%
+      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      operators/every custom gate/.style=%
+         {/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      operators/every custom gate/.style=%
+         {/yquant/operators/subcircuit/seamless}%
+   }
+\fi
+\pgfqkeys{/yquant}{%
+   operators/every dmeter/.style=%
+      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
+   % every h is implicitly defined during gate declaration
+   operators/every measure/.style=%
+      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
+   operators/every measure meter/.style=%
+      {draw, -{Latex[length=2.5pt]}},%
+   operators/every not/.style=%
+      {shape=yquant-oplus, radius=1.3mm, draw},%
+   operators/every pauli/.style=%
+      {/yquant/operators/every box},%
+   operators/every phase/.style=%
+      {shape=yquant-circle, radius=.5mm, fill},%
+   operators/every slash/.style=%
+      {shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw},%
+   operators/every subcircuit/.style=%
+      {},%
+   operators/every subcircuit box/.style=%
+      {/yquant/operators/every box},%
+   subcircuit box style/.style=%
+      {/yquant/operators/every subcircuit box/.append style={#1}},%
+   operators/this subcircuit box/.style=%
+      {},%
+   this subcircuit box style/.style=%
+      {/yquant/operators/this subcircuit box/.append style={#1}},%
+   operators/subcircuit/frameless/.style=
+      {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}},%
+   operators/subcircuit/seamless/.code=%
+      {\pgfkeysalso{/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
+       \letcs\yquant@prevseamless{\yquant@prefix seamless}%
+       \yquant@config@circuit@seamlesstrue},
+   operators/every swap/.style=%
+      {shape=yquant-swap, radius=.75mm, draw},%
    operators/every wave/.style=%
       {shape=yquant-circle, radius=.5mm, fill}%
+   % every x is implicitly defined during gate declaration
+   operators/every xx/.style=%
+      {shape=yquant-rectangle, radius=.75mm, draw},%
+   % every y is implicitly defined during gate declaration
+   % every z is implicitly defined during gate declaration
+   operators/every zz/.style=%
+      {shape=yquant-circle, radius=.5mm, fill},%
 }
+% END_FOLD
+% BEGIN_FOLD Internal styles (undocument, do not use!)
+\pgfqkeys{/yquant}{%
+   internal/move label/.code=%
+      {\yquant@config@operator@position@rightaligntrue},
+   internal/no advance/.code=%
+      {\unless\ifyquantmeasuring% We don't draw subcircuits during measuring time, but we need their advancement
+          \yquant@config@operator@position@advancefalse%
+       \fi},
+   internal/multi main/.is if=%
+      yquant@config@internal@multi@main,%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      internal/squeeze slash/.code=%
+         {\dimdef\yquant@config@operator@sep{.5\dimexpr\yquant@config@operator@sep-\pgflinewidth\relax}%
+          \yquant@config@operator@position@advancefalse},%
+   }
+\else%
+   \pgfqkeys{/yquant}{%
+      internal/squeeze slash/.code={}%
+   }
+\fi
+% END_FOLD
 
 \def\yquant@config@register@default@name{\regidx}
 \def\yquant@config@register@minimum@height{1.5mm}
@@ -225,8 +230,8 @@
 \def\yquant@config@register@sep{1mm}
 \def\yquant@config@operator@sep{1mm}
 \def\yquant@config@operator@minimum@width{5mm}
-\newif\ifyquant@config@operator@multi@main%
-\yquant@config@operator@multi@maintrue
+\newif\ifyquant@config@internal@multi@main%
+\yquant@config@internal@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
 \newif\ifyquant@config@operator@position@rightalign

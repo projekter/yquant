@@ -391,7 +391,7 @@
          \fi%
       \else%
          \pgf@y=\dimexpr.5\ht\pgfnodeparttextbox+.5\dp\pgfnodeparttextbox+2pt\relax%
-         \ifyquant@config@operator@multi@main%
+         \ifyquant@config@internal@multi@main%
             \advance\pgf@y by 1.25mm %
          \fi%
          \ifdim\pgf@x<\pgf@y%
@@ -400,7 +400,7 @@
       \fi%
    }%
    \savedanchor\stext{%
-      \ifyquant@config@operator@multi@main%
+      \ifyquant@config@internal@multi@main%
          \pgfqpoint%
             {-.5\wd\pgfnodeparttextbox}%
             {\dp\pgfnodeparttextbox}%
@@ -414,13 +414,13 @@
       \pgf@x=\ht\pgfnodeparttextbox%
    }%
    \savedmacro\main{%
-      \ifyquant@config@operator@multi@main%
-         \def\main{\noexpand\yquant@config@operator@multi@maintrue}%
+      \ifyquant@config@internal@multi@main%
+         \def\main{\noexpand\yquant@config@internal@multi@maintrue}%
       \else%
          \ifdim\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox\relax=0pt%
-            \def\main{\noexpand\yquant@config@operator@multi@maintrue}%
+            \def\main{\noexpand\yquant@config@internal@multi@maintrue}%
          \else%
-            \def\main{\noexpand\yquant@config@operator@multi@mainfalse}%
+            \def\main{\noexpand\yquant@config@internal@multi@mainfalse}%
          \fi%
       \fi%
    }%
@@ -430,7 +430,7 @@
    \anchor{text}{%
       \stext%
       \main%
-      \ifyquant@config@operator@multi@main%
+      \ifyquant@config@internal@multi@main%
          \pgf@y=\dimexpr-\yradius+1pt+\pgf@y\relax%
       \fi%
    }%
@@ -440,7 +440,7 @@
    \beforebackgroundpath{%
       \main%
       % we only draw the meter symbol if this is the main part of a multi-register (or there is no text)
-      \ifyquant@config@operator@multi@main%
+      \ifyquant@config@internal@multi@main%
          % Make sure the meter does not extend beyond the box (we are in a scope here)
          \path [clip]%
             (-\xradius, \yradius) rectangle (\xradius, -\yradius);%

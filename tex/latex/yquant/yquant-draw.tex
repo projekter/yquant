@@ -13,6 +13,7 @@
    \fi%
 }
 
+\def\yquant@draw@subcircuit@leftpos{0pt}% outermost circuit: 0pt
 \protected\long\def\yquant@draw@group#1#2#3#4#5#6{%
    \begingroup%
       \yquant@register@get@maxxlist\yquant@draw@@x{#6}%
@@ -160,7 +161,7 @@
                          \yquant@register@get@y{#1}+\yquant@register@get@y{#2}\relax%
                       \relax)%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
-              /yquant/operator/multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
+              /yquant/internal/multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
               y radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
                      .5*\noexpand\pgfkeysvalueof{/tikz/y radius}\fi,%
               name prefix=, name suffix=, name=yquantbox]%
@@ -390,7 +391,7 @@
          \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
          \edef\yquant@draw@subcircuit@style{%
             /yquant/every operator, \yquant@draw@@style,%
-            /yquant/this operator, /yquant/operator/multi main=true,%
+            /yquant/this operator, /yquant/internal/multi main=true,%
          }
          \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
          \csname\yquant@prefix draw\endcsname%
@@ -400,7 +401,7 @@
             node[/yquant/every operator, \yquant@draw@@style,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
-                 /yquant/operator/multi main=true,%
+                 /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
             {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#3 {}}};%
       }%
@@ -466,7 +467,7 @@
           /yquant/every operator, \yquant@draw@@style,%
           /yquant/operators/every subcircuit box, /yquant/this operator,%
           /yquant/operators/this subcircuit box,%
-          /yquant/operator/multi main=true,%
+          /yquant/internal/multi main=true,%
       }%
    }%
    \cmd%
