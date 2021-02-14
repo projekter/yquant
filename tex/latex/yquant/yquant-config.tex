@@ -17,6 +17,13 @@
    every circuit/.style={%
       every node/.prefix style={transform shape}
    },%
+}
+\@ifpackagelater{pgf}{2020/09/31}\relax{
+   \pgfkeys{/yquant/every circuit/.append style={%
+      every label/.prefix style={transform shape=false}%
+   }}
+}
+\pgfqkeys{/yquant}{%
    every group/.style={%
       inner sep=0pt, outer sep=0pt, anchor=center%
    },%
@@ -54,9 +61,15 @@
    every qubits label/.style=%
       {},%
    every multi label/.style=%
-      {draw, decoration={gapped brace, mirror, raise=2pt}, decorate},%
-   every input label/.style=%
-      {},%
+      {draw, decoration={gapped brace, mirror, raise=2pt}, decorate}%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      every input label/.style=%
+         {}%
+   }%
+\fi%
+\pgfqkeys{/yquant}{%
    internal/move label/.code=%
       {\yquant@config@operator@position@rightaligntrue},
    internal/no advance/.code=%

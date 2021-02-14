@@ -243,7 +243,9 @@
       \def\yquant@config@operator@minimum@width{0pt}%
       \expandafter\yquant@prepare%
          \expandafter{\yquant@lang@attr@value}%
-         {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@create@style\space label}%
+         {/yquant/every label, /yquant/every initial label,%
+          /yquant/every \yquant@lang@create@style\space label,%
+          \ifnum\yquant@compat<2 \ifdefined\yquant@lang@attr@input /yquant/every input label\fi\fi}%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
             \csxappto{\yquant@prefix draw}%
@@ -340,6 +342,7 @@
          {\yquant@prepare{#4}{/yquant/operators/every #1}}%
    }%
    \yquantdefinebox@do%
+   \yquant@langhelper@setup@attrs{#1}{}{}%
 }
 % END_FOLD
 
@@ -583,7 +586,8 @@
          \edef\cmd{%
             \yquant@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
-               {/yquant/every label, /yquant/every initial label, /yquant/every \yquant@lang@attr@type\space label}%
+               {/yquant/every label, /yquant/every initial label,%
+                /yquant/every \yquant@lang@attr@type\space label}%
          }%
       \else%
          \edef\cmd{%
