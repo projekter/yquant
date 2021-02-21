@@ -7,7 +7,7 @@
 # circuit with syndrome measurement
 
 	defbox	synd,4,0,'\txt{Process\\Syndrome}'
-	defbox	rop,7,4,'{\symcal R}'
+	defbox	rop,7,4,'{\cal R}'
 
 	qubit	q0	# code data qubits
 	qubit	q1

@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-qasm}[2020/06/13 v0.3 yquant-qasm]
+\ProvidesPackage{yquantlanguage-qasm}[2020/06/13 v0.4 yquant-qasm]
 
-\RequirePackage{yquant}[2020/06/13]
+\RequirePackage{yquant}[2021/02/21]
 
 % BEGIN_FOLD Environment definitions
 \begingroup
@@ -222,17 +222,43 @@
    \csname qasm@lang@\cmd\endcsname#2 \qasm@end%
 }
 
-% Defining commands that accept registers and take an optional value
-% #1: name of the argument
-% #2: command that is to be called
-% #3: number of controls
-% #4: number of targets
-\protected\def\qasm@langhelper@declare@command#1#2#3#4{%
+% Defines a yquant command for qasm
+% #1: name of the command
+% #2: number of controls
+% #3: number of targets
+% #4: name of the yquant command
+% #5: pre-actions
+\protected\def\qasm@langhelper@alias@yquant#1#2#3#4#5{%
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
       % everything after the next space is just gobbled
       \protected\long\csgdef{qasm@lang@\cmd}##1 ##2\qasm@end{%
-         \qasm@langhelper@declare@command@@fetchargs{#3}{#4}{##1}{#2}%
+         \unexpanded{#5}%
+         \qasm@langhelper@declare@command@@fetchargs{#2}{#3}{##1}{\csname yquant@lang@#4\endcsname}%
+         \yquant@env@rescan%
+      }%
+   \endgroup%
+}
+
+% Defining commands that accept registers and take an optional value
+% #1: name of the argument
+% #2: number of controls
+% #3: number of targets
+% #4: actions to be taken before parsing
+% #5: actions to be taken after parsing
+\protected\def\qasm@langhelper@declare@command#1#2#3#4#5{%
+   \begingroup%
+      \lowercase{\edef\cmd{#1}}%
+      \long\protected\csxdef{qasm@lang@\cmd}##1 ##2\qasm@end{%
+         \noexpand\yquant@langhelper@execclear@lastgatetrue%
+         \unexpanded{#4}%
+         \qasm@langhelper@declare@command@@fetchargs{#2}{#3}{##1}\yquant@circuit@operator%
+         \noexpand\ifyquant@langhelper@execclear@lastgate%
+            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            }%
+         \noexpand\fi%
+         \unexpanded{#5}%
          \yquant@env@rescan%
       }%
    \endgroup%
@@ -488,18 +514,40 @@
          \process%
       }%
    \fi%
-   \yquant@prepare@create{#1}0\yquant@lang@create@type{0pt}%
+   \yquant@prepare@create{#1}0\yquant@lang@create@type%
+   \letcs\yquant@circuit@operator@maxtarget{\yquant@prefix registers}%
+   \numdef\yquant@circuit@operator@numtarget{1}%
+   \edef\yquant@circuit@operator@targets{\yquant@circuit@operator@maxtarget\yquant@list@delim}%
+   \let\yquant@circuit@operator@pctrls=\empty%
+   \def\yquant@circuit@operator@minpctrl{2147483647}%
+   \def\yquant@circuit@operator@maxpctrl{0}%
+   \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@nctrls=\empty%
+   \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
+   \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
+   \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
+   \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+   \def\yquant@attrs@remaining{internal/move label}
+   \def\yquant@config@operator@minimum@width{0pt}%
+   \expandafter\yquant@prepare%
+      \expandafter{\yquant@lang@attr@value}%
+      {/yquant/every label, /yquant/every initial label,%
+       /yquant/every \yquant@lang@create@style\space label}%
+   \unless\ifx\yquant@lang@attr@value\empty%
+      \yquant@register@execclear@lastgate{\yquant@circuit@operator@maxtarget}{init}%
+   \fi%
    \yquant@env@rescan%
 }
 
 \protected\def\qasm@lang@def#1,#2,'#3' #4\qasm@end{%
       \lowercase{\def\cmd{#1}}%
-      % we need to do a couple of case distictions (it might seem crazy to look for the existence of a particular macro in #3, but this is what qasm does)
+      % we need to do a couple of case distinctions (it might seem crazy to look for the existence of a particular macro in #3, but this is what qasm does)
       \ifstrequal{#3}{bullet}{%
          \edef\process{%
             \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
                \let\noexpand\yquant@lang@attr@value=\noexpand\empty%
-               \noexpand\yquant@lang@@phase%
+               \noexpand\yquant@lang@phase%
             }%
          }%
       }{%
@@ -519,32 +567,31 @@
          % now check whether the text begins with \meter, \dmeter or \dmeterwide. This is not 100% equivalent to qasm, which only checks whether these macros are present, not whether they are at the beginning. But due to our node approach, anything different from the whole content being this macro does not make sense.
          \expandafter\ifyquant@firsttoken\expandafter\meter\expandafter{\texcode}{%
             \edef\process{%
-               \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
-                  \noexpand\yquant@lang@@measure%
+               \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+                  \noexpand\yquant@lang@measure%
                }%
             }%
          }{%
             \expandafter\ifyquant@firsttoken\expandafter\dmeter\expandafter{\texcode}{%
                \protected@edef\process{%
-                  \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
+                  \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
                      \def\noexpand\yquant@lang@attr@value{\texcode}%
-                     \noexpand\yquant@lang@@dmeter%
+                     \noexpand\yquant@lang@dmeter%
                   }%
                }%
             }{%
                \expandafter\ifyquant@firsttoken\expandafter\dmeterwide\expandafter{\texcode}{%
                   \protected@edef\process{%
-                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname####1####2{%
+                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
                         \def\noexpand\yquant@lang@attr@value{\texcode}%
-                        \noexpand\yquant@lang@@dmeter%
+                        \noexpand\yquant@lang@dmeter%
                      }%
                   }%
                }{%
                   \edef\process{%
                      \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
-                        \yquant@prepare%
-                           {$\unexpanded\expandafter{\texcode}$}%
-                           {/yquant/operators/every box}%
+                        \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\texcode}$}%
+                        \noexpand\yquant@lang@box%
                      }%
                   }%
                }%
@@ -586,9 +633,8 @@
       \edef\process{%
          \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
             \noexpand\yquant@register@get@allowmultitrue%
-            \yquant@prepare%
-               {$\unexpanded\expandafter{\texcode}$}%
-               {/yquant/operators/every box}%
+            \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\texcode}$}%
+            \noexpand\yquant@lang@box%
          }%
          % we don't use \qasm@langhelper@declare@command here, since it works globally
          \protected\long\def\expandafter\noexpand\csname qasm@lang@\cmd\endcsname####1 ####2\noexpand\qasm@end{%
@@ -602,73 +648,68 @@
    \yquant@env@scan%
 }
 
-\qasm@langhelper@declare@command{measure}{\expandafter\yquant@lang@@measure\@gobbletwo}01
+\qasm@langhelper@alias@yquant{measure}01{measure}{}
 
-\qasm@langhelper@declare@command{H}\yquant@lang@@h01
+\qasm@langhelper@alias@yquant{h}01{h}{}
 
-\qasm@langhelper@declare@command{X}\yquant@lang@@x01
+\qasm@langhelper@alias@yquant{x}01{x}{}
 
-\qasm@langhelper@declare@command{Y}\yquant@lang@@y01
+\qasm@langhelper@alias@yquant{y}01{y}{}
 
-\qasm@langhelper@declare@command{Z}\yquant@lang@@z01
+\qasm@langhelper@alias@yquant{z}01{z}{}
 
-\qasm@langhelper@declare@command{S}\qasm@lang@@s01
-\def\qasm@lang@@s{%
+\qasm@langhelper@declare@command{S}01{}{%
    \yquant@prepare%
       {$S$}%
       {/yquant/operators/every s}%
 }
 
-\qasm@langhelper@declare@command{T}\qasm@lang@@t01
-\def\qasm@lang@@t{%
+\qasm@langhelper@declare@command{T}01{}{%
    \yquant@prepare%
       {$T$}%
       {/yquant/operators/every t}%
 }
 
-\qasm@langhelper@declare@command{nop}\qasm@lang@@nop01
-\def\qasm@lang@@nop#1#2#3{%
+\qasm@langhelper@alias@yquant{nop}01{hspace}{%
    \dimdef\yquant@lang@attr@value{\yquant@config@operator@minimum@width+\yquant@config@operator@sep}%
-   \yquant@lang@@hspace{#3}%
    % we don't use a grid-based layout, so a nop really does nothing
 }
 
-\qasm@langhelper@declare@command{zero}\qasm@lang@@zero01
-\def\qasm@lang@@zero#1#2#3{%
+\qasm@langhelper@alias@yquant{zero}01{init}{%
    \let\yquant@lang@attr@value=\qasm@config@zero%
-   \yquant@lang@@init{#3}%
+   \def\yquant@lang@attr@type{qubit}%
 }
 
-\qasm@langhelper@declare@command{discard}{\expandafter\yquant@lang@@discard\@gobbletwo}01
+\qasm@langhelper@alias@yquant{discard}01{discard}{}
 
-\qasm@langhelper@declare@command{slash}{\expandafter\yquant@lang@@slash\@gobbletwo}01
+\qasm@langhelper@alias@yquant{slash}01{slash}{}
 
-\qasm@langhelper@declare@command{dmeter}{\expandafter\yquant@lang@@dmeter\@gobbletwo}01
+\qasm@langhelper@alias@yquant{dmeter}01{dmeter}{}
 
-\qasm@langhelper@declare@command{cnot}\yquant@lang@@not11
+\qasm@langhelper@alias@yquant{cnot}11{not}{}
 
-\qasm@langhelper@declare@command{c-z}\yquant@lang@@z11
+\qasm@langhelper@alias@yquant{c-z}11{z}{}
 
-\qasm@langhelper@declare@command{c-x}\yquant@lang@@x11
+\qasm@langhelper@alias@yquant{c-x}11{x}{}
 
-\qasm@langhelper@declare@command{toffoli}\yquant@lang@@not21
+\qasm@langhelper@alias@yquant{toffoli}21{not}{}
 
-\qasm@langhelper@declare@command{ZZ}{\expandafter\yquant@lang@@zz\@gobbletwo}02
+\qasm@langhelper@alias@yquant{zz}02{zz}{}
 
-\qasm@langhelper@declare@command{XX}\yquant@lang@@xx02
+\qasm@langhelper@alias@yquant{xx}02{xx}{}
 
-\qasm@langhelper@declare@command{swap}\yquant@lang@@swap02
+\qasm@langhelper@alias@yquant{swap}02{swap}{}
 
-\qasm@langhelper@declare@command{Utwo}\qasm@lang@@Utwo02
-\def\qasm@lang@@Utwo{%
+\qasm@langhelper@declare@command{Utwo}02{%
    \yquant@register@get@allowmultitrue%
+}{%
    \yquant@prepare%
       {$U$}%
       {/yquant/operators/every utwo}%
 }
 
 % space is a hspace _without_ wire - in priciple, we would have to discard and then re-initialize
-\qasm@langhelper@declare@command{space}\qasm@lang@@nop01
+\let\qasm@lang@space=\qasm@lang@nop
 % END_FOLD
 
 % some commands that might be used in boxes
