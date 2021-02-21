@@ -3,8 +3,23 @@
 \protected\def\yquant@draw@init#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
       % for connected subcircuit wires, check if this actually changes the type [happens for formerly discarded output wires] and flush the wire if necessary
-      \unless\if\yquant@register@get@type{#1}#2\relax%
+      \edef\yquant@draw@init@type{\yquant@register@get@type{#1}}%
+      \unless\if\yquant@draw@init@type#2\relax%
          \yquant@circuit@flushwire{#1}%
+         \ifx\yquant@draw@init@type\yquant@register@type@none%
+            % in case the wire was discarded before, forget about the lastx position, it should always start with the others
+            \yquant@register@get@lastwire{#1}\wirelast%
+            \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
+               \expandafter\@thirdoffour\wirelast%
+            }{%
+               \yquant@register@set@lastwire{#1}{%
+                  {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}%
+                  {\unexpanded\expandafter\expandafter\expandafter{%
+                      \expandafter\@fourthoffour\wirelast%
+                   }}%
+               }%
+            }\relax
+         \fi%
          \yquant@register@set@type{#1}{#2}%
       \fi%
    \else%
@@ -12,6 +27,9 @@
       \yquant@register@set@type{#1}{#2}%
       \ifdefined\yquant@draw@subcircuit@wirestart%
          \yquant@register@set@x{#1}{\yquant@draw@subcircuit@wirestart}%
+         \yquant@register@set@lastwire{#1}{%
+            {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}{}%
+         }%
       \fi%
    \fi%
 }
@@ -73,17 +91,6 @@
       % for connected subcircuit wires, make sure to flush the wire until the beginning.
       \yquant@circuit@flushwire{#1}%
    \fi%
-   \yquant@register@get@lastwire{#1}\wirelast%
-   \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
-      \expandafter\@thirdoffour\wirelast%
-   }{%
-      \yquant@register@set@lastwire{#1}{%
-         {\yquant@draw@@x}{\yquant@draw@@x}{}%
-         {\unexpanded\expandafter\expandafter\expandafter{%
-             \expandafter\@fourthoffour\wirelast%
-          }}%
-      }%
-   }\relax% else should not occur. It indicates the wire was not flushed properly before, so we won't remove the lastx content.
 }
 
 \protected\def\yquant@draw@endgroup#1#2#3{%
@@ -399,6 +406,14 @@
          }
          \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
          \csname\yquant@prefix draw\endcsname%
+         \dimen0=\yquant@register@get@y1\relax%
+         \ifdim\dimen0>\pgf@picmaxy %
+            \global\pgf@picmaxy=\dimen0 %
+         \fi%
+         \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax%
+         \ifdim\dimen0<\pgf@picminy %
+            \global\pgf@picminy=\dimen0 %
+         \fi%
       \endgroup%
       \edef\cmd{%
          \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax)%
