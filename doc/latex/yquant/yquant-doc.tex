@@ -216,9 +216,9 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.4 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.4a \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
-      Please do report all issues and desirable additions.
+      Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
       
       \subsection{How to read the manual}
          The probably fastest way to start using \Yquant{} is by just scanning through the examples in \cref{sec:examples}.
@@ -230,9 +230,12 @@
       
       \subsection{Installation}
          The recommended way of installation is through CTAN.
-         A direct installation from this Git repository to obtain the latest additions and features is be possible by just cloning it to a path visible to your \TeX{} compiler.
+         A direct installation from the Git repository to obtain the latest additions and features is be possible by just cloning it to a path visible to your \TeX{} compiler.
+         For example, you may put the source files in the same directory as your document (if you just want to give a try), or you may extract them to \texttt{tex/latex/yquant} in your local \texttt{texmf} (followed by an update of the file name database).
          While the repository may contain new additions, they are not thoroughly tested until they end up on CTAN; features that are not documented in this manual are entirely unreliable.
-         For example, you may put them in the same directory as your document (if you just want to give a try), or you may extract them to \texttt{tex/latex/yquant} in your local \texttt{texmf} (followed by an update of the file name database).
+         
+         \compat{New in 0.4}The CTAN repository reflects the most current version tag on Git; the \href{https://github.com/projekter/yquant/releases}{Releases} section on GitHub additionally provides a single\hyp file version of the main package, which can for example conveniently be included in arXiv submissions.
+         Note that the arXiv currently provides \Yquant{}~0.3.2 out\hyp of\hyp the\hyp box.
       
       \subsection{Purpose of \Yquant, alternatives}\label{sec:alt}
          \Yquant{} is the acronym for ``yet another quantum circuit package.''
@@ -298,8 +301,8 @@
       Since it runs entirely within \TeX, you can at any time interject \Yquant{} code with arbitrary \TeX{} or \TikZ{} code (though if it is ``too arbitrary,'' you may need to restart the \Yquant{} interpreter).
       
       \subsection{General usage}
-         \begin{minted}{tex}
-% preamble: \usepackage[compat=<version>]{yquant}
+         \begin{minted}[escapeinside=||]{tex}
+% preamble: |\compat{Changed in 0.4}|\usepackage[compat=<version>]{yquant}
 \begin{tikzpicture}% tikz options possible
    % tikz commands go here
    \begin{yquant}% yquant options possible. Watch the newlines!
@@ -309,8 +312,8 @@
 \end{tikzpicture}
          \end{minted}
          
-         Note that \Yquant{} depends on \pkg{etoolbox}, \TikZ, \pkg{trimspaces}, and \pkg{xkeyval}.
-         Additionally, it requires a moderately recent version of \hologo{LaTeX2e}, using either \hologo{LuaLaTeX}, or (untested), \hologo{pdfLaTeX} or \hologo{XeLaTeX}.
+         Note that \Yquant{} depends on \pkg{etoolbox}, \TikZ, \pkg{trimspaces}, and \compat{Changed in 0.4}\pkg{xkeyval}.
+         Additionally, it requires a moderately recent version of \hologo{LaTeX2e}, using either \hologo{LuaLaTeX}; or (untested) \hologo{pdfLaTeX} or \hologo{XeLaTeX}.
          
          \begin{warning}[Optional arguments]
             The optional arguments for the \tex!yquant! environment have to appear \emph{on the same line} as the environment itself.
@@ -326,7 +329,7 @@
             Both may lead to a change in the look of circuits developed with a previous version of \Yquant{} or even---though this should rarely, if ever, happen, and should be filed as a bug---prevent compilation in the new version.
             
             For this reason, \Yquant{} offers a compatibility key that is highly recommended to be specified as a package option.
-            This allows certain features which are expected to break old layout or functionality to revert to their previous behavior.
+            This allows certain features that are expected to break old layout or functionality to revert to their previous behavior.
             Every feature affected by the \texttt{compat} key is documented in this manual.
             Once a compatibility version is selected in a document, it cannot be changed any more.
             Compatibility versions will include the major and minor, but not the patch level version number.
@@ -348,6 +351,7 @@
          
          The starred form additionally supports the use of undeclared registers: it basically declares a registers upon its first usage.
          This will always be a \texttt{qubit} register; but if you use the corresponding attribute and the first usage is an \gate{init} command, you may overwrite this.
+         
          \compat{New in 0.2}Subcircuits always use the unstarred form.
          
          \compat{New in 0.1.1}Additionally, if you refer to the index $i$ of a vector register of length $L < i$, this register will automatically be enlarged to $i \coloneq L$.
@@ -463,9 +467,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{warning}
          
          All that was said so far refers to the operation being carried out on each of the registers \emph{individually}, i.e., producing several copies of the operation.
-         This is different from using the operation multiple times on the individual single registers only with regard to the vertical positioning: if specified as a register list with one operation, all copies of the operation will be aligned at the same vertical position (as if an \gate{align} command had been carried out before).
+         This is different from using the operation multiple times on the individual single registers only with regard to the horizontal positioning: if specified as a register list with one operation, all copies of the operation will be aligned at the same horizontal middle axis (for gates with the same width on each register, this is the same as issuing an \gate{align} command before performing the operations individually).
          \begin{warning}
-            It is forbidden (in the sense of ``not useful,'' but \Yquant{} does not check for this) to list the same register multiple times (explicitly or via ranges) in one operation.
+            It is forbidden (in the sense of ``not useful and giving unexpected output,'' but \Yquant{} does not check for this) to list the same register multiple times (explicitly or via ranges) in one operation.
          \end{warning}
          
          Instead of copies of single\hyp register operations, one might want to carry out a multi\hyp register operation.
@@ -482,8 +486,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          It will draw a \emph{main} part of the gate at the first contiguous slice of registers in the target list---you may select another register for this part by preceding the name or index with a star (which, contrary to the simplified grammar, may only occur \emph{once} in a target specification).
          All other contiguous slices of target registers will be drawn in a \emph{subordinate style} for this gate.
          Finally, all slices will be connected by a single vertical line with the style \style{/yquant/every multi line}.
-         \compat{New in 0.2}Subcircuits, will always span the full region from the first to the last register specified in a multi\hyp qubit gate.
-         This is due to the fact that they may contain arbitrary ancilla registers which may be positioned somewhere in between the parts that actually constitute the subcircuit---surrounding this with a scattered set of connected subcircuit boxed would look quite unpleasant.
+         \compat{New in 0.2}Subcircuits will always span the full region from the first to the last register specified in a multi\hyp qubit gate.
+         This is due to the fact that they may contain arbitrary ancilla registers which may be positioned somewhere in between the parts that actually constitute the subcircuit---surrounding this with a scattered set of connected boxes would look quite unpleasant.
          \clearpage
          \begin{warning}[\compat{Improved in 0.1.2}Discontiguous targets and control lines]
             A control line extends from the very first to the very last affected register in an operation.
@@ -497,7 +501,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{warning}
             There is no established style for discontiguous gates.
             Note that at the moment, main and subordinate style coincide for all gates except for the \gate{measure} gate with a value.
-            In order to still make it possible to visually distinguish discontiguous multi\hyp register gates operating on slices of a single register from just a bunch of single\hyp register gates that are executed in a parallel manner, if controls are present, \Yquant's default vertical line style for the former case is a wavy line instead of a straight one.
+            In order to still make it possible to visually distinguish discontiguous multi\hyp register gates operating on slices of a single register from just a bunch of single\hyp register gates that are executed in a parallel manner if controls are present, \Yquant's default vertical line style for the former case is a wavy line instead of a straight one.
             Still, the meaning of this should probably be explained.
             Please feel free to submit issues or pull requests with propositions of how default styles or alternative subordinate gate shapes may additionally help to mitigate the problem.
          \end{warning}
@@ -526,7 +530,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          By then writing a pipe (``\yquant!|!''), the list of positive controls is introduced; this mimics the mathematical syntax ``conditioned on'' for probabilities or ``given'' for sets.
          If there are no positive controls, the list may be empty or, together with the pipe, omitted.
          Preceded by a tilde (``\yquant!~!''), the list of negative controls then follows; this mimics the syntax of many programming languages that denote logical negation by a tilde.
-         If there are no negative controls, the list may be empty or, together with the pipe, omitted.
+         If there are no negative controls, the list may be empty or, together with the tilde, omitted.
          
       \subsection[Importing circuit from files]{\compat{New in 0.2}Importing circuits from files}\label{sec:import}
          \Yquant{} provides a simple way to import circuits that are stored in external files.
@@ -563,14 +567,15 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          
          \compat{New in 0.2.1}If you want to define a gate that corresponds to a single \gate{box} gate with a certain pre\hyp defined content, you may use the macro\\
          \tex!\yquantdefinebox{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \tex!\yquantdefinegate! introduced below.
-         It works in the following way:
+         It only allows for single\hyp register usage; use \compat{New in 0.4}\tex!\yquantdefinemultibox! with the same arguments if you want to allow the gate to be used in a multi\hyp register gate fashion.
+         The macros work in the following way:
          \begin{itemize}
-            \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other build\hyp in gates.
+            \item They create a new gate with name \texttt{<name>} that can be accessed as all the other build\hyp in gates.
                Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
                Special characters are allowed if \TeX{} can cope with them (i.e., no comment signs, no unbalanced braces, no backslashes...).
-            \item It creates a style \style{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
+            \item They create a style \style{/yquant/operators/every <name>} and assign the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \style{/yquant/operators/every box}.
-            \item It defines \texttt{<content>} to be the value that is written into the box.
+            \item They define \texttt{<content>} to be the value that is written into the box.
                This \texttt{<content>} is expanded in a protected manner at the time of gate declaration.
                You may need to prefix fragile macros by \tex!\protect!.
          \end{itemize}
@@ -602,7 +607,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          
          \begin{warning}[Redefining existing gates]
             The above macros will issue an error if the gate already exists.
-            You can use \tex!\yquantredefinebox! or \tex!\yquantredefinegate! to overwrite existing gate definitions.
+            You can use \tex!\yquantredefinebox!, \tex!\yquantredefinemultibox! (use the appropriate command for the \emph{new} definition), or \tex!\yquantredefinegate! to overwrite existing gate definitions.
             Note that this will overwrite \emph{any} gate, even the built\hyp in ones.
             
             Generally, it is discouraged to make use of this possibility.
@@ -616,6 +621,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          
          More advanced declaration of custom gates requires the use of backend macros.
          Refer to \texttt{yquant-lang.tex} for this.
+         Note that the backend interface changed in version~0.4.
          For the declaration of custom shapes, see \texttt{yquant-shapes.tex} for examples.
       
    \section{Configuration}\label{sec:config}
@@ -663,11 +669,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{option}
          
          \begin{option}{operator/separation}!1mm!
-            This key controls the amount of horizontal space that is inserted between two successive operators.
+            This key controls the amount of horizontal space that is inserted between two successive operators and at the beginning and end of a circuit.
          \end{option}
          
          \begin{option}[New in 0.1.2]{operator/multi warning}!true!
-            If this key is \texttt{true}, a warning is displayed whenever more than a single multi\hyp register gate, where at least one is discontiguous, are employed together with controls.
+            If this key is \texttt{true}, a warning is displayed whenever more than a single multi\hyp register gate, where at least one is discontiguous, is employed together with controls.
             Even if a visual distinction between control and multi\hyp qubit line may be possible (depending on the style in use), they will overlap and produce unaesthetic output.
             You may disable this warning globally, on a per\hyp circuit, or even on a per\hyp gate basis.
          \end{option}
@@ -684,14 +690,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \end{itemize}
          \end{option}
          
-         \begin{option}{every label}!shape=yquant-text, anchor=center, align=right!
+         \begin{option}[Changed in 0.4]{every label}!shape=yquant-init, anchor=center, align=right, outer xsep=2pt!
             This style is installed for every single register name label (i.e., upon creation and when used with the \gate{init} gate).
             The default style allows to use line breaks in the labels.
          \end{option}
          
          \begin{option}{every initial label}!anchor=east!
             This style is installed for every single register name label at the left border of the circuit.
-            Hence, it is only used for the \gate{init} gate if in the \tex!yquant*! environment, the gate occurs for a new register (which allows to override the default register type).
+            \compat{Changed in 0.4}It is therefore used if a label is specified upon declaration and also for the \gate{init} gate if it happens to be the first gate on an unlabelled register (use a zero\hyp width \gate{hspace} gate before if you want to suppress this).
          \end{option}
          
          \begin{option}{every qubit label}!!
@@ -706,20 +712,20 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every single register name label of a register of type \gate{qubits}.
          \end{option}
          
-         \begin{option}[Changed in 0.1.2]{every multi label}!shift={(-.075, 0)}, draw, decoration={gapped brace, mirror}, decorate, /yquant/gapped brace/apply shift, every node/.append style={shape=yquant-text, anchor=east, align=right, shift={(-.05, 0)}, pos=-1}!
+         \begin{option}[Changed in 0.4, 0.1.2]{every multi label}!draw, decoration={gapped brace, mirror, raise=2pt}, decorate!
             This style is installed for every register name label that is attached to a multi\hyp qubit register by means of the \gate{init} gate.
-            \Yquant{} additionally inserts a straight line that connects the topmost and the bottom\hyp most register at their left ends.
-            The default style turns this line into a brace and places the description at the appropriate position.
-            The decoration \texttt{gapped brace} allows to additionally specify the regions in which a line should be drawn by using the \texttt{/tikz/decoration/from to} key, which expects a comma\hyp separated list of dimension ranges, and which is automatically populated by \Yquant.
-            Since it may happen that the arch of the brace needs to be shifted from the value specified in \texttt{/tikz/decoration/aspect} (else, it would be drawn into a gap), the special key \texttt{/yquant/gapped brace/apply shift} is installed, which transforms the \texttt{pos=-1} specification into a position that corresponds to the actual \texttt{aspect} value.
+            The node shape, \texttt{yquant-init}, will draw a line at its right side, which is replaced by the \texttt{gapped brace} decoration.
+            It is similar to \TikZ's \texttt{brace} decoration, but additionally allows specify the regions in which a line should be drawn by using the \texttt{/tikz/decoration/from to} key, which expects a comma\hyp separated list of dimension ranges, and which is automatically populated by \Yquant.
          \end{option}
          
-         \begin{option}[New in 0.2]{every input label}!!
+         \begin{option}[Removed in 0.4\\New in 0.2]{every input label}!!
             This style is installed for every register name label in a \gate{subcircuit} when the register is an input (or input and output) register.
+            
+            Note that this key is only available if the \texttt{compat} setting is smaller than \texttt{0.4}; and in this case, it behaves inconsistently, as it is only applied for labels directly specified during creation, but not for initial \gate{init} gates.
          \end{option}
       
       \subsection{Register outputs}\unskipOpt
-         \begin{option}{every output}!shape=yquant-text, anchor=west, align=left!
+         \begin{option}[Changed in 0.4]{every output}!shape=yquant-output, anchor=west, align=left, outer xsep=2pt!
             This style is installed for every \gate{output} label at the end of the circuit.
             The default style allows to use line breaks in the labels.
          \end{option}
@@ -736,10 +742,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{output} label of a register of type \gate{qubits}.
          \end{option}
          
-         \begin{option}[Changed in 0.1.2]{every multi output}!shift={(.075, 0)}, draw, decoration={gapped brace}, decorate, /yquant/gapped brace/apply shift, every node/.append style={shape=yquant-text, anchor=west, align=left, shift={(.05, 0)}, pos=-1}!
+         \begin{option}[Changed in 0.4, 0.1.2]{every multi output}!draw, decoration={gapped brace, raise=2pt}, decorate!
             This style is installed for every \gate{output} label that is attached to a multi\hyp qubit register.
-            \Yquant{} additionally inserts a straight line that connects the topmost and the bottom\hyp most register at their right ends.
-            The default style turns this line into a brace and places the description at the appropriate position.
+            The node shape, \texttt{yquant-output}, will draw a line at its left side, which is replaced by the \texttt{gapped brace} decoration.
             See \style{/yquant/every multi label} for a more detailed explanation.
          \end{option}
       
@@ -750,8 +755,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The style is re\hyp applied for every subcircuit.
             The default style will make all nodes (which in particular means, all gates) respect outer canvas transformations.
             
-            The default requires at least \TikZ{} version~3.1.6a.
-            Consider updating if you use an older version or add \tex!every label/.prefix style={transform shape=false}! to this style, which undoes the effect for \texttt{label}s (see \TikZ{} bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843}).
+            If your \TikZ{} version is before 3.1.6a, this style will additionally contain \tex!every label/.prefix style={transform shape=false}!, which undoes the effect for \texttt{label}s (see \TikZ{} bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843}).
+            An update is recommended.
          \end{option}
          
          \begin{option}{every wire}!draw!
@@ -823,7 +828,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{option}
          
          \begin{option}[New in 0.4]{circuit/seamless}!false!
-            The value of this setting determines whether the current circuit is drawn in a ``seamless'' state.
+            The value of this setting determines whether circuits drawn in a \Yquant{} environment in the current group will be drawn in a ``seamless'' state (hence, this style must be set \emph{before} the \Yquant{} environment is started).
             The key \style{/yquant/operator/separation} will control the amount of padding with which a wire starts or ends before the first or after the last gate.
             By turning on the seamless state, this padding is suppressed.
             Using outputs or giving an initial value at the register declaration brings the corresponding padding back.
@@ -843,10 +848,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{box} operator.
          \end{option}
          
-         \begin{option}[Changed in 0.4\\New in 0.2]{operators/every custom gate}!/yquant/operators/subcircuit/seamless, /yquant/register/default name=!
+         \begin{option}[Changed in 0.4\\New in 0.2]{operators/every custom gate}!/yquant/operators/subcircuit/seamless!
             This style is by default installed for every user\hyp defined gate.
             User\hyp defined gates are implemented via subcircuits; this style suppresses the box that surrounds the subcircuit and by default suppresses all register names.
             This allows a seamless integration of the gate/subcircuit into the main circuit, without putting particular emphasis to the fact that what was defined as the custom gate indeed belongs together.
+            Note that with the \texttt{compat} key set before \texttt{0.4}, this style instead defaults to \tex!/yquant/operators/subcircuit/frameless, /yquant/register/default name=!.
          \end{option}
          
          \begin{option}{operators/every dmeter}!shape=yquant-dmeter, x radius=2mm, y radius=2mm, fill=white, draw!
@@ -891,9 +897,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Note that all styles given here will also apply to every element in the subcircuit; in a way, this is an addition to \style{/yquant/every circuit} (which is also again put into effect at the beginning of a subcircuit).
          \end{option}
          
-         \begin{option}[Changed in 0.4\\New in 0.2]{operators/every subcircuit box}!/yquant/operators/every box, inner xsep=0pt!
+         \begin{option}[New in 0.2]{operators/every subcircuit box}!/yquant/operators/every box!
             This style is installed for every \gate{subcircuit}.
             Note that in contrast to all other styles such as \style{/yquant/operators/every subcircuit} or \style{/yquant/this operator}, this style is only applied to the ``container'' node of the subcircuit, but not to the elements in the subcircuit themselves.
+            Also note that the box style by default contains an \texttt{inner xsep} that will be added as an inside padding.
+            This makes sense if your wires have labels so that these labels don't move too closely to the border of the box.
+            However, if you do not labelled wires but still want to have a box around the subcircuit, you should consider removing the separation---as it will be added to the initial wire padding given by \style{/yquant/operator/separation}.
          \end{option}
          
          \begin{option}[New in 0.2]{subcircuit box style}!/yquant/operators/every subcircuit box/.append style={#1}!
@@ -909,11 +918,13 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This is a shorthand to append styles to the current subcircuit box only.
          \end{option}
          
-         \begin{option}[New in 0.4]{operators/subcircuit/frameless}!/yquant/operators/this subcircuit box/.append style={draw=none, inner ysep=0pt}!
-            This is a shorthand style that removes the frame and additional vertical separation for the current subcircuit.
+         \begin{option}[New in 0.4]{operators/subcircuit/frameless}!/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}!
+            This is a shorthand style that removes the frame and additional inner separation for the current subcircuit.
+            Note that still, the wire padding given by \style{/yquant/operator/separation} is present within the---now invisible---outer box that contains the subcircuit (use \style{/yquant/operators/subcircuit/seamless} to suppress it).
+            Hence, the most prominent application of this key is if the wires before and after the subcircuit are \gate{nobit}s, which provides a clean way to build up circuit equations with perfectly aligned wires (examples can be found in \cref{sec:examples}).
          \end{option}
          
-         \begin{option}[New in 0.4]{operators/subcircuit/seamless}!/yquant/operators/subcircuit/frameless, /yquant/circuit/seamless!
+         \begin{option}[New in 0.4]{operators/subcircuit/seamless}!/yquant/operators/subcircuit/frameless, /yquant/register/default name=, /yquant/circuit/seamless!
             This option carries out multiple actions that are responsible to let the current subcircuit appear in a ``seamless'' state:
             \begin{itemize}
                \item It calls \style{/yquant/operators/subcircuit/frameless}.
@@ -984,7 +995,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          To understand clipping paths, \Yquant's drawing pipeline needs to be explained.
          \begin{itemize}
             \item In a first run---this is what happens directly at the position where you type the gate command---\Yquant{} will ``virtually'' draw the gates in order to determine their dimensions and calculate register heights.
-               The actual drawing commands are written to a macro (this is the cause that some macros must be preceded by \tex!\protect! if used in a gate \texttt{value}).
+               The actual drawing commands are written to a macro (this is the cause that some macros must be preceded by \tex!\protect! if used in a gate \texttt{value}---in fact, if multiple registers are targeted in one gate, the style and values required for this gate are only stored once, so that for example \tex!\idx! is a \tex!\protected! macro until the very end).
             \item When \tex!\end{yquant}! is encountered, the actual drawing commands are executed.
             \item Unless the operation changes the wire type or style, do the following (first two items for every register at which an operator node has to be created).
                \begin{itemize}
@@ -994,7 +1005,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                      Then, it will call the horizontal clipping path, which is supposed to create some soft path commands.
                      Those soft path commands are collected in a macro on a per\hyp register basis and the soft path is cleared.
                      The same happens for the vertical clipping path, which is collected in a macro on a per\hyp operation basis.
-                  \item If control lines or multi lines are to be drawn, the vertical clipping path commands are now executed and installed as an inverted\footnote{Inverting the clipping means that instead of drawing only \emph{within} the clipping path (which corresponds to the gates), we only draw \emph{outside}. However, as there is no direct support for this, we invert by exploiting the even\hyp odd rule. If you specify a register multiple times, whether as target, control, or mixed, funny effects can be expected, as the clipping region is inverted multiple times. Note that using a register more than once is always an error, but \Yquant{} does not check for it due to the high overhead.} clipping path.
+                  \item If control lines or multi lines are to be drawn, the vertical clipping path commands are now executed and installed as an inverted\footnote{Inverting the clipping means that instead of drawing only \emph{within} the clipping path (which corresponds to the gates), we only draw \emph{outside}. However, as there is no direct support for this, we invert by exploiting the even\hyp odd rule. If you specify a register multiple times, whether as target, control, or mixed, funny effects can be expected, as the clipping region is inverted multiple times. Note that using a register more than once is always an error, but \Yquant{} does not check for it due to the high overhead.} clipping.
                   \item Control lines and multi lines are drawn (in this order) from one to the next \texttt{center} anchor.
                      Due to the clipping commands, this will create a perfect connection with the shape of the gate, but even transparent gates are possible without the lines being visible.
                \end{itemize}
@@ -1015,7 +1026,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                After that, it checks for all multi\hyp register gates: Is the space from the top of the first to the bottom of the last register enough to hold the multi\hyp qubit gate?
                If not, it evenly distributes the additional required space to all registers that are visually within the range of this multi\hyp register.
                
-               This will fail to produce good results only in two cases:
+               This will fail to produce good results (hopefully) only in two cases:
                \begin{itemize}
                   \item If you place \texttt{label}s on the gate, those are outside of the gate---and typically, either below or above.
                      Hence, the additional extent stemming from them should \emph{not} be equally distributed among all registers, but either to the height of the first or the depth of the last one.
@@ -1025,7 +1036,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                      Hence, the automatically calculated vertical positions will be unsuitable.
                \end{itemize}
             \item Sometimes, there is more space available than \Yquant{} thinks because you already discarded some wire.
-               \Yquant{} does not keep track of whether the wires below or above a gate are actually visible at this position---which might not even be known at the time the gate command is issued.
+               \Yquant{} does not keep track of whether the wires below or above a gate are actually visible at this position---which is not even be known at the time the gate command is issued, as horizontal positions are determined only in the drawing stage.
                Hence, you may choose to draw ``within'' the other, invisible wire.
          \end{itemize}
          
@@ -1033,21 +1044,21 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Note that you may then, depending on the situation, obtain results with overlapping gates.
          You can use the keys \style{/yquant/register/minimum height} and \style{/yquant/register/minimum depth} when declaring the relevant register to manually specify a larger desired value, but you have to experiment with regard to what this value is.
          
-         The global attribute \texttt{overlay} (conveniently overwriting \TikZ's \texttt{overlay} key, which should not be used for gates) can take the values
+         The global attribute \texttt{overlay} (conveniently overshadowing \TikZ's \texttt{overlay} key, which should not be used for gates) can take the values
          \begin{itemize}
-            \item \texttt{true} (default, combines \texttt{multi}, \texttt{height}, and \texttt{depth}),
+            \item \texttt{true} (default if no value given, combines \texttt{multi}, \texttt{height}, and \texttt{depth}),
             \item \texttt{multi} (short \texttt{m}),
             \item \texttt{height} (short \texttt{ht}, \texttt{h}),
             \item \texttt{depth} (short \texttt{dp}, \texttt{d}),
-            \item \texttt{single} (short \texttt{s}, equals \texttt{height} and \texttt{depth}), and
-            \item \texttt{false} (useless).
+            \item \texttt{single} (short \texttt{s}, combines \texttt{height} and \texttt{depth}), and
+            \item \texttt{false} (useless, default if attribute not given).
          \end{itemize}
          It disables the calculation of the selected vertical extent for this particular gate.
-         (In fact, \texttt{multi}, \texttt{height}, \texttt{depth}, and \texttt{single} accept boolean values.)
+         (In fact, \texttt{multi}, \texttt{height}, \texttt{depth}, and \texttt{single} are subkeys that accept boolean values.)
    
    \section{Reference: Gates and operations}\label{sec:gates}
       This section lists all operations \Yquant{} currently understands.
-      It also details all arguments that can be given to customize the operation, apart from \texttt{name} and \texttt{overlay}, which are always available.
+      It also details all arguments that can be given to customize the operation, apart from \texttt{name} and \compat{New in 0.4}\texttt{overlay}, which are always available.
       Note that the \tex![value=<value>]! attribute can (and should) alternatively be given as a braced expression that follows the name of the register.
       
       \subsection[\texorpdfstring{\yquant!addstyle!}{addstyle}]{\compat{New in 0.1.2}\yquant!addstyle!}\label{gate:addstyle}
@@ -1067,6 +1078,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Syntax: \yquant!align <target>;! \\
          This is an invisible pseudo\hyp gate that enforces all affected registers to share a common horizontal position for their next gate, which is determined by the largest position of all gates involved.
          It may not span multiple registers and does not allow for controls.
+         \compat{Changed in 0.4}The gate now always aligns the wires, i.e., if they are discarded directly after this gate, they will still discarded all at the same position.
          
          \emph{Possible attributes:} none
       
@@ -1111,7 +1123,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       \subsection{\texorpdfstring{\yquant!discard!}{discard}}\label{gate:discard}
          Syntax: \yquant!discard <target>;! \\
          This is an invisible pseudo\hyp gate that changes the type of all target registers to \gate{nobit}, i.e., no line will be drawn for them.
-         This has effect already for the outgoing line of the last visible gate on the target registers.
+         This has effect already for the outgoing line of the last gate on the target registers.
          The gate may not span multiple registers and does not allow for controls.
          To change a register type on\hyp the\hyp fly into something different from \gate{nobit}, use the \compat{Changed in 0.1.2}\gate{settype} pseudo\hyp gate.
          
@@ -1146,20 +1158,23 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Syntax: \yquant!hspace <target>;! \\
          This is an invisible pseudo\hyp gate that inserts a certain amount of white space into all target registers.
          It may not span multiple registers and does not allow for controls.
+         \compat{Changed in 0.4}The gate now always has an effect, e.g., if the wire is discarded after this gate, it will still be extended by the given amount first.
          
          \emph{Possible attributes}:
          \begin{itemize}
             \item \yquant![value=<dim>]! (required) \\
-               Gives the amount of white space that is to be inserted. Must be a valid \TeX{} dimension.
+               Gives the amount of white space that is to be inserted. Must be a valid (nonnegative) \TeX{} dimension.
          \end{itemize}
       
-      \subsection{\texorpdfstring{\yquant!init!}{init}}\label{gate:init}
+      \subsection[\texorpdfstring{\yquant!init!}{init}]{\compat{Changed in 0.4}\yquant!init!}\label{gate:init}
          Syntax: \yquant!init <target>;! \\
          This is a pseudo\hyp gate that (re)initializes a registers to a given state.
          It may span multiple registers, but does not allow for controls.
          The style \style{/yquant/every label} is installed.
          Note that this pseudo\hyp gate, unlike all others, behaves differently if it is the first operation acting on a register: in this case, it does not increment the horizontal position, but uses the space available to the left; and the style \style{/yquant/every initial label} is installed additionally.
-         For multiple registers, the style \style{/yquant/every multi label} is installed at the end, and a path is constructed that extends from the left end of the first to the left end of the last register in the multi\hyp register compound.
+         For multiple registers, the style \style{/yquant/every multi label} is installed at the end.
+         Basically, creating a new register with some printed name gives exactly the same result as creating a new register without text, followed by application of this gate with the desired text.
+         However, it is recommended to use the first alternative whenever possible, as it is more efficient.
          
          \emph{Possible attributes:}
          \begin{itemize}
@@ -1193,11 +1208,10 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       \subsection{\texorpdfstring{\yquant!nobit!}{nobit}}\label{gate:nobit}
          Syntax: \yquant!nobit <name>[<len>];! \\
          Declares a register of type \gate{nobit}.
-         The \texttt{<name>} must be a self\hyp chosen name for the register which was not previously used as a register name in this \tex!yquant! environment.
+         The \texttt{<name>} must be a self\hyp chosen name for the register which was not previously used as a register name in this circuit (but names can be re\hyp used in subcircuits).
          Names are case\hyp insensitive.
          The register can be made into a vector register by specifying \texttt{<len>} (default \tex!1!).
          
-         \clearpage
          \emph{Possible attributes:}
          \begin{itemize}
             \item \compat{New in 0.2}\yquant![out]! or \yquant![ancilla]! (required in subcircuits) \\
@@ -1213,13 +1227,13 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          
          \emph{Possible attributes:} none
       
-      \subsection{\texorpdfstring{\yquant!output!}{output}}\label{gate:output}
+      \subsection[\texorpdfstring{\yquant!output!}{output}]{\compat{Changed in 0.4}\yquant!output!}\label{gate:output}
          Syntax: \yquant!output <target>;! \\
          This is a pseudo\hyp gate that allows to write some text at the very end of the register line.
          It may only be specified once per register.
          It may span multiple registers, but does not allow for controls.
          The style \style{/yquant/every output} is installed, and also the style \texttt{/yquant/every <type> output}, where \texttt{<type>} is the type of the affected register (at the time of printout).
-         For outputs on multiple registers, the style \style{/yquant/every multi output} is installed instead of the two previously mentioned ones; and additionally, a path is constructed that extends from the first to the last register in the multi\hyp register compound.
+         For outputs on multiple registers, the style \style{/yquant/every multi output} is installed instead of the two previously mentioned ones.
          
          \emph{Possible attributes:}
          \begin{itemize}
@@ -1245,7 +1259,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       \subsection{\texorpdfstring{\yquant!qubit!}{qubit}}\label{gate:qubit}
          Syntax: \yquant!qubit <name>[<len>];! \\
          Declares a register of type \texttt{qubit}.
-         The \texttt{<name>} must be a self\hyp chosen name for the register which was not previously used as a register name in this \tex!yquant! environment.
+         The \texttt{<name>} must be a self\hyp chosen name for the register which was not previously used as a register name in this circuit (but names can be re\hyp used in subcircuits).
          Names are case\hyp insensitive.
          The register can be made into a vector register by specifying \texttt{<len>} (default \tex!1!).
          
@@ -1552,7 +1566,7 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
          \end{example}
          
          \clearpage
-         \begin{example}[test8 (stage in simplification of quantum teleportation)]
+         \begin{example}<Changed in 0.4>[test8 (stage in simplification of quantum teleportation)]
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
@@ -1572,11 +1586,16 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             Note that we left out two Hadamards at the end.
             
             Another way to provide various initial values in a single command is by performing case discrimination on \tex!\idx!, for example in the following manner:
+            
             \begin{minted}{tex}
-qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
+qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
             \end{minted}
+            In principle, all \TeX{} conditionals that check against \tex!\idx! need to be prefixed by \tex!\protect!.
+            If the \texttt{compat} key is at least \texttt{0.4}, \Yquant{} will make the commands \tex!\Ifnum!, \tex!\Ifcase!, \tex!\Or!, \tex!\Else!, \tex!\Fi!, \tex!\Unless! and \tex!\The! available for use within registers; they correspond in a certain way to auto\hyp\tex!\protect!ed versions of the corresponding \TeX{} primitives.
+            Most likely, you will never need them inside values if not in the exact combination with \tex!\idx!.
          \end{example}
          
+         \clearpage
          \begin{example}[test9 (two-qubit gate circuit implementation of Toffoli)]
             \begin{codeexample}
 \begin{tikzpicture}
@@ -1593,7 +1612,6 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             \end{codeexample}
          \end{example}
          
-         \clearpage
          \begin{example}<Alternative in 0.1.2\\Updated in 0.1.1>[test10 (multi-qubit gates also demonstrates use of classical bits)]
             \begin{codeexample}
 \begin{tikzpicture}
@@ -1614,6 +1632,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             We might also have used a three\hyp register vector and used the \gate{settype} pseudo\hyp gate to immediately change the second register into a classical one, which would give indices matching the labels---but still, the registers would have a common name, which would make this a very unnatural approach.
          \end{example}
          
+         \clearpage
          \begin{example}<Updated in 0.1.1>[test11 (user-defined multi-qubit ops)]
             \begin{codeexample}
 \begin{tikzpicture}
@@ -1631,7 +1650,6 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             Instead of \tex!(q)!, we could have also written, e.g., \tex!(q[0]-q[2])! or \tex!(q[0-2])!, or enumerated all sub\hyp registers in a comma\hyp separated list.
          \end{example}
          
-         \clearpage
          \begin{example}<Updated in 0.1.1>[test12 (multi-qubit controlled multi-qubit operations)]
             \begin{codeexample}
 \begin{tikzpicture}
@@ -1647,6 +1665,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             \end{codeexample}
          \end{example}
          
+         \clearpage
          \begin{example}[test13 (three-qubit phase estimation circuit with QFT and controlled-U)]
             \begin{codeexample*}
 \begin{tikzpicture}
@@ -1726,7 +1745,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             \end{codeexample}
          \end{example}
             
-         \begin{example}<Updated in 0.1.2, 0.1.1>[test16 (example from Nielsen paper on cluster states)]
+         \begin{example}<Updated in 0.4, 0.1.2, 0.1.1>[test16 (example from Nielsen paper on cluster states)]
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
@@ -1739,6 +1758,9 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
       cnot q[3] | q[2];
       slash q[0];
       dmeter q[3];
+      align q;
+      [solid]
+      barrier q[2];
       discard q[2];
    \end{yquant}
 \end{tikzpicture}
@@ -1747,8 +1769,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             Usually, this would be sufficient to put the \gate{cnot} and the \gate{slash} gate directly under each other, as it is in the \pkg{qasm} example.
             However, the \gate{slash} gate is special in that it does not need horizontal space and is put with only half of the usual operator separation into the circuit (for this reason, it can be put at the beginning of a wire without creating weird shifts with respect to the ``unslashed'' registers---it is put in the initial line that every wire even without an operation has).
             Hence, you should normally only use the \gate{slash} gate as the very first gate in a circuit.
-            It is possible, but not worthwhile to construct the exact same appearance as in the \pkg{qasm} example.
-            Note that \gate{discard} currently just drops the wire directly after the last operation.
+            To get the vertical stopper mark, we abuse a \gate{barrier} on just a single wire and turn it from dashed to solid before \gate{discard}ing.
          \end{example}
          
          \begin{example}<Updated in 0.1.1>[test17 (example from Nielsen paper on cluster states)]
@@ -1772,7 +1793,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket{q_{\idx}} = \ket{\ifcase\idx\relax \psi \or + \or + \or \phi \fi}$} q[4];
+      qubit {$\ket{q_{\idx}} = \ket{\Ifcase\idx\relax \psi \Or + \Or + \Or \phi \Fi}$} q[4];
       
       zz (q);
       dmeter {$H$} q[1, 2];
@@ -1790,12 +1811,12 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
          \yquantset{operator/separation=2mm}
          For a better orientation, we use the same section headings as the \pkg{qcircuit} manual.
          The manual uses unnamed registers a lot; often, we will use the \tex!yquant*! environment to make things more concise.
-         As \pkg{qcircuit} uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=2mm}!.
+         As the \pkg{qcircuit} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=1em}!.
          
          \subsubsection{I. Introduction}
             \begin{example}<Updated in 0.4, 0.1.1>%
                \begin{codeexample*}
-\begin{tikzpicture}[baseline=(current bounding box.center)]
+\begin{tikzpicture}
    \begin{yquant}[operators/subcircuit/frameless]
       nobit q[3];
       
@@ -1902,7 +1923,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                
                Note that it could have become necessary to pass the \texttt{overlay} attribute to the recovery gate, as it is a multi\hyp register gate with a \texttt{label}, meaning that \Yquant{} cannot reliably distribute its total vertical extent over its constituent registers.
                However, as the $\symcal R$ together with the label in total were not higher than the three\hyp qubit gate would have been anyway, this was not necessary here.
-               In generally, don't use \texttt{overlay} unless necessary, as this drawback is expected to be fixed in a future version at least to some degree.
+               In generally, don't use \texttt{overlay} unless necessary; maybe a future version will even be able to handle the more difficult cases better.
                
                Finally, we will give a similar circuit by using the \TikZ{} interface instead of subcircuits, this time also showing how we can change the shape of the measurement gate to one as in the \pkg{qcircuit} manual:
                
@@ -2013,11 +2034,11 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                \end{example}
                
             \paragraph{C. Vertical wires}\leavevmode
-               \begin{example}<Updated in 0.1.1>
+               \begin{example}<Updated in 0.4, 0.1.1>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
-      box {$U_{\protect\the\numexpr\idx+1}$} q[0, 2] | q[1];
+      box {$U_{\The\numexpr\idx+1}$} q[0, 2] | q[1];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -2025,9 +2046,8 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   This macro follows the same rules as the name suffix, i.e., it assigns indices (zero\hyp based) to the target registers in top\hyp to\hyp bottom order, regardless of which order was specified in the target list.
                   Since we instead want a one\hyp based subscript, we need to add one.
                   Note that if you want to output \tex!\idx! directly or within an unexpandable expression, you don't need to take any action.
-                  However, here, \tex!\the! is expandable; and since \Yquant{} needs to process all its output twice (first in order to determine the vertical spacing, second to actually typeset), you must manually take care that the command is \emph{not} expanded prematurely by inserting \tex!\protect!.
-                  Had you not done this, the subscript would have been ``$1$'' for both operators.
-                  Note this is not the case if this macro is used upon creation of a register (as is evident by the fact that the previous examples that used \tex!\ifcase! within the value did not need to say \tex!\protect\ifcase ... \protect\or ... \protect\fi!), this is internally handled quite differently.
+                  However, here, \tex!\the! is expandable; and since \Yquant{} needs to process all its output twice (first in order to determine the vertical spacing, second to actually typeset), you must manually take care that the command is \emph{not} expanded prematurely by saying \tex!\protect\the! instead, for which \Yquant{}, with a \texttt{compat} setting of at least \texttt{0.4}, provides the shorthand \tex!\The!.
+                  Had we used the plain \TeX{} \tex!\the! instead, the subscript would have been ``$1$'' for both operators.
                \end{example}
                
             \paragraph{D. Labeling input and output states}\leavevmode
@@ -2045,6 +2065,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                
                \begin{example}<Updated in 0.4, 0.1.1>
                   \begin{codeexample}
+% \usetikzlibrary{calc}
 \begin{tikzpicture}
    \begin{yquant*}
       {
@@ -2052,9 +2073,9 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
          init {$\ket{0^k}$} (a[-1]);
       }
       init {$\ket\psi$} (b[-1]);
-      qubit {\ifcase\idx\relax$A$\or$B$\fi} c[2];
-      [every multi label/.style={every node/.style={anchor=east, midway, shift={(-.3, 0)}}}]
-      init {$\ket\psi$} (c);
+      [name=cinit]
+      qubit {\Ifcase\idx\relax$A$\Or$B$\Fi} c[2];
+      \node[anchor=east] at ($(cinit-0.west)!.5!(cinit-1.west)$) {$\ket\psi$};
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -2062,7 +2083,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   The second one (using a curly brace) corresponds to the default.
                   It is overwritten for the first qubit, and to make this modification local, this is done in a group.
                   The third qubit pair uses an overall label and additionally individual labels on the lines.
-                  This is achieved by some trickery: the individual labels are given as initialization labels on the register; the global label is given as an \gate{init} multi\hyp qubit gate.
+                  The recommended way to do this starting from version~0.4 is to add the ``special'' label by means of a \TikZ{} command.
                \end{example}
                
          \subsubsection{V. More Complicated Circuits: Multiple Qubit gates and Beyond}
@@ -2077,7 +2098,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   \end{codeexample}
                \end{example}
                
-               \begin{example}<Updated in 0.4>
+               \begin{example}<Updated in 0.4, 0.1.1>
                   \begin{codeexample}
 \yquantdefinebox{dots}[inner sep=0pt]{$\dots$}
 \begin{tikzpicture}
@@ -2101,7 +2122,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                \end{example}
                
                \clearpage
-               \begin{example}<Updated in 0.1.2>
+               \begin{example}<Updated in 0.1.2, 0.1.1>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
@@ -2158,7 +2179,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   \end{codeexample}
                \end{example}
                
-               \begin{example}
+               \begin{example}<Updated in 0.1.1>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
@@ -2272,7 +2293,6 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
          \subsubsection{VI. Bells and Whistles: Tweaking Your Diagram to Perfection}
             For options how to configure the circuits, refer to \cref{sec:config}.
             
-            \clearpage
             \paragraph{A. Spacing}\leavevmode
                \begin{example}<Updated in 0.1.1>
                   \begin{codeexample}
@@ -2287,10 +2307,10 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                \end{example}
                
             \paragraph{B. Labeling}\leavevmode
-               \begin{example}
+               \begin{example}<Updated in 0.4>
                   \begin{codeexample}
 \begin{tikzpicture}
-   \begin{yquant}[every initial label/.style={anchor=south east}]
+   \begin{yquant}[every initial label/.style={anchor=south east, yshift=1mm}]
       qubit {\rlap{\hskip2mm $a$}} a;
       qubit {\rlap{\hskip2mm $b$}} b;
       hspace {5mm} -;
@@ -2309,7 +2329,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                
             \clearpage
             \paragraph{C. Grouping}\leavevmode
-               \begin{example}<Updated in 0.4>
+               \begin{example}<Updated in 0.4, 0.1.1>
                   \begin{codeexample*}
 % \usetikzlibrary{fit}
 \begin{tikzpicture}
@@ -2482,7 +2502,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
             \end{example}
             
             \clearpage
-            \begin{example}<Updated in 0.1.2, 0.1.1>
+            \begin{example}<Updated in 0.4, 0.1.2, 0.1.1>
                \begin{codeexample*}
 \begin{tikzpicture}
    \begin{yquant*}
@@ -2498,10 +2518,9 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
 \end{tikzpicture}
                \end{codeexample*}
                It is not possible for the double control line to directly exit the measurement gate.
-               Also, if you discard a gate, this will prevent it from exiting from its last gate.
-               \Yquant{} will not allow you (apart from manual drawing) to extend the wire to some arbitrary position, then drop it.
-               But of course, as done here, you can always resort to the full power of \TikZ.
-               Still, this is inferior to a wire drawn by \Yquant, as it does not use clippings: the connection with the \gate{cnot} gate may not be accurate; in particular, if the wire is of a different color or if you need to draw classical or bundle wires, the connection will become unpleasant.
+               Here, we manually extended the wire on the last register.
+               We could instead have performed an \gate{align} gate before the discarding process, then, the wire line would have extended by \Yquant{}; but since \gate{align} aligns at the \emph{right end} as opposed to the center of the gate, the wire line would have been a bit longer.
+               Still, this \TikZ{} wire is inferior to a wire drawn by \Yquant, as it does not use clippings: the connection with the \gate{cnot} gate may not be accurate; in particular, if the wire is of a different color or if you need to draw classical or bundle wires, the connection will become unpleasant.
             \end{example}
             
             \begin{example}<Updated in 0.1.1>
@@ -2600,7 +2619,7 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                This time, we did not artificially discard the lines.
             \end{example}
             
-            \begin{example}
+            \begin{example}<Changed in 0.4, 0.1.1>
                \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}
@@ -2610,6 +2629,11 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample}
+               Notice here that the vertical spacing is uneven.
+               \Yquant{} realizes that the minimal vertical spacing will not be enough to account for the multi\hyp qubit boxes.
+               However, when it tries to adjust positions accordingly so that the last gate fits, this will of course not change anything for the first wire, which is not contained in the gate.
+               After having increased the spacing, \Yquant{} realizes that this already was enough to accomodate for the first gate, so no further action is taken.
+               In order to get a more even spacing, just increase \style{/yquant/register/minimum height} and \style{/yquant/register/minimum depth}.
             \end{example}
             
             \paragraph{A. Different connections}\leavevmode
@@ -2630,7 +2654,6 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   This example for the first time demonstrates the declaration of a non\hyp existing register and the \gate{settype} pseudo\hyp gate that acts as a zero\hyp width, no\hyp content \gate{init} gate.
                \end{example}
             
-         \clearpage
          \subsubsection{V. Slicing}
             \begin{example}
                \begin{codeexample}
@@ -2676,22 +2699,22 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                \end{codeexample*}
             \end{example}
             
-            \begin{example}
+            \begin{example}<Changed in 0.4>
                \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}[label distance=4mm]
-   \begin{yquant}[operators/every barrier/.append style={red, thick, shorten <= -2mm, shorten >= -2mm}]
+   \begin{yquant}[operators/every barrier/.append style={red, thick, shorten <= -4mm, shorten >= -4mm}]
       qubit {$\ket0$} a;
       h a;
       ["1"]
-      barrier (a);
+      barrier a;
       phase {[label distance=0pt]$\varphi$} a;
       ["2"]
-      barrier (a);
+      barrier a;
       h a;
       ["3"]
-      barrier (a);
-      output {$\cos\frac\varphi2 \ket0 - i\sin\frac\varphi2 \ket1$};
+      barrier a;
+      output {$\cos\frac\varphi2 \ket0 - i\sin\frac\varphi2 \ket1$} a;
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample*}
@@ -2724,13 +2747,13 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
          \clearpage
          \subsubsection{VI. Spacing}
             \paragraph{A. Local adjustment}\leavevmode
-               \begin{example}
+               \begin{example}<Changed in 0.4>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant}[register/default name=]
-      [register/minimum height=2cm]
+      [register/minimum depth=2cm]
       qubit a;
-      qubit {\vbox to 1cm{}} b;
+      qubit b;
       qubit c;
       
       h a;
@@ -2743,11 +2766,10 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
    \end{yquant}
 \end{tikzpicture}
                   \end{codeexample}
-                  At the moment, the distance between registers is calculated by \Yquant{} automatically.
-                  We show various possibilities to intervene in this example.
-                  The first is to locally, upon creation of the register, reset \style{/yquant/register/minimum height} to a different value.
-                  The second is to artificially enlarge the label that the qubit initializer takes.
-                  However, both approaches enlarge the \emph{height} of the registers, i.e., add half of the specified amount to the top and the bottom.
+                  The vertical distance between registers is calculated by \Yquant{} automatically based on the height and depth that \Yquant{} find for this particular register---i.e., how much space is required above and below the wire line for all the gates.
+                  In order to enlarge these values, reset \style{/yquant/register/minimum height} or \style{/yquant/register/minimum depth} to a different value.
+                  It is not possible to artificially \emph{reduce} the calculated heights and depths, as this would result in overlapping gates.
+                  However, sometimes it might be required to exclude a certain gate from the calculation; then, use the \texttt{overlay} attribute.
                \end{example}
                
                \begin{example}
@@ -2783,10 +2805,10 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
                   \end{codeexample*}
                \end{example}
                
-               \begin{example}
+               \begin{example}<Changed in 0.4, 0.1.1>
                   \begin{codeexample}
 \begin{tikzpicture}
-   \begin{yquant*}[register/minimum height=0pt]
+   \begin{yquant*}[register/minimum height=0pt, register/minimum depth=0pt]
       x a[0, 2];
       zz (a[0, 1]);
       x a[0];
@@ -2794,13 +2816,13 @@ qubit {$\ket{q_{\idx}} = \ifcase\idx\relax \ket\psi \else \ket0 \fi$} q[3];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  By default, \Yquant{} will use the height that is required by the individual gates, but at least \style{/yquant/register/minimum height} (which defaults to \tex!3mm!).
+                  By default, \Yquant{} will use the height and depth that is required by the individual gates, but at least \style{/yquant/register/minimum height} or, respectively, \style{/yquant/register/minimum depth} (which default to \tex!1.5mm!).
                   Only manually reducing the default height will produce the cramped spacing displayed here.
                \end{example}
                
             \clearpage
             \paragraph{C. Alignment}\leavevmode
-               \begin{example}
+               \begin{example}<Changed in 0.4>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
@@ -2817,80 +2839,126 @@ $=$
 \end{tikzpicture}
                   \end{codeexample}
                   Not specifying anything for the vertical alignment will lead to the common \TikZ{} problem: the baseline will be at the bottom, which is particularly bad in this case due to the missing $X$ gate.
-                  The \style{/yquant/register/minimum height} key does not help here, since it only affects \Yquant's internal handling, but not the bounding box calculated by \TikZ.
-                  In the first example of the \pkg{qcircuit} documentation, we demonstrated how the desired task can easily be achieved in terms of \texttt{baseline}s.
-                  We will now do the same with scopes instead.\vskip2mm 
-                  \begin{codeexample*}
-\begin{tikzpicture}[/yquant/register/minimum height=5mm]
-   \begin{yquant*}
-      x a[0];
-      cnot a[1] | a[0];
-   \end{yquant*}
-   \path (current bounding box.east |- 0, 0) ++(1, 0) coordinate (shift);
-   \begin{scope}[shift=(shift)]
-      \begin{yquant*}
-         cnot a[1] | a[0];
-         x a;
-      \end{yquant*}
-   \end{scope}
-   \node at (current bounding box) {$=$};
+                  The keys for minimal register sizes do not help here, since they only affect \Yquant's internal handling, but not the bounding box calculated by \TikZ.
+                  The recommended way to draw circuit equations is always with \texttt{frameless} \gate{subcircuit}s; only this will guarantee perfect wire alignment in all cases.
+                  
+                  \begin{codeexample}
+\begin{tikzpicture}
+   \begin{yquant}
+      nobit q[2];
+      
+      [frameless]
+      subcircuit {
+         [out]
+         qubit {} q[2];
+         x q[0];
+         cnot q[1] | q[0];
+      } (q);
+      discard -;
+      
+      [draw=none]
+      box {$=$} (q);
+      
+      [frameless]
+      subcircuit {
+         [out]
+         qubit {} q[2];
+         cnot q[1] | q[0];
+         x q;
+      } (q);
+      discard -;
+   \end{yquant}
 \end{tikzpicture}
-                  \end{codeexample*}
-                  Here, we increased the minimum height so that in the left circuit despite the absence of the $X$ gate, the second register has the same separation.
-                  We used the meta\hyp node \texttt{current bounding box} to avoid the need to manually specify hard\hyp coded positions.
+                  \end{codeexample}
                \end{example}
                
+               \begin{example}<New in 0.4>
+                  \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit {$\ket x$} q;
+      qubit {$\ket y$} q[+1];
+      
+      [frameless]
+      subcircuit {
+         [in]
+         qubit {} q[2];
+         
+         h q[0];
+         cnot q[1] | q[0];
+         output {\quad$\mapsto$} (-);
+      } (q);
+      
+      [draw=none, inner sep=0pt]
+      box {$\ket{\psi_{x, y}}$} (q);
+      
+      [frameless]
+      subcircuit {
+         [out]
+         qubit {} q[2];
+         
+         init {$\mapsto$\quad} (q);
+         cnot q[1] | q[0];
+         h q[0];
+      } (q);
+      
+      output {$\ket x$} q[0];
+      output {$\ket y$} q[1];
+   \end{yquant}
+\end{tikzpicture}
+                  \end{codeexample*}
+                  Here, we do not have a circuit equation (i.e., logical statements involving multiple rather independent circuits), but a circuit progression.
+                  We start with some ``outer'' states (note we could again have used the \tex!\symbol! trick to make the declaration a bit shorter), let them enter into the first subcircuit and define an output of this.
+                  In the opposite way, we proceed after giving the state.
+                  Where to put the actual labels (e.g., the \gate{box} could also have contained $\mapsto \ket{\psi_{x, y}} \mapsto$ and the \gate{output} and \gate{init} gates could have been empty) is up to the user.
+               \end{example}
+               
+               \clearpage
                \subparagraph{1. Perfecting Vertical Alignment}\leavevmode
-                  \begin{example}
+                  \begin{example}<Updated in 0.4>
                      \begin{codeexample*}
-\begin{tikzpicture}[baseline=(W)]
+\begin{tikzpicture}
    \begin{yquant}
-      qubit {$\ket0$} anc;
-      [name=W]
-      qubit {} x;
-      h x;
-      cnot x | anc;
-   \end{yquant}
-\end{tikzpicture} $\equiv$ \begin{tikzpicture}[baseline=(W)]
-   \begin{yquant}
-      [name=W]
-      qubit {} x;
-      h x;
-      x x;
+      nobit q[2];
+      
+      [frameless]
+      subcircuit {
+         [out]
+         qubit {} q;
+         [out]
+         qubit {$\ket0$} q[+1];
+         
+         cnot q[0] | q[1];
+         cnot q[1] | q[0];
+         cnot q[0] | q[1];
+      } (q);
+      discard -;
+      
+      [draw=none]
+      box {$=$} (q);
+      
+      [frameless]
+      subcircuit {
+         [out]
+         qubit {} q;
+         [out]
+         qubit {$\ket0$} q[+1];
+         
+         cnot q[1] | q[0];
+         cnot q[0] | q[1];
+      } (q);
+      discard -;
    \end{yquant}
 \end{tikzpicture}
                      \end{codeexample*}
-                     While here, we opted for the most logical choice to name the declaration of the register, a name put to any operation on the desired register would also serve the purpose (as long as this operation is vertically symmetrical, which subcircuits may not be).
-                  \end{example}
-                  
-                  \clearpage
-                  \begin{example}
-                     \begin{codeexample*}
-\begin{tikzpicture}[baseline={([yshift=.2cm]W)}]
-   \begin{yquant}
-      qubit {$\ket0$} anc;
-      [name=W]
-      qubit {} x;
-      h x;
-      cnot x | anc;
-   \end{yquant}
-\end{tikzpicture} $\equiv$
-\begin{tikzpicture}[baseline={([yshift=.2cm]new)}]
-   \begin{yquant}
-      [name=new]
-      qubit {} x;
-      h x;
-      x x;
-   \end{yquant}
-\end{tikzpicture}
-                     \end{codeexample*}
-                     Of course, you may also use the features of the \TikZ{} library \texttt{calc} to achieve the same shift.
+                     Using \gate{subcircuit}s here looks like an overkill, but it is the best way both for logical consistency and also to achieve perfect horizontal alignment.
                   \end{example}
             
+            \clearpage
             \paragraph{D. Scaling}\leavevmode
                \begin{example}
                   \begin{codeexample*}
-\begin{tikzpicture}[scale=1.5, every label/.append style={scale=1.5}]
+\begin{tikzpicture}[scale=1.5]
    \begin{yquant*}
       h a;
       phase {$\beta$} a;
@@ -2900,8 +2968,8 @@ $=$
                   \end{codeexample*}
                   Here, we first scaled the circuit itself.
                   The default style for \style{/yquant/every circuit} sets the \texttt{transform shape} key for every node (which means any gate), so that those are also scaled.
-                  This is explicitly undone for \texttt{label}s due to \TikZ{} bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843}, so the scaling must be specified explicitly for the \texttt{label}s.
-                  % TODO Note that unless you use a very recent version of \TikZ{} in which bug \href{https://github.com/pgf-tikz/pgf/issues/843}{\#843} was fixed, you might need to add \tex!every label/.prefix style={transform shape=false}! to this style, which undoes the effect for \texttt{label}s.
+                  If your \TikZ{} version is at least 3.1.6a, this is all that needs to be done.
+                  In earlier versions, there was a bug that required \Yquant{} to reset the \texttt{transform shape} key for \texttt{labels}, which would then require you to scale those manually.
                \end{example}
          
          \subsubsection{VII. Typesetting}
@@ -2942,7 +3010,7 @@ $=$
                   If you only want to fill certain operators, you have to selectively target them using their styles.
                \end{example}
                
-               \begin{example}
+               \begin{example}<Updated in 0.1.2, 0.1.1>
                   \begin{codeexample*}
 \begin{tikzpicture}
    \begin{yquant}[operators/every box/.append style={fill=white}]
@@ -2953,11 +3021,12 @@ $=$
    \end{yquant}
 \end{tikzpicture}
                   \end{codeexample*}
-                  \Yquant{} properly splits discontiguous multi\hyp qubit operations as of version~0.1.2.
+                  \Yquant{} properly splits discontiguous multi\hyp qubit operations.
                \end{example}
             
+            \clearpage
             \paragraph{B. Per-Gate Styling}\leavevmode
-               \begin{example}
+               \begin{example}<Changed in 0.4>
                   \begin{codeexample}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
@@ -2966,7 +3035,7 @@ $=$
       h a;
       [green]
       phase {[green]$\beta$} a;
-      ["$\ket\pm$"]
+      ["$\ket\pm$", blue]
       measure a;
       discard a;
    \end{yquant*}
@@ -2974,8 +3043,7 @@ $=$
                   \end{codeexample}
                \end{example}
                
-               \clearpage
-               \begin{example}
+               \begin{example}<Changed in 0.4>
                   \begin{codeexample*}
 % \usetikzlibrary{shapes.symbols, fit}
 \begin{tikzpicture}
@@ -2992,10 +3060,11 @@ $=$
       cnot anc2[0] | data;
       cnot anc2 | anc1[0];
       cnot anc2[1] | anc1[1];
-      measure anc2;
+      measure anc2[0];
+      [blue] measure anc2[1];
    \end{yquant}
-   \node[starburst, cyan, fill=yellow, draw=red,
-         line width=2pt, inner xsep=-4pt, inner ysep=-5pt, fit=(box)] {noise};
+   \node[starburst, cyan, fill=yellow, draw=red, line width=2pt,
+         inner xsep=-4pt, inner ysep=-5pt, fit=(box)] {noise};
 \end{tikzpicture}
                   \end{codeexample*}
                   \TikZ{} shapes cannot simply be used with \Yquant.
@@ -3007,9 +3076,9 @@ $=$
                \end{example}
                
             \paragraph{C. Boxing/Highlighting Parts of a Circuit}\leavevmode
-               \begin{example}
+               \begin{example}<Updated in 0.2>
                   \begin{codeexample*}
-% \usetikzlibrary{quotes}
+% \usetikzlibrary{quotes, fit}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
@@ -3026,14 +3095,14 @@ $=$
          draw, inner sep=6pt, "reversed c-\textsc{not}"] {};
 \end{tikzpicture}
                   \end{codeexample*}
-                  In this case, since version~0.2, a subcircuit may provide a similar experience:
+                  As usual, subcircuits provide a similar experience, but respect the separation:
                   \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
       cnot b | a;
-      [this subcircuit box style={inner sep=6pt, "reversed c-\textsc{not}"}]
+      [this subcircuit box style={inner ysep=6pt, "reversed c-\textsc{not}"}]
       subcircuit {
          qubit {} x;
          qubit {} y;
@@ -3050,13 +3119,13 @@ $=$
                \end{example}
                
                \clearpage
-               \begin{example}
+               \begin{example}<Updated in 0.4>
                   \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
-      [this subcircuit box style={draw, dashed, rounded corners, fill=blue!20, inner xsep=6pt, inner ysep=10pt, "\textsc{swap}" below}, register/default name=]
+      [this subcircuit box style={draw, dashed, rounded corners, fill=blue!20, inner ysep=10pt, "\textsc{swap}" below}, register/default name=]
       subcircuit {
          qubit a;
          qubit b;
@@ -3079,13 +3148,13 @@ $=$
                
          \clearpage
          \subsubsection{VIII. Otherwise undocumented features}
-            \begin{example}
+            \begin{example}<Updated in 0.4>
                \begin{codeexample*}
-% \usetikzlibrary{quantikz}
+% \usetikzlibrary{quantikz,fit}
 \begin{tikzpicture}
    \begin{yquant}[register/default name=]
       qubit a;
-      [name=wave, register/minimum height=1cm]
+      [name=wave, register/minimum height=5mm, register/minimum depth=5mm]
       nobit wave;
       qubit b;
       qubit c;
@@ -3105,6 +3174,8 @@ $=$
                Since the name assigned to a register without any text actually is of a \texttt{coordinate} shape, we need to enlarge the height of the wave by providing a slightly increased \texttt{inner ysep}.
                Additionally, \pkg{quantikz} sets a negative \texttt{inner xsep}, which is probably required for its grid layout; but \Yquant{} positions exactly, so we also need to reset this.
             \end{example}
+            
+            \Yquant{} does not provide a shape corresponding to the ``creating an ebit'' gate.
          
          \clearpage
          \subsubsection{X. Troubleshooting}
@@ -3127,7 +3198,7 @@ $=$
    
    \section{Foreign language support}\label{sec:foreign}
       \Yquant{} is built in various modules, so that it is not hard to use the quantum circuit rendering backend, but expose a different language frontend.
-      Since version~0.3, \Yquant{} not only understands its own language, but also others.
+      \compat{New in 0.3}\Yquant{} not only understands its own language, but also others.
       
       \subsection{qasm}\label{sec:foreign:qasm}
          By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \pkg{qasm} (not OpenQASM) is loaded.
@@ -3154,7 +3225,7 @@ $=$
             They are implemented for compatibility reasons and will produce a fixed horizontal space of the operator minimum width plus one separation, which might or might not be accurate.
             
             Note that whatever you write between \tex!\begin{qasm}! and \tex!\end{qasm}! is essentially treated as verbatim; only where the specification says so (in the definition of a new gate and in the optional third command to the register definition), it is interpreted as \TeX{} markup.
-            Consequently, in \pkg{beamer}, any frame containing these environments must be given the \texttt{verbatim} option.
+            Consequently, in \pkg{beamer}, any frame containing these environments must be given the \texttt{fragile} option.
          
          \subsubsection{Configuration}
             Loading the \pkg{qasm} language interpreter will define several new configuration keys.
@@ -3185,7 +3256,7 @@ $=$
             \end{option*}
          
          \subsubsection{Examples}
-            The unaltered\footnote{Only in \texttt{test14.qasm}, \tex!\cal! was replaced by \tex!\symcal!---and this is only necessary as this manual was set with \pkg{unicode-math}. In traditional mode, even this would not be necessary.} \texttt{.qasm} files provided from \href{https://www.media.mit.edu/quanta/qasm2circ/}{the \texttt{qasm2circ} page} were stored in the subfolder \texttt{qasm} relative to this manual's \TeX{} file.
+            The unaltered \texttt{.qasm} files provided from \href{https://www.media.mit.edu/quanta/qasm2circ/}{the \texttt{qasm2circ} page} were stored in the subfolder \texttt{qasm} relative to this manual's \TeX{} file.
             The following command is then used to print all of them:
             \begin{minted}{tex}
 % preamble:
@@ -3258,5 +3329,17 @@ $=$
       
       \subsection*{2020-10-27: Version 0.3.3}
          Fix \href{https://github.com/projekter/yquant/issues/6}{\#6}: shorten doesn't work for 2-qubit barriers. This fixes a bug in how the \texttt{shorten} keyword worked on \gate{barrier}s, which may require re\hyp assessing your chosen values.
+      
+      \subsection*{2021-02-21: Version 0.4a}
+         Lots of internal fixes, most notably vertical alignment with subcircuits. \\
+         Introduce capability to perform vertical alignment with multi\hyp register gates. \\
+         Dramatic changes under the hood regarding horizontal positioning, which is now only determined in the drawing stage; this paves the way for delayed gates, which are planned for 0.4.
+         Also changes in the gate declaration interface. \\
+         Introduce compatibility layer, so that layout\hyp breaking changes will not become effective unless explicitly requested. \\
+         Separate register height into a height and depth key. \\
+         Introduce \texttt{overlay} key to disable height caluclation selectively. \\
+         Change register style declaration, so that this is now always equivalent to creating an unnamed register followed by an \gate{init} gate with the given text. \\
+         Now use nodes for \gate{init} and \gate{output} gates. \\
+         Change behavior of \gate{hspace} and \gate{align}: Now also extend if the wire is discarded afterwards.
 %END_FOLD
 \end{document}
