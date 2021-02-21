@@ -388,7 +388,7 @@
          \yquant@draw@@x-.5\dimexpr\@firstofthree#3\relax-\@thirdofthree#3%
       }%
       \forlistloop\yquant@draw@group@advance{#4}%
-      \begingroup%
+      \setbox\yquant@prepare@subcircuit@box=\hbox{{%
          \let\yquant@draw@subcircuit@wirestart=\newx%
          \let\yquant@parent=\yquant@prefix%
          \def\yquant@prefix{yquant@env#1@}%
@@ -414,7 +414,7 @@
          \ifdim\dimen0<\pgf@picminy %
             \global\pgf@picminy=\dimen0 %
          \fi%
-      \endgroup%
+      }}%
       \edef\cmd{%
          \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax)%
             node[/yquant/every operator, \yquant@draw@@style,%
@@ -425,6 +425,7 @@
             {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#3 {}}};%
       }%
       \cmd%
+      \unhbox\yquant@prepare@subcircuit@box
    % \endpgfinterruptboundingbox + increase
       \ifdim\pgf@interrupt@savemaxy>\pgf@picmaxy%
          \global\pgf@picmaxy=\pgf@interrupt@savemaxy%
