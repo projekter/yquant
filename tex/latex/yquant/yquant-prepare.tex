@@ -138,6 +138,10 @@
 }
 
 \ifnum\yquant@compat>1 %
+   \expandafter\@firstoftwo
+\else
+   \expandafter\@secondoftwo
+\fi{
    \def\yquant@prepare@ifs@Ifnum{\noexpand\ifnum}
    \def\yquant@prepare@ifs@Ifcase{\noexpand\ifcase}
    \def\yquant@prepare@ifs@Or{\noexpand\or}
@@ -153,7 +157,7 @@
       \let\Fi=\yquant@prepare@ifs@Fi%
       \let\Unless=\yquant@prepare@ifs@Unless%
       \let\The=\yquant@prepare@ifs@The%
-   }%
+   }
    \protected\def\yquant@prepare@ifs@direct{%
       \let\Ifnum=\ifnum%
       \let\Ifcase=\ifcase%
@@ -162,10 +166,11 @@
       \let\Fi=\fi%
       \let\Unless=\unless%
       \let\The=\the%
-   }%
-\else%
+   }
+}{
    \let\yquant@prepare@ifs@set=\relax%
-\fi
+   \let\yquant@prepare@ifs@direct=\relax%
+}
 \protected\long\def\yquant@prepare@finalize#1#2{%
    % We now know the dimensions of all the registers (though we didn't bother with the height of the control knobs [if present], we just assume they are too small to change this).
    \protected\def\idx{}%#
