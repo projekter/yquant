@@ -508,6 +508,13 @@
       }%
    \fi%
    \let\yquant@circuit@endwires@finalize=\relax%
+   \forlistcsloop\yquant@prepare@subcircuit@endwires@loop{\yquant@prefix inonly}%
+}
+
+\protected\def\yquant@prepare@subcircuit@endwires@loop#1{%
+   \eappto\yquant@circuit@endwires@finalize{%
+      \yquant@register@set@type{#1}\noexpand\yquant@register@type@none%
+   }%
 }
 % END_FOLD
 
