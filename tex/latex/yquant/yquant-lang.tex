@@ -246,6 +246,12 @@
          {/yquant/every label, /yquant/every initial label,%
           /yquant/every \yquant@lang@create@style\space label,%
           \ifnum\yquant@compat<2 \ifdefined\yquant@lang@attr@input /yquant/every input label\fi\fi}%
+      \unless\ifx\yquant@lang@attr@value\empty%
+         % make sure to immediately remove the "clear" marker again if we have a text
+         \yquant@for \i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
+            \yquant@register@execclear@lastgate{\i}{init}%
+         }%
+      \fi%
       \unless\ifx\yquant@lang@attr@name\empty%
          \ifnum\len=1 %
             \csxappto{\yquant@prefix draw}%
@@ -278,6 +284,7 @@
 
 \protected\long\def\yquantdefinegate@i#1[#2]#3{%
    \pgfkeys{/yquant/operators/every #1/.style={#2}}%
+   \yquant@prepare@ifs@set%
    \protected@edef\yquantdefinegate@do{%
       \yquant@langhelper@declare@command%
          {#1}%
@@ -335,6 +342,7 @@
 
 \protected\long\def\yquantdefinebox@i#1#2[#3]#4{%
    \pgfkeys{/yquant/operators/every #1/.style={#3}}%
+   \yquant@prepare@ifs@set%
    \protected@edef\yquantdefinebox@do{%
       \yquant@langhelper@declare@command%
          {#1}%

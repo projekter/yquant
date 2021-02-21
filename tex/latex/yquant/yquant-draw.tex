@@ -8,8 +8,11 @@
          \yquant@register@set@type{#1}{#2}%
       \fi%
    \else%
-      % for new wires, just reset the type. It might have changed from its initial value during preparation stage
+      % for new wires, reset the type, and if this a subcircuit, put the appropriate x position in place. It might have changed from its initial value during preparation stage
       \yquant@register@set@type{#1}{#2}%
+      \ifdefined\yquant@draw@subcircuit@wirestart%
+         \yquant@register@set@x{#1}{\yquant@draw@subcircuit@wirestart}%
+      \fi%
    \fi%
 }
 
@@ -379,6 +382,7 @@
       }%
       \forlistloop\yquant@draw@group@advance{#4}%
       \begingroup%
+         \let\yquant@draw@subcircuit@wirestart=\newx%
          \let\yquant@parent=\yquant@prefix%
          \def\yquant@prefix{yquant@env#1@}%
          \ifstrempty{#2}{%

@@ -57,6 +57,7 @@
 \protected\long\def\yquant@prepare#1#2{%
    \yquant@sort@clear%
    \def\idx{0}%
+   \yquant@prepare@ifs@direct%
    \dimen2=\yquant@config@operator@minimum@width%
    \ifyquant@circuit@operator@hasControls%
       \edef\yquant@prepare@list{%
@@ -136,9 +137,39 @@
    \fi%
 }
 
+\ifnum\yquant@compat>1 %
+   \def\yquant@prepare@ifs@Ifnum{\noexpand\ifnum}
+   \def\yquant@prepare@ifs@Ifcase{\noexpand\ifcase}
+   \def\yquant@prepare@ifs@Or{\noexpand\or}
+   \def\yquant@prepare@ifs@Else{\noexpand\else}
+   \def\yquant@prepare@ifs@Fi{\noexpand\fi}
+   \def\yquant@prepare@ifs@Unless{\noexpand\unless}
+   \def\yquant@prepare@ifs@The{\noexpand\the}
+   \protected\def\yquant@prepare@ifs@set{%
+      \let\Ifnum=\yquant@prepare@ifs@Ifnum%
+      \let\Ifcase=\yquant@prepare@ifs@Ifcase%
+      \let\Or=\yquant@prepare@ifs@Or%
+      \let\Else=\yquant@prepare@ifs@Else%
+      \let\Fi=\yquant@prepare@ifs@Fi%
+      \let\Unless=\yquant@prepare@ifs@Unless%
+      \let\The=\yquant@prepare@ifs@The%
+   }%
+   \protected\def\yquant@prepare@ifs@direct{%
+      \let\Ifnum=\ifnum%
+      \let\Ifcase=\ifcase%
+      \let\Or=\or%
+      \let\Else=\else%
+      \let\Fi=\fi%
+      \let\Unless=\unless%
+      \let\The=\the%
+   }%
+\else%
+   \let\yquant@prepare@ifs@set=\relax%
+\fi
 \protected\long\def\yquant@prepare@finalize#1#2{%
    % We now know the dimensions of all the registers (though we didn't bother with the height of the control knobs [if present], we just assume they are too small to change this).
-   \protected\def\idx{}%
+   \protected\def\idx{}%#
+   \yquant@prepare@ifs@set%
    \protected@edef\yquant@prepare@append{%
       \yquant@draw@group%
          {\the\dimen2}%
