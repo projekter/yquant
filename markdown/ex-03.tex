@@ -1,6 +1,7 @@
 \documentclass[tikz, convert={convertexe=magick}, png]{standalone}
 
-\usepackage{yquant, braket}
+\usepackage[compat=0.4]{yquant}
+\usepackage{braket}
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
 
 \begin{document}
@@ -19,7 +20,7 @@
          measure s;
          cnot c[0] | s[0];
          cnot c[1] | s[1];
-         discard s;
+         discard s; % to suppress wires extending until re-initialization
          
          init {$\ket0$} s;
          h s[0];

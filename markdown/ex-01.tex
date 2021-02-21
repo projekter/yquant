@@ -1,6 +1,7 @@
 \documentclass[tikz, convert={convertexe=magick}, png]{standalone}
 
-\usepackage{yquant, braket}
+\usepackage[compat=0.4]{yquant}
+\usepackage{braket}
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
 
 \begin{document}
@@ -12,7 +13,7 @@
          cnot q[2] | q[1];
          cnot q[1] | q[0];
          h q[0];
-         measure q[0], q[1];
+         measure q[0-1];
          
          z q[2] | q[1];
          x q[2] | q[0];
