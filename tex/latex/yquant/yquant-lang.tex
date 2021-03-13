@@ -637,6 +637,16 @@
 \yquant@langhelper@setup@attrs{output}{value}{}
 
 \yquant@langhelper@declare@command@uncontrolled%
+   {inspect}%
+   \yquant@register@get@allowmultitrue%
+   {%
+      \expandafter\yquant@prepare%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/operators/every inspect}%
+   }
+\yquant@langhelper@setup@attrs{inspect}{value}{}
+
+\yquant@langhelper@declare@command@uncontrolled%
    {settype}%
    {\yquant@langhelper@execclear@lastgatefalse}%
    {%

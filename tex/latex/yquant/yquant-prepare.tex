@@ -250,6 +250,7 @@
    \fi%
    % determine the actual dimensions by a virtual draw command
    \pgfinterruptboundingbox%
+      \yquant@config@operator@multifalse%
       \yquant@env@virtualize@path%
       \path%
          (0pt, 0pt)%
@@ -271,6 +272,7 @@
       }%
    \fi%
    \pgfinterruptboundingbox%
+      \yquant@config@operator@multitrue%
       \yquant@env@virtualize@path%
       \def\yquant@prepare@content{#1}%
       \def\yquant@prepare@style{#2}%
@@ -317,13 +319,20 @@
       }%
    \fi%
    \pgfinterruptboundingbox%
+      \yquant@config@operator@multitrue%
       \yquant@env@virtualize@path%
       \edef\first{\@secondoffive#3}%
       \def\pgfdecorationsegmentaspect{0.5}%
       \def\pgfdecorationsegmentfromto{0-1}%
-      \path (0pt, 0pt)%
-         node[/yquant/every operator, #2, /yquant/every multi label,%
-              /yquant/this operator, name prefix=, name suffix=, name=] {#1};%
+      \ifnum\yquant@compat<2 %
+         \path (0pt, 0pt)%
+            node[/yquant/every operator, #2, /yquant/every multi label,%
+                 /yquant/this operator, name prefix=, name suffix=, name=] {#1};%
+      \else%
+         \path (0pt, 0pt)%
+            node[/yquant/every operator, #2,%
+                 /yquant/this operator, name prefix=, name suffix=, name=] {#1};%
+      \fi%
       \ifnum\@secondoffive#3=\@thirdoffive#3 %
          % this is a single register in disguise
          \yquant@register@update@height{\first}{\the\pgf@picmaxy}%
@@ -348,6 +357,7 @@
    \listadd\yquant@prepare@list{#3}%
    % determine the actual dimensions by a virtual draw command
    \pgfinterruptboundingbox%
+      \yquant@config@operator@multifalse%
       \yquant@env@virtualize@path%
       % #2 is empty anyway
       \edef\cmd{%
@@ -372,6 +382,7 @@
       \expandafter\yquant@list@range\@secondandthirdoffive#3%
    }%
    \pgfinterruptboundingbox%
+      \yquant@config@operator@multitrue%
       \yquant@env@virtualize@path%
       % We need to draw a line with some vertical extent, so just take the current height, whether it makes sense or not. We only need an estimate
       \edef\first{\@secondoffive#3}%
@@ -381,7 +392,7 @@
       \edef\cmd{%
          \noexpand\path (0pt, 0pt)
             node[\ifnum\yquant@compat>1 /yquant/every operator, /yquant/every output, \fi%
-                 /yquant/every multi output,%
+                 \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
                  \ifnum\yquant@compat>1  /yquant/this operator,\fi%
                  name prefix=, name suffix=, name=] {\unexpanded{#1}};%
       }%
@@ -625,6 +636,7 @@
 }
 
 \protected\def\yquant@prepare@subcircuit@single#1#2{%
+   \yquant@config@operator@multifalse%
    \edef\yquant@circuit@subcircuit@param{#2\yquant@list@delim}%
    \yquant@circuit@subcircuit{#1}%
    \unless\ifyquant@circuit@operator@hasControls%
@@ -642,6 +654,7 @@
 }
 
 \protected\def\yquant@prepare@subcircuit@multi#1#2{%
+   \yquant@config@operator@multitrue%
    \edef\yquant@circuit@subcircuit@param{\@fifthoffive#2}%
    \yquant@sort@list\yquant@circuit@subcircuit@param\yquant@sort@ascending%
    \yquant@circuit@subcircuit{#1}%

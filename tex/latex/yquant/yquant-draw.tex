@@ -124,6 +124,7 @@
 
 \protected\def\yquant@draw@single#1#2{%
    \let\idx=\yquant@draw@@idx@content%
+   \yquant@config@operator@multifalse%
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \yquant@register@get@y{#1})%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
@@ -145,6 +146,7 @@
 }
 
 \protected\def\yquant@draw@multi#1#2#3#4#5{%
+   \yquant@config@operator@multitrue%
    \let\idx=\yquant@draw@@idx@content%
    \edef\yquant@draw@multi@@name{#5}%
    \def\yquant@draw@@idx@multipart{0}%
@@ -210,19 +212,22 @@
    \let\pgfdecorationsegmentfromto=\empty%
    #4%
    \edef\pgfdecorationsegmentfromto{\expandafter\@gobble\pgfdecorationsegmentfromto}%
+   \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
    \edef\cmd{%
       \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
-         node[/yquant/every operator, \yquant@draw@@style, /yquant/every multi label,%
+         node[/yquant/every operator, \yquant@draw@@style,
+              \ifnum\yquant@compat<2 /yquant/every multi label,\fi%
               /yquant/this operator,%
               y radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \pgfshapeclippath{yquantbox}%
                        {/yquant/every operator, \yquant@draw@@style,%
-                        /yquant/every multi label, /yquant/this operator}%
+                        \ifnum\yquant@compat<2 /yquant/every multi label,\fi%
+                        /yquant/this operator}%
    }%
    \cmd%
    \yquant@for \i := #1 to #2 {%
@@ -276,6 +281,7 @@
 
 \protected\long\def\yquant@draw@output@single#1#2{%
    \let\idx=\yquant@draw@@idx@content%
+   \yquant@config@operator@multifalse%
    \edef\cmd{%
       \noexpand\path (\yquant@circuit@endwires@x, \yquant@register@get@y{#1})%
          node[\ifnum\yquant@compat>1 /yquant/every operator,\fi%
@@ -318,13 +324,15 @@
    \let\pgfdecorationsegmentfromto=\empty%
    #4%
    \edef\pgfdecorationsegmentfromto{\expandafter\@gobble\pgfdecorationsegmentfromto}%
+   \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
    \edef\cmd{%
       \noexpand\path (\yquant@circuit@endwires@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
          node[\ifnum\yquant@compat>1 /yquant/every operator, /yquant/every output,\fi%
-              \yquant@draw@@style, /yquant/every multi output,%
+              \yquant@draw@@style,%
+              \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
               /yquant/this operator,%
               y radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
@@ -332,7 +340,8 @@
       \ifdefined\yquant@parent%
          \pgfshapeclippath{yquantbox}%
                           {\ifnum\yquant@compat>1 /yquant/every operator, /yquant/every output,\fi%
-                           \yquant@draw@@style, /yquant/every multi output,%
+                           \yquant@draw@@style,
+                           \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
                            /yquant/this operator}%
       \fi%
    }%
@@ -457,6 +466,7 @@
 }
 
 \protected\long\def\yquant@draw@subcircuit@single#1#2#3#4{%
+   \yquant@config@operator@multifalse%
    \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#1}%
    \edef\cmd{%
       \pgfshapeclippath{yquantbox}{%
@@ -480,6 +490,7 @@
 }
 
 \protected\long\def\yquant@draw@subcircuit@multi#1#2#3#4#5#6#7{%
+   \yquant@config@operator@multitrue%
    % there is no contiguous slicing for subcircuits, as they may have all kinds of wire operations that can extend beyond the individual slices, let alone ancillas
    \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#4}%
    \edef\cmd{%

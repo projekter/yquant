@@ -43,9 +43,23 @@
 % BEGIN_FOLD Register creation
 \pgfqkeys{/yquant}{%
    register/default name/.store in=%
-      \yquant@config@register@default@name,
-   every label/.style=%
-      {shape=yquant-init, anchor=center, align=right, outer xsep=2pt},%
+      \yquant@config@register@default@name%
+}
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      every label/.style=%
+         {shape=yquant-init, anchor=center, align=right, outer xsep=2pt},%
+      every multi label/.style=%
+         {draw, decoration={gapped brace, mirror, raise=2pt}, decorate}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      every label/.style=%
+         {shape=yquant-init, anchor=center, align=right, outer xsep=2pt,%
+          /yquant/operator/if multi={draw, decoration={gapped brace, mirror, raise=2pt}, decorate}}%
+    }
+\fi
+\pgfqkeys{/yquant}{
    every initial label/.style=%
       {anchor=east},%
    every qubit label/.style=%
@@ -53,9 +67,7 @@
    every cbit label/.style=%
       {},%
    every qubits label/.style=%
-      {},%
-   every multi label/.style=%
-      {draw, decoration={gapped brace, mirror, raise=2pt}, decorate}%
+      {}%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
@@ -65,17 +77,27 @@
 \fi%
 % END_FOLD
 % BEGIN_FOLD Register outputs
+\ifnum\yquant@compat<2 %
+   \pgfqkeys{/yquant}{%
+      every output/.style=%
+         {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
+      every multi output/.style=%
+         {draw, decoration={gapped brace, raise=2pt}, decorate}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      every output/.style=%
+         {shape=yquant-output, anchor=west, align=left, outer xsep=2pt,%
+          /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}}%
+   }
+\fi
 \pgfqkeys{/yquant}{%
-   every output/.style=%
-      {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
    every qubit output/.style=%
       {},%
    every cbit output/.style=%
       {},%
    every qubits output/.style=%
-      {},%
-   every multi output/.style=%
-      {draw, decoration={gapped brace, raise=2pt}, decorate}%
+      {}%
 }
 % END_FOLD
 % BEGIN_FOLD General styling
@@ -125,6 +147,8 @@
        /yquant/this control/.append style={#1}},%
    operator/multi as single/.style=%
       {/yquant/every multi line/.style=/yquant/every control line},%
+   operator/if multi/.code=%
+      {\ifyquant@config@operator@multi\pgfkeysalso{#1}\fi},%
    circuit/seamless/.is if=yquant@config@circuit@seamless%
 }
 % END_FOLD
@@ -159,6 +183,9 @@
    operators/every dmeter/.style=%
       {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
    % every h is implicitly defined during gate declaration
+   operators/every inspect/.style=%
+      {shape=yquant-output, align=left, outer xsep=.3333em, y radius=2.47mm,%
+       /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}},%
    operators/every measure/.style=%
       {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
    operators/every measure meter/.style=%
@@ -238,3 +265,4 @@
 \newif\ifyquant@config@operator@position@advance
 \yquant@config@operator@position@advancetrue
 \newif\ifyquant@config@circuit@seamless
+\newif\ifyquant@config@operator@multi
