@@ -56,6 +56,7 @@
 % #2: tikz options that select the correct shape
 \protected\long\def\yquant@prepare#1#2{%
    \yquant@sort@clear%
+   \def\yquant@prepare@injectcontrols@count{0}%
    \def\idx{0}%
    \yquant@prepare@ifs@direct%
    \dimen2=\yquant@config@operator@minimum@width%
@@ -95,6 +96,114 @@
    \yquant@prepare@finalize{#1}{#2}%
 }
 
+\newcount\yquant@prepare@injections
+% generic shape of an operator - but delayed to some later point
+% #1: value
+% #2: tikz options that select the correct shape
+\protected\long\def\yquant@prepare@injection#1#2{%
+   \global\advance\yquant@prepare@injections by 1 % we just keep increasing, doesn't really matter
+   \edef\yquant@draw@group{\yquant@draw@injectiongroup{\the\yquant@prepare@injections}}%
+   \def\yquant@draw@endgroup{\noexpand\yquant@draw@endinjectiongroup}%
+   \yquant@prepare{#1}{#2}%
+   \csxdef{yquant@prepare@@injection@\the\yquant@prepare@injections}{%
+      {\the\dimen2}{\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
+   }%
+   \forlistloop\yquant@prepare@injection@loop\yquant@circuit@operator@targets%
+}
+
+\protected\def\yquant@prepare@injection@loop#1{%
+   \ifyquant@firsttoken\yquant@register@multi{#1}{%
+      \edef\first{\@secondoffive#1}%
+      \edef\last{\@thirdoffive#1}%
+      \yquant@for \i := \first to \last {%
+         \yquant@register@set@lastgate\i{%
+            % we only need this once, but it may be called multiple times if acting on multiple registers
+            \noexpand\ifcsname yquant@prepare@@injection@\the\yquant@prepare@injections\noexpand\endcsname%
+               % first check whether this is valid - i.e., the list of targets for this measurement is in fact a subset of the list of positive controls for the next operation
+               \ifyquant@registersubset%
+                  {\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
+                  {\noexpand\yquant@circuit@operator@pctrls}{%
+                  \yquant@prepare@inject{\the\yquant@prepare@injections}%
+               }{%
+                  \yquant@prepare@inject@discard{\the\yquant@prepare@injections}%
+               }%
+               \yquant@prepare@injection@clean{\first}{\last}%
+            \noexpand\fi
+            \noexpand\@gobble%
+         }%
+      }%
+   }{%
+      \yquant@register@set@lastgate{#1}{%
+         \noexpand\ifcsname yquant@prepare@@injection@\the\yquant@prepare@injections\noexpand\endcsname%
+            % first check whether this is valid - i.e., the list of targets for this measurement is in fact a subset of the list of positive controls for the next operation
+            \ifyquant@registersubset%
+               {\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
+               {\noexpand\yquant@circuit@operator@pctrls}{%
+               \yquant@prepare@inject{\the\yquant@prepare@injections}%
+            }{%
+               \yquant@prepare@inject@discard{\the\yquant@prepare@injections}
+            }%
+         \noexpand\fi%
+         \noexpand\@gobble%
+      }%
+   }%
+}
+
+\protected\def\yquant@prepare@injection@clean#1#2{%
+   \yquant@for \i := #1 to #2 {%
+      \yquant@register@set@lastgate\i{}%
+   }%
+}
+
+\protected\def\yquant@prepare@inject#1{%
+   \letcs\yquant@prepare@inject@@data{yquant@prepare@@injection@#1}%
+   \csgundef{yquant@prepare@@injection@#1}%
+   \dimen0=\expandafter\@firstoftwo\yquant@prepare@inject@@data\relax%
+   \let\@tmpconti=\yquant@register@multi@contiguous%
+   \protected\def\yquant@register@multi@contiguous##1##2{%
+      \yquant@for \i := ##1 to ##2 {%
+         \cslet{yquant@prepare@replacecontrol@\i}\empty%
+      }%
+   }%
+   \expandafter\expandafter\expandafter\etb@forlistloop%
+      \expandafter\expandafter\expandafter{%
+      \expandafter\@secondoftwo%
+      \yquant@prepare@inject@@data%
+   }{\yquant@prepare@inject@loop{#1}}%
+   \let\yquant@register@multi@contiguous=\@tmpconti%
+}
+
+\protected\def\yquant@prepare@inject@loop#1#2{%
+   \ifyquant@firsttoken\yquant@register@multi{#2}{%
+      \@fifthoffive#2% this clears all the actions for the individual contiguous slices
+      % but we need to do something for the first register
+      \csedef{yquant@prepare@replacecontrol@\@secondoffive#2}{%
+         \noexpand\ifdim\the\dimen0>\dimen2 %
+            \dimen2=\the\dimen0 \relax%
+         \noexpand\fi%
+         \yquant@sort@eadd{%
+            \yquant@draw@inject{#1}%
+         }
+      }%
+   }{%
+      \csedef{yquant@prepare@replacecontrol@#2}{%
+         \noexpand\ifdim\the\dimen0>\dimen2 %
+            \dimen2=\the\dimen0 \relax%
+         \noexpand\fi%
+         \yquant@sort@eadd{%
+            \yquant@draw@inject{#1}%
+         }%
+      }%
+   }%
+}
+
+\protected\def\yquant@prepare@inject@discard#1{%
+   \csappto{\yquant@prefix draw}{%
+      \yquant@draw@inject@outer{#1}%
+   }%
+   \csgundef{yquant@prepare@@injection@#1}%
+}
+
 \def\yquant@prepare@sort#1#2{%
    \yquant@prepare@sort@aux#1\relax#2\relax%
       \expandafter\@firstoftwo%
@@ -113,15 +222,26 @@
    \else%
       \edef\nodename{\yquant@lang@attr@name-#1\idx}%
    \fi%
-   \yquant@sort@eadd{%
-      \expandafter\noexpand\csname yquant@draw@#1control\endcsname%
-         {#2}% register index
-         {\nodename}%
-   }%
-   \unless\ifdefined\yquant@prepare@controltype%
-      \edef\yquant@prepare@controltype{#2}%
+   \ifcsname yquant@prepare@replacecontrol@#2\endcsname%
+      \ifcsempty{yquant@prepare@replacecontrol@#2}\relax{%
+         % do something unorthodox
+         \csname yquant@prepare@replacecontrol@#2\endcsname%
+         \numdef\idx{\idx+1}%
+         \unless\ifdefined\yquant@prepare@controltype%
+            \edef\yquant@prepare@controltype{#2}%
+         \fi%
+      }%
+   \else%
+      \yquant@sort@eadd{%
+         \expandafter\noexpand\csname yquant@draw@#1control\endcsname%
+            {#2}% register index
+            {\nodename}%
+      }%
+      \numdef\idx{\idx+1}%
+      \unless\ifdefined\yquant@prepare@controltype%
+         \edef\yquant@prepare@controltype{#2}%
+      \fi%
    \fi%
-   \numdef\idx{\idx+1}%
 }
 
 \protected\def\yquant@prepare@controls{%
@@ -175,11 +295,18 @@
    % We now know the dimensions of all the registers (though we didn't bother with the height of the control knobs [if present], we just assume they are too small to change this).
    \protected\def\idx{}%#
    \yquant@prepare@ifs@set%
-   \protected@edef\yquant@prepare@append{%
+   \let\yquant@prepare@append=\empty%
+   \yquant@sort\yquant@prepare@sort%
+   \def\do##1{%
+      \appto\yquant@prepare@append{##1}%
+      \yquant@prepare@finalize@ctrl##1%
+   }%
+   \yquant@sort@dolistloop%
+   \protected@csxappto{\yquant@prefix draw}{%
       \yquant@draw@group%
          {\the\dimen2}%
          \ifyquant@circuit@operator@hasControls%
-           \yquant@prepare@controltype%
+           \yquant@register@get@type\yquant@prepare@controltype%
          \else%
            F%
          \fi% if-switch whether controls are present
@@ -187,14 +314,6 @@
          {#2}% operator style
          {#1}%
          {\yquant@prepare@list}%
-   }%
-   \yquant@sort\yquant@prepare@sort%
-   \def\do##1{%
-      \appto\yquant@prepare@append{##1}%
-      \yquant@prepare@finalize@ctrl##1%
-   }%
-   \yquant@sort@dolistloop%
-   \csxappto{\yquant@prefix draw}{%
       \unexpanded\expandafter{\yquant@prepare@append}%
       \yquant@draw@endgroup%
          \ifyquant@circuit@operator@hasControls%
@@ -690,6 +809,10 @@
             \else%
                \ifx\yquant@draw@subcircuit@single#1%
                   \let\next=\yquant@prepare@finalize@ctrl@subcircuit@single%
+               \else%
+                  \ifx\yquant@draw@inject#1%
+                     \let\next=\@gobble%
+                  \fi%
                \fi%
             \fi%
          \fi%

@@ -149,7 +149,14 @@
       {/yquant/every multi line/.style=/yquant/every control line},%
    operator/if multi/.code=%
       {\ifyquant@config@operator@multi\pgfkeysalso{#1}\fi},%
-   circuit/seamless/.is if=yquant@config@circuit@seamless%
+   circuit/seamless/.is if=yquant@config@circuit@seamless,%
+   every post measurement control/.is choice,
+   every post measurement control/indirect/.code={%
+      \undef\yquant@lang@attr@directcontrol%
+   },%
+   every post measurement control/direct/.code={%
+      \let\yquant@lang@attr@directcontrol=\relax%
+   }%
 }
 % END_FOLD
 % BEGIN_FOLD Styles for operators

@@ -415,6 +415,31 @@
 }
 \endgroup
 
+% performs #3 if #1 is a subset of #2; else, performs #4
+\protected\def\ifyquant@registersubset#1#2{%
+   \begingroup%
+      \let\yquant@register@multi=\@fourthoffour
+      \def\yquant@register@multi@contiguous##1##2##3{\yquant@list@range{##1}{##2}}%
+      \edef\listA{#1}%
+      \edef\listB{#2}%
+      \let\ifsuccess=\iftrue%
+      \forlistloop\yquant@registersubset@loop\listA%
+      \expandafter%
+   \endgroup%
+   \ifsuccess%
+      \expandafter\@firstoftwo%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+}
+
+\protected\def\yquant@registersubset@loop#1{%
+   \ifinlist{#1}\listB\relax{%
+      \let\ifsuccess=\iffalse%
+      \listbreak%
+   }%
+}
+
 \def\ifyquant@OR#1#2{%
    #1%
       \expandafter\@firstoftwo%

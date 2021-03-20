@@ -215,6 +215,31 @@
       \relax%
 }
 
+% restores the data captured for an uncontrolled operator and starts preparation
+% #1: \yquant@attrs@remaining
+% #2: \yquant@circuit@operator@targets
+% #3: \yquant@circuit@operator@mintarget
+% #4: \yquant@circuit@operator@maxtarget
+% #5: \yquant@circuit@operator@numtarget
+\protected\def\yquant@circuit@restore#1#2#3#4#5{%
+   \def\yquant@attrs@remaining{#1}%
+   \def\yquant@circuit@operator@targets{#2}%
+   \def\yquant@circuit@operator@mintarget{#3}%
+   \def\yquant@circuit@operator@maxtarget{#4}%
+   \def\yquant@circuit@operator@numtarget{#5}%
+   \yquant@circuit@operator@hasControlsfalse%
+   \let\yquant@circuit@operator@pctrls=\empty%
+   \def\yquant@circuit@operator@minpctrl{2147483647}%
+   \def\yquant@circuit@operator@maxpctrl{0}%
+   \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@nctrls=\empty%
+   \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
+   \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
+   \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
+   \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
+   \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+}
+
 % creates a subcircuit. Parameter registers must be filled in \yquant@circuit@subcircuit@params.
 % #1: style
 \protected\def\yquant@circuit@subcircuit#1{%
@@ -298,33 +323,13 @@
 % sets the output of wires
 % #1: arbitrary register list
 \protected\def\yquant@circuit@output{%
-   \csxappto{\yquant@prefix outputs}%
-            {\yquant@circuit@output@prepare%
-               {\unexpanded\expandafter{\yquant@lang@attr@value}}%
-               {\unexpanded\expandafter{\yquant@attrs@remaining}}%
+   \protected@csxappto{\yquant@prefix outputs}%
+            {\yquant@circuit@restore%
+               {\yquant@attrs@remaining}%
                {\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
                {\yquant@circuit@operator@mintarget}{\yquant@circuit@operator@maxtarget}%
                {\yquant@circuit@operator@numtarget}%
+             \yquant@prepare{\yquant@lang@attr@value}{}%
             }%
-}
-
-\protected\def\yquant@circuit@output@prepare#1#2#3#4#5#6{%
-   \def\yquant@attrs@remaining{#2}%
-   \def\yquant@circuit@operator@targets{#3}%
-   \def\yquant@circuit@operator@mintarget{#4}%
-   \def\yquant@circuit@operator@maxtarget{#5}%
-   \def\yquant@circuit@operator@numtarget{#6}%
-   \yquant@circuit@operator@hasControlsfalse%
-   \let\yquant@circuit@operator@pctrls=\empty%
-   \def\yquant@circuit@operator@minpctrl{2147483647}%
-   \def\yquant@circuit@operator@maxpctrl{0}%
-   \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
-   \let\yquant@circuit@operator@nctrls=\empty%
-   \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
-   \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
-   \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
-   \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
-   \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
-   \yquant@prepare{#1}{}%
 }
 % END_FOLD

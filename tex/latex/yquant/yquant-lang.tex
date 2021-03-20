@@ -29,6 +29,9 @@
    seamless/.code={%
       \pgfkeysalso{/yquant/operators/subcircuit/seamless}%
       \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/seamless}%
+   },%
+   direct control/.code={%
+      \let\yquant@lang@attr@directcontrol=\relax%
    }%
 }
 \yquant@langhelper@declare@attr@global{%
@@ -481,11 +484,18 @@
       \unless\ifcsname yquant@lang@attr@value\endcsname%
          \let\yquant@lang@attr@value=\empty%
       \fi%
-      \expandafter\yquant@prepare%
-         \expandafter{\yquant@lang@attr@value}%
-         {/yquant/operators/every measure}%
+      \ifdefined\yquant@lang@attr@directcontrol%
+         % direct control means that we must defer this operator until the next that has this/these targets as positive controls.
+         \expandafter\yquant@prepare@injection%
+            \expandafter{\yquant@lang@attr@value}%
+            {/yquant/operators/every measure}%
+      \else%
+         \expandafter\yquant@prepare%
+            \expandafter{\yquant@lang@attr@value}%
+            {/yquant/operators/every measure}%
+      \fi%
    }
-\yquant@langhelper@setup@attrs{measure}{}{value,type}
+\yquant@langhelper@setup@attrs{measure}{}{value,type,direct control}
 
 % measure (dmeter)
 \yquant@langhelper@declare@command@uncontrolled%
