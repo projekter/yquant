@@ -84,13 +84,13 @@
 % BEGIN_FOLD Drawing control lines
 % populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
 \protected\def\yquant@circuit@extendcontrolline#1#2{%
+   \eappto\yquant@circuit@extendcontrolline@clip{%
+      \unexpanded\expandafter{\pgfshapeclippathvertresult}%
+   }%
    \begingroup%
       \tikzset{/yquant/every control line}%
       \expandafter%
    \endgroup%
-   \eappto\yquant@circuit@extendcontrolline@clip{%
-      \unexpanded\expandafter{\pgfshapeclippathvertresult}%
-   }%
    \expandafter\@tempdima\the\pgflinewidth%
    \ifcase#1%
       % no control (or to a discarded target, which we don't do)
