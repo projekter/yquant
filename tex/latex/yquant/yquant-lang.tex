@@ -32,6 +32,9 @@
    },%
    direct control/.code={%
       \let\yquant@lang@attr@directcontrol=\relax%
+   },%
+   indirect control/.code={%
+      \undef\yquant@lang@attr@directcontrol%
    }%
 }
 \yquant@langhelper@declare@attr@global{%
@@ -495,7 +498,7 @@
             {/yquant/operators/every measure}%
       \fi%
    }
-\yquant@langhelper@setup@attrs{measure}{}{value,type,direct control}
+\yquant@langhelper@setup@attrs{measure}{}{value,type,direct control,indirect control}
 
 % measure (dmeter)
 \yquant@langhelper@declare@command@uncontrolled%
