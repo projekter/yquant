@@ -323,6 +323,7 @@
 % sets the output of wires
 % #1: arbitrary register list
 \protected\def\yquant@circuit@output{%
+   \protected\def\idx{}%
    \protected@csxappto{\yquant@prefix outputs}%
             {\yquant@circuit@restore%
                {\yquant@attrs@remaining}%
