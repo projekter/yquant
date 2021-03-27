@@ -275,3 +275,6 @@ TSWLatexianTemp*
 
 # Minted cache directory
 _minted-*
+
+# Documentation of old versions, to check compat key
+doc/latex/yquant/legacy
