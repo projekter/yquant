@@ -98,8 +98,8 @@
    \fi%
    \expandafter\yquant@register@set@@aux%
       \csname\csname\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname\endcsname\endcsname%
-      \yquant@register@set@lastgate@aux%
-      \yquant@register@flag@clean%
+      \yquant@register@set@typelastgate@aux%
+      {{#1}{\yquant@register@flag@clean}}%
 }
 
 \def\yquant@register@alias@extract yquant@env#1@{#1}%
@@ -1120,5 +1120,9 @@
 
 \long\def\yquant@register@set@lastgate@aux#1#2#3#4#5#6#7{%
    \unexpanded{{#1}{#2}{#3}{#4}{#5}}{#7}%
+}
+
+\long\def\yquant@register@set@typelastgate@aux#1#2#3#4#5#6#7{%
+   {\@firstoftwo#7}\unexpanded{{#2}{#3}{#4}{#5}}{\@secondoftwo#7}%
 }
 % END_FOLD
