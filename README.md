@@ -102,23 +102,23 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
   \begin{yquant}
     qubit {} msg[3];
     nobit syndrome[3];
-    
+
     [this subcircuit box style={dashed, "Syndrome Measurement"}]
     subcircuit {
        qubit {} msg[3];
        [out]
        qubit {$\ket0$} syndrome[3];
-       
+
        cnot syndrome[0] | msg[0];
        cnot syndrome[0] | msg[1];
        cnot syndrome[1] | msg[1];
        cnot syndrome[1] | msg[2];
        cnot syndrome[2] | msg[0];
        cnot syndrome[2] | msg[2];
-       
+
        dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
     } (msg[-2], syndrome[-2]);
-  
+
     ["Recovery"]
     box {$\mathcal R$} (msg) | syndrome;
     discard syndrome;
