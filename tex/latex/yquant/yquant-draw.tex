@@ -138,6 +138,27 @@
 }
 
 \protected\def\yquant@draw@stopinjection#1#2#3{%
+   \ifcase#3\relax%
+   \or%
+      \yquant@draw@alias@ctrl{#2}n%
+   \or%
+      \yquant@draw@alias@ctrl{#2}p%
+   \or%
+      \yquant@draw@alias@ctrl{#2}p%
+      \yquant@draw@alias@ctrl{#2}n%
+   \or%
+      \yquant@draw@alias{#2}%
+   \or%
+      \yquant@draw@alias{#2}%
+      \yquant@draw@alias@ctrl{#2}n%
+   \or%
+      \yquant@draw@alias{#2}%
+      \yquant@draw@alias@ctrl{#2}p%
+   \or%
+      \yquant@draw@alias{#2}%
+      \yquant@draw@alias@ctrl{#2}p%
+      \yquant@draw@alias@ctrl{#2}n%
+   \fi%
    \edef\process{%
          \endgroup%
          \def\noexpand\yquant@circuit@extendcontrolline@clip{%
