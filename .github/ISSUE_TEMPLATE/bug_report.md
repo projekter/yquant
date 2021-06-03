@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Minimal working example, including documentclass, all _required_ packages, and the complete circuit that triggers the problem.
+Minimal working example, including documentclass, all _required_ packages, and the complete circuit that triggers the problem. Ensure that you are using the most current version of `yquant` that is on CTAN.
 
 **Expected output**
 A clear and concise description of how you expect yquant to give its output.
