@@ -413,7 +413,7 @@
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \ifdefined\yquant@parent%
          \pgfshapeclippath{yquantbox}%
-                          {\ifnum\yquant@compat>1 /yquant/every operator, /yquant/every output,\fi%
+                          {\ifnum\yquant@compat>1 /yquant/every operator,\fi /yquant/every output,%
                            \yquant@draw@@style,
                            \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
                            /yquant/this operator}%
