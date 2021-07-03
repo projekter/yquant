@@ -766,7 +766,7 @@
          \yquant@draw@subcircuit@single%
             {#2}% register index
             {\yquant@circuit@subcircuit@id}%
-            {\nodename}%
+            {\nodename}\ifnum\yquant@circuit@operator@numtarget=1 1\else0\fi%
             {\noexpand\yquant@prepare@subcircuit@width}%
       }%
    }%
@@ -787,7 +787,7 @@
          \yquant@draw@subcircuit@multi%
             #2%
             {\yquant@circuit@subcircuit@id}%
-            {\nodename}%
+            {\nodename}\ifnum\yquant@circuit@operator@numtarget=1 1\else0\fi%
             {\noexpand\yquant@prepare@subcircuit@width}%
       }%
    }%
@@ -866,7 +866,7 @@
    }%
 }
 
-\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3#4{%
+\def\yquant@prepare@finalize@ctrl@subcircuit@single#1#2#3#4#5{%
    \yquant@prepare@finalize@ctrl@single{#1}{#3}%
 }
 
@@ -877,7 +877,7 @@
    \yquant@prepare@callback@prepare{#1}%
 }
 
-\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6#7{%
+\protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6#7#8{%
    % there are no contiguous parts here, don't call the normal @multi
    \forlistloop\yquant@prepare@finalize@ctrl@subcircuit@multi@loop{#4}%
 }

@@ -441,9 +441,10 @@
 
 % #1: id of subcircuit
 % #2: name
-% #3: {width of subcircuit (excluding outer box)}{including outer box}{left margin}
-% #4: affected wires
-\protected\long\def\yquant@draw@subcircuit@prepare#1#2#3#4{%
+% #3: 1 if aliasing of the name should be done (remove -0), 0 else
+% #4: {width of subcircuit (excluding outer box)}{including outer box}{left margin}
+% #5: affected wires
+\protected\long\def\yquant@draw@subcircuit@prepare#1#2#3#4#5{%
    \let\idx=\yquant@draw@@idx@content%
    % In order to wrap the inner circuit in a proper box operator and clip outer paths appropriately (which was not possible yet, as we didn't know the exact vertical positions), we first place it within a box.
    % First, we anticipate the macro that is used by our subcircuit to store the node
@@ -458,19 +459,19 @@
       \pgf@picminy=16000pt %
       \pgf@size@hookedfalse%
       \let\pgf@path@size@hook=\pgfutil@empty%
-      % now we must take care of extending all the wires appropriately until the beginning of the box. #3 contains width of this box, #4 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
+      % now we must take care of extending all the wires appropriately until the beginning of the box. #4 contains width of this box, #5 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
       \dimdef\newx{%
-         \yquant@draw@@x-.5\dimexpr\@secondofthree#3\relax%
+         \yquant@draw@@x-.5\dimexpr\@secondofthree#4\relax%
       }%
       \dimen0=\newx%
       \let\yquant@draw@subcircuit@leftpos=\newx% seamless subcircuits: do not add another separation if we are there
       \let\pgfshapeclippathhorzresult=\empty%
-      \forlistloop\yquant@draw@move@loop{#4}%
+      \forlistloop\yquant@draw@move@loop{#5}%
       % but the new positions are not at the beginning of the box, but inside (with possible margin)
       \dimdef\newx{%
-         \yquant@draw@@x-.5\dimexpr\@firstofthree#3\relax-\@thirdofthree#3%
+         \yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax-\@thirdofthree#4%
       }%
-      \forlistloop\yquant@draw@group@advance{#4}%
+      \forlistloop\yquant@draw@group@advance{#5}%
       \setbox\yquant@prepare@subcircuit@box=\hbox{{%
          \let\yquant@draw@subcircuit@wirestart=\newx%
          \let\yquant@parent=\yquant@prefix%
@@ -481,6 +482,9 @@
             \let\pgf@nodecallback=\yquant@draw@subcircuit@nodecallback%
          }{%
             \pgfkeys{/tikz/name prefix/.expanded={\pgfkeysvalueof{/tikz/name prefix}#2-}}%
+            \ifnum#3=1 %
+               \let\pgf@nodecallback=\yquant@draw@subcircuit@nodecallback%
+            \fi%
          }%
          \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
          \edef\yquant@draw@subcircuit@style{%
@@ -497,6 +501,17 @@
          \ifdim\dimen0<\pgf@picminy %
             \global\pgf@picminy=\dimen0 %
          \fi%
+         \ifnum#3=1 %
+            % we must apply the aliasing to all the included nodes. We do this in this group, which still has the callback available, so that the aliased nodes will also be added to the list and can propagate (note that the number of node names is then exponential in the number of nested subcircuits)
+            \protected\def\yquant@draw@subcircuit@alias@do##1#2-##2\relax##3\relax{%
+               \ifstrempty{##1}{%
+                  \pgfnodealias{\yquant@draw@subcircuit@alias@removezero#2-##2}{#2-##2}%
+                  \@gobble% there is an additional \relax
+               }\relax%
+            }%
+            \forlistcsloop%
+               {\yquant@draw@subcircuit@alias{#2}}\yquant@draw@subcircuit@nodelist%
+         \fi%
       }}%
       \edef\cmd{%
          \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax)%
@@ -505,10 +520,10 @@
                  /yquant/operators/this subcircuit box,%
                  /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
-            {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#3 {}}};%
+            {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#4 {}}};%
       }%
       \cmd%
-      \unhbox\yquant@prepare@subcircuit@box
+      \unhbox\yquant@prepare@subcircuit@box%
    % \endpgfinterruptboundingbox + increase
       \ifdim\pgf@interrupt@savemaxy>\pgf@picmaxy%
          \global\pgf@picmaxy=\pgf@interrupt@savemaxy%
@@ -519,7 +534,7 @@
    \endgroup%
    % Now that the subcircuit is finished, we need advance all the wires
    \dimdef\newx{\yquant@draw@@x+.5\dimexpr\yquant@draw@@width\relax}%
-   \forlistloop\yquant@draw@group@advance{#4}%
+   \forlistloop\yquant@draw@group@advance{#5}%
    \ifstrempty{#2}{%
       % However, if the outer node was not named, no access to the inner nodes is desired, so we delete all nodes again.
       \def\do##1{%
@@ -539,9 +554,15 @@
    }%
 }
 
-\protected\long\def\yquant@draw@subcircuit@single#1#2#3#4{%
+\def\yquant@draw@subcircuit@alias@removezero#1-0{#1}
+
+\def\yquant@draw@subcircuit@alias#1#2{%
+   \yquant@draw@subcircuit@alias@do#2\relax#1-0-\relax\relax%
+}
+
+\protected\long\def\yquant@draw@subcircuit@single#1#2#3#4#5{%
    \yquant@config@operator@multifalse%
-   \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#1}%
+   \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#5}{#1}%
    \edef\cmd{%
       \pgfshapeclippath{yquantbox}{%
           /yquant/every operator, \yquant@draw@@style,%
@@ -563,10 +584,10 @@
    \numdef\yquant@draw@@idx@content{\yquant@draw@@idx@content+1}%
 }
 
-\protected\long\def\yquant@draw@subcircuit@multi#1#2#3#4#5#6#7{%
+\protected\long\def\yquant@draw@subcircuit@multi#1#2#3#4#5#6#7#8{%
    \yquant@config@operator@multitrue%
    % there is no contiguous slicing for subcircuits, as they may have all kinds of wire operations that can extend beyond the individual slices, let alone ancillas
-   \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#4}%
+   \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#8}{#4}%
    \edef\cmd{%
       \pgfshapeclippath{yquantbox}{%
           /yquant/every operator, \yquant@draw@@style,%

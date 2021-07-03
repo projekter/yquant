@@ -1,3 +1,4 @@
+% !TeX spellcheck = en_US
 \documentclass{scrartcl}
 
 \title{yquant.sty package documentation}
@@ -216,7 +217,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.4 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.4.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -1021,6 +1022,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Counters for target registers, positive, and negative controls are all independent.
          Finally, you can even access names within a subcircuit, provided you give a name to the subcircuit.
          All nodes in the subcircuit will then have the name \texttt{\textit{<subcircuit name>}-\textit{<name specified in the subcircuits>}}.
+         Note that here, \texttt{\textit{<subcircuit name>}} is the \emph{full} name of the subcircuit, which includes the \tex!-\idx! suffix, \compat{New in 0.4.1}unless there is only a single target register.
          For nested subcircuits, you will get multiple prefixes.
 
       \subsection{Shapes and the drawing pipeline}
@@ -3427,5 +3429,9 @@ $=$
       \subsection*{2021-03-27: Version 0.4}
          New gate: \gate{inspect}. Various bug fixes. \\
          Introduce the \texttt{direct control} feature: \gate{measure} gates can now substitute positive controls of future gates.
+      
+      \subsection*{2021-07-03: Version 0.4.1}
+         Fix \href{https://github.com/projekter/yquant/issues/9}{\#9}: Output bracket misaligned. \\
+         Fix \href{https://github.com/projekter/yquant/issues/10}{\#10}: Unable to access node in subcircuit. As of this version, named nodes in subcircuits will also be properly aliased if there is only a single target subcircuit (so that you don't need to use the \texttt{-0} suffix for the subcircuit's name).
 %END_FOLD
 \end{document}
