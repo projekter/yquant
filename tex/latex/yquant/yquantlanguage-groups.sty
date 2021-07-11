@@ -1,0 +1,433 @@
+% yquantlanguage-groups.sty
+%  Extend yquant for quick and simple circuit equations.
+%
+% Copyright 2021 Benjamin Desef
+%
+% This work may be distributed and/or modified under the conditions of the LaTeX Project
+% Public License, either version 1.3c of this license or (at your option) any later
+% version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3c or later is part of all distributions of LaTeX version 2005/12/01 or
+% later.
+%
+% This work has the LPPL maintenance status `author-maintained'.
+%
+% The Current Maintainer of this work is Benjamin Desef.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{yquantlanguage-groups}[2021/07/10 v0.5 yquant-groups]
+
+\RequirePackage{yquant}[2021/03/27]
+
+% BEGIN_FOLD Config
+\newif\ifyquantgroup@config@aligned
+\pgfqkeys{/yquant}{%
+   group/every group/.style={},%
+   group/line separation/.code={%
+      \dimdef\yquantgroup@config@lineseparation{#1}%
+   },%
+   group/aligned/.is if=yquantgroup@config@aligned,
+   operators/every group circuit/.style={%
+      /yquant/operators/every subcircuit,%
+      /yquant/operators/subcircuit/frameless%
+   },%
+   operators/every group equals/.style={shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}
+}
+\def\yquantgroup@config@lineseparation{3mm}%
+% END_FOLD
+
+\def\yquantgroup@prefix{yquantgroup@env@registers@}%
+\def\yquantgroup@parent{yquantgroup@env@parent@}%
+
+% BEGIN_FOLD Environment
+\newenvironment{yquantgroup}[1][]{
+   \ifdefined\yquant@parent%
+      \PackageError{yquant.sty}{yquantgroup must be top-level}%
+                   {You may not use the yquantgroup environment within a subcircuit or a user-defined gate.}%
+   \fi%
+   % macros that may have a meaning that we want to restore inside the circuits
+   \let\yquantgroup@save@registers=\registers%
+   \let\yquantgroup@save@circuit=\circuit%
+   \let\yquantgroup@save@equals=\equals%
+   \let\yquantgroup@save@shiftright=\shiftright%
+   \let\yquantgroup@save@linebreak=\\%
+   \let\yquantgroup@save@gatecallback=\yquant@langhelper@gatecallback%
+   % assign the new meaning
+   \let\registers=\yquantgroup@registers%
+   \let\circuit=\yquantgroup@circuit%
+   \let\equals=\yquantgroup@equals%
+   \let\shiftright=\yquantgroup@shiftright%
+   \let\\=\yquantgroup@linebreak%
+   % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately since at pgf 3.1.2.
+   \let\ifyquantgroup@inpicture=\ifpgfpicture%
+   \pgfkeysgetvalue{/yquant/preamble}\yquantgroup@save@preamble%
+   \ifpgfpicture%
+      \let\pagebreak=\yquantgroup@nobreak%
+      \let\newpage=\yquantgroup@nobreak%
+      \let\clearpage=\yquantgroup@nobreak%
+      \let\cleardoublepage=\yquantgroup@nobreak%
+      \let\yquantgroup@start@tikzpicture=\relax%
+      \let\yquantgroup@end@tikzpicture=\relax%
+   \else%
+      \let\pagebreak=\yquantgroup@pagebreak%
+      \let\newpage=\yquantgroup@newpage%
+      \let\clearpage=\yquantgroup@clearpage%
+      \let\cleardoublepage=\yquantgroup@cleardoublepage%
+      \def\yquantgroup@start@tikzpicture{\tikzpicture}%
+      \def\yquantgroup@end@tikzpicture{\endtikzpicture}%
+      \pgfkeysdef{/yquant/preamble}{%
+         \def\yquantgroup@start@tikzpicture{\tikzpicture[{#1}]}%
+      }%
+   \fi%
+   \undef\yquantgroup%
+   \yquantset{group/every group, #1}%
+   \def\yquantgroup@alignments{0}%
+   \def\yquantgroup@currentxpos{0pt}%
+   \def\yquantgroup@currentypos{0pt}%
+   \pgfkeyslet{/yquant/preamble}\yquantgroup@save@preamble%
+}{%
+   \ifdefined\yquant@prefix%
+         \yquant@env@end%
+      \end{scope}
+   \fi%
+   \ifcsname\yquantgroup@parent cleanup\endcsname%
+      \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
+         \csgundef{\yquantgroup@prefix import@\i}%
+      }%
+      \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquantgroup@parent cleanup\endcsname|%
+      \csgundef{\yquantgroup@parent cleanup}%
+      \gundef\yquantgroup@start@yquant%
+   \else%
+      \PackageWarning{yquant.sty}{Empty yquantgroup}%
+   \fi%
+   \gundef\yquantgroup@alignments%
+   \ifpgfpicture%
+      \expandafter\yquantgroup@end@tikzpicture%
+   \fi%
+}
+
+\newenvironment{yquantgroup*}[1][]{%
+   \yquantgroup[{#1}]%
+      \yquant@env@lazytrue%
+}{%
+   \endyquantgroup%
+}
+% END_FOLD
+
+% BEGIN_FOLD Register declaration
+\protected\long\def\yquantgroup@registers#1{%
+   \begingroup%
+      \gdef\yquantgroup@registers@text{#1}%
+      \let\yquantgroup@save@lang@create@parse=\yquant@lang@create@parse@name%
+      \let\yquant@lang@create@parse@name=\yquantgroup@registers@create@parse%
+      \let\yquant@env@begin@generic=\yquantgroup@registers@env@generic%
+      \appto\yquant@langhelper@setup@attrs@set@nobit{%
+         \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
+      }%
+      \appto\yquant@langhelper@setup@attrs@set@qubit{%
+         \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
+      }%
+      \appto\yquant@langhelper@setup@attrs@set@cbit{%
+         \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
+      }%
+      \appto\yquant@langhelper@setup@attrs@set@qubits{%
+         \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
+      }%
+      \let\yquantgroup@registers@remember@attrs=\empty%
+      \yquantgroup@start@tikzpicture%
+      \yquant@envunstar%
+         #1%
+      \yquant@env@end%
+      \yquantgroup@end@tikzpicture%
+      \def\registers{%
+         \PackageError{yquant.sty}{Double invocation of \string\registers}%
+                      {All registers must be specified once at the beginning of the group. Multiple declarations or later additions are not allowed.}%
+      }%
+      \unless\ifx\yquantgroup@registers@text\empty%
+         \csxappto{\yquantgroup@prefix import@\csname\yquantgroup@prefix registers\endcsname}{%
+            \unexpanded\expandafter{\yquantgroup@registers@text}%
+         }%
+      \fi%
+      \gundef\yquantgroup@registers@text%
+   \endgroup%
+}
+
+% sync with yquant-env
+\let\yquantgroup@registers@env@generic=\yquant@env@begin@generic
+\patchcmd\yquantgroup@registers@env@generic{%
+   \let\yquant@parent=\yquant@prefix%
+   \global\advance\yquant@env by 1 %
+   \edef\yquant@prefix{yquant@env\the\yquant@env @}%
+   \ifnum\yquant@env=1 %
+      \yquantmeasuringtrue%
+      \yquant@env@substikz#1%
+      \global\cslet{\yquant@prefix parameters}\empty%
+   \else%
+      \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
+      \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
+      \yquant@env@lazyfalse% forbid lazy register creation in subcircuits. We need a proper and in-order declaration of the subcircuit's interface.
+   \fi%
+}{%
+   \unless\ifnum\yquant@env=0 %
+      \PackageError{yquant.sty}{Assertion failure}%
+                   {Nested \string\registers-induced yquant environment found.}%
+   \fi%
+   \let\yquant@parent=\yquantgroup@parent%
+   \let\yquant@prefix=\yquantgroup@prefix%
+   \yquantmeasuringtrue%
+   \yquant@env@substikz#1%
+   \global\cslet{\yquant@prefix parameters}\empty%
+}\relax{%
+   \PackageError{yquant.sty}{Internal error}%
+                {Unable to patch yquant environment for \string\registers.}%
+}
+
+\protected\def\yquantgroup@registers@create@parse#1[#2;{%
+   \let\yquant@lang@create@type=\yquant@register@type@none%
+   \ifstrempty{#2}{%
+      \edef\yquantgroup@registers@splittext{%
+         \protected\def\noexpand\yquantgroup@registers@splittext####1%
+            \yquant@langhelper@cmd@original####2#1;####3%
+            \noexpand\yquantgroup@registers@splittext@end{%
+            \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
+               ####1\yquant@langhelper@cmd@original####2#1;%
+            }%
+            \gdef\noexpand\yquantgroup@registers@text{####3}%
+         }%
+      }%
+      \yquantgroup@registers@splittext%
+      \expandafter\yquantgroup@registers@splittext\yquantgroup@registers@text%
+                                                  \yquantgroup@registers@splittext@end%
+      \yquant@lang@create@do#1[1][;%
+   }{%
+      \edef\yquantgroup@registers@splittext{%
+         \protected\def\noexpand\yquantgroup@registers@splittext####1%
+            \yquant@langhelper@cmd@original####2#1[\yquantgroup@registers@create@parse@extract#2];####3%
+            \noexpand\yquantgroup@registers@splittext@end{%
+            \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
+               ####1\yquant@langhelper@cmd@original####2#1[+1];%
+            }%
+            \ifnum\yquantgroup@registers@create@parse@extract#2>1 %
+               \noexpand\yquant@for \noexpand\i := 2 to \yquantgroup@registers@create@parse@extract#2 {%
+                  \csgdef{\yquantgroup@prefix import@\noexpand\the\numexpr\csname\yquant@prefix registers\endcsname+\noexpand\i\relax}{%
+                     [\yquantgroup@registers@remember@attrs]%
+                     \yquant@langhelper@cmd@original####2#1[+1];%
+                  }%
+               }%
+            \fi%
+            \gdef\noexpand\yquantgroup@registers@text{####3}%
+         }%
+      }%
+      \yquantgroup@registers@splittext%
+      \expandafter\yquantgroup@registers@splittext\yquantgroup@registers@text%
+                                                  \yquantgroup@registers@splittext@end%
+      \yquant@lang@create@do#1[#2;%
+   }%
+}
+
+\def\yquantgroup@registers@create@parse@extract#1][{#1}
+% END_FOLD
+
+\protected\def\yquantgroup@startenvironments{%
+   \unless\ifcsname\yquantgroup@prefix registers\endcsname%
+      \PackageError{yquant.sty}{\string\circuit without \string\registers}%
+                   {A circuit was invoked without preceding register definitions.}%
+   \fi%
+   % since \registers is in subcircuit mode, that the existence of the macro implies that it is greater than zero
+   \unless\ifpgfpicture%
+      \expandafter\yquantgroup@start@tikzpicture%
+   \fi%
+   \ifdef\yquant@prefix\relax{%
+      \begin{scope}[xshift=\yquantgroup@currentxpos, yshift=\yquantgroup@currentypos]
+         \yquant@env@begin%
+            % we copy all the internal register definitions, but we do not copy the names
+            \global\csletcs{\yquant@prefix registers}{\yquantgroup@prefix registers}%
+            \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
+               \global\csletcs{\yquant@prefix register@\i}%
+                              {\yquantgroup@prefix register@\i}%
+            }%
+   }%
+}
+
+% BEGIN_FOLD Circuit
+\def\yquantgroup@circuit{%
+   \@ifnextchar[\yquantgroup@circuit@i%
+                {\yquantgroup@circuit@i[]}%
+}
+
+\long\def\yquantgroup@circuit@i[#1]#2{%
+   \yquantgroup@startenvironments%
+   \yquant [{#1}] group\space circuit {#2} (-); discard -;
+}
+
+\yquant@langhelper@declare@command@uncontrolled%
+   {group circuit}%
+   \yquant@register@get@multiaslist%
+   {%
+      \let\yquant@lang@import=\yquantgroup@circuit@import%
+      \edef\yquantgroup@circuit@nonimported{%
+         \yquant@list@range{1}{\csname\yquantgroup@prefix registers\endcsname}%
+      }%
+      \let\yquant@langhelper@gatecallback=\yquantgroup@circuit@gatecallback%
+      \yquant@prepare@subcircuit{/yquant/operators/every group circuit}%
+      \gundef\yquantgroup@circuit@nonimported%
+   }
+\yquant@langhelper@setup@attrs{group circuit}{value}{frameless,seamless}
+
+\yquant@langhelper@declare@command@uncontrolled{import}{%
+   \expandafter\ifstrequal\expandafter{\yquant@parent}{yquant@env1@}\relax{%
+      \PackageError{yquant.sty}{import gate in subcircuit}%
+                   {The import gate can only be used in the top-level \string\circuit, but not in subcircuits.}%
+   }%
+   \let\yquantgroup@circuit@oldprefix=\yquant@prefix%
+   \let\yquant@prefix=\yquantgroup@prefix%
+}{%
+   \let\yquant@prefix=\yquantgroup@circuit@oldprefix%
+   % we don't end the group here, so that potential attributes given to import will carry over
+   \undef\yquant@lang@attr@input%
+   \let\yquant@lang@attr@output=\relax%
+   \forlistloop\yquantgroup@circuit@directimport\yquant@circuit@operator@targets%
+}
+\let\yquantgroup@circuit@import=\yquant@lang@import
+\undef\yquant@lang@import
+
+\protected\def\yquantgroup@circuit@directimport#1{%
+   \listgremove\yquantgroup@circuit@nonimported{#1}%
+   \ifx\yquantgroup@circuit@nonimported\empty%
+      \gundef\yquant@lang@import%
+      \global\let\yquant@langhelper@gatecallback=\yquantgroup@save@gatecallback%
+   \fi%
+   \expandafter\expandafter\expandafter\yquant%
+      \csname\yquantgroup@prefix import@#1\endcsname%
+}
+
+\def\yquantgroup@circuit@restimport#1{%
+   % basically the same as directimport, but since we are doing all the remaining stuff, no need to check in between
+   \expandafter\expandafter\expandafter\yquant%
+      \csname\yquantgroup@prefix import@#1\endcsname%
+}
+
+\protected\def\yquantgroup@circuit@gatecallback#1{%
+   \ifstrequal{#1}{import}\relax{%
+      % this is called by every standard gate - so we ensure that before the first standard gate is used, all outer registers are imported. Note that we are actually in a group that already contains all the relevant setup for the _current_ gate, which should not influence the implicit imports at all! So this means we do a state reset as for subcircuits.
+      \begingroup%
+         \let\yquant@langhelper@list@attrs=\empty%
+         \yquant@lang@reset@attrs%
+         \undef\yquant@lang@attr@input%
+         \let\yquant@lang@attr@output=\relax%
+         \forlistloop\yquantgroup@circuit@restimport\yquantgroup@circuit@nonimported%
+      \endgroup%
+      \global\let\yquantgroup@circuit@nonimported=\empty%
+      \gundef\yquant@lang@import%
+      \global\let\yquant@langhelper@gatecallback=\yquantgroup@save@gatecallback%
+   }%
+}
+% END_FOLD
+
+% BEGIN_FOLD Equals box
+\yquant@langhelper@declare@command%
+   {group equals}%
+   \yquant@register@get@allowmultitrue%
+   {%
+      \expandafter\yquant@prepare%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/operators/every group equals}%
+   }
+\yquant@langhelper@setup@attrs{group equals}{value}{}
+
+\def\yquantgroup@equals{%
+   \@ifstar{\yquantgroup@equals@i1}%
+           {\yquantgroup@equals@i0}%
+}
+
+\def\yquantgroup@equals@i#1{%
+   \@ifnextchar[{\yquantgroup@equals@ii{#1}}%
+                {\yquantgroup@equals@ii{#1}[]}%
+}
+
+\protected\long\def\yquantgroup@equals@ii#1[#2]{%
+   \yquantgroup@startenvironments%
+   \ifx0#1%
+      \yquant group\space equals {#2} (-);%
+   \else%
+      \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
+      \yquant [name=yquantgroup@internal@alignment@\yquantgroup@alignments]%
+         group\space equals {#2} (-);%
+   \fi%
+}
+% END_FOLD
+
+% TODO: linebreak must activate shiftright
+\def\yquantgroup@shiftright{%
+   \@ifstar{\yquantgroup@shiftright@i1}%
+           {\yquantgroup@shiftright@i0}%
+}
+
+\def\yquantgroup@shiftright@i#1{%
+   \@ifnextchar[{\yquantgroup@shiftright@ii{#1}}%
+                {\yquantgroup@shiftright@ii{#1}[1]}%
+}
+
+% TODO: allow to put a mark at this position
+\def\yquantgroup@shiftright@ii#1[#2]{%
+   % first check whether #2 is a pure number or a dimension
+   \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
+      \expandafter\yquantgroup@shiftright@removedim\the\dimexpr#2pt\relax\relax%
+   }{%
+      % #2 was no dimension (appending pt made it one)
+      \ifnum#2=0 %
+         \dimdef\yquantgroup@currentxpos{0pt}%
+      \else%
+         \pgfpointanchor{yquantgroup@internal@alignment@#2}{west}%
+         \dimdef\yquantgroup@currentxpos{\pgf@x}%
+      \fi%
+   }{%
+      % #2 was a dimension (the pt\relax remained)
+      \dimdef\yquantgroup@currentxpos{#2}%
+   }%
+}
+
+\def\yquantgroup@shiftright@removedim#1\relax{}
+
+\def\yquantgroup@linebreak{%
+   \@ifnextchar[\yquantgroup@linebreak@i%
+                {\yquantgroup@linebreak@i[\yquantgroup@config@lineseparation]}%
+}
+
+\def\yquantgroup@linebreak@i[#1]{%
+   \ifdefined\yquant@prefix%
+         \yquant@env@end%
+      \end{scope}
+   \else%
+      \PackageError{yquant.sty}{There is no line here to end}%
+                   {You did not start a circuit before requesting a line break.}%
+   \fi%
+   \def\yquantgroup@currentxpos{0pt}%
+   \dimdef\yquantgroup@currentypos{\pgf@picminy-#1}%
+   \ifyquantgroup@config@aligned%
+      \yquantgroup@shiftright@ii0[1]%
+   \fi%
+}
+
+\def\yquantgroup@nobreak{%
+   \PackageError{yquant.sty}{Page breaking disallowed in tikzpicture environment}%
+                {In order to allow for page breaking in a yquantgroup environment, move it outside of the tikzpicture.}%
+}
+
+\def\yquantgroup@pagebreak{%
+
+}
+
+\def\yquantgroup@newpage{%
+
+}
+
+\def\yquantgroup@clearpage{%
+
+}
+
+\def\yquantgroup@cleardoublepage{
+
+}
+
+\endinput
