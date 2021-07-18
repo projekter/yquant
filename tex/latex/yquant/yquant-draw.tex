@@ -9,16 +9,12 @@
          \ifx\yquant@draw@init@type\yquant@register@type@none%
             % in case the wire was discarded before, forget about the lastx position, it should always start with the others
             \yquant@register@get@lastwire{#1}\wirelast%
-            \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
-               \expandafter\@thirdoffour\wirelast%
-            }{%
-               \yquant@register@set@lastwire{#1}{%
-                  {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}%
-                  {\unexpanded\expandafter\expandafter\expandafter{%
-                      \expandafter\@fourthoffour\wirelast%
-                   }}%
-               }%
-            }\relax
+            \yquant@register@set@lastwire{#1}{%
+               {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}%
+               {\unexpanded\expandafter\expandafter\expandafter{%
+                   \expandafter\@fourthoffour\wirelast%
+                }}%
+            }%
          \fi%
          \yquant@register@set@type{#1}{#2}%
       \fi%
@@ -492,14 +488,53 @@
             /yquant/this operator, /yquant/internal/multi main=true,%
          }
          \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
-         \csname\yquant@prefix draw\endcsname%
-         \dimen0=\yquant@register@get@y1\relax%
-         \ifdim\dimen0>\pgf@picmaxy %
-            \global\pgf@picmaxy=\dimen0 %
-         \fi%
-         \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax%
-         \ifdim\dimen0<\pgf@picminy %
-            \global\pgf@picminy=\dimen0 %
+         \begingroup%
+            \csname\yquant@prefix draw\endcsname%
+         \endgroup%
+         % Completely empty wires did not yet affect the bounding box
+         % Problem: we compare an user-mode TikZ position (register y position) with a system-level pgf position (picture boundary box). If shifts or scalings are in effect, we must first transform the point appropriately. Note that negative scalings may upset our assumption of which is the minimum and which is the maximum! If additionally rotations are in effect, we must even consider those transformations for the leftmost and the rightmost point, which makes all of this far more complicated than it should be. For this reason, we have a shortcut in action in case no nontranslation transformations are present.
+         \ifpgf@pt@identity%
+            \dimen0=\dimexpr\yquant@register@get@y1+\pgf@pt@y\relax%
+            \ifdim\dimen0>\pgf@picmaxy %
+               \global\pgf@picmaxy=\dimen0 %
+            \fi%
+            \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}+\pgf@pt@y\relax%
+            \ifdim\dimen0<\pgf@picminy %
+               \global\pgf@picminy=\dimen0 %
+            \fi%
+         \else%
+            % first wire, left end
+            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \ifdim\pgf@y>\pgf@picmaxy %
+               \global\pgf@picmaxy=\pgf@y %
+            \fi%
+            \ifdim\pgf@y<\pgf@picminy % negative scaling
+               \global\pgf@picminy=\pgf@y %
+            \fi%
+            % first wire, right end
+            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \ifdim\pgf@y>\pgf@picmaxy %
+               \global\pgf@picmaxy=\pgf@y %
+            \fi%
+            \ifdim\pgf@y<\pgf@picminy % negative scaling
+               \global\pgf@picminy=\pgf@y %
+            \fi%
+            % last wire, left end
+            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \ifdim\pgf@y>\pgf@picmaxy %
+               \global\pgf@picmaxy=\pgf@y %
+            \fi%
+            \ifdim\pgf@y<\pgf@picminy % negative scaling
+               \global\pgf@picminy=\pgf@y %
+            \fi%
+            % last wire, right end
+            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \ifdim\pgf@y>\pgf@picmaxy %
+               \global\pgf@picmaxy=\pgf@y %
+            \fi%
+            \ifdim\pgf@y<\pgf@picminy % negative scaling
+               \global\pgf@picminy=\pgf@y %
+            \fi%
          \fi%
          \ifnum#3=1 %
             % we must apply the aliasing to all the included nodes. We do this in this group, which still has the callback available, so that the aliased nodes will also be added to the list and can propagate (note that the number of node names is then exponential in the number of nested subcircuits)
@@ -513,14 +548,34 @@
                {\yquant@draw@subcircuit@alias{#2}}\yquant@draw@subcircuit@nodelist%
          \fi%
       }}%
+      \ifpgf@pt@identity%
+         \dimen0=\dimexpr.5\pgf@picminy+.5\pgf@picmaxy-\pgf@pt@y\relax%
+         \dimen2=\dimexpr\pgf@picmaxy-\pgf@picminy\relax%
+      \else%
+         \begingroup%
+            \pgftransforminvert%
+            \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+            \@tempdima=\pgf@y%
+            \pgfpointtransform{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+            \edef\cmd{\@tempdima=\the\@tempdima\space\@tempdimb=\the\@tempdimb\space}%
+            \expandafter%
+         \endgroup%
+         \cmd%
+         \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x}%
+                                        {.5\dimexpr\@tempdima+\@tempdimb\relax}}%
+         \dimen0=\pgf@y%
+         \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x}%
+                                        {\dimexpr\@tempdimb-\@tempdima\relax}}%
+         \dimen2=\pgf@y%
+      \fi%
       \edef\cmd{%
-         \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\pgf@picminy+.5\pgf@picmaxy\relax)%
+         \noexpand\path (\yquant@draw@@x, \the\dimen0)%
             node[/yquant/every operator, \yquant@draw@@style,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
                  /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
-            {\vbox to \the\dimexpr\pgf@picmaxy-\pgf@picminy\relax {\hbox to \@firstofthree#4 {}}};%
+            {\vbox to \the\dimen2 {\hbox to \@firstofthree#4 {}}};%
       }%
       \cmd%
       \unhbox\yquant@prepare@subcircuit@box%
@@ -606,7 +661,7 @@
          \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
                                        {\yquant@register@get@y\i}%
          \let\pgfshapeclippathhorzresult=\empty%
-         \yquant@circuit@extendwire\i{*}%
+         \yquant@circuit@extendwire\i*%
       }{%
          \let\pgfshapeclippathhorzresult=\nonaffectedpgfshapeclippathhorzresult%
          \yquant@circuit@extendwire\i{center}%
@@ -767,9 +822,9 @@
                            \pgf@picmaxy=0pt %
                         \fi%
                         \pgftransforminvert%
-                        \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                        \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
                         \global\@tempdima=\pgf@y%
-                        \pgfpointtransformednonlinear{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+                        \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
                         \global\@tempdimb=\pgf@y%
                      \endgroup%
                      % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.

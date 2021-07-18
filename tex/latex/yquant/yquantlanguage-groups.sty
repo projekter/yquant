@@ -33,14 +33,14 @@
    },%
    operators/every group equals/.style={shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}
 }
-\def\yquantgroup@config@lineseparation{3mm}%
+\def\yquantgroup@config@lineseparation{5mm}%
 % END_FOLD
 
 \def\yquantgroup@prefix{yquantgroup@env@registers@}%
 \def\yquantgroup@parent{yquantgroup@env@parent@}%
 
 % BEGIN_FOLD Environment
-\newenvironment{yquantgroup}[1][]{
+\newenvironment{yquantgroup}[1][]{%
    \ifdefined\yquant@parent%
       \PackageError{yquant.sty}{yquantgroup must be top-level}%
                    {You may not use the yquantgroup environment within a subcircuit or a user-defined gate.}%
@@ -58,7 +58,7 @@
    \let\equals=\yquantgroup@equals%
    \let\shiftright=\yquantgroup@shiftright%
    \let\\=\yquantgroup@linebreak%
-   % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately since at pgf 3.1.2.
+   % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately set since at pgf 3.1.2.
    \let\ifyquantgroup@inpicture=\ifpgfpicture%
    \pgfkeysgetvalue{/yquant/preamble}\yquantgroup@save@preamble%
    \ifpgfpicture%
@@ -69,26 +69,30 @@
       \let\yquantgroup@start@tikzpicture=\relax%
       \let\yquantgroup@end@tikzpicture=\relax%
    \else%
+      \let\yquantgroup@save@pagebreak=\pagebreak%
       \let\pagebreak=\yquantgroup@pagebreak%
+      \let\yquantgroup@save@newpage=\newpage%
       \let\newpage=\yquantgroup@newpage%
+      \let\yquantgroup@save@clearpage=\clearpage%
       \let\clearpage=\yquantgroup@clearpage%
+      \let\yquantgroup@save@cleardoublepage=\cleardoublepage%
       \let\cleardoublepage=\yquantgroup@cleardoublepage%
-      \def\yquantgroup@start@tikzpicture{\tikzpicture}%
+      \def\yquantgroup@start@tikzpicture{\tikzpicture \global\pgf@picminx=0pt }%
       \def\yquantgroup@end@tikzpicture{\endtikzpicture}%
       \pgfkeysdef{/yquant/preamble}{%
-         \def\yquantgroup@start@tikzpicture{\tikzpicture[{#1}]}%
+         \def\yquantgroup@start@tikzpicture{\tikzpicture[{#1}] \global\pgf@picminx=0pt }%
       }%
    \fi%
    \undef\yquantgroup%
    \yquantset{group/every group, #1}%
    \def\yquantgroup@alignments{0}%
-   \def\yquantgroup@currentxpos{0pt}%
+   \def\yquantgroup@currentxpos{-\yquant@config@operator@sep}%
    \def\yquantgroup@currentypos{0pt}%
    \pgfkeyslet{/yquant/preamble}\yquantgroup@save@preamble%
+   \yquantgroup@start@tikzpicture%
 }{%
    \ifdefined\yquant@prefix%
-         \yquant@env@end%
-      \end{scope}
+      \yquant@env@end%
    \fi%
    \ifcsname\yquantgroup@parent cleanup\endcsname%
       \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
@@ -101,9 +105,7 @@
       \PackageWarning{yquant.sty}{Empty yquantgroup}%
    \fi%
    \gundef\yquantgroup@alignments%
-   \ifpgfpicture%
-      \expandafter\yquantgroup@end@tikzpicture%
-   \fi%
+   \yquantgroup@end@tikzpicture%
 }
 
 \newenvironment{yquantgroup*}[1][]{%
@@ -134,11 +136,13 @@
          \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
       }%
       \let\yquantgroup@registers@remember@attrs=\empty%
-      \yquantgroup@start@tikzpicture%
-      \yquant@envunstar%
-         #1%
-      \yquant@env@end%
-      \yquantgroup@end@tikzpicture%
+      \setbox0=\hbox{%
+         \pgfinterruptboundingbox%
+            \yquant@envunstar%
+               #1%
+            \yquant@env@end%
+         \endpgfinterruptboundingbox%
+      }%
       \def\registers{%
          \PackageError{yquant.sty}{Double invocation of \string\registers}%
                       {All registers must be specified once at the beginning of the group. Multiple declarations or later additions are not allowed.}%
@@ -234,18 +238,35 @@
                    {A circuit was invoked without preceding register definitions.}%
    \fi%
    % since \registers is in subcircuit mode, that the existence of the macro implies that it is greater than zero
-   \unless\ifpgfpicture%
-      \expandafter\yquantgroup@start@tikzpicture%
-   \fi%
-   \ifdef\yquant@prefix\relax{%
-      \begin{scope}[xshift=\yquantgroup@currentxpos, yshift=\yquantgroup@currentypos]
-         \yquant@env@begin%
-            % we copy all the internal register definitions, but we do not copy the names
-            \global\csletcs{\yquant@prefix registers}{\yquantgroup@prefix registers}%
-            \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
-               \global\csletcs{\yquant@prefix register@\i}%
-                              {\yquantgroup@prefix register@\i}%
+   \ifdef\yquant@prefix{%
+      % We already started the yquant environment - but this means that potentially, we could have changed our wire styles. The underlying subcircuit architecture will preserve these changes, but since in our context, we treat the circuits as independent, this is not the desired behavior: remove all styles.
+      \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+         % we don't really need to flush a wire, since it is discarded anyway
+         \csxappto{\yquant@prefix draw}{%
+            \yquant@register@set@style{\i}{}%
+         }%
+      }%
+   }{%
+      \yquant@env@begin[/tikz/shift={(\yquantgroup@currentxpos, \yquantgroup@currentypos)}]%
+         % we re-create all the outer registers, but without the names.
+         % sync with yquant-registers/\yquant@register@define
+         \global\csletcs{\yquant@prefix registers}{\yquantgroup@prefix registers}%
+         \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
+            \csxdef{\yquant@prefix register@\i}{%
+               {\yquant@register@type@none}% type
+               {0pt}% x pos
+               {{\yquant@config@register@minimum@height}%
+                {\yquant@config@register@minimum@depth}%
+                {}}% height, depth, and multi-space parts; at the end, the y position
+               {{0pt}{0pt}{}{}}% wire start positions and clipping
+               {}% wire style
+               {\yquant@register@flag@clean}%
             }%
+            \yquant@cleanup@csadd{\yquant@prefix register@\i}%
+            \csxappto{\yquant@prefix draw}{%
+               \yquant@draw@init{\i}{\yquant@register@type@none}%
+            }%
+         }%
    }%
 }
 
@@ -257,7 +278,8 @@
 
 \long\def\yquantgroup@circuit@i[#1]#2{%
    \yquantgroup@startenvironments%
-   \yquant [{#1}] group\space circuit {#2} (-); discard -;
+   \yquant [{#1}] group\space circuit {#2} (-);%
+   discard -;
 }
 
 \yquant@langhelper@declare@command@uncontrolled%
@@ -351,13 +373,23 @@
       \yquant group\space equals {#2} (-);%
    \else%
       \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
+      % hopefully no prefixes/suffixes are installed - if we reset them here, it will also reset them for the content, which we don't want to do; but this will then give an error when we try to access the node. Probably never a problem.
       \yquant [name=yquantgroup@internal@alignment@\yquantgroup@alignments]%
          group\space equals {#2} (-);%
+      \ifnum\yquantgroup@alignments>1 %
+         \pgfcoordinate{yquantgroup@internal@alignment@\the\numexpr\yquantgroup@alignments-1\relax}{west}%
+         \pgf@xa=\pgf@x%
+         \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
+         \unless\ifdim\pgf@x>\pgf@xa%
+            \PackageError{yquant.sty}{Invalid alignment mark position}%
+                         {The desired alignment mark position would be to the left of an already existing mark.}%
+         \fi%
+      \fi%
    \fi%
 }
 % END_FOLD
 
-% TODO: linebreak must activate shiftright
+% BEGIN_FOLD alignment
 \def\yquantgroup@shiftright{%
    \@ifstar{\yquantgroup@shiftright@i1}%
            {\yquantgroup@shiftright@i0}%
@@ -368,7 +400,6 @@
                 {\yquantgroup@shiftright@ii{#1}[1]}%
 }
 
-% TODO: allow to put a mark at this position
 \def\yquantgroup@shiftright@ii#1[#2]{%
    % first check whether #2 is a pure number or a dimension
    \expandafter\expandafter\expandafter\ifstrempty\expandafter\expandafter\expandafter{%
@@ -376,19 +407,38 @@
    }{%
       % #2 was no dimension (appending pt made it one)
       \ifnum#2=0 %
-         \dimdef\yquantgroup@currentxpos{0pt}%
+         \dimdef\yquantgroup@currentxpos{-\yquant@config@operator@sep}%
       \else%
+         \ifnum\yquantgroup@alignments<#2 %
+            \PackageError{yquant.sty}{Unknown alignment point}%
+                         {Alignment points must first be defined using \string\equals*.}%
+         \fi%
          \pgfpointanchor{yquantgroup@internal@alignment@#2}{west}%
-         \dimdef\yquantgroup@currentxpos{\pgf@x}%
+         \dimdef\yquantgroup@currentxpos{\pgf@x-\yquant@config@operator@sep}%
       \fi%
    }{%
       % #2 was a dimension (the pt\relax remained)
-      \dimdef\yquantgroup@currentxpos{#2}%
+      \dimdef\yquantgroup@currentxpos{#2-\yquant@config@operator@sep}%
    }%
+   \ifx1#1%
+      \ifnum\yquantgroup@alignments>0 %
+         \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
+         \unless\ifdim\dimexpr\yquantgroup@currentxpos+\yquant@config@operator@sep\relax>\pgf@x%
+            \PackageError{yquant.sty}{Invalid alignment mark position}%
+                         {The desired alignment mark position would be to the left of an already existing mark.}%
+         \fi%
+      \fi%
+      \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
+      \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}%
+           {\pgfqpoint{\dimexpr\yquantgroup@currentxpos+\yquant@config@operator@sep\relax}%
+                      {\yquantgroup@currentypos}}%
+   \fi%
 }
 
 \def\yquantgroup@shiftright@removedim#1\relax{}
+% END_FOLD
 
+% BEGIN_FOLD breaks
 \def\yquantgroup@linebreak{%
    \@ifnextchar[\yquantgroup@linebreak@i%
                 {\yquantgroup@linebreak@i[\yquantgroup@config@lineseparation]}%
@@ -396,13 +446,12 @@
 
 \def\yquantgroup@linebreak@i[#1]{%
    \ifdefined\yquant@prefix%
-         \yquant@env@end%
-      \end{scope}
+      \yquant@env@end%
    \else%
       \PackageError{yquant.sty}{There is no line here to end}%
                    {You did not start a circuit before requesting a line break.}%
    \fi%
-   \def\yquantgroup@currentxpos{0pt}%
+   \def\yquantgroup@currentxpos{-\yquant@config@operator@sep}%
    \dimdef\yquantgroup@currentypos{\pgf@picminy-#1}%
    \ifyquantgroup@config@aligned%
       \yquantgroup@shiftright@ii0[1]%
@@ -414,20 +463,53 @@
                 {In order to allow for page breaking in a yquantgroup environment, move it outside of the tikzpicture.}%
 }
 
-\def\yquantgroup@pagebreak{%
+\def\yquantgroup@bigbreak#1{%
+   \@ifstar{\yquantgroup@bigbreak@i{#1}1}{\yquantgroup@bigbreak@i{#1}0}%
+}
 
+\def\yquantgroup@bigbreak@i#1#2{%
+   \ifdefined\yquant@prefix%
+      \yquant@env@end%
+   \else%
+      \PackageError{yquant.sty}{There is no page here to end}%
+                   {You did not start a circuit before requesting a page break.}%
+   \fi%
+   % there is no cleanup of names when leaving a tikzpicture, so all the shapes are still there - all we have to do is to remember the correct number, and also be aware of the fact that the minimum x value in the picture needs to be preserved - else and left margin will just be dropped.
+   \ifx1#2%
+      \edef\tmp{%
+         \unexpanded{%
+            \yquantgroup@end@tikzpicture%
+            \par#1%
+            \yquantgroup@start@tikzpicture%
+         }%
+         \global\pgf@picminx=\the\pgf@picminx\space%
+      }%
+   \else%
+      \def\tmp{%
+         \yquantgroup@end@tikzpicture%
+         \par#1%
+         \yquantgroup@start@tikzpicture%
+         \def\yquantgroup@alignments{0}% the assignments were global, so we must rather reset them
+      }%
+   \fi%
+   \tmp%
+}
+
+\def\yquantgroup@pagebreak{%
+   \yquantgroup@bigbreak\yquantgroup@save@pagebreak%
 }
 
 \def\yquantgroup@newpage{%
-
+   \yquantgroup@bigbreak\yquantgroup@save@newpage%
 }
 
 \def\yquantgroup@clearpage{%
-
+   \yquantgroup@bigbreak\yquantgroup@save@clearpage%
 }
 
-\def\yquantgroup@cleardoublepage{
-
+\def\yquantgroup@cleardoublepage{%
+   \yquantgroup@bigbreak\yquantgroup@save@cleardoublepage%
 }
+% END_FOLD
 
 \endinput

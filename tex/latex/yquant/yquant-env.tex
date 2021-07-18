@@ -522,9 +522,8 @@
    \let\path=\tikz@command@path%
    \let\tikz@finish=\yquant@env@substikz@finish%
    \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
-   % we rely on the origin being the origin
-   \pgf@pt@x=0pt %
-   \pgf@pt@y=0pt %
+   % we will often access the bounding box, which is never transformed
+   \pgftransformreset%
 }
 
 % substitute the tikz commands (defined in \tikz@installcommands) so that they can be arbitrarily interleaved with yquant code. We patch \path, \scope, \endscope, \stopscope, their internal complements, and also patch \yquantset.

@@ -713,7 +713,7 @@
                \global\pgf@picminy=0pt %
             \fi%
             \ifyquant@env@seamless{%
-               % for seamless circuits, we do not have an initial separation. However, if there is an label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
+               % for seamless circuits, we do not have an initial separation. However, if there is a label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
                \ifdim\pgf@picminx<0pt %
                   \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
                \fi%
