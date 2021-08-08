@@ -27,9 +27,17 @@
       \dimdef\yquantgroup@config@lineseparation{#1}%
    },%
    group/aligned/.is if=yquantgroup@config@aligned,
-   operators/every group circuit/.style={%
-      /yquant/operators/every subcircuit,%
-      /yquant/operators/subcircuit/frameless%
+   operators/every group circuit/.code={%
+      \pgfkeysalso{%
+         /yquant/operators/every subcircuit,%
+         /yquant/operators/subcircuit/frameless,%
+      }%
+      % we want no name mangling for the subcircuit that is responsible for the groups, but we want the original setting restored within (with the possibility to override this in the options). Since the outer option is queried in the preparation step and then fixes to what it is reset within the subcircuit, we just don't apply our name mangling rule during the preparation stage, only during execution.
+      \unless\ifyquantmeasuring%
+         \pgfkeysalso{%
+            /yquant/operators/subcircuit/name mangling=transparent%
+         }%
+      \fi%
    },%
    operators/every group equals/.style={shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}
 }
@@ -88,6 +96,7 @@
    \def\yquantgroup@alignments{0}%
    \def\yquantgroup@currentxpos{-\yquant@config@operator@sep}%
    \def\yquantgroup@currentypos{0pt}%
+   \let\yquantgroup@mangling=\yquant@config@operator@subcircuit@mangling%
    \pgfkeyslet{/yquant/preamble}\yquantgroup@save@preamble%
    \yquantgroup@start@tikzpicture%
 }{%

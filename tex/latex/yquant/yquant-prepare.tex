@@ -561,6 +561,7 @@
    \cslet{\yquant@prefix xpos@#1}\newx%
 }
 
+% TODO: We need to somehow provide meaningful nodes for every named gate. We don't know about the y positions, so we cannot do anything about it. But we know the x positions and should set them appropriately (and unless some bend-paths are used, this should be sufficient).
 \protected\long\def\yquant@prepare@subcircuit@group#1#2#3#4#5#6#7\yquant@draw@endgroup{%
    \begingroup%
       \yquant@prepare@subcircuit@getmaxx{#6}%
