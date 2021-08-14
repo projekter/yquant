@@ -427,7 +427,7 @@
       \fi%
    }{%
       % #2 was a dimension (the pt\relax remained)
-      \dimdef\yquantgroup@currentxpos{#2-\yquant@config@operator@sep}%
+      \dimdef\yquantgroup@currentxpos{\yquantgroup@currentxpos+#2}%
    }%
    \ifx1#1%
       \ifnum\yquantgroup@alignments>0 %
