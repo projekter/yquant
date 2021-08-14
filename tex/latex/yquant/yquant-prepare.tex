@@ -561,7 +561,6 @@
    \cslet{\yquant@prefix xpos@#1}\newx%
 }
 
-% TODO: We need to somehow provide meaningful nodes for every named gate. We don't know about the y positions, so we cannot do anything about it. But we know the x positions and should set them appropriately (and unless some bend-paths are used, this should be sufficient).
 \protected\long\def\yquant@prepare@subcircuit@group#1#2#3#4#5#6#7\yquant@draw@endgroup{%
    \begingroup%
       \yquant@prepare@subcircuit@getmaxx{#6}%
@@ -604,6 +603,19 @@
       \fi%
    \next%
    \@gobblethree% three arguments for the endgroup
+}
+
+\let\yquant@prepare@subcircuit@pgfpointanchor=\pgfpointanchor
+\patchcmd\yquant@prepare@subcircuit@pgfpointanchor{%
+   \pgferror{No shape named `#1' is known}%
+}{}\relax{%
+   \PackageWarning{yquant.sty}{Patching \string\pgfpointanchor\space for the purpose of subcircuits failed; using and referencing named nodes in subcircuits may lead to irrelevant errors.}%
+}
+\let\yquant@prepare@subcircuit@pgfpointshapeborder=\pgfpointshapeborder
+\patchcmd\yquant@prepare@subcircuit@pgfpointshapeborder{%
+   \pgferror{No shape named `#1' is known}%
+}{}\relax{%
+   \PackageWarning{yquant.sty}{Patching \string\pgfpointshapeborder\space for the purpose of subcircuits failed; using and referencing named nodes in subcircuits may lead to irrelevant errors.}%
 }
 
 \protected\def\yquant@prepare@subcircuit@hspace#1#2{%
@@ -690,6 +702,9 @@
             \edef\yquant@prefix{yquant@env\yquant@circuit@subcircuit@id @}%
             \let\yquant@draw@init=\yquant@prepare@subcircuit@init%
             \let\yquant@draw@group=\yquant@prepare@subcircuit@group%
+            % We may have draw actions within the subcircuit which reference nodes that have been created within the same subcircuit - but they are not known at the stage of preparation! So we here hack into the node querying macros of pgf and just let every unknown node be equal to the origin. If the node is truely unknown, we will find out about this in the draw stage.
+            \let\pgfpointanchor=\yquant@prepare@subcircuit@pgfpointanchor%
+            \let\pgfpointshapeborder=\yquant@prepare@subcircuit@pgfpointshapeborder%
             \let\yquant@draw@alias=\@gobble%
             \let\yquant@draw@hspace=\yquant@prepare@subcircuit@hspace%
             \let\yquant@circuit@endwires=\yquant@prepare@subcircuit@endwires%
