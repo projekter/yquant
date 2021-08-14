@@ -492,6 +492,9 @@
             \yquantgroup@start@tikzpicture%
          }%
          \global\pgf@picminx=\the\pgf@picminx\space%
+         \ifyquantgroup@config@aligned%
+            \noexpand\yquantgroup@shiftright@ii0[1]%
+         \fi%
       }%
    \else%
       \def\tmp{%
