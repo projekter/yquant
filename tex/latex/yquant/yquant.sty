@@ -51,8 +51,11 @@
 % usually, \\ is robust; but when using \centering, it is \let to \@centercr, which is not robust (probably because this happens only when not protecting). Fix this, so that \\ does not require \protect if a centered circuit is drawn.
 \robustify\@centercr
 
-\outer\def\useyquantlanguage#1{%
-   \RequirePackage{yquantlanguage-#1}
+\def\useyquantlanguage@#1{%
+   \RequirePackage{yquantlanguage-#1}%
+}
+\outer\def\useyquantlanguage{%
+   \forcsvlist\useyquantlanguage@
 }
 
 \endinput
