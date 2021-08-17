@@ -1,0 +1,24 @@
+\documentclass[tikz, convert={convertexe=magick}, png]{standalone}
+
+\usepackage[compat=0.4]{yquant}
+\useyquantlanguage{groups}
+\usepackage{braket}
+
+\begin{document}
+   \begin{tikzpicture}
+      \begin{yquantgroup}
+         \registers{
+            qubit {} q[2];
+         }
+         \circuit{
+            h -;
+            cnot q[1] | q[0];
+            h -;
+         }
+         \equals
+         \circuit{
+            cnot q[0] | q[1];
+         }
+      \end{yquantgroup}
+   \end{tikzpicture}
+\end{document}

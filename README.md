@@ -7,7 +7,7 @@ It builds on and interacts with TiKZ, which brings an enourmous flexibility for 
 
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
-Now yquant also understands circuits written in the qasm language!
+Now yquant also understands circuits written in the qasm language and provides a simple interface for circuit equations!
 
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
@@ -139,5 +139,27 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
       box {$U$} (a[0, 1]) | a[3] ~ a[2];
       discard a[2, 3];
    \end{yquant*}
+\end{tikzpicture}
+```
+
+### Circuit equations
+![ex-06.png](markdown/ex-06.png)
+```LaTeX
+% \useyquantlanguage{groups}
+\begin{tikzpicture}
+   \begin{yquantgroup}
+      \registers{
+         qubit {} q[2];
+      }
+      \circuit{
+         h -;
+         cnot q[1] | q[0];
+         h -;
+      }
+      \equals
+      \circuit{
+         cnot q[0] | q[1];
+      }
+   \end{yquantgroup}
 \end{tikzpicture}
 ```
