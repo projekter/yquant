@@ -198,7 +198,7 @@
 }
 
 \protected\def\yquant@prepare@inject@discard#1{%
-   \csappto{\yquant@prefix draw}{%
+   \csgappto{\yquant@prefix draw}{%
       \yquant@draw@inject@outer{#1}%
    }%
    \csgundef{yquant@prepare@@injection@#1}%
@@ -467,6 +467,13 @@
       \fi%
 }
 
+\protected\gdef\yquant@prepare@output@discard#1#2#3{%
+   \ifstrequal{#3}{discard}{%
+      % This notification is triggered in the main circuit if there was an output gate on a wire with [out] or [inout] modifier, but the wire was discarded directly after the subcircuit. Then, it would look weird to extend the wire from the output gate until the end of the subcircuit, so we change the modifier to [ancilla] (not really, this is an artificial state) or [out].
+      \listcsxadd{#2inonly}{#1}%
+   }\relax%
+}
+
 \protected\long\def\yquant@prepare@output@single#1#2#3{%
    \yquant@sort@eadd{%
       \yquant@draw@output@single%
@@ -474,6 +481,14 @@
          {\nodename}%
    }%
    \listadd\yquant@prepare@list{#3}%
+   % we must be extra careful with outputs in subcircuits: Assume the wire is discarded after the subcircuit, then we don't want to extend it after our output label
+   \ifdefined\yquant@parent%
+      \ifinlistcs{#3}{\yquant@prefix inonly}\relax{%
+         \yquant@register@set@lastgate{#3}{%
+            \yquant@prepare@output@discard{#3}{\yquant@prefix}%
+         }%
+      }%
+   \fi%
    % determine the actual dimensions by a virtual draw command
    \pgfinterruptboundingbox%
       \yquant@config@operator@multifalse%
@@ -500,6 +515,18 @@
    \eappto\yquant@prepare@list{%
       \expandafter\yquant@list@range\@secondandthirdoffive#3%
    }%
+   % we must be extra careful with outputs in subcircuits: Assume the wire is discarded after the subcircuit, then we don't want to extend it after our output label
+   \ifdefined\yquant@parent%
+      \edef\first{\@secondoffive#3}%
+      \edef\last{\@thirdoffive#3}%
+      \yquant@for \i := \first to \last {%
+         \xifinlistcs\i{\yquant@prefix inonly}\relax{%
+            \yquant@register@set@lastgate\i{%
+               \yquant@prepare@output@discard{\i}{\yquant@prefix}%
+            }%
+         }%
+      }%
+   \fi%
    \pgfinterruptboundingbox%
       \yquant@config@operator@multitrue%
       \yquant@env@virtualize@path%
@@ -605,6 +632,19 @@
    \@gobblethree% three arguments for the endgroup
 }
 
+\let\yquant@prepare@subcircuit@pgfpointanchor=\pgfpointanchor
+\patchcmd\yquant@prepare@subcircuit@pgfpointanchor{%
+   \pgferror{No shape named `#1' is known}%
+}{}\relax{%
+   \PackageWarning{yquant.sty}{Patching \string\pgfpointanchor\space for the purpose of subcircuits failed; using and referencing named nodes in subcircuits may lead to irrelevant errors.}%
+}
+\let\yquant@prepare@subcircuit@pgfpointshapeborder=\pgfpointshapeborder
+\patchcmd\yquant@prepare@subcircuit@pgfpointshapeborder{%
+   \pgferror{No shape named `#1' is known}%
+}{}\relax{%
+   \PackageWarning{yquant.sty}{Patching \string\pgfpointshapeborder\space for the purpose of subcircuits failed; using and referencing named nodes in subcircuits may lead to irrelevant errors.}%
+}
+
 \protected\def\yquant@prepare@subcircuit@hspace#1#2{%
    \yquant@prepare@subcircuit@getmaxx{#1}%
    \dimdef\newx{\newx+#2}%
@@ -689,6 +729,9 @@
             \edef\yquant@prefix{yquant@env\yquant@circuit@subcircuit@id @}%
             \let\yquant@draw@init=\yquant@prepare@subcircuit@init%
             \let\yquant@draw@group=\yquant@prepare@subcircuit@group%
+            % We may have draw actions within the subcircuit which reference nodes that have been created within the same subcircuit - but they are not known at the stage of preparation! So we here hack into the node querying macros of pgf and just let every unknown node be equal to the origin. If the node is truely unknown, we will find out about this in the draw stage.
+            \let\pgfpointanchor=\yquant@prepare@subcircuit@pgfpointanchor%
+            \let\pgfpointshapeborder=\yquant@prepare@subcircuit@pgfpointshapeborder%
             \let\yquant@draw@alias=\@gobble%
             \let\yquant@draw@hspace=\yquant@prepare@subcircuit@hspace%
             \let\yquant@circuit@endwires=\yquant@prepare@subcircuit@endwires%
@@ -713,7 +756,7 @@
                \global\pgf@picminy=0pt %
             \fi%
             \ifyquant@env@seamless{%
-               % for seamless circuits, we do not have an initial separation. However, if there is an label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
+               % for seamless circuits, we do not have an initial separation. However, if there is a label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
                \ifdim\pgf@picminx<0pt %
                   \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
                \fi%

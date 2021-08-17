@@ -15,7 +15,7 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquant}[2021/07/03 v0.4.1 Yet another quantum circuit library for LaTeX]
+\ProvidesPackage{yquant}[2021/08/17 v0.5 Yet another quantum circuit library for LaTeX]
 
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
@@ -32,7 +32,7 @@
 }
 \ProcessOptionsX
 \unless\ifdefined\yquant@compat
-   \PackageWarning{yquant.sty}{Please specify the `compat` key for yquant. Using `0.3`. Current version is `0.4`.}
+   \PackageWarning{yquant.sty}{Please specify the `compat` key for yquant. Using `0.3`. Current compatibility version `0.4`.}
    \def\yquant@compat{1}
 \fi
 
@@ -51,8 +51,11 @@
 % usually, \\ is robust; but when using \centering, it is \let to \@centercr, which is not robust (probably because this happens only when not protecting). Fix this, so that \\ does not require \protect if a centered circuit is drawn.
 \robustify\@centercr
 
-\outer\def\useyquantlanguage#1{%
-   \RequirePackage{yquantlanguage-#1}
+\def\useyquantlanguage@#1{%
+   \RequirePackage{yquantlanguage-#1}%
+}
+\outer\def\useyquantlanguage{%
+   \forcsvlist\useyquantlanguage@
 }
 
 \endinput

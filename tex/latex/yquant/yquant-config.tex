@@ -221,6 +221,17 @@
       {\pgfkeysalso{/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
        \letcs\yquant@prevseamless{\yquant@prefix seamless}%
        \yquant@config@circuit@seamlesstrue},
+   operators/subcircuit/name mangling/.is choice,%
+   operators/subcircuit/name mangling/prefix or discard/.code=%
+      {\def\yquant@config@operator@subcircuit@mangling{0}},%
+   operators/subcircuit/name mangling/prefix or transparent/.code=%
+      {\def\yquant@config@operator@subcircuit@mangling{1}},%
+   operators/subcircuit/name mangling/transparent/.code=%
+      {\def\yquant@config@operator@subcircuit@mangling{2}},%
+   operators/subcircuit/name mangling/discard/.code=%
+      {\def\yquant@config@operator@subcircuit@mangling{3}},%
+   operators/subcircuit/name mangling reset/.is if=%
+      yquant@config@operator@subcircuit@manglingreset,
    operators/every swap/.style=%
       {shape=yquant-swap, radius=.75mm, draw},%
    operators/every wave/.style=%
@@ -272,4 +283,13 @@
 \newif\ifyquant@config@operator@position@advance
 \yquant@config@operator@position@advancetrue
 \newif\ifyquant@config@circuit@seamless
+\def\yquant@config@operator@subcircuit@mangling{0}
+\newif\ifyquant@config@operator@subcircuit@manglingreset
+\yquant@config@operator@subcircuit@manglingresettrue
 \newif\ifyquant@config@operator@multi
+
+\protected\def\yquant@config@operator@subcircuit@mangling@set#1{%
+   \ifyquant@config@operator@subcircuit@manglingreset%
+      \def\yquant@config@operator@subcircuit@mangling{#1}%
+   \fi%
+}

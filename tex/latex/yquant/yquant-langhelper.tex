@@ -1,5 +1,7 @@
 % BEGIN_FOLD Parsing attributes
 \let\yquant@langhelper@list@attrs=\empty
+% gatecallback is called by every "standard" gate (which does not include the "create" type of gates)
+\let\yquant@langhelper@gatecallback=\@gobble
 
 \protected\long\def\yquant@langhelper@check@attrs[#1]{%
    \appto\yquant@langhelper@list@attrs{#1,}%
@@ -175,6 +177,7 @@
       \PackageError{yquant.sty}{Unsupported yquant command: `#1'}%
          {You used a command that is unknown to yquant.}%
    \fi%
+   \edef\yquant@langhelper@cmd@original{#1}%
    % Provide the association with the correct attributes
    \csname yquant@langhelper@setup@attrs@set@\cmd\endcsname%
    % For "ordinary" uses of the quotes library (without additional options), it would be better not to load the library now, since then the original text (everything in quotes) is just appended to /yquant/operator style. However, then uses with options will break the pgfkeys parser, as they are invalid. For this reason, we must enable the quotes library already at this state, with the consequence that we store the longer version, i.e., the output of the quotes-parsed expression instead.
@@ -225,6 +228,7 @@
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
       \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
+         \noexpand\yquant@langhelper@gatecallback{\cmd}%
          \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{##1}{##2}{##3}%
@@ -252,6 +256,7 @@
          \noexpand\ifstrempty{##2}\relax{%
             \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
          }%
+         \noexpand\yquant@langhelper@gatecallback{\cmd}%
          \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{}{}{##3}%

@@ -44,6 +44,7 @@
 \protected\def\yquant@register@define#1#2#3{%
    \csnumgdef{\yquant@prefix registers}%
              {\csname\yquant@prefix registers\endcsname+1}%
+   % sync with yquantlanguage-groups/\yquantgroup@startenvironment
    \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
       {#1}% type
       {0pt}% x pos

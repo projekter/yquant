@@ -18,7 +18,7 @@
 \usepackage[compat=newest]{yquant}
 \usepackage{braket,hyphenat,microtype,hologo,minted,import,ragged2e}
 \usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
-\useyquantlanguage{qasm}
+\useyquantlanguage{qasm,groups}
 \usepackage{amsmath,adjustbox,cleveref}
 \usepackage[framemethod=tikz]{mdframed}
 % END_FOLD
@@ -217,7 +217,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.4.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.5 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -333,7 +333,7 @@
             This allows certain features that are expected to break old layout or functionality to revert to their previous behavior.
             Every feature affected by the \texttt{compat} key is documented in this manual.
             Once a compatibility version is selected in a document, it cannot be changed any more.
-            Compatibility versions will include the major and minor, but not the patch level version number.
+            Compatibility versions will include the major and minor, but not the patch level version number (though not every major or minor version will necessarily introduce new compatibility versions).
             Bugs that clearly violated behavior described in this manual will be fixed without a possibility to revert back.
             Changes that are not supposed to result in a (more than marginally) different result will not be included in the compatibility layer.
             If you find this to be wrong in a particular case, please file a bug report.
@@ -962,6 +962,34 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Hence, the most prominent application of this key is if the wires before and after the subcircuit are \gate{nobit}s, which provides a clean way to build up circuit equations with perfectly aligned wires (examples can be found in \cref{sec:examples}).
          \end{option}
 
+         \begin{option}[New in 0.5]{operators/subcircuit/name mangling}!prefix or discard!
+            This option defines how named nodes within subcircuits are made available to the outer circuit:
+            \begin{itemize}
+               \item \texttt{prefix or discard} \\
+                  If the subcircuit itself has a name $s$ and the inner gate has a name $g$, the outer circuit can refer to the inner gate via the name \texttt{$s$-$g$}.
+                  Note that $s$ itself may not only consist of the user\hyp specified name, but may instead already be suffixed by \texttt{-0}, \texttt{-1}, \dots, if the subcircuits were assigned to multiple targets.
+
+                  If the subcircuit itself has no name, works as \texttt{discard}.
+               \item \texttt{prefix or transparent} \\
+                  If the subcircuit itself has a name, as works as \texttt{prefix or discard}; else, works as \texttt{transparent}.
+               \item \texttt{transparent} \\
+                  The inner gates are always available in the outer circuit by their original names.
+                  Note that this may potentially lead to naming conflicts, which are always resolved by the latest name overwriting all previous declarations without notice.
+               \item \texttt{discard} \\
+                  The inner gates will not be available in the outer circuit.
+            \end{itemize}
+            Note that if a new gate is defined via \tex!\yquantdefinegate!---which internally uses subcircuits---the value of this option at the time of declaration is the relevant one, not the one at the time of usage.
+            This can be influenced via \style{/yquant/operators/subcircuit/name mangling reset}.
+         \end{option}
+
+         \begin{option}[New in 0.5]{operators/subcircuit/name mangling reset}!true!
+            The current value of \style{/yquant/operators/subcircuit/name mangling} will be reset at the beginning of a subcircuit to the value it had upon declaration of the subcircuit only if this option is \texttt{true} upon \emph{using} the subcircuit (which typically will only make a difference if the subcircuit was defined via \tex!\yquantdefinegate! at some earlier stage).
+            \begin{warning}
+               Setting this value to \tex!false! has the potential of breaking the corresponding subcircuit/custom gate, as it may internally reference gates by names that are no longer the correct ones.
+               Do not use this property without a very good reason and thorough understanding of what is happening.
+            \end{warning}
+         \end{option}
+
          \begin{option}[New in 0.4]{operators/subcircuit/seamless}!/yquant/operators/subcircuit/frameless, /yquant/register/default name=, /yquant/circuit/seamless!
             This option carries out multiple actions that are responsible to let the current subcircuit appear in a ``seamless'' state:
             \begin{itemize}
@@ -1024,6 +1052,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          All nodes in the subcircuit will then have the name \texttt{\textit{<subcircuit name>}-\textit{<name specified in the subcircuits>}}.
          Note that here, \texttt{\textit{<subcircuit name>}} is the \emph{full} name of the subcircuit, which includes the \tex!-\idx! suffix, \compat{New in 0.4.1}unless there is only a single target register.
          For nested subcircuits, you will get multiple prefixes.
+         \compat{New in 0.5}The prefixing behavior can be influenced by \style{/yquant/operators/subcircuit/name mangling}.
 
       \subsection{Shapes and the drawing pipeline}
          All \Yquant{} shapes have the anchors available you would typically expect from a \TikZ{} shape of the given outline.
@@ -1402,6 +1431,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{itemize}
             \item \compat{New in 0.4}\yquant!frameless! \\
                This \style{/yquant/operators/subcircuit/frameless} style is activated with this shorthand.
+            \item \compat{New in 0.5}\yquant!name mangling! \\
+               This shorthand will pass the value of the attribute directly to the configuration key \style{/yquant/operators/subcircuit/name mangling}.
             \item \compat{New in 0.4}\yquant!seamless! \\
                The \style{/yquant/operators/subcircuit/seamless} style is activated with this shorthand (implies \yquant!frameless!).
             \item \yquant!value=<subcircuit>! (required) \\
@@ -1871,42 +1902,27 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
          As the \pkg{qcircuit} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=1em}!.
 
          \subsubsection{I. Introduction}
-            \begin{example}<Updated in 0.4, 0.1.1>%
+            \begin{example}<Updated in 0.5, 0.4, 0.1.1>%
                \begin{codeexample*}
-\begin{tikzpicture}
-   \begin{yquant}[operators/subcircuit/frameless]
-      nobit q[3];
-
-      subcircuit {
-         [out]
-         qubit {} q[3];
-         box {$U$} q[2] | q[0, 1];
-      } (q);
-      discard -;
-
-      [draw=none]
-      box {$=$} (-);
-
-      subcircuit {
-         [out]
-         qubit {} q[3];
-         box {$V$} q[2] | q[1];
-         cnot q[1] | q[0];
-         box {$V^\dagger$} q[2] | q[1];
-         cnot q[1] | q[0];
-         box {$V$} q[2] | q[0];
-      } (q);
-      discard -;
-   \end{yquant}
-\end{tikzpicture}
+% \useyquantlanguage{groups}
+\begin{yquantgroup}
+   \registers{
+      qubit {} q[3];
+   }
+   \circuit{
+      box {$U$} q[2] | q[0, 1];
+   }
+   \equals
+   \circuit{
+      box {$V$} q[2] | q[1];
+      cnot q[1] | q[0];
+      box {$V^\dagger$} q[2] | q[1];
+      cnot q[1] | q[0];
+      box {$V$} q[2] | q[0];
+   }
+\end{yquantgroup}
                \end{codeexample*}
-               The best way to realize circuit equalities is with the help of \texttt{frameless} subcircuits.
-               The \texttt{[frameless]} attribute can either be specified on each subcircuit individually or, as done here, globally via the corresponding style.
-               In this way, we can specify all subcircuits individually.
-               All wires that are identical in the circuits must be outer wires; but in fact, we do not want them to be visible outside of the subcircuits.
-               Consequently, we initialize them in the outer circuit as \gate{nobit}s, declare them with the \texttt{[out]} attribute, and discard them right after the subcircuit.
-               It is important not to discard them within the subcircuit, as the wires would then not extend to the same horizontal final position.
-               The equality sign is realized very easily by means of a \gate{box} gate that spans all registers and from which we remove the border.
+               The best way to realize circuit equalities is with the help of \pkg{groups} language extension, which is documented in \cref{sec:foreign:groups}.
             \end{example}
 
             \begin{example}<Updated in 0.4>
@@ -2494,7 +2510,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
 
                   In general, any macros that are used within a \TikZ{} path or a \Yquant{} operation must not be fragile, or must be preceded with \tex!\protect!.
                   In this example, \tex!\\! is a robust command (at least in newer kernels), so protection is not required.
-                  Since it may occur quite frequently that \Yquant{} is used within a \tex!center! environment or in \tex!\centering! mode (in which \tex!\\! is still fragile), \Yquant{} takes care of this (it actually robustifies \tex!\@centercr!, which is the meaning of \tex!\\! in these surroundings).
+                  Since it may occur quite frequently that \Yquant{} is used within a \tex!center! environment or in \tex!\centering! mode (in which \tex!\\! is still fragile), \Yquant{} takes care of this (it actually robustifies \tex!\@centercr!, which is the meaning of \tex!\\! in these surroundings---and which is now incorporated into the \LaTeX{} kernel as of June~2021).
 
                   In order to change the style of an individual wire, we use \gate{addstyle}.
                   To make the final line shorter, we change the operator separation by issuing \tex!\yquantset! at the end.
@@ -2824,7 +2840,6 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
 
             \Yquant{} does not provide a mechanism for vertical labels, but you may of course just insert line breaks at appropriate positions (and set the \texttt{align} property of the labels).
 
-         \clearpage
          \subsubsection{VI. Spacing}
             \paragraph{A. Local adjustment}\leavevmode
                \begin{example}<Updated in 0.4>
@@ -2872,6 +2887,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   Also note that the \style{/yquant/operator/minimum width} style is unsuitable for the given task: it would not change the visual width, only what \Yquant{} assumes its width to be.
                \end{example}
 
+            \clearpage
             \paragraph{B. Global Adjustment}\leavevmode
                \begin{example}
                   \begin{codeexample*}
@@ -2902,7 +2918,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
 
             \clearpage
             \paragraph{C. Alignment}\leavevmode
-               \begin{example}<Updated in 0.4>
+               \begin{example}<Updated in 0.5, 0.4>
                   \begin{codeexample}
 \begin{tikzpicture}
    \begin{yquant*}
@@ -2920,123 +2936,84 @@ $=$
                   \end{codeexample}
                   Not specifying anything for the vertical alignment will lead to the common \TikZ{} problem: the baseline will be at the bottom, which is particularly bad in this case due to the missing $X$ gate.
                   The keys for minimal register sizes do not help here, since they only affect \Yquant's internal handling, but not the bounding box calculated by \TikZ.
-                  The recommended way to draw circuit equations is always with \texttt{frameless} \gate{subcircuit}s; only this will guarantee perfect wire alignment in all cases.
+                  The recommended way to draw circuit equations is always with the \pkg{groups} language extension.
 
                   \begin{codeexample}
-\begin{tikzpicture}
-   \begin{yquant}
-      nobit q[2];
-
-      [frameless]
-      subcircuit {
-         [out]
-         qubit {} q[2];
-         x q[0];
-         cnot q[1] | q[0];
-      } (q);
-      discard -;
-
-      [draw=none]
-      box {$=$} (q);
-
-      [frameless]
-      subcircuit {
-         [out]
-         qubit {} q[2];
-         cnot q[1] | q[0];
-         x q;
-      } (q);
-      discard -;
-   \end{yquant}
-\end{tikzpicture}
+% \useyquantlanguage{groups}
+\begin{yquantgroup}
+   \registers{
+      qubit {} q[2];
+   }
+   \circuit{
+      x q[0];
+      cnot q[1] | q[0];
+   }
+   \equals
+   \circuit{
+      cnot q[1] | q[0];
+      x q;
+   }
+\end{yquantgroup}
                   \end{codeexample}
                \end{example}
 
-               \begin{example}<New in 0.4>
+               \clearpage
+               \begin{example}<Updated in 0.5\\New in 0.4>
                   \begin{codeexample*}
-\begin{tikzpicture}
-   \begin{yquant}
-      qubit {$\ket x$} q;
-      qubit {$\ket y$} q[+1];
+% \useyquantlanguage{groups}
+\begin{yquantgroup}
+   \registers{
+      qubit {} q[2];
+   }
+   \circuit{
+      init {$\ket x$} q[0];
+      init {$\ket y$} q[1];
 
-      [seamless]
-      subcircuit {
-         [in]
-         qubit {} q[2];
-
-         h q[0];
-         cnot q[1] | q[0];
-         output {\quad$\mapsto$} (-);
-      } (q);
-
-      [draw=none, inner sep=0pt]
-      box {$\ket{\psi_{x, y}}$} (q);
-
-      [seamless]
-      subcircuit {
-         [out]
-         qubit {} q[2];
-
-         init {$\mapsto$\quad} (q);
-         cnot q[1] | q[0];
-         h q[0];
-      } (q);
+      h q[0];
+      cnot q[1] | q[0];
+      output {} (-);
+   }
+   \equals[$\mapsto\quad\ket{\psi_{x, y}}\quad\mapsto$]
+   \circuit{
+      init {} (q);
+      cnot q[1] | q[0];
+      h q[0];
 
       output {$\ket x$} q[0];
       output {$\ket y$} q[1];
-   \end{yquant}
-\end{tikzpicture}
+   }
+\end{yquantgroup}
                   \end{codeexample*}
                   Here, we do not have a circuit equation (i.e., logical statements involving multiple rather independent circuits), but a circuit progression.
-                  We start with some ``outer'' states (note we could again have used the \tex!\symbol! trick to make the declaration a bit shorter), let them enter into the first subcircuit and define an output of this.
-                  In the opposite way, we proceed after giving the state.
-                  Where to put the actual labels (e.g., the \gate{box} could also have contained $\mapsto \ket{\psi_{x, y}} \mapsto$ and the \gate{output} and \gate{init} gates could have been empty) is up to the user.
-
-                  Note that we used \texttt{seamless} instead of \texttt{frameless}, which gives a tighter spacing that is more suitable if initializers or outputs are present.
+                  Since only in one circuit we have a description of the registers, we declare them without an initial text and put their initialization into \gate{init} gates.
+                  The mapping in between is done by using the optional argument of the \tex!\equals! macro.
+                  In order to obtain the braces at the ends, we use empty \gate{output} and \gate{init} gates.
                \end{example}
 
                \clearpage
                \subparagraph{1. Perfecting Vertical Alignment}\leavevmode
-                  \begin{example}<Updated in 0.4>
+                  \begin{example}<Updated in 0.5, 0.4>
                      \begin{codeexample*}
-\begin{tikzpicture}
-   \begin{yquant}
-      nobit q[2];
-
-      [frameless]
-      subcircuit {
-         [out]
-         qubit {} q;
-         [out]
-         qubit {$\ket0$} q[+1];
-
-         cnot q[0] | q[1];
-         cnot q[1] | q[0];
-         cnot q[0] | q[1];
-      } (q);
-      discard -;
-
-      [draw=none]
-      box {$=$} (q);
-
-      [frameless]
-      subcircuit {
-         [out]
-         qubit {} q;
-         [out]
-         qubit {$\ket0$} q[+1];
-
-         cnot q[1] | q[0];
-         cnot q[0] | q[1];
-      } (q);
-      discard -;
-   \end{yquant}
-\end{tikzpicture}
+% \useyquantlanguage{groups}
+\begin{yquantgroup}
+   \registers{
+      qubit {} q;
+      qubit {$\ket0$} q[+1];
+   }
+   \circuit{
+      cnot q[0] | q[1];
+      cnot q[1] | q[0];
+      cnot q[0] | q[1];
+   }
+   \equals
+   \circuit{
+      cnot q[1] | q[0];
+      cnot q[0] | q[1];
+   }
+\end{yquantgroup}
                      \end{codeexample*}
-                     Using \gate{subcircuit}s here looks like an overkill, but it is the best way both for logical consistency and also to achieve perfect horizontal alignment.
                   \end{example}
 
-            \clearpage
             \paragraph{D. Scaling}\leavevmode
                \begin{example}
                   \begin{codeexample*}
@@ -3054,6 +3031,7 @@ $=$
                   In earlier versions, there was a bug that required \Yquant{} to reset the \texttt{transform shape} key for \texttt{label}s, which would then require you to scale those manually.
                \end{example}
 
+         \clearpage
          \subsubsection{VII. Typesetting}
             \paragraph{A. Global Styling}\leavevmode
                \begin{example}
@@ -3106,7 +3084,6 @@ $=$
                   \Yquant{} properly splits discontiguous multi\hyp qubit operations.
                \end{example}
 
-            \clearpage
             \paragraph{B. Per-Gate Styling}\leavevmode
                \begin{example}<Updated in 0.4>
                   \begin{codeexample}
@@ -3200,7 +3177,6 @@ $=$
                   Here, we used the key \style{/yquant/this subcircuit box style} to influence only the style of the subcircuit box itself instead of providing global options that apply to every object in the subcircuit (you wouldn't want the label be assigned to every single gate).
                \end{example}
 
-               \clearpage
                \begin{example}<Updated in 0.4>
                   \begin{codeexample*}
 % \usetikzlibrary{quotes}
@@ -3278,9 +3254,167 @@ $=$
             \end{example}
       \endgroup
 
-   \section{Foreign language support}\label{sec:foreign}
+   \section{Foreign language support and extensions}\label{sec:foreign}
       \Yquant{} is built in various modules, so that it is not hard to use the quantum circuit rendering backend, but expose a different language frontend.
       \compat{New in 0.3}\Yquant{} not only understands its own language, but also others.
+      \compat{New in 0.5}Although we refer to ``foreign languages,'' additional extension packages of the \Yquant{} language itself are also covered in this section and can be loaded by the same syntax.
+
+      \subsection[groups]{\compat{New in 0.5}groups}\label{sec:foreign:groups}
+         By saying \tex!\useyquantlanguage{groups}! in the preamble after loading \Yquant{} itself, additional support for groups of \Yquant{} circuits is loaded.
+         Various circuits in a group share a common set of registers, are appropriately aligned horizontally if on the same line and can also be aligned vertically among multiple lines.
+         The main intended use is for circuit equations.
+
+         This extension provides the environment \tex!yquantgroup!.
+         You may use this environment within a \tex!tikzpicture!; in this case, all page\hyp break related features are not available.
+         You may alternatively use the environment outside of a \tex!tikzpicture!; in this case, it will start and end the pictures appropriately.
+
+         As with \tex!yquant!, the environment accepts optional options that are passed to \tex!\yquantset!; a starred form is available that allows for the lazy creation of registers---but note that \emph{shared} registers must always be created explicitly; only if some circuits in the group have additional registers, the lazy creation applies.
+
+         \subsubsection{General usage}
+            \begin{minted}{tex}
+% preamble:
+% \usepackage[compat=<version>]{yquant}
+% \useyquantlanguage{groups}
+\begin{tikzpicture}% tikz options possible. This environment may be omitted.
+   % tikz commands go here
+   \begin{yquantgroup}% yquant(group) options possible.
+      \registers{
+         % arbitrary shared register declaration go here
+      }
+      % any of \circuit, \equals, \\, \shiftright
+      % if the tikzpicture environment was omitted: also allows
+      % \pagebreak, \newpage, \clearpage, \cleardoublepage
+      % in most cases, TikZ commands are also allowed
+   \end{yquantgroup}
+   % tikz commands go here
+\end{tikzpicture}
+            \end{minted}
+
+         \subsubsection{Special macros}
+            \paragraph*{\tex!\registers!}
+               The \tex!\registers! macro can and must only be used once in a \tex!yquantgroup! environment.
+               It contains the declaration of all the registers that are shared among the various circuits within a group.
+               Basically, if you follow the convention in a usual \Yquant{} circuit to first declare all the registers, then use the gates, then you would put the declaration part in the \tex!\registers! macro.
+               However, note that it is in principle also possible to mix register declarations with other gates and \TikZ{} commands.
+
+               In case you do not use the \gate{import} gate in any of the circuits within the group and you do not declare own registers, the behavior is very straightforward: basically, the content of \tex!\registers! is copied verbatim at the beginning of each circuit.
+               Otherwise, the general rule is: importing a register will ensure that all non\hyp declaration commands that preceded this register declaration are executed; and importing the last register will additionally execute all succeeding commands within \tex!\registers!.
+
+            \paragraph*{\tex!\circuit[<style>]{<content>}!}
+               The \tex!\circuit! macro can be thought of as starting a \tex!yquant! (or \tex!yquant*!) environment and using its mandatory argument \tex!<content>! as the content of the circuit; the optional \tex!<style>! is used to apply additional styling options to the circuit.
+
+               This is not entirely accurate: In reality, the content is put into a \gate{subcircuit} and \tex!<style>! is passed as arguments to the subcircuit.
+
+               The default style \style{/yquant/operators/every group circuit} is applied to the circuit.
+               This style is configured such that the illusion of working in a top\hyp level \tex!yquant! environment is very convincing: The circuit is frameless by default and uses the transparent name mangling scheme.
+
+               All the registers that were previously defined via \tex!\registers! are automatically available within the circuit, as if their declaration had been copied.
+               In fact, \Yquant{} will make a register available the first time it is referenced in some gate; if at the end of a circuit some of the shared registers were not used, they will be imported before exiting the circuit.
+               Consequently, if you define own registers just for a single circuit, these will always be at the very top.
+               This can be influenced by means of the \gate{import} gate, which is only available in group \tex!\circuit!s.
+               This gate allows to import a declared register at an arbitrary position.
+
+            \paragraph*{\tex!\equals*[<content>]!}\label{sec:foreign:groups:equals}
+               The \tex!\equals! macro inserts a blank text---internally, a \gate{box}\hyp like gate with the style \style{/yquant/operators/every group equals}---that contains \tex!<content>!.
+               If omitted, \tex!<content>! is given by \tex!$=$!.
+
+               The optional star will put a horizontal alignment mark at the position where the box is inserted.
+               Similar to the \tex!&! operation in \pkg{amsmath}'s \tex!align! environment or the \tex!\>! in \TeX's native \tex!tabbing!, \Yquant{} will now remember the horizontal position of the box internally and will allow you to directly jump to this position in the next line.
+               Note that you may well have multiple alignment marks in a single line, which \Yquant{} internally numbers \texttt{1}, \texttt{2}, \dots.
+
+            \paragraph*{\tex!\\[<separation>]!}
+               The \tex!\\! macro inserts a line break (never a page break), so that the next \tex!\circuit! or \tex!\equals! will be put below all circuits that were output before, and it will again start at the same left position as the first circuit.
+               The default vertical distance is given by \style{/yquant/group/line separation}, but it may be overwritten by the optional \tex!<separation>! argument, which must be a \TeX{} dimension.
+
+               Note that if you \emph{set} new alignment marks in a new line, this will delete the alignment marks that were previously set.
+
+               If the option \style{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after each linebreak.
+
+            \paragraph*{\tex!\shiftright*[<where>]!}
+               The \tex!\shiftright! command will put the ``cursor,'' i.e., the horizontal position at which the next \tex!\circuit! or \tex!\equals! will start, at the position specified by \tex!<where>!.
+               By default, \tex!<where>! is \tex!1!.
+               If the optional star is present, \Yquant{} will additionally put an alignment mark at this position (see the documentation for \hyperref[sec:foreign:groups:equals]{\tex!\equals!}).
+               If the option \style{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after each linebreak or starred page break.
+
+               The option \tex!<where>! can take various forms:
+               \begin{itemize}
+                  \item It may be a natural number \texttt{1}, \texttt{2}, \dots, denoting the number of an alignment mark specified in a previous line.
+                  \item It may be the number \texttt{0}, denoting the very beginning of the line; this is useful if the \style{/yquant/group/aligned} option is given, but for a specific line, no alignment should be performed.
+                  \item It may be a \TeX{} dimension, in which case this dimension is directly added to the cursor (so it is a relative value).
+                     This is where passing the optional star makes most sense.
+                     If you want to position absolutely, you may first issue \tex!\shiftright[0]! followed by a shift by the dimension that you want.
+               \end{itemize}
+
+               \begin{warning}
+                  The macro is named \tex!\shiftright!; however, \Yquant{} does not enforce that the actual position is to the right of the current position.
+                  You may indeed be able to create overlapping circuits if you shift back to a previous position.
+               \end{warning}
+
+            \paragraph*{\tex!\pagebreak*!, \tex!\newpage*!, \tex!\clearpage*!, \tex!\cleardoublepage*!}
+               The page breaking commands are available only if the \tex!yquantgroup! was not enclosed in a \tex!tikzpicture!.
+               They will end the current picture environment, issue the original page breaking command, and start a new picture.
+               Hence, if you want to pass options globally to the picture, you should use the \style{/yquant/preamble} option for the \tex!yquantgroup!; the content of this key will be passed as options for every implicitly started \tex!tikzpicture!.
+
+               Usually, remembering the horizontal alignment marks on a new page does not make much sense.
+               For this reason, the commands will delete all alignment; use their starred versions to retain them.
+               If the option \style{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after the starred version of the page break.
+
+               Typically, you will not want to refer to named gates in a circuit on a different page; remember that if you need this feature, you must pass the \texttt{remember picture} key in the \style{/yquant/preamble} option, as this is a reference to another \tex!tikzpicture!.
+               Also don't forget to use the (\TikZ) \texttt{overlay} key on the corresponding path that references the node in order not to mess up with the bounding box (see the \TikZ{} documentation for those two keys).
+
+            \subsubsection{Configuration}
+               Loading the \pkg{groups} language extension will define several new configuration keys.
+
+               \begin{option}{group/every group}!!
+                  Style that is installed for every \tex!yquantgroup! and \tex!yquantgroup*! environment, as if it had been given as an option.
+                  The style's default path is \texttt{/tikz}.
+               \end{option}
+
+               \begin{option}{group/line separation}!5mm!
+                  This is the default vertical line separation that is inserted whenever a new line is issued in a \tex!yquantgroup!.
+               \end{option}
+
+               \begin{option}{group/aligned}!false!
+                  This boolean flag defines whether \tex!\shiftright! is automatically issued after \tex!\\! and the starred page breaking commands.
+               \end{option}
+
+               \begin{option}{preamble}!!
+                  This style may only be passed to the \tex!yquantgroup! alignment directly as an option; it is not available via \tex!\yquantset! and the like.
+                  It is only relevant if the \tex!yquantgroup! is not contained in a \tex!tikzpicture!.
+                  The content of this style will be given as an optional argument to the \tex!tikzpicture!; this is the recommended way to specify \TikZ{} options, as they are automatically preserved among page breaks.
+               \end{option}
+
+               \begin{option}{operators/every group circuit}!/yquant/operators/every subcircuit, /yquant/operators/subcircuit/frameless, /yquant/operators/subcircuit/name mangling=transparent!
+                  This style is installed for the \gate{subcircuit} that implicitly wraps each \tex!\circuit!.
+                  Note that some magic is carried out to ensure that the name mangling setting only applies to the \emph{direct} content of the \tex!\circuit!; any \gate{subcircuit}s within the \tex!\circuit! will use the default name mangling scheme.
+               \end{option}
+
+               \begin{option}{operators/every group equals}!shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
+                  This style is installed for every \tex!\equals!, which is internally realized similarly to a \gate{box} gate.
+               \end{option}
+
+            \subsubsection{Gates and operations}
+               No gates or operations may be used directly within the \tex!yquantgroup! environment, but all the usual \Yquant{} gates and operations are available within \tex!\registers! and \tex!\circuit!.
+               Additionally, within \tex!\circuit!, the \gate{import} gate is available.
+
+               \paragraph*{\yquant!import!}\label{gate:import}\leavevmode\\
+                  Syntax: \yquant!import <target>;! \\
+                  This is a pseudo\hyp gate that makes all the outer registers given in \tex!<target>! available in the current circuit.
+                  Consequently, the register names that are specified in \tex!<target>!, also ranges, do not refer to the registers in the \emph{current} \tex!\circuit!, but instead to those defined via \tex!\registers!.
+                  Therefore, it is for example possible to import all outer registers at once using \yquant!import -;!.
+                  Vector registers can also be imported partially.
+
+                  If additional content (\TeX{} commands such as \TikZ{} paths, non\hyp creation gates) is used within \tex!\registers!, everything that comes \emph{before} the declaration of a register will be copied into the \tex!\circuit! when the register is imported; for a vector, this refers to the index zero.
+                  Additionally, any additional content that comes \emph{after} the declaration of the last register will be copied directly after the last register was imported.
+
+                  \begin{warning}[Out-of-order importing]
+                     Note that it is principle possible to import registers out\hyp of\hyp order.
+                     Since matching outer and inner wires in subcircuits is done in the order in which they appear, this will lead to inner registers with names that do not match their outer registers and is probably highly undesirable.
+                  \end{warning}
+
+                  Usually, this gate will not be needed as \Yquant{} will automatically import an outer register upon its first use.
+
+                  \emph{Possible attributes:} none
 
       \subsection{qasm}\label{sec:foreign:qasm}
          By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \pkg{qasm} (not OpenQASM) is loaded.
@@ -3342,7 +3476,8 @@ $=$
             The following command is then used to print all of them:
             \begin{minted}{tex}
 % preamble:
-% \usepackage{yquant,import}
+% \usepackage[compat=<version>]{yquant}
+% \usepackage{import}
 % \useyquantlanguage{qasm}
 \def\yquantimportpath{qasm/}
 \foreach \circuitno in {1, ..., 18} {
@@ -3429,9 +3564,18 @@ $=$
       \subsection*{2021-03-27: Version 0.4}
          New gate: \gate{inspect}. Various bug fixes. \\
          Introduce the \texttt{direct control} feature: \gate{measure} gates can now substitute positive controls of future gates.
-      
+
       \subsection*{2021-07-03: Version 0.4.1}
          Fix \href{https://github.com/projekter/yquant/issues/9}{\#9}: Output bracket misaligned. \\
          Fix \href{https://github.com/projekter/yquant/issues/10}{\#10}: Unable to access node in subcircuit. As of this version, named nodes in subcircuits will also be properly aliased if there is only a single target subcircuit (so that you don't need to use the \texttt{-0} suffix for the subcircuit's name).
+
+      \subsection*{2021-08-17: Version 0.5}
+         Improvement: Active outer canvas transformations (\TikZ{} shifts, scalings, rotations) should be supported more nicely (no guarantees!). \\
+         Improvement: Custom gates (\tex!\yquantdefinegate!) can now contain \TikZ{} \tex!\path!\hyp like commands without the \tex!\noexpand! prefix. \\
+         Improvement: Automatically discard wires \emph{inside} a subcircuit (even if they had the \texttt{out} or \texttt{inout} attribute) if they are discarded directly after the subcircuit \emph{and} they have output gates within the subcircuit (else, the wire would be re\hyp drawn from the output to the border of the subcircuit). \\
+         Bugfix: Referencing named gates in nested subcircuits now works without producing an error (worked before, but gave errors). \\
+         Bugfix: Properly handle the \texttt{direct control} feature if it was specified, but not used until the end of the (sub)circuit. \\
+         Introduce name mangling options for subcircuits. \\
+         Implement \href{https://github.com/projekter/yquant/issues/11}{\#11}: Circuit equations. As of this version, the \pkg{groups} language is available that allows to easily implement circuit equations.
 %END_FOLD
 \end{document}

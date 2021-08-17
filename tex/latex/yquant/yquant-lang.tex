@@ -35,6 +35,10 @@
    },%
    indirect control/.code={%
       \undef\yquant@lang@attr@directcontrol%
+   },%
+   name mangling/.code={%
+      \pgfkeysalso{/yquant/operators/subcircuit/name mangling={#1}}%
+      \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/name mangling={#1}}%
    }%
 }
 \yquant@langhelper@declare@attr@global{%
@@ -289,23 +293,38 @@
 }
 
 \protected\long\def\yquantdefinegate@i#1[#2]#3{%
-   \pgfkeys{/yquant/operators/every #1/.style={#2}}%
-   \yquant@prepare@ifs@set%
-   \protected@edef\yquantdefinegate@do{%
-      \yquant@langhelper@declare@command%
-         {#1}%
-         \yquant@register@get@multiaslist%
-         {%
-            \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@#1\endcsname%
-            \yquant@prepare@subcircuit{/yquant/operators/every #1}%
+   \begingroup%
+      \yquant@prepare@ifs@set%
+      % usually, we will not be in a tikzpicture here, so all the commands that abbreviate some path operation are undefined!
+      \tikz@installcommands%
+      % While we want the content to be expanded, protect the most likely TikZ commands - the same ones that we usually substitute in \yquant@env@substikz.
+      \protected\def\path{}%
+      \let\scoped=\path%
+      \let\scope=\path%
+      \let\endscope=\path%
+      \let\stopscope=\path%
+      \protected@edef\yquantdefinegate@do{%
+         \endgroup%
+         \noexpand\pgfkeys{/yquant/operators/every #1/.code={%
+            \yquant@config@operator@subcircuit@mangling@set{%
+               \yquant@config@operator@subcircuit@mangling%
+            }%
+            \noexpand\pgfkeysalso{\unexpanded{#2}}%
+         }}%
+         \yquant@langhelper@declare@command%
+            {#1}%
+            \yquant@register@get@multiaslist%
+            {%
+               \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@#1\endcsname%
+               \yquant@prepare@subcircuit{/yquant/operators/every #1}%
+            }%
+         % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
+         \yquant@langhelper@setup@attrs{#1}{}{}%
+         % Now define the gate's content as a macro
+         \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
+            #3%
          }%
-      % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
-      \yquant@langhelper@setup@attrs{#1}{}{}%
-      % Now define the gate's content as a macro
-      \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
-         #3%
       }%
-   }%
    \yquantdefinegate@do%
 }
 
@@ -348,14 +367,16 @@
 
 \protected\long\def\yquantdefinebox@i#1#2[#3]#4{%
    \pgfkeys{/yquant/operators/every #1/.style={#3}}%
-   \yquant@prepare@ifs@set%
-   \protected@edef\yquantdefinebox@do{%
-      \yquant@langhelper@declare@command%
-         {#1}%
-         {\unexpanded{#2}}%
-         {\yquant@prepare{#4}{/yquant/operators/every #1}}%
-   }%
-   \yquantdefinebox@do%
+   \begingroup%
+      \yquant@prepare@ifs@set%
+      \protected@edef\yquantdefinebox@do{%
+         \endgroup%
+         \yquant@langhelper@declare@command%
+            {#1}%
+            {\unexpanded{#2}}%
+            {\yquant@prepare{#4}{/yquant/operators/every #1}}%
+      }%
+      \yquantdefinebox@do%
    \yquant@langhelper@setup@attrs{#1}{}{}%
 }
 % END_FOLD
@@ -391,7 +412,7 @@
    {%
       \yquant@prepare@subcircuit{/yquant/operators/every subcircuit}%
    }
-\yquant@langhelper@setup@attrs{subcircuit}{value}{frameless,seamless}
+\yquant@langhelper@setup@attrs{subcircuit}{value}{frameless,seamless,name mangling}
 % END_FOLD
 
 % BEGIN_FOLD other geometric shapes
@@ -565,7 +586,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {discard}%
-   {\yquant@langhelper@execclear@lastgatefalse}%
+   {}%
    {%
       \let\yquant@circuit@settype@to=\yquant@register@type@none%
       \yquant@circuit@actonwires%
@@ -661,7 +682,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {settype}%
-   {\yquant@langhelper@execclear@lastgatefalse}%
+   {}%
    {%
       \yquant@register@type@fromstring\yquant@lang@attr@value\yquant@circuit@settype@to%
       \yquant@circuit@actonwires%
@@ -682,7 +703,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {setstyle}%
-   {\yquant@langhelper@execclear@lastgatefalse}%
+   {}%
    {%
       \yquant@circuit@actonwires%
          \@gobbletwo%
@@ -694,7 +715,7 @@
 
 \yquant@langhelper@declare@command@uncontrolled%
    {addstyle}%
-   {\yquant@langhelper@execclear@lastgatefalse}%
+   {}%
    {%
       \yquant@circuit@actonwires%
          \@gobbletwo%
