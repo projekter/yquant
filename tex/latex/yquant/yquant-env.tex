@@ -90,9 +90,12 @@
 
 \protected\def\yquant@env@end{%
          \ifnum\csname\yquant@prefix registers\endcsname>0 %
-            \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-               \yquant@register@execclear@lastgate{\i}{@end}%
-            }%
+            \begingroup%
+               \let\yquant@circuit@operator@pctrls=\empty%
+               \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+                  \yquant@register@execclear@lastgate{\i}{@end}%
+               }%
+            \endgroup%
             \csgappto{\yquant@prefix draw}{%
                \yquant@circuit@endwires%
             }%

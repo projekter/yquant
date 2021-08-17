@@ -3569,11 +3569,12 @@ $=$
          Fix \href{https://github.com/projekter/yquant/issues/9}{\#9}: Output bracket misaligned. \\
          Fix \href{https://github.com/projekter/yquant/issues/10}{\#10}: Unable to access node in subcircuit. As of this version, named nodes in subcircuits will also be properly aliased if there is only a single target subcircuit (so that you don't need to use the \texttt{-0} suffix for the subcircuit's name).
 
-      \subsection*{2021-08-14: Version 0.5}
+      \subsection*{2021-08-17: Version 0.5}
          Improvement: Active outer canvas transformations (\TikZ{} shifts, scalings, rotations) should be supported more nicely (no guarantees!). \\
          Improvement: Custom gates (\tex!\yquantdefinegate!) can now contain \TikZ{} \tex!\path!\hyp like commands without the \tex!\noexpand! prefix. \\
          Improvement: Automatically discard wires \emph{inside} a subcircuit (even if they had the \texttt{out} or \texttt{inout} attribute) if they are discarded directly after the subcircuit \emph{and} they have output gates within the subcircuit (else, the wire would be re\hyp drawn from the output to the border of the subcircuit). \\
          Bugfix: Referencing named gates in nested subcircuits now works without producing an error (worked before, but gave errors). \\
+         Bugfix: Properly handle the \texttt{direct control} feature if it was specified, but not used until the end of the (sub)circuit. \\
          Introduce name mangling options for subcircuits. \\
          Implement \href{https://github.com/projekter/yquant/issues/11}{\#11}: Circuit equations. As of this version, the \pkg{groups} language is available that allows to easily implement circuit equations.
 %END_FOLD

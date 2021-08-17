@@ -198,7 +198,7 @@
 }
 
 \protected\def\yquant@prepare@inject@discard#1{%
-   \csappto{\yquant@prefix draw}{%
+   \csgappto{\yquant@prefix draw}{%
       \yquant@draw@inject@outer{#1}%
    }%
    \csgundef{yquant@prepare@@injection@#1}%
