@@ -147,7 +147,7 @@
       \let\yquantgroup@registers@remember@attrs=\empty%
       \setbox0=\hbox{%
          \pgfinterruptboundingbox%
-            \yquant@envunstar%
+            \yquant@envunstar[]%
                #1%
             \yquant@env@end%
          \endpgfinterruptboundingbox%
@@ -199,7 +199,7 @@
    \let\yquant@lang@create@type=\yquant@register@type@none%
    \ifstrempty{#2}{%
       \edef\yquantgroup@registers@splittext{%
-         \protected\def\noexpand\yquantgroup@registers@splittext####1%
+         \protected\long\def\noexpand\yquantgroup@registers@splittext####1%
             \yquant@langhelper@cmd@original####2#1;####3%
             \noexpand\yquantgroup@registers@splittext@end{%
             \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
@@ -214,7 +214,7 @@
       \yquant@lang@create@do#1[1][;%
    }{%
       \edef\yquantgroup@registers@splittext{%
-         \protected\def\noexpand\yquantgroup@registers@splittext####1%
+         \protected\long\def\noexpand\yquantgroup@registers@splittext####1%
             \yquant@langhelper@cmd@original####2#1[\yquantgroup@registers@create@parse@extract#2];####3%
             \noexpand\yquantgroup@registers@splittext@end{%
             \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
