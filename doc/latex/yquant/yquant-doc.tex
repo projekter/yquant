@@ -217,7 +217,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.5 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.5.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -3577,5 +3577,8 @@ $=$
          Bugfix: Properly handle the \texttt{direct control} feature if it was specified, but not used until the end of the (sub)circuit. \\
          Introduce name mangling options for subcircuits. \\
          Implement \href{https://github.com/projekter/yquant/issues/11}{\#11}: Circuit equations. As of this version, the \pkg{groups} language is available that allows to easily implement circuit equations.
+
+      \subsection*{2021-09-04: Version 0.5.1}
+         Bugfix: The \gate{xx} gate style was not made available since version~0.4-alpha.
 %END_FOLD
 \end{document}
