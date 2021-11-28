@@ -15,10 +15,10 @@ Support the development:
 - ![Ethereum](https://img.shields.io/badge/donate-ETH-blue.svg?style=flat) 0xE0F774221290b1E41ea62c2dd9af5dbD3df7c685
 
 ## Examples
-Many more examples and explanations can be found in the [PDF version](doc/latex/yquant/yquant-doc.pdf) of this Readme.
+Many more examples and explanations can be found in the [PDF version](https://github.com/projekter/yquant/blob/master/doc/latex/yquant/yquant-doc.pdf) of this Readme.
 
 ### Simple teleportation circuit
-![ex-01.png](markdown/ex-01.png)
+![ex-01.png](https://github.com/projekter/yquant/blob/master/markdown/ex-01.png)
 ```LaTeX
 \begin{tikzpicture}
   \begin{yquant}
@@ -37,7 +37,7 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
 ```
 
 ### Three-qubit phase estimation circuit with QFT and controlled-U
-![ex-02.png](markdown/ex-02.png)
+![ex-02.png](https://github.com/projekter/yquant/blob/master/markdown/ex-02.png)
 ```LaTeX
 \begin{tikzpicture}
   \begin{yquant}
@@ -60,7 +60,7 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
 ```
 
 ### Three-qubit FT QEC circuit with syndrome measurement
-![ex-03.png](markdown/ex-03.png)
+![ex-03.png](https://github.com/projekter/yquant/blob/master/markdown/ex-03.png)
 ```LaTeX
 \begin{tikzpicture}
   \begin{yquant}
@@ -95,7 +95,7 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
 ```
 
 ### Error correction
-![ex-04.png](markdown/ex-04.png)
+![ex-04.png](https://github.com/projekter/yquant/blob/master/markdown/ex-04.png)
 ```LaTeX
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
@@ -127,7 +127,7 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
 ```
 
 ### Lots of controls
-![ex-05.png](markdown/ex-05.png)
+![ex-05.png](https://github.com/projekter/yquant/blob/master/markdown/ex-05.png)
 ```LaTeX
 \begin{tikzpicture}
    \begin{yquant*}
@@ -143,7 +143,7 @@ Many more examples and explanations can be found in the [PDF version](doc/latex/
 ```
 
 ### Circuit equations
-![ex-06.png](markdown/ex-06.png)
+![ex-06.png](https://github.com/projekter/yquant/blob/master/markdown/ex-06.png)
 ```LaTeX
 % \useyquantlanguage{groups}
 \begin{tikzpicture}
