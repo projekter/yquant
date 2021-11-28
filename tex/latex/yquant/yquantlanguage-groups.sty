@@ -173,7 +173,7 @@
    \edef\yquant@prefix{yquant@env\the\yquant@env @}%
    \ifnum\yquant@env=1 %
       \yquantmeasuringtrue%
-      \yquant@env@substikz#1%
+      \yquant@env@substitute#1\yquant@env@contscan%
       \global\cslet{\yquant@prefix parameters}\empty%
    \else%
       \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
@@ -188,7 +188,7 @@
    \let\yquant@parent=\yquantgroup@parent%
    \let\yquant@prefix=\yquantgroup@prefix%
    \yquantmeasuringtrue%
-   \yquant@env@substikz#1%
+   \yquant@env@substitute#1\yquant@env@contscan%
    \global\cslet{\yquant@prefix parameters}\empty%
 }\relax{%
    \PackageError{yquant.sty}{Internal error}%

@@ -56,7 +56,8 @@
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
          \yquantmeasuringtrue%
-         \yquant@env@substikz#1%
+         \forlistloop{##1}
+         \yquant@env@substitute#1\yquant@env@contscan%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
          \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
@@ -529,8 +530,18 @@
    \pgftransformreset%
 }
 
+\let\yquant@env@substitutions=\empty
+\def\yquant@env@substitute#1#2{%
+   \forlistloop{\yquant@env@substitute@{#1}{#2}}\yquant@env@substitutions%
+}
+
+\def\yquant@env@substitute@#1#2#3{%
+   #3{#1}{#2}%
+}
+
 % substitute the tikz commands (defined in \tikz@installcommands) so that they can be arbitrarily interleaved with yquant code. We patch \path, \scope, \endscope, \stopscope, their internal complements, and also patch \yquantset.
-\protected\def\yquant@env@substikz#1{%
+\listadd\yquant@env@substitutions\yquant@env@substikz
+\protected\def\yquant@env@substikz#1#2{%
    % \tikz@path@do@at@end is called after a path. Hence, it is an ideal candidate to re-invoke \yquant@env@scan. However, it is by default defined to be \tikz@lib@scope@check, and we need this definition for the scopes library to work correctly. But since \tikz@lib@scope@check is also called after a scope and the end of a scope, this is even better. Yet, we need to check whether the scopes library is present or not.
    \let\yquant@env@substikz@scopecheck=\tikz@lib@scope@check%
    \ifx\tikz@lib@scope@check\pgfutil@empty%
@@ -604,6 +615,93 @@
    \yquant@env@scan%
 }
 
+\ifdefined\beamer@masterdecode%
+   \def\yquant@env@check@noendgroup{}
+   \protected\def\yquant@env@check@endgroupnonbeamer{%
+      % we only put the beamer macros in here that effectively remove things from the input stream. Everything that is typeset in a special way will end the group
+      \ifyquant@OR{\ifx\yquant@env@nextchar\yquant@env@beamer@only}%
+                  {\ifx\yquant@env@nextchar\yquant@env@beamer@alt}\relax{%
+         \ifyquant@OR{\ifx\yquant@env@nextchar\yquant@env@beamer@temporal}%
+                     {\ifx\yquant@env@nextchar\yquant@env@check@noendgroup}\relax{%
+            \endgroup%
+         }%
+      }%
+   }%
+
+   \listadd\yquant@env@substitutions\yquant@env@substbeamer
+   \protected\def\yquant@env@substbeamer#1#2{%
+      % standard case:
+      % #1 = \yquant, #2 = \yquant@env@contscan (i.e., without grouping)
+      \let\yquant@env@beamer@store@only=\only%
+      \let\yquant@env@beamer@store@alt=\alt%
+      \let\yquant@env@beamer@store@temporal=\temporal%
+      \let\yquant@env@beamer@store@uncover=\uncover%
+      \let\yquant@env@beamer@store@visible=\visible%
+      \let\yquant@env@beamer@store@invisible=\invisible%
+      %
+      \long\def\only##1{%
+         \yquant@env@beamer@store@alt{#2##1}{#2}%
+      }%
+      \long\def\yquant@env@beamer@alt##1##2{%
+         \yquant@env@beamer@store@alt{#2##1}{#2##2}%
+      }%
+      \renewcommand<>\temporal[3]{%
+         \yquant@env@beamer@store@temporal##4{#2##1}{#2##2}{#2##3}%
+      }%
+      % There's no need for the fakeinvisible or spacingcover macros, since we are within TikZ anyway
+      \long\def\yquant@env@beamer@visibilitymacros##1##2##3##4{%
+         \yquant@env@beamer@visibilitymacros@flip##1%
+         \yquant@env@beamer@store@alt%
+            {#1##3}%
+            {%
+               \begingroup%
+                  \letcs\yquant@env@beamer@olddraw{\yquant@prefix draw}%
+                  \csglet{\yquant@prefix draw}\empty%
+                  ##2{#1##3}%
+                  \csxdef{\yquant@prefix draw}{%
+                     \unexpanded\expandafter{\yquant@env@beamer@olddraw}%
+                     \ifx1##1%
+                        \noexpand\yquant@env@beamer@store@alt##4{}%
+                     \else%
+                        \noexpand\yquant@env@beamer@store@only##4%
+                     \fi%
+                     {%
+                        \unexpanded{##2}{%
+                           \unexpanded\expandafter\expandafter\expandafter{\csname\yquant@prefix draw}%
+                        }%
+                     }%
+                  }%
+               \endgroup%
+               #1% TODO: should only call this if the parser was still active after ##2...
+           }%
+           ##4%
+      }
+      \let\uncover=\yquant@env@beamer@uncover%
+      \let\visible=\yquant@env@beamer@visible%
+      \let\invisible=\yquant@env@beamer@invisible%
+   }
+   \def\yquant@env@beamer@visibilitymacros@flip#1#2#3#4{%
+      \ifx1#1%
+         \expandafter\@firstoftwo%
+      \else%
+         \expandafter\@secondoftwo%
+      \fi%
+      {#2{#4}{#3}}{#2{#3}{#4}}%
+   }
+
+   \newcommand<>\yquant@env@beamer@uncover[1]{%
+      \yquant@env@beamer@visibilitymacros0\beamer@makecovered{#1}{#2}%
+   }%
+   \newcommand<>\yquant@env@beamer@visible[1]{%
+      \yquant@env@beamer@visibilitymacros0\beamer@reallymakeinvisible{#1}{#2}%
+   }%
+   \newcommand<>\yquant@env@beamer@invisible[1]{%
+      \yquant@env@beamer@visibilitymacros1\beamer@reallymakeinvisible{#1}{#2}%
+   }
+\else%
+   \let\yquant@env@check@endgroupnonbeamer=\endgroup%
+\fi%
+
 \protected\def\yquant@env@check@{%
    \let\next=\relax%
    % Here we assume standard catcodes for A and [, but our language specification also requires this implicitly.
@@ -625,7 +723,7 @@
                   \let\next=\yquant@env@gobblepar%
                \else%
                   \ifcat\noexpand\yquant@env@nextchar\relax%
-                     \endgroup%
+                     \yquant@env@check@endgroupnonbeamer%
                      \let\next=\relax%
                   \else%
                      \PackageError{yquant.sty}%
