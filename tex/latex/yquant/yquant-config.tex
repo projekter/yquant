@@ -219,7 +219,11 @@
       {/yquant/operators/this subcircuit box/.append style={draw=none, inner sep=0pt}},%
    operators/subcircuit/seamless/.code=%
       {\pgfkeysalso{/yquant/operators/subcircuit/frameless, /yquant/register/default name=}%
-       \letcs\yquant@prevseamless{\yquant@prefix seamless}%
+       \ifdefined\yquant@prefix%
+          \csletcs{yquant@prevseamless}{\yquant@prefix seamless}%
+       \else%
+          \csletcs{yquant@prevseamless}{iffalse}%
+       \fi%
        \yquant@config@circuit@seamlesstrue},
    operators/subcircuit/name mangling/.is choice,%
    operators/subcircuit/name mangling/prefix or discard/.code=%
