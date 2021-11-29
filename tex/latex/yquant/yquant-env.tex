@@ -56,7 +56,6 @@
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
          \yquantmeasuringtrue%
-         \forlistloop{##1}
          \yquant@env@substitute#1\yquant@env@contscan%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
@@ -615,43 +614,51 @@
    \yquant@env@scan%
 }
 
-\ifdefined\beamer@masterdecode%
+\ifdefined\beamer@masterdecode
+   \expandafter\@firstoftwo
+\else
+   \expandafter\@secondoftwo
+\fi{%
    \def\yquant@env@check@noendgroup{}
-   \protected\def\yquant@env@check@endgroupnonbeamer{%
+   \protected\def\yquant@env@check@findmacro{%
       % we only put the beamer macros in here that effectively remove things from the input stream. Everything that is typeset in a special way will end the group
-      \ifyquant@OR{\ifx\yquant@env@nextchar\yquant@env@beamer@only}%
-                  {\ifx\yquant@env@nextchar\yquant@env@beamer@alt}\relax{%
-         \ifyquant@OR{\ifx\yquant@env@nextchar\yquant@env@beamer@temporal}%
-                     {\ifx\yquant@env@nextchar\yquant@env@check@noendgroup}\relax{%
-            \endgroup%
-         }%
-      }%
+      \ifx\yquant@env@nextchar\only%
+         \let\next=\yquant@env@beamer@only%
+      \else%
+         \ifx\yquant@env@nextchar\alt%
+            \let\next=\yquant@env@beamer@alt%
+         \else%
+            \ifx\yquant@env@nextchar\temporal%
+               \let\next=\yquant@env@beamer@temporal%
+            \else%
+               \endgroup%
+               \let\next=\relax%
+            \fi%
+         \fi%
+      \fi%
    }%
 
    \listadd\yquant@env@substitutions\yquant@env@substbeamer
    \protected\def\yquant@env@substbeamer#1#2{%
       % standard case:
       % #1 = \yquant, #2 = \yquant@env@contscan (i.e., without grouping)
-      \let\yquant@env@beamer@store@only=\only%
-      \let\yquant@env@beamer@store@alt=\alt%
-      \let\yquant@env@beamer@store@temporal=\temporal%
       \let\yquant@env@beamer@store@uncover=\uncover%
       \let\yquant@env@beamer@store@visible=\visible%
       \let\yquant@env@beamer@store@invisible=\invisible%
       %
-      \long\def\only##1{%
-         \yquant@env@beamer@store@alt{#2##1}{#2}%
+      \long\def\yquant@env@beamer@only@arga<##1>##2{%
+         \beamer@alt<##1>{#2##2}{#2}%
       }%
-      \long\def\yquant@env@beamer@alt##1##2{%
-         \yquant@env@beamer@store@alt{#2##1}{#2##2}%
+      \long\def\yquant@env@beamer@alt@arga<##1>##2##3{%
+         \beamer@alt<##1>{#2##2}{#2##3}%
       }%
-      \renewcommand<>\temporal[3]{%
-         \yquant@env@beamer@store@temporal##4{#2##1}{#2##2}{#2##3}%
+      \protected\long\def\yquant@env@beamer@temporal\temporal<##1>##2##3##4{%
+         \temporal<##1>{#2##2}{#2##3}{#2##4}%
       }%
       % There's no need for the fakeinvisible or spacingcover macros, since we are within TikZ anyway
       \long\def\yquant@env@beamer@visibilitymacros##1##2##3##4{%
          \yquant@env@beamer@visibilitymacros@flip##1%
-         \yquant@env@beamer@store@alt%
+         \beamer@altget%
             {#1##3}%
             {%
                \begingroup%
@@ -661,9 +668,9 @@
                   \csxdef{\yquant@prefix draw}{%
                      \unexpanded\expandafter{\yquant@env@beamer@olddraw}%
                      \ifx1##1%
-                        \noexpand\yquant@env@beamer@store@alt##4{}%
+                        \noexpand\beamer@alt##4{}%
                      \else%
-                        \noexpand\yquant@env@beamer@store@only##4%
+                        \noexpand\beamer@only##4%
                      \fi%
                      {%
                         \unexpanded{##2}{%
@@ -680,6 +687,24 @@
       \let\visible=\yquant@env@beamer@visible%
       \let\invisible=\yquant@env@beamer@invisible%
    }
+
+   \protected\def\yquant@env@beamer@only\only{\@ifnextchar<{\yquant@env@beamer@only@arga}%
+                                                           {\yquant@env@beamer@only@argb}}%
+   \long\def\yquant@env@beamer@only@argb#1{%
+      \beamer@ifnextcharospec{\yquant@env@beamer@only@argb@{#1}}{#1}%
+   }%
+   \long\def\yquant@env@beamer@only@argb@#1<#2>{%
+      \yquant@env@beamer@only@arga<#2>{#1}%
+   }%
+   \protected\def\yquant@env@beamer@alt\alt{\@ifnextchar<{\yquant@env@beamer@alt@arga}%
+                                                         {\yquant@env@beamer@alt@argb}}%
+   \long\def\yquant@env@beamer@alt@argb#1#2{%
+      \beamer@ifnextcharospec{\yquant@env@beamer@alt@argb@{#1}{#2}}{#1}%
+   }
+   \long\def\yquant@env@beamer@alt@argb@#1#2<#3>{%
+      \yquant@env@beamer@alt@arga<#3>{#1}{#2}%
+   }
+
    \def\yquant@env@beamer@visibilitymacros@flip#1#2#3#4{%
       \ifx1#1%
          \expandafter\@firstoftwo%
@@ -698,9 +723,12 @@
    \newcommand<>\yquant@env@beamer@invisible[1]{%
       \yquant@env@beamer@visibilitymacros1\beamer@reallymakeinvisible{#1}{#2}%
    }
-\else%
-   \let\yquant@env@check@endgroupnonbeamer=\endgroup%
-\fi%
+}{%
+   \def\yquant@env@check@findmacro{%
+      \endgroup%
+      \let\next=\relax%
+   }
+}%
 
 \protected\def\yquant@env@check@{%
    \let\next=\relax%
@@ -723,8 +751,7 @@
                   \let\next=\yquant@env@gobblepar%
                \else%
                   \ifcat\noexpand\yquant@env@nextchar\relax%
-                     \yquant@env@check@endgroupnonbeamer%
-                     \let\next=\relax%
+                     \yquant@env@check@findmacro%
                   \else%
                      \PackageError{yquant.sty}%
                         {Invalid yquant syntax: `\meaning\yquant@env@nextchar'}%
