@@ -594,7 +594,29 @@
          \noexpand\pgfqkeys{/yquant}{##1}%
       }%
       \pgfqkeys{/yquant}{##1}%
-      \yquant@env@scan%
+      #1%
+   }%
+}
+
+\listadd\yquant@env@substitutions\yquant@env@secondpass
+\protected\def\yquant@env@secondpass#1#2{%
+   \protected\long\def\yquantsecondpass##1{%
+      \csgappto{\yquant@prefix draw}{##1}%
+      #1%
+   }%
+   \protected\long\def\yquantesecondpass##1{%
+      \protected@csxappto{\yquant@prefix draw}{##1}%
+      #1%
+   }%
+   \protected\long\def\yquantescape##1{%
+      ##1%
+      \protected@csxappto{\yquant@prefix draw}{##1}%
+      #1%
+   }%
+   \protected\long\def\yquanteescape##1{%
+      ##1%
+      \csgappto{\yquant@prefix draw}{##1}%
+      #1%
    }%
 }
 
