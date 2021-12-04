@@ -217,7 +217,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.5.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.6 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -1054,7 +1054,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          For nested subcircuits, you will get multiple prefixes.
          \compat{New in 0.5}The prefixing behavior can be influenced by \style{/yquant/operators/subcircuit/name mangling}.
 
-      \subsection{Shapes and the drawing pipeline}
+      \subsection{Shapes and the drawing pipeline}\label{sec:pipeline}
          All \Yquant{} shapes have the anchors available you would typically expect from a \TikZ{} shape of the given outline.
          The \texttt{center} anchor will be aligned to the wire.
          \compat{Changed in 0.1.2}In addition to the normal paths implemented by \TikZ{} shapes, those fit for \Yquant{} must additionally implement clipping paths, a \Yquant{} addition to \TikZ{} shapes.
@@ -2434,6 +2434,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   \end{codeexample*}
                   Note that \tex!\begin{yquant*}! must not be followed by a line break (unless masked by \tex!%!) if options follow.
                   Also note that here, we cannot make use of a subcircuit due to the very last control, which would then control an inner gate of said subcircuit---but they are not exposed.
+                  \iffalse\end{yquant*}\fi% code folding
                \end{example}
       \endgroup
 
@@ -3496,6 +3497,98 @@ $=$
                   \end{adjustbox}
             }
 
+   \section{Integration with other packages}
+      In general, \Yquant{} should not introduce incompatibilities with other packages.
+      However, the possibility to mix \Yquant{} code with arbitrary \TeX{} code may lead to certain expectations on how things should work, which may not always be met.
+      This is mainly due to the fact that \Yquant{} requires two passes of its content (see \cref{sec:pipeline}), as it has to measure the heights and depths of the individual gates.
+      Similar issues can for example also arise in \pkg{amsmath}'s \texttt{align} environment, which also has a measuring and a shipout stage.
+      If you run into an incompatibility using a macro from another package (or even plain \TeX), try the following:
+      \begin{enumerate}
+         \item Using a \TeX{} macro within \Yquant{} code will stop the \Yquant{} parser.
+            Hence, all gates following this macro will be ignored.
+            Did you remember to issue \tex!\yquant! in order to restart the parser after your macro? \\
+            \emph{Symptom:} No errors, but gates are missing
+         \item Is the macro robust?
+            Modern packages could automatically take care of this by a \tex!\protected! definition, but older ones may not.
+            Try to prefix the macro by \tex!\protect!. \\
+            \emph{Symptom:} Unexpected error messages
+         \item Does the macro depend on other macros defined \emph{within} the circuit?
+            The double pass may lead to problems.
+            If possible, define your macros outside of the \texttt{yquant} environment.
+            If this is not possible, make sure the definitions are expandable, then at measurement stage, \Yquant{} will do the expansion, so that you get the correct results. \\
+            \emph{Symptom:} Only the latest assignment will show up whenever the macro is used; the vertical spacing (for subcircuits, possibly also the horizontal spacing) may even be screwed.
+         \item Does the macro create output, using its own font?
+            If the output depends on the current position, this position will be completely wrong.
+            This is due to the fact that the macro is executed at the first pass only, where \Yquant{} does not know about any positions at all.
+            \compat{New in 0.6}The macro \tex!\yquantsecondpass! will defer its content so that it is executed only at the second pass, where positions are known.
+            It will also automatically restart the parser.
+            Note that \tex!\yquantsecondpass! will not expand its content.
+            If you need expansion, you may use \tex!\yquantesecondpass!, which uses \tex!\protected@edef!. \\
+            \emph{Symptom:} Content occurring in the wrong place or missing
+         \item Does the macro need to be executed at both passes?
+            There may be reasons for this, in particular if you use commands from \pkg{pgf}'s basic or system layer.
+            However, all custom macros will only be executed once, at the first pass.
+            \compat{New in 0.6}Wrap the macros in \tex!\yquantescape! in order to execute them both times.
+            The parser will automatically be restarted afterwards.
+            Note that \tex!\yquantescape! will not expand its content.
+            You may use \tex!\yquanteescape!, which will first expand its content using \tex!\protected@edef!.
+            Note that the content will first be executed, then stored for the second pass. \\
+            \emph{Symptom:} Content missing
+         \item If all of this did not work and the use case is interesting enough, please file a bug report.
+      \end{enumerate}
+
+      \subsection{\texorpdfstring{\TikZ}{TikZ}}
+         \Yquant{} is built on top of \TikZ{} an hence integrates well with \TikZ.
+         You can use all \tex!\path!-like comands as well as scopes and \Yquant{} will automatically take care of restarting the parser appropriately.
+         If it does not, this is very likely a bug, please file a report.
+
+         You should typically not use \tex!\tikzset!, as all changes made by this macro will only be executed in the first pass.
+         Instead, use \tex!\yquantset! and change the path appropriately: this macro will first store its argument (using \tex!\protected@edef!) for the second pass and then set the appropriate options also in the first pass.
+
+         Note that low\hyp level \pkg{pgf} functions are not altered by \Yquant; this would be highly inefficient.
+         \compat{New in 0.6}If you need to use them, wrap them in \tex!\yquantescape! or \tex!\yquanteescape!.
+
+      \subsection[\texorpdfstring{\pkg{beamer}}{beamer}]{\compat{New in 0.6}\pkg{beamer}}
+         \Yquant{} integrates with \pkg{beamer} overlays.
+         This means that you can use the overlay commands \tex!\only!, \tex!\alt!, \tex!\temporal!, \tex!\uncover!, \tex!\visible!, and \tex!\invisible! directly in your \Yquant{} code; the parser will automatically be restarted whenever necessary.
+         Note that the \texttt{*env} environments (\texttt{onlyenv}, \texttt{altenv}, \texttt{uncoverenv}, \texttt{visibleenv}, and \texttt{invisibleenv}) should \emph{not} be used within \Yquant{} code.
+
+         The macros \tex!\pause! and \tex!\uncover! are also supported to some degree (\tex!\uncover! with braces is fully supported).
+         They should work well in simple circuits, but unexpected results can be expected in more complex scenarios.
+         If you don't get appropriate results, use the aforementioned macros.
+
+         You may also use \tex!\note! inside \Yquant{} circuits.
+
+         Note that \Yquant{} does not overwrite the definitions of the \pkg{beamer} macros, which implies that you can also use them \emph{within} gates (e.g., for the \texttt{value} of a \gate{box}).
+         However, this means that the \Yquant{} parser must be running to detect these macros and take appropriate action.
+         Hence, if you interrupted the code via some special macros, make sure to restart the parser even if your next macro is, e.g., \tex!\only!.
+
+         Finally note that \tex!\only!, \tex!\alt!, and \tex!\temporal! are more special than the usual \Yquant\hyp code\hyp interrupting macros.
+         They will \emph{not} terminate the group that was opened for the current gate.
+         As a consequence, you can also use these macros for arguments.
+         Note that whenever you pass arguments to a gate using the \texttt{[<arguments>] <gate> <registers>;} syntax, the value of \texttt{<arguments>} is directly fed to \tex!\pgfkeys!, which \emph{does not} understand \pkg{beamer} macros.
+         Hence, you \emph{cannot} use, e.g., \tex!\only! \emph{within} the brackets.
+         However, you can wrap the arguments including the brackets as a whole in \tex!\only!---this happens before \Yquant{} relinquishes control to \tex!\pgfkeys! and therefore is executed as expected.
+         Since you can also pass multiple arguments to a gate by repeating \texttt{[<arguments>]}, this easily allows to combine arguments with and arguments without overlays.
+         \begin{example}[Using overlays for arguments]
+            \begin{minted}{tex}
+% \documentclass{beamer}
+\begin{frame}
+   \begin{tikzpicture}
+      \begin{yquant}
+         qubit a;
+         [fill=yellow]
+         \alt<2>{[draw=blue]}{[draw=green]}
+         \only<3>{[ultra thick]}
+         h a;
+      \end{yquant}
+   \end{tikzpicture}
+\end{frame}
+            \end{minted}
+            The Hadamard gate will always be filled yellow; its line color will be blue on the second frame and green on all other frames.
+            On the third frame, its line width is dramatically increased.
+         \end{example}
+
    \section{Wishlist}
       This section contains some thoughts on future improvements and features.
       \begin{itemize}
@@ -3580,5 +3673,9 @@ $=$
 
       \subsection*{2021-09-04: Version 0.5.1}
          Bugfix: The \gate{xx} gate style was not made available since version~0.4-alpha.
+
+      \subsection*{2021-12-04: Version 0.6}
+         Bugfix: Support to set the \style{/yquant/operators/subcircuit/seamless} property outside of \Yquant{} environments. \\
+         Support for \pkg{beamer}
 %END_FOLD
 \end{document}
