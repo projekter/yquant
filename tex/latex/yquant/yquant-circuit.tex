@@ -324,6 +324,15 @@
 % #1: arbitrary register list
 \protected\def\yquant@circuit@output{%
    \protected\def\idx{}%
+   \ifnum\yquant@compat>1 %
+      \let\Ifnum=\yquant@circuit@output@protected%
+      \let\Ifcase=\yquant@circuit@output@protected%
+      \let\Or=\yquant@circuit@output@protected%
+      \let\Else=\yquant@circuit@output@protected%
+      \let\Fi=\yquant@circuit@output@protected%
+      \let\Unless=\yquant@circuit@output@protected%
+      \let\The=\yquant@circuit@output@protected%
+   \fi%
    \protected@csxappto{\yquant@prefix outputs}%
             {\yquant@circuit@restore%
                {\yquant@attrs@remaining}%
@@ -333,4 +342,8 @@
              \yquant@prepare{\yquant@lang@attr@value}{}%
             }%
 }
+
+\ifnum\yquant@compat>1 %
+   \protected\def\yquant@circuit@output@protected{}
+\fi%
 % END_FOLD
