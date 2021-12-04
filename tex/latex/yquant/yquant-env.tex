@@ -619,7 +619,6 @@
 \else
    \expandafter\@secondoftwo
 \fi{%
-   \def\yquant@env@check@noendgroup{}
    \protected\def\yquant@env@check@findmacro{%
       % we only put the beamer macros in here that effectively remove things from the input stream. Everything that is typeset in a special way will end the group
       \ifx\yquant@env@nextchar\only%
@@ -644,13 +643,23 @@
                         \endgroup%
                         \let\next=\yquant@env@beamer@invisible%
                      \else%
-                        \ifx\yquant@env@nextchar\yquant@env@beamer@checkifactive%
+                        \ifx\yquant@env@nextchar\onslide%
                            \endgroup%
-                           \let\yquant@env@beamer@checkifactive@true=\relax%
-                           \let\next=\relax%
+                           \let\next=\yquant@env@beamer@onslide%
                         \else%
-                           \endgroup%
-                           \let\next=\relax%
+                           \ifx\yquant@env@nextchar\pause%
+                              \endgroup%
+                              \let\next=\yquant@env@beamer@pause%
+                           \else%
+                              \ifx\yquant@env@nextchar\yquant@env@beamer@checkifactive%
+                                 \endgroup%
+                                 \let\yquant@env@beamer@checkifactive@true=\relax%
+                                 \let\next=\relax%
+                              \else%
+                                 \endgroup%
+                                 \let\next=\relax%
+                              \fi%
+                           \fi%
                         \fi%
                      \fi%
                   \fi%
@@ -674,40 +683,68 @@
          \temporal<##1>{#2##2}{#2##3}{#2##4}%
       }%
       % There's no need for the fakeinvisible or spacingcover macros, since we are within TikZ anyway
-      \long\def\yquant@env@beamer@visibilitymacros##1##2##3##4{%
-         \yquant@env@beamer@visibilitymacros@flip##1%
-         \beamer@altget%
-            {#1##3}%
-            {%
-               \begingroup%
-                  \letcs\yquant@env@beamer@olddraw{\yquant@prefix draw}%
-                  \global\cslet{\yquant@prefix draw}\empty%
-                  \undef\yquant@env@beamer@checkifactive@true%
-                  ##2{#1##3\yquant@env@beamer@checkifactive}%
-                  \csxdef{\yquant@prefix draw}{%
-                     \unexpanded\expandafter{\yquant@env@beamer@olddraw}%
-                     \ifx0##1%
-                        \noexpand\beamer@alt##4{}%
-                     \else%
-                        \noexpand\beamer@only##4%
-                     \fi%
-                     {%
-                        \unexpanded{##2}{%
-                           \unexpanded\expandafter\expandafter\expandafter{\csname\yquant@prefix draw\endcsname}%
+      \mode<presentation>{
+         \protected\long\def\yquant@env@beamer@visibilitymacros##1##2##3##4{%
+            \yquant@env@beamer@visibilitymacros@flip##1%
+            \beamer@altget%
+               {#1##3}%
+               {%
+                  \begingroup%
+                     \letcs\yquant@env@beamer@olddraw{\yquant@prefix draw}%
+                     \global\cslet{\yquant@prefix draw}\empty%
+                     \undef\yquant@env@beamer@checkifactive@true%
+                     ##2{#1##3\yquant@env@beamer@checkifactive}%
+                     \csxdef{\yquant@prefix draw}{%
+                        \unexpanded\expandafter{\yquant@env@beamer@olddraw}%
+                        \ifx0##1%
+                           \noexpand\beamer@alt##4{}%
+                        \else%
+                           \noexpand\beamer@only##4%
+                        \fi%
+                        {%
+                           \unexpanded{##2}{%
+                              \unexpanded\expandafter\expandafter\expandafter{\csname\yquant@prefix draw\endcsname}%
+                           }%
                         }%
                      }%
-                  }%
-                  \expandafter%
-               \endgroup%
-               \ifdefined\yquant@env@beamer@checkifactive@true%
-                  \expandafter\@firstofone%
-               \else%
-                  \expandafter\@gobble%
-               \fi%
-               #1%
-           }%
-           ##4%
-      }
+                     \expandafter%
+                  \endgroup%
+                  \ifdefined\yquant@env@beamer@checkifactive@true%
+                     \expandafter\@firstofone%
+                  \else%
+                     \expandafter\@gobble%
+                  \fi%
+                  #1%
+              }%
+              ##4%
+         }
+         \newcommand<>\yquant@env@beamer@onslidenoargs[2]{%
+            \let\yquant@env@beamer@onslideappdraw=\empty%
+            \appto\yquant@env@beamer@onslideappdraw{\beamer@endpause}%
+            \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname{%
+               \eappto\yquant@env@beamer@onslideappdraw{\noexpand\yquant@circuit@flushwire{\i}}%
+            }%
+            \csxappto{\yquant@prefix draw}%
+                     {\unexpanded\expandafter{\yquant@env@beamer@onslideappdraw}}%
+            \beamer@alt##3%
+               {\csgappto{\yquant@prefix draw}{%
+                   \global\let\beamer@endpause=\empty%
+                }%
+                #1}%
+               {\csgappto{\yquant@prefix draw}{%
+                   ##1%
+                   \gdef\beamer@endpause{##2}%
+                }%
+                #1%
+               }%
+         }
+      }%
+      \protected\def\yquant@env@beamer@onslide@{%
+         \@ifstar{#1\only}%
+                 {\@ifnextchar+{\expandafter\yquant@env@beamer@visibleonslide\@gobble}%
+                               {\yquant@env@beamer@mainonslide}%
+                 }%
+      }%
    }
 
    \protected\def\yquant@env@beamer@only\only{\@ifnextchar<{\yquant@env@beamer@only@arga}%
@@ -727,28 +764,56 @@
       \yquant@env@beamer@alt@arga<#3>{#1}{#2}%
    }
 
-   \def\yquant@env@beamer@visibilitymacros@flip#1#2#3#4{%
-      \ifx1#1%
-         \expandafter\@firstoftwo%
-      \else%
-         \expandafter\@secondoftwo%
-      \fi%
-      {#2{#4}{#3}}{#2{#3}{#4}}%
+   \def\yquant@env@beamer@checkifactive{%
+      % this should not compare to anything else, but should also not give an error on expansion
+      \yquant@env@beamer@checkifactive@%
    }
-
-   \def\yquant@env@beamer@checkifactive{}
-
+   \let\yquant@env@beamer@checkifactive@=\empty%
    \def\yquant@env@beamer@uncover\uncover{\yquant@env@beamer@uncover@}
-   \newcommand<>\yquant@env@beamer@uncover@[1]{%
-      \yquant@env@beamer@visibilitymacros0\beamer@makecovered{#1}{#2}%
-   }%
    \def\yquant@env@beamer@visible\visible{\yquant@env@beamer@visible@}
-   \newcommand<>\yquant@env@beamer@visible@[1]{%
-      \yquant@env@beamer@visibilitymacros0\beamer@reallymakeinvisible{#1}{#2}%
-   }%
    \def\yquant@env@beamer@invisible\invisible{\yquant@env@beamer@invisible@}
-   \newcommand<>\yquant@env@beamer@invisible@[1]{%
-      \yquant@env@beamer@visibilitymacros1\beamer@reallymakeinvisible{#1}{#2}%
+   \def\yquant@env@beamer@onslide\onslide{\yquant@env@beamer@onslide@}%
+   \def\yquant@env@beamer@pause\pause{\yquant@env@beamer@pause@}%
+
+   \mode<presentation>{
+      \long\def\yquant@env@beamer@visibilitymacros@flip#1#2#3#4{%
+         \ifx1#1%
+            \expandafter\@firstoftwo%
+         \else%
+            \expandafter\@secondoftwo%
+         \fi%
+         {#2{#4}{#3}}{#2{#3}{#4}}%
+      }
+      \newcommand<>\yquant@env@beamer@uncover@[1]{%
+         \yquant@env@beamer@visibilitymacros0\beamer@makecovered{#1}{#2}%
+      }
+      \newcommand<>\yquant@env@beamer@visible@[1]{%
+         \yquant@env@beamer@visibilitymacros0\beamer@reallymakeinvisible{#1}{#2}%
+      }
+      \newcommand<>\yquant@env@beamer@invisible@[1]{%
+         \yquant@env@beamer@visibilitymacros1\beamer@reallymakeinvisible{#1}{#2}%
+      }
+      \newrobustcmd\yquant@env@beamer@pause@[1][]{%
+         \ifblank{#1}%
+            {\stepcounter{beamerpauses}}%
+            {\setcounter{beamerpauses}{#1}}%
+         \yquant@env@beamer@onslidenoargs<\value{beamerpauses}->\beamer@startcovered\beamer@endcovered%
+      }
+   }
+   \mode<article>{
+      \def\yquant@env@beamer@uncover{\yquant@env@beamer@alt@argb{\@firstofone}{\@gobble}}
+      \def\yquant@env@beamer@visible{\yquant@env@beamer@alt@argb{\@firstofone}{\@gobble}}
+      \def\yquant@env@beamer@invisible{\yquant@env@beamer@alt@argb{\@gobble}{\@firstofone}}
+      \newcommand<>\yquant@env@beamer@noargsonslide[2]{}
+      \newrobustcmd\yquant@env@beamer@pause@[1][]{}
+   }
+   \newcommand<>{\yquant@env@beamer@visibleonslide}{%
+      \@ifnextchar\bgroup{\yquant@env@beamer@visible@#1}%
+                         {\yquant@env@beamer@onslidenoargs#1\beamer@begininvisible\beamer@endinvisible}%
+   }
+   \newcommand<>{\yquant@env@beamer@mainonslide}{%
+      \@ifnextchar\bgroup{\yquant@env@beamer@uncover@#1}%
+                         {\yquant@env@beamer@onslidenoargs#1\beamer@startcovered\beamer@endcovered}%
    }
 }{%
    \def\yquant@env@check@findmacro{%
