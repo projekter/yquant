@@ -652,34 +652,38 @@
             \ifx\yquant@env@nextchar\temporal%
                \let\next=\yquant@env@beamer@temporal%
             \else%
-               % in principle: \endgroup for all in here, but need to preserve \yquant@env@nextchar
-               \ifx\yquant@env@nextchar\uncover%
-                  \endgroup%
-                  \let\next=\yquant@env@beamer@uncover%
+               \ifx\yquant@env@nextchar\note%
+                  \let\next=\yquant@env@beamer@note%
                \else%
-                  \ifx\yquant@env@nextchar\visible%
+                  % in principle: \endgroup for all in here, but need to preserve \yquant@env@nextchar
+                  \ifx\yquant@env@nextchar\uncover%
                      \endgroup%
-                     \let\next=\yquant@env@beamer@visible%
+                     \let\next=\yquant@env@beamer@uncover%
                   \else%
-                     \ifx\yquant@env@nextchar\invisible%
+                     \ifx\yquant@env@nextchar\visible%
                         \endgroup%
-                        \let\next=\yquant@env@beamer@invisible%
+                        \let\next=\yquant@env@beamer@visible%
                      \else%
-                        \ifx\yquant@env@nextchar\onslide%
+                        \ifx\yquant@env@nextchar\invisible%
                            \endgroup%
-                           \let\next=\yquant@env@beamer@onslide%
+                           \let\next=\yquant@env@beamer@invisible%
                         \else%
-                           \ifx\yquant@env@nextchar\pause%
+                           \ifx\yquant@env@nextchar\onslide%
                               \endgroup%
-                              \let\next=\yquant@env@beamer@pause%
+                              \let\next=\yquant@env@beamer@onslide%
                            \else%
-                              \ifx\yquant@env@nextchar\yquant@env@beamer@checkifactive%
+                              \ifx\yquant@env@nextchar\pause%
                                  \endgroup%
-                                 \let\yquant@env@beamer@checkifactive@true=\relax%
-                                 \let\next=\relax%
+                                 \let\next=\yquant@env@beamer@pause%
                               \else%
-                                 \endgroup%
-                                 \let\next=\relax%
+                                 \ifx\yquant@env@nextchar\yquant@env@beamer@checkifactive%
+                                    \endgroup%
+                                    \let\yquant@env@beamer@checkifactive@true=\relax%
+                                    \let\next=\relax%
+                                 \else%
+                                    \endgroup%
+                                    \let\next=\relax%
+                                 \fi%
                               \fi%
                            \fi%
                         \fi%
@@ -760,7 +764,15 @@
                 #1%
                }%
          }
+         % This is \beamer@inframenote, but we are always in a frame if we an in yquant
+         \newcommand<>{\yquant@env@beamer@note@}[2][]{%
+            \beamer@inframenote##3[{##1}]{##2}%
+            #2%
+         }
       }%
+      \mode<article>{
+         \newcommand<>{\yquant@env@beamer@note@}[2][]{#2}
+      }
       \protected\def\yquant@env@beamer@onslide@{%
          \@ifstar{#1\only}%
                  {\@ifnextchar+{\expandafter\yquant@env@beamer@visibleonslide\@gobble}%
@@ -792,6 +804,7 @@
    }
    \let\yquant@env@beamer@checkifactive@=\empty%
    \def\yquant@env@beamer@uncover\uncover{\yquant@env@beamer@uncover@}
+   \def\yquant@env@beamer@note\note{\yquant@env@beamer@note@}
    \def\yquant@env@beamer@visible\visible{\yquant@env@beamer@visible@}
    \def\yquant@env@beamer@invisible\invisible{\yquant@env@beamer@invisible@}
    \def\yquant@env@beamer@onslide\onslide{\yquant@env@beamer@onslide@}%
