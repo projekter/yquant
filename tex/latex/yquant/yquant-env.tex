@@ -771,7 +771,15 @@
          }
       }%
       \mode<article>{
+         \newcommand<>\yquant@env@beamer@uncover@[1]{%
+            \beamer@alt##2{#1##1}{#1}%
+         }
+         % we don't need \yquant@env@beamer@visible@ in this mode, since \uncover and \visible are equal (w.r.t. \ifx), so we will always end up with the \uncover path
+         \newcommand<>\yquant@env@beamer@invisible@[1]{%
+            \beamer@alt##2{#1}{#1##1}%
+         }
          \newcommand<>{\yquant@env@beamer@note@}[2][]{#2}
+         \newrobustcmd\yquant@env@beamer@pause@[1][]{#1}
       }
       \protected\def\yquant@env@beamer@onslide@{%
          \@ifstar{#1\only}%
@@ -803,12 +811,13 @@
       \yquant@env@beamer@checkifactive@%
    }
    \let\yquant@env@beamer@checkifactive@=\empty%
-   \def\yquant@env@beamer@uncover\uncover{\yquant@env@beamer@uncover@}
    \def\yquant@env@beamer@note\note{\yquant@env@beamer@note@}
+   % note: in article mode, the definitions of \uncover and \visible are identical, hence we will mistake \visible for \uncover (which is checked first); therefore, \yquant@env@beamer@uncover may be followed by \uncover or \visible, just take an arbitrary argument.
+   \def\yquant@env@beamer@uncover#1{\yquant@env@beamer@uncover@}
    \def\yquant@env@beamer@visible\visible{\yquant@env@beamer@visible@}
    \def\yquant@env@beamer@invisible\invisible{\yquant@env@beamer@invisible@}
-   \def\yquant@env@beamer@onslide\onslide{\yquant@env@beamer@onslide@}%
-   \def\yquant@env@beamer@pause\pause{\yquant@env@beamer@pause@}%
+   \def\yquant@env@beamer@onslide\onslide{\yquant@env@beamer@onslide@}
+   \def\yquant@env@beamer@pause\pause{\yquant@env@beamer@pause@}
 
    \mode<presentation>{
       \long\def\yquant@env@beamer@visibilitymacros@flip#1#2#3#4{%
@@ -836,11 +845,7 @@
       }
    }
    \mode<article>{
-      \def\yquant@env@beamer@uncover{\yquant@env@beamer@alt@argb{\@firstofone}{\@gobble}}
-      \def\yquant@env@beamer@visible{\yquant@env@beamer@alt@argb{\@firstofone}{\@gobble}}
-      \def\yquant@env@beamer@invisible{\yquant@env@beamer@alt@argb{\@gobble}{\@firstofone}}
-      \newcommand<>\yquant@env@beamer@noargsonslide[2]{}
-      \newrobustcmd\yquant@env@beamer@pause@[1][]{}
+      \newcommand<>\yquant@env@beamer@onslidenoargs[2]{}
    }
    \newcommand<>{\yquant@env@beamer@visibleonslide}{%
       \@ifnextchar\bgroup{\yquant@env@beamer@visible@#1}%
