@@ -1899,7 +1899,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
          \yquantset{operator/separation=2mm}
          For a better orientation, we use the same section headings as the \pkg{qcircuit} manual.
          The manual uses unnamed registers a lot; often, we will use the \tex!yquant*! environment to make things more concise.
-         As the \pkg{qcircuit} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=1em}!.
+         As the \pkg{qcircuit} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=2mm}!.
 
          \subsubsection{I. Introduction}
             \begin{example}<Updated in 0.5, 0.4, 0.1.1>%
@@ -3255,6 +3255,145 @@ $=$
             \end{example}
       \endgroup
 
+      \subsection[\texorpdfstring{\pkg{qpic}}{qpic} documentation]{\compat{New in 0.6}\pkg{qpic} documentation}
+      \begingroup
+         \yquantset{operator/separation=3mm}%
+         Again, our section headings will be the same as in the \pkg{qpic} manual.
+         As the \pkg{qpic} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=3mm}!.
+
+         \subsubsection{1 Introduction}
+            \begin{example}
+               \begin{codeexample*}
+\begin{tikzpicture}
+   \let\high=\empty
+   \listgadd\high2
+   \def\cnot#1|#2;{%
+      \ifinlist{#2}\high{
+         \yquant [style=red] cnot a[#1] | a[#2];
+         \ifinlist{#1}\high{
+            \listremove\high{#1}
+            \yquant addstyle {black} a[#1];
+         }{
+            \listadd\high{#1}
+            \yquant addstyle {red} a[#1];
+         }
+      }{
+         \yquant cnot a[#1] | a[#2];
+      }
+   }
+   \def\cnotA{\cnot 0|1; \cnot 2|3; \cnot 4|5; \cnot 6|7;}
+   \def\cnotB{\cnot 2|1; \cnot 4|3; \cnot 6|5; \cnot 8|7;}
+   \def\cnotC{\cnot 1|0; \cnot 3|2; \cnot 5|4; \cnot 7|6;}
+   \def\cnotD{\cnot 1|2; \cnot 3|4; \cnot 5|6; \cnot 7|8;}
+   \def\cnotBlock{\cnotA \cnotB barrier (-); \cnotC \cnotD}
+   \begin{yquant}[operator/minimum width=0pt, register/minimum height=2mm,
+                  register/minimum depth=2mm]
+      qubit {$\reg_{\The\numexpr\idx+1}$} a[9];
+      addstyle {very thick, red} a[2];
+
+      \cnotBlock barrier (-);
+      \cnotBlock barrier (-);
+      \cnotBlock barrier (-);
+      \cnotBlock
+      output {$a_{\The\numexpr9-\idx}$} -;
+   \end{yquant}
+\end{tikzpicture}
+               \end{codeexample*}
+               This is an extremely interesting example, which could have been implemented in a lot of different manners.
+               We chose an approach where we deferred the logic of coloring the gates entirely to \TeX.
+
+               We first define an \pkg{etoolbox} list that is stored in \tex!\high!.
+               The idea is that this list holds at any point in time the indices of all the registers that are currently colored in red.
+               Initially, we add the register with number~$2$ to this list.
+
+               Next, we do not want to manually do the bookkeeping of this list.
+               All we want to do is to issue the command to put a \textsc{CNot} gate on the appropriate registers and \TeX{} should keep track of the correct coloring and register state.
+               For this, we first define a macro \tex!\cnot! that expects the index of the target and the index of the control register.
+               Within this macro, we check whether the register of the control is currently highlighted (\tex!\ifinlist{#2}\high!).
+               If this is not the case, we draw the \textsc{CNot} gate without any additional styles (note that since we interrupted the \Yquant{} parser due to the lots of intervening macros, we first have to restart it saying \tex!\yquant!).
+               However, if it is the case that the control register is currently highlighted, we draw the \textsc{CNot} gate with the attribute \texttt{[style=red]}---we do not only want to draw the gate itself in red (for which \texttt{[red]} would be sufficient), but also its control line and the control blob, so we use the \style{/yquant/style} shorthand.
+               Then, we have to change the state of the target register appropriately, since the highlighting state will propagate from control to target.
+               If the target register was already highlighted, we have to remove it from the list and we change its line color back to \texttt{black}; if it was not highlighted, we add it to the list and change its line color to \texttt{red}.
+               Note that the use of \gate{addstyle} will keep adding styles, so in the end, the register line style will be a long string \texttt{red,black,red,black,...}; we could do better by saying \gate{setstyle}, which would overwrite the line style.
+               However, since we will initially set the line width of $a_3$ to \texttt{very thick}---which should be kept throughout the circuit---we would have to take additional care not to lose this setting.
+               Here, we chose the simpler version.
+
+               After setting the coloring preliminaries, we note that if we slice the circuit at any time, it will have four possible gate configurations (or a \gate{barrier}).
+               We define abbreviations for these in the macros \tex!\cnotA! to \tex!\cnotD!.
+               Since they will always follow in this order, we also define a \tex!\cnotBlock! abbreviation that executes these configurations together with their intermediate \gate{barrier}.
+               We do not include the final barrier, since it is not present in the last block.
+
+               Now, we start the \texttt{yquant} environment.
+               We give some options for a nicer spacing and initialize the registers.
+               In the \pkg{qpic} example, the registers were $1$\hyp indexed, so we use \tex!\The\numexpr\idx+1\relax! to give back the value of the current register index (\tex!\idx!) plus one.
+               Note that here we use \Yquant's shorthand for \tex!\protect\the!, which is \tex!\The!, to get the correct expansion behavior.
+
+               Then, we add the initial style for the $a_3$ register.
+               Inserting the gates together with the correct coloring is now extremely simple: we just need to call our \tex!\cnotBlock! command and intersperse it with \gate{barrier}s.
+               At the end, we output all the gates in reverse order, which works similarly to the initialization of the gates.
+
+               Note that if there were more that just four blocks, we could also have made use of \TikZ's \tex!\foreach! loop to output all the \tex!\cnotBlock! commands.
+               However, be aware of the fact that \tex!\foreach! puts its content in a group, so the \tex!\high! list assignments would have been local and forgotten in the next iteration.
+               Either they would need to be made globally or some non\hyp grouping loop construct would have to be used (e.g., \tex!\pgfplotsforeachungrouped!).
+            \end{example}
+
+         \subsubsection{2 Simple Examples}
+            \paragraph{2.1 Example 1: Majority}\leavevmode
+               \begin{example}
+                  \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit {$a$} a;
+      qubit {$b$} b;
+      qubit {$c$} c;
+
+      box {\rotatebox{90}{$\operatorname{MAJ}$}} (-);
+
+      [draw=none]
+      box {$=$} (-);
+
+      cnot b | c;
+      cnot a | c;
+      cnot c | a, b;
+
+      output {$a \oplus c$} a;
+      output {$b \oplus c$} b;
+      output {$\operatorname{MAJ}(a, b, c)$} c;
+   \end{yquant}
+\end{tikzpicture}
+                  \end{codeexample*}
+               \end{example}
+
+            \paragraph{2.2 Example 2: Quantum Fourier Transform}
+               \begin{example}
+                  \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}[operators/every box/.append style={shape=yquant-circle, radius=2.5mm}, operators/every h/.append style={shape=yquant-rectangle}]
+      qubit {$x_2$} x2;
+      qubit {$x_1$} x1;
+      qubit {$x_0$} x0;
+
+      h x2;
+      box {$2$} x2 | x1;
+      box {$3$} x2 | x0;
+      h x1;
+      box {$2$} x1 | x0;
+      h x0;
+
+      output {$\frac{1}{\sqrt2} (\ket0 + e^{2\pi i \cdot 0.x_2 x_1 x_0}) \ket1$} x2;
+      output {$\frac{1}{\sqrt2} (\ket0 + e^{2\pi i \cdot 0.x_1 x_0}) \ket1$} x1;
+      output {$\frac{1}{\sqrt2} (\ket0 + e^{2\pi i \cdot 0.x_0}) \ket1$} x0;
+   \end{yquant}
+\end{tikzpicture}
+                  \end{codeexample*}
+                  In this example, we opted to use three distinct registers instead of one vector register, since the reversed indexing would probably have led to more confusion.
+                  We globally overwrite the \style{/yquant/operators/every box} style to use a circular shape instead.
+                  Note that this would usually be an ellipse, so we explicitly set the radius to a value that exceeds the minimum (half) width.
+                  Since the \style{/yquant/operators/every h} style inherits from the \gate{box} style, we need to undo the change in shape.
+                  Here, we opted for not undoing the radius change.
+               \end{example}
+         \endgroup
+
    \section{Foreign language support and extensions}\label{sec:foreign}
       \Yquant{} is built in various modules, so that it is not hard to use the quantum circuit rendering backend, but expose a different language frontend.
       \compat{New in 0.3}\Yquant{} not only understands its own language, but also others.
@@ -3676,6 +3815,7 @@ $=$
 
       \subsection*{2021-12-04: Version 0.6}
          Bugfix: Support to set the \style{/yquant/operators/subcircuit/seamless} property outside of \Yquant{} environments. \\
-         Support for \pkg{beamer}
+         Support for \pkg{beamer} \\
+         Bugfix: the auto\hyp\tex!\protect!ed versions \tex!\Ifnum! etc. now also work in \gate{output} gates.
 %END_FOLD
 \end{document}
