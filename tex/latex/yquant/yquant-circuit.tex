@@ -217,16 +217,18 @@
 
 % restores the data captured for an uncontrolled operator and starts preparation
 % #1: \yquant@attrs@remaining
-% #2: \yquant@circuit@operator@targets
-% #3: \yquant@circuit@operator@mintarget
-% #4: \yquant@circuit@operator@maxtarget
-% #5: \yquant@circuit@operator@numtarget
-\protected\def\yquant@circuit@restore#1#2#3#4#5{%
+% #2: \yquant@lang@attr@name
+% #3: \yquant@circuit@operator@targets
+% #4: \yquant@circuit@operator@mintarget
+% #5: \yquant@circuit@operator@maxtarget
+% #6: \yquant@circuit@operator@numtarget
+\protected\def\yquant@circuit@restore#1#2#3#4#5#6{%
    \def\yquant@attrs@remaining{#1}%
-   \def\yquant@circuit@operator@targets{#2}%
-   \def\yquant@circuit@operator@mintarget{#3}%
-   \def\yquant@circuit@operator@maxtarget{#4}%
-   \def\yquant@circuit@operator@numtarget{#5}%
+   \def\yquant@lang@attr@name{#2}%
+   \def\yquant@circuit@operator@targets{#3}%
+   \def\yquant@circuit@operator@mintarget{#4}%
+   \def\yquant@circuit@operator@maxtarget{#5}%
+   \def\yquant@circuit@operator@numtarget{#6}%
    \yquant@circuit@operator@hasControlsfalse%
    \let\yquant@circuit@operator@pctrls=\empty%
    \def\yquant@circuit@operator@minpctrl{2147483647}%
@@ -336,6 +338,7 @@
    \protected@csxappto{\yquant@prefix outputs}%
             {\yquant@circuit@restore%
                {\yquant@attrs@remaining}%
+               {\yquant@lang@attr@name}%
                {\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
                {\yquant@circuit@operator@mintarget}{\yquant@circuit@operator@maxtarget}%
                {\yquant@circuit@operator@numtarget}%
