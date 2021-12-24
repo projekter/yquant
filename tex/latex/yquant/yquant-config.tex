@@ -172,11 +172,25 @@
    }
 \fi
 \pgfqkeys{/yquant}{%
-   operators/every box/.style=%
-      {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
    operators/every text/.style=%
       {shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}%
 }
+\ifnum\yquant@compat<3 %
+   \pgfqkeys{/yquant}{%
+      % we did not have this style before 0.6, but for the ease of implementation, we just change the direction of inheritance---users of earlier compat versions will never use the style, so this is fully transparent
+      operators/every rectangular box/.style=%
+         {/yquant/operators/every box},%
+      operators/every box/.style=%
+         {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}%
+   }
+\else
+   \pgfqkeys{/yquant}{%
+      operators/every rectangular box/.style=%
+         {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
+      operators/every box/.style=%
+         {/yquant/operators/every rectangular box}%
+   }
+\fi
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       operators/every custom gate/.style=%
@@ -202,7 +216,7 @@
    operators/every not/.style=%
       {shape=yquant-oplus, radius=1.3mm, draw},%
    operators/every pauli/.style=%
-      {/yquant/operators/every box},%
+      {/yquant/operators/every rectangular box},%
    operators/every phase/.style=%
       {shape=yquant-circle, radius=.5mm, fill},%
    operators/every slash/.style=%
@@ -210,7 +224,7 @@
    operators/every subcircuit/.style=%
       {},%
    operators/every subcircuit box/.style=%
-      {/yquant/operators/every box},%
+      {/yquant/operators/every rectangular box},%
    subcircuit box style/.style=%
       {/yquant/operators/every subcircuit box/.append style={#1}},%
    operators/this subcircuit box/.style=%

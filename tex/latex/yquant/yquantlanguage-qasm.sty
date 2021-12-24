@@ -1,7 +1,7 @@
 % yquantlanguage-qasm.sty
 %  Extend yquant to understand qasm syntax.
 %
-% Copyright 2020 Benjamin Desef
+% Copyright 2021 Benjamin Desef
 %
 % This work may be distributed and/or modified under the conditions of the LaTeX Project
 % Public License, either version 1.3c of this license or (at your option) any later
@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-qasm}[2021/03/27 v0.4 yquant-qasm]
+\ProvidesPackage{yquantlanguage-qasm}[2021/12/24 v0.6 yquant-qasm]
 
-\RequirePackage{yquant}[2021/03/27]
+\RequirePackage{yquant}[2021/12/24]
 
 % BEGIN_FOLD Environment definitions
 \begingroup
@@ -338,13 +338,13 @@
 % BEGIN_FOLD Configuration
 \pgfkeys{%
    /yquant/operators/every s/.style={%
-      /yquant/operators/every box%
+      /yquant/operators/every rectangular box%
    },%
    /yquant/operators/every t/.style={%
-      /yquant/operators/every box%
+      /yquant/operators/every rectangular box%
    },%
    /yquant/operators/every utwo/.style={%
-      /yquant/operators/every box%
+      /yquant/operators/every rectangular box%
    },
    /qasm/zero/.store in=%
       \qasm@config@zero,%
