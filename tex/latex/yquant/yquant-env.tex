@@ -56,7 +56,7 @@
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
       \ifnum\yquant@env=1 %
          \yquantmeasuringtrue%
-         \yquant@env@substitute#1\yquant@env@contscan%
+         \yquant@env@substitute%
          \global\cslet{\yquant@prefix parameters}\empty%
       \else%
          \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
@@ -530,17 +530,13 @@
 }
 
 \let\yquant@env@substitutions=\empty
-\def\yquant@env@substitute#1#2{%
-   \forlistloop{\yquant@env@substitute@{#1}{#2}}\yquant@env@substitutions%
-}
-
-\def\yquant@env@substitute@#1#2#3{%
-   #3{#1}{#2}%
+\def\yquant@env@substitute{%
+   \forlistloop\@firstofone\yquant@env@substitutions%
 }
 
 % substitute the tikz commands (defined in \tikz@installcommands) so that they can be arbitrarily interleaved with yquant code. We patch \path, \scope, \endscope, \stopscope, their internal complements, and also patch \yquantset.
 \listadd\yquant@env@substitutions\yquant@env@substikz
-\protected\def\yquant@env@substikz#1#2{%
+\protected\def\yquant@env@substikz{%
    % \tikz@path@do@at@end is called after a path. Hence, it is an ideal candidate to re-invoke \yquant@env@scan. However, it is by default defined to be \tikz@lib@scope@check, and we need this definition for the scopes library to work correctly. But since \tikz@lib@scope@check is also called after a scope and the end of a scope, this is even better. Yet, we need to check whether the scopes library is present or not.
    \let\yquant@env@substikz@scopecheck=\tikz@lib@scope@check%
    \ifx\tikz@lib@scope@check\pgfutil@empty%
@@ -557,7 +553,7 @@
       \protected@csxappto{\yquant@prefix draw}{%
          \noexpand\path##1;%
       }%
-      #1%
+      \yquant@env@scan%
    }%
    % no need for \scoped, because it internally calls \scope.
    % We need to hack into \scope, but this is a bit tricky due to its argument handling. In order to get all optional arguments, including the possible animations library, correct, we change \tikz@scope@opt.
@@ -594,29 +590,29 @@
          \noexpand\pgfqkeys{/yquant}{##1}%
       }%
       \pgfqkeys{/yquant}{##1}%
-      #1%
+      \yquant@env@scan%
    }%
 }
 
 \listadd\yquant@env@substitutions\yquant@env@secondpass
-\protected\def\yquant@env@secondpass#1#2{%
+\protected\def\yquant@env@secondpass{%
    \protected\long\def\yquantsecondpass##1{%
       \csgappto{\yquant@prefix draw}{##1}%
-      #1%
+      \yquant@env@scan%
    }%
    \protected\long\def\yquantesecondpass##1{%
       \protected@csxappto{\yquant@prefix draw}{##1}%
-      #1%
+      \yquant@env@scan%
    }%
    \protected\long\def\yquantescape##1{%
       ##1%
       \protected@csxappto{\yquant@prefix draw}{##1}%
-      #1%
+      \yquant@env@scan%
    }%
    \protected\long\def\yquanteescape##1{%
       ##1%
       \csgappto{\yquant@prefix draw}{##1}%
-      #1%
+      \yquant@env@scan%
    }%
 }
 
@@ -696,30 +692,28 @@
    }%
 
    \listadd\yquant@env@substitutions\yquant@env@substbeamer
-   \protected\def\yquant@env@substbeamer#1#2{%
-      % standard case:
-      % #1 = \yquant, #2 = \yquant@env@contscan (i.e., without grouping)
+   \protected\def\yquant@env@substbeamer{%
       \long\def\yquant@env@beamer@only@arga<##1>##2{%
-         \beamer@alt<##1>{#2##2}{#2}%
+         \beamer@alt<##1>{\yquant@env@contscan##2}{\yquant@env@contscan}%
       }%
       \long\def\yquant@env@beamer@alt@arga<##1>##2##3{%
-         \beamer@alt<##1>{#2##2}{#2##3}%
+         \beamer@alt<##1>{\yquant@env@contscan##2}{\yquant@env@contscan##3}%
       }%
       \protected\long\def\yquant@env@beamer@temporal\temporal<##1>##2##3##4{%
-         \temporal<##1>{#2##2}{#2##3}{#2##4}%
+         \temporal<##1>{\yquant@env@contscan##2}{\yquant@env@contscan##3}{\yquant@env@contscan##4}%
       }%
       % There's no need for the fakeinvisible or spacingcover macros, since we are within TikZ anyway
       \mode<presentation>{
          \protected\long\def\yquant@env@beamer@visibilitymacros##1##2##3##4{%
             \yquant@env@beamer@visibilitymacros@flip##1%
             \beamer@altget%
-               {#1##3}%
+               {\yquant@env@scan##3}%
                {%
                   \begingroup%
                      \letcs\yquant@env@beamer@olddraw{\yquant@prefix draw}%
                      \global\cslet{\yquant@prefix draw}\empty%
                      \undef\yquant@env@beamer@checkifactive@true%
-                     ##2{#1##3\yquant@env@beamer@checkifactive}%
+                     ##2{\yquant@env@scan##3\yquant@env@beamer@checkifactive}%
                      \csxdef{\yquant@prefix draw}{%
                         \unexpanded\expandafter{\yquant@env@beamer@olddraw}%
                         \ifx0##1%
@@ -740,7 +734,7 @@
                   \else%
                      \expandafter\@gobble%
                   \fi%
-                  #1%
+                  \yquant@env@scan%
               }%
               ##4%
          }
@@ -756,33 +750,33 @@
                {\csgappto{\yquant@prefix draw}{%
                    \global\let\beamer@endpause=\empty%
                 }%
-                #1}%
+                \yquant@env@scan}%
                {\csgappto{\yquant@prefix draw}{%
                    ##1%
                    \gdef\beamer@endpause{##2}%
                 }%
-                #1%
+                \yquant@env@scan%
                }%
          }
          % This is \beamer@inframenote, but we are always in a frame if we an in yquant
          \newcommand<>{\yquant@env@beamer@note@}[2][]{%
             \beamer@inframenote##3[{##1}]{##2}%
-            #2%
+            \yquant@env@contscan%
          }
       }%
       \mode<article>{
          \newcommand<>\yquant@env@beamer@uncover@[1]{%
-            \beamer@alt##2{#1##1}{#1}%
+            \beamer@alt##2{\yquant@env@scan##1}{\yquant@env@scan}%
          }
          % we don't need \yquant@env@beamer@visible@ in this mode, since \uncover and \visible are equal (w.r.t. \ifx), so we will always end up with the \uncover path
          \newcommand<>\yquant@env@beamer@invisible@[1]{%
-            \beamer@alt##2{#1}{#1##1}%
+            \beamer@alt##2{\yquant@env@scan}{\yquant@env@scan##1}%
          }
-         \newcommand<>{\yquant@env@beamer@note@}[2][]{#2}
-         \newrobustcmd\yquant@env@beamer@pause@[1][]{#1}
+         \newcommand<>{\yquant@env@beamer@note@}[2][]{\yquant@env@contscan}
+         \newrobustcmd\yquant@env@beamer@pause@[1][]{\yquant@env@scan}
       }
       \protected\def\yquant@env@beamer@onslide@{%
-         \@ifstar{#1\only}%
+         \@ifstar{\yquant@env@scan\only}%
                  {\@ifnextchar+{\expandafter\yquant@env@beamer@visibleonslide\@gobble}%
                                {\yquant@env@beamer@mainonslide}%
                  }%
