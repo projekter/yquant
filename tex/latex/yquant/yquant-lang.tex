@@ -393,6 +393,16 @@
    }
 \yquant@langhelper@setup@attrs{box}{value}{}
 
+\yquant@langhelper@declare@command%
+   {text}%
+   \yquant@register@get@allowmultitrue%
+   {%
+      \expandafter\yquant@prepare%
+         \expandafter{\yquant@lang@attr@value}%
+         {/yquant/operators/every text}%
+   }
+\yquant@langhelper@setup@attrs{text}{value}{}
+
 % Hadamard
 \yquantdefinebox{h}{$H$}
 
