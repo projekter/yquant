@@ -192,8 +192,7 @@
       \@tempdima=\pgf@x%
       \@tempdimb=\pgf@y%
       \pgfpointborderellipse{\pgfqpoint{\@tempdima}{\@tempdimb}}%
-                            {\pgfqpoint{.707107\dimexpr\xradius\relax}%
-                                       {.707107\dimexpr\yradius\relax}}%
+                            {\pgfqpoint{\xradius}{\yradius}}%
    }%
    \backgroundpath{%
       \pgfpathellipse{\pgfpointorigin}%
