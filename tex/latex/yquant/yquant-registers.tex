@@ -216,8 +216,8 @@
 }
 \endgroup
 
-\protected\def\yquant@register@get@ids@@index{}
-\protected\def\yquant@register@get@ids@@multi{}
+\let\yquant@register@get@ids@@index=\yquant@protectedempty
+\let\yquant@register@get@ids@@multi=\yquant@protectedempty
 
 \def\yquant@register@get@ids@outerlist#1{%
    \ifyquant@firsttoken\yquant@register@get@ids@@multi{#1}{%
@@ -557,8 +557,8 @@
    \yquant@register@get@id#1{\trim@spaces{#2}[\trim@spaces{\trim@spaces#3}]}%
 }
 
-\let\yquant@register@multi=\empty%
-\protected\def\yquant@register@multi@contiguous{}%
+\let\yquant@register@multi=\empty
+\let\yquant@register@multi@contiguous=\yquant@protectedempty
 
 % splits \yquant@register@get@ids@list into a list of contiguous parts
 \protected\def\yquant@register@multi@splitparts{%
@@ -738,7 +738,7 @@
 }
 
 % This plays a similar role: It must never be expanded before the tikz command is invoked (because it does not exist).
-\protected\def\nodepart{}
+\let\nodepart=\yquant@protectedempty
 
 \def\yquant@register@get@y@unprotected#1{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%

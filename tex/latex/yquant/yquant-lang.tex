@@ -298,7 +298,7 @@
       % usually, we will not be in a tikzpicture here, so all the commands that abbreviate some path operation are undefined!
       \tikz@installcommands%
       % While we want the content to be expanded, protect the most likely TikZ commands - the same ones that we usually substitute in \yquant@env@substikz.
-      \protected\def\path{}%
+      \let\path=\yquant@protectedempty%
       \let\scoped=\path%
       \let\scope=\path%
       \let\endscope=\path%

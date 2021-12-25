@@ -529,6 +529,21 @@
    \pgftransformreset%
 }
 
+\protected\def\yquant@env@protectidx{%
+   \ifundef\idx{%
+      \let\idx=\yquant@protectedempty%
+   }\relax%
+   \ifundef\reg{%
+      \let\reg=\yquant@protectedempty%
+   }\relax%
+   \ifundef\regidx{%
+      \let\regidx=\yquant@protectedempty%
+   }\relax%
+   \ifundef\len{%
+      \let\len=\yquant@protectedempty%
+   }\relax%
+}
+
 \let\yquant@env@substitutions=\empty
 \def\yquant@env@substitute{%
    \forlistloop\@firstofone\yquant@env@substitutions%
@@ -560,18 +575,24 @@
    \ifdefined\tikz@scope@opt%
       \let\yquant@env@substikz@scope=\tikz@scope@opt%
       \def\tikz@scope@opt[##1]{%
-         \protected@csxappto{\yquant@prefix draw}{%
-            \noexpand\tikz@scope@env[{##1}]%
-         }%
+         \begingroup%
+            \yquant@env@protectidx% scope options may contain \idx, \reg, and \regidx
+            \protected@csxappto{\yquant@prefix draw}{%
+               \noexpand\tikz@scope@env[{##1}]%
+            }%
+         \endgroup%
          \yquant@env@substikz@scope[{##1}]%
       }%
    \else%
       % this is for the arXiv, which has a very outdated version of TikZ
       \let\yquant@env@substikz@scope=\tikz@@scope@env%
       \def\tikz@@scope@env[##1]{%
-         \protected@csxappto{\yquant@prefix draw}{%
-            \noexpand\tikz@@scope@env[{##1}]%
-         }%
+         \begingroup%
+            \yquant@env@protectidx% scope options may contain \idx, \reg, and \regidx
+            \protected@csxappto{\yquant@prefix draw}{%
+               \noexpand\tikz@@scope@env[{##1}]%
+            }%
+         \endgroup%
          \yquant@env@substikz@scope[{##1}]%
       }%
    \fi%
@@ -586,9 +607,12 @@
    \let\stopscope=\endscope%
    % We define \yquantset as a pgfkeys-like macro. Anything else would deteriorate performance badly, as \pgfkeys, \pgfqkeys, or \tikzset are used a lot internally.
    \protected\def\yquantset##1{%
-      \protected@csxappto{\yquant@prefix draw}{%
-         \noexpand\pgfqkeys{/yquant}{##1}%
-      }%
+      \begingroup%
+         \yquant@env@protectidx% yquant options may contain \idx, \reg, and \regidx
+         \protected@csxappto{\yquant@prefix draw}{%
+            \noexpand\pgfqkeys{/yquant}{##1}%
+         }%
+      \endgroup%
       \pgfqkeys{/yquant}{##1}%
       \yquant@env@scan%
    }%

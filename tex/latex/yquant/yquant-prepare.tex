@@ -293,7 +293,7 @@
 }
 \protected\long\def\yquant@prepare@finalize#1#2{%
    % We now know the dimensions of all the registers (though we didn't bother with the height of the control knobs [if present], we just assume they are too small to change this).
-   \protected\def\idx{}%#
+   \let\idx=\yquant@protectedempty%
    \yquant@prepare@ifs@set%
    \let\yquant@prepare@append=\empty%
    \yquant@sort\yquant@prepare@sort%
