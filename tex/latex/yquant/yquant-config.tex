@@ -43,7 +43,9 @@
 % BEGIN_FOLD Register creation
 \pgfqkeys{/yquant}{%
    register/default name/.store in=%
-      \yquant@config@register@default@name%
+      \yquant@config@register@default@name,%
+   register/default lazy name/.store in=%
+      \yquant@config@register@default@lazyname%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
@@ -290,6 +292,7 @@
 % END_FOLD
 
 \def\yquant@config@register@default@name{\regidx}
+\let\yquant@config@register@default@lazyname=\empty
 \def\yquant@config@register@minimum@height{1.5mm}
 \def\yquant@config@register@minimum@depth{1.5mm}
 \def\yquant@config@register@sep{1mm}

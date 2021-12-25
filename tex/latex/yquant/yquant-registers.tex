@@ -166,9 +166,56 @@
       \else%
          \def\idx{0}%
       \fi%
-      % pre-set y position
-      \yquant@for \idx := \idx to \numexpr \len -1\relax {%
-         \yquant@prepare@create\reg\idx\yquant@register@type@q%
+      % define text macros
+      \ifnum\len=1 %
+         \let\regidx=\reg%
+      \else%
+         \def\regidx{\reg[\idx]}%
+      \fi%
+      \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
+      \begingroup%
+         \yquant@for \idx := \idx to \numexpr \len -1\relax {%
+            \yquant@prepare@create\reg\idx\yquant@register@type@q%
+         }%
+      \endgroup%
+      \ifx\yquant@config@register@default@lazyname\empty%
+         \expandafter\@gobble%
+      \else%
+         \expandafter\@firstofone%
+      \fi%
+      {%
+         \let\yquant@lang@attr@value=\yquant@config@register@default@lazyname%
+         % gather details about the created registers
+         \letcs\yquant@circuit@operator@maxtarget{\yquant@prefix registers}%
+         \numdef\yquant@circuit@operator@numtarget{\yquant@circuit@operator@maxtarget-\yquant@circuit@operator@mintarget+1}%
+         \edef\yquant@circuit@operator@targets{%
+            \yquant@list@range%
+               \yquant@circuit@operator@mintarget%
+               \yquant@circuit@operator@maxtarget%
+         }%
+         \let\yquant@circuit@operator@pctrls=\empty%
+         \def\yquant@circuit@operator@minpctrl{2147483647}%
+         \def\yquant@circuit@operator@maxpctrl{0}%
+         \let\yquant@circuit@operator@numpctrl=\yquant@circuit@operator@maxpctrl%
+         \let\yquant@circuit@operator@nctrls=\empty%
+         \let\yquant@circuit@operator@minnctrl=\yquant@circuit@operator@minpctrl%
+         \let\yquant@circuit@operator@maxnctrl=\yquant@circuit@operator@maxpctrl%
+         \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
+         \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
+         \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+         % there are no multi inits in this context
+         \preto\yquant@attrs@remaining{internal/move label,}%
+         \def\yquant@config@operator@minimum@width{0pt}%
+         \unless\ifx\yquant@lang@attr@value\empty%
+            % make sure to immediately remove the "clear" marker again if we have a text
+            \yquant@for \i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
+               \yquant@register@execclear@lastgate{\i}{init}%
+            }%
+         \fi%
+         \expandafter\yquant@prepare%
+            \expandafter{\yquant@lang@attr@value}%
+            {/yquant/every label, /yquant/every initial label,%
+             /yquant/every qubit label}%
       }%
    \endgroup%
 }
