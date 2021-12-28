@@ -5,9 +5,24 @@ yquant is a LaTeX package that allows to quickly draw quantum circuits. It bridg
 yquant is a pure-LaTeX solution - i.e., it requires no external program - that introduces a logic oriented language and thus brings the best of both worlds together.
 It builds on and interacts with TiKZ, which brings an enourmous flexibility for customization of individual circuit.
 
+Important features in the latest updates (for a much more complete list, see the documentation):
+- Support the `beamer` package (since 0.6)
+- New `text` gate, which replaces the common `[draw=none] box` situation (since 0.6)
+- Integration of all qpic examples in the manual, showcasing some very advanced circuits (since 0.6)
+- Simple interface for circuit equations, no more `subcircuit` hassling (since 0.5)
+- Measurement outputs can now directly control other gates, i.e., with a vertical classical line emanating from the measurement (since 0.4)
+- Automatically adjust vertical positions of wires also for multi-register gates (since 0.4-alpha)
+- Vertical alignment actually works for subcircuits (since 0.4-alpha)
+- Directly support circuits written in the `qasm` language (since 0.3)
+- Simple declaration of custom gates (since 0.2.1)
+- Support for subcircuits, though vertical alignment may be messed up (since 0.2)
+- Load circuits from files (since 0.2)
+- Native support for non-contiguous multi-qubit gates (since 0.1.2)
+- Extensive user-friendly support for register name ranges, lists (since 0.1.1)
+
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
-Now yquant also understands circuits written in the qasm language and provides a simple interface for circuit equations!
+The arXiv runs on version 0.3.2 - please download the latest version from the releases section and include it in your submission.
 
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
