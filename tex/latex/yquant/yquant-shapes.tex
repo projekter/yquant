@@ -201,8 +201,8 @@
    }%
    \clippath{%
       \pgfpathellipse{\pgfpointorigin}%
-                     {\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth}{0pt}}%
-                     {\pgfqpoint{0pt}{\dimexpr\yradius+.5\pgflinewidth}}%
+                     {\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth\relax}{0pt}}%
+                     {\pgfqpoint{0pt}{\dimexpr\yradius+.5\pgflinewidth\relax}}%
    }%
 }
 
