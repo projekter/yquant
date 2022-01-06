@@ -85,7 +85,7 @@
          \expandafter\noexpand\csname\yquant@prefix seamless\endcsname%
          \expandafter\noexpand\csname\yquant@prefix cleanup\endcsname%
       }%
-      \scope[{/yquant/.cd, #2, /tikz/.cd, /yquant/every circuit}]%
+      \scope[{/yquant/.cd, #2, /tikz/.cd, /yquant/every circuit, /yquant/internal/setup done}]%
 }
 
 \protected\def\yquant@env@end{%
@@ -175,7 +175,7 @@
       \yquant@env@end@calcypositions@run1%
       \yquant@env@end@calcypositions@godeepfalse%
       \yquant@env@end@calcypositions@redo%
-%      % The macros now set up performed all the proper and unambiguous justification. After that, we will also need to take care of the multi gates. We expect that for most of all multi gates, we already have enough space. But sometimes, this may not be the case, so we need to increase overall spacing and re-evaluate all spacing. In order to get a proper balanced layout, we start with the largest enlargement that is required. Every enlargement step will equally distribute the registers in between. Starting with the largest one, this is likely to also solve issues with smaller ones.
+      % The macros now set up performed all the proper and unambiguous justification. After that, we will also need to take care of the multi gates. We expect that for most of all multi gates, we already have enough space. But sometimes, this may not be the case, so we need to increase overall spacing and re-evaluate all spacing. In order to get a proper balanced layout, we start with the largest enlargement that is required. Every enlargement step will equally distribute the registers in between. Starting with the largest one, this is likely to also solve issues with smaller ones.
       \yquant@env@end@calcypositions@multi%
       % Turn the preliminary positions into true ones at every level.
       \yquant@env@end@setypositions1%
@@ -477,16 +477,17 @@
    \ifyquantdebug%
       \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
          \ifcsname\yquant@prefix registermap@\i\endcsname%
-            \message{^^J y(#1, \i): external}%
+            \message{^^J \yquant@direction@y(#1, \i): external}%
          \else%
-            \message{^^J y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
-            \yquant@register@set@y\i{-\csname\yquant@prefix env@endy@\i\endcsname}%
+            \message{^^J \yquant@direction@y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
+            % do not use \yquant@direction@minus: this will lead to an explicit + in vertical mode, and the value of the register y position is directly used for TikZ coordinates. However, those are parsed using \pgfmathsetlength, which will skip pgf's parser if the value starts with an explicit +. We don't want this.
+            \yquant@register@set@y\i{\ifyquanthorz{-}{}\csname\yquant@prefix env@endy@\i\endcsname}%
          \fi%
       }%
    \else%
       \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
          \unless\ifcsname\yquant@prefix registermap@\i\endcsname%
-            \yquant@register@set@y\i{-\csname\yquant@prefix env@endy@\i\endcsname}%
+            \yquant@register@set@y\i{\ifyquanthorz{-}{}\csname\yquant@prefix env@endy@\i\endcsname}%
          \fi%
       }%
    \fi%

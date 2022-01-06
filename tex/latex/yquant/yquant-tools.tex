@@ -455,9 +455,10 @@
 }
 
 % #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \dimen0, which is translated to the user coordinate system.
+% If the circuit is currently vertical, we extract the minimum y position at the x position specified in #2.
 \protected\def\yquant@softpath@extractmaxxat#1#2{%
    \begingroup%
-      \dimen0=-16000pt %
+      \dimen0=\yquant@direction@minus16000pt %
       \dimen2=#2 %
       \pgftransforminvert%
       \let\pgfsyssoftpath@movetotoken=\yquant@softpath@extractmaxxat@moveto%
@@ -473,44 +474,45 @@
 }
 
 \protected\def\yquant@softpath@extractmaxxat@update#1{%
-   \ifdim\dimen0<#1 %
+   \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus#1 %
       \dimen0=#1 %
    \fi%
 }
 
 \protected\def\yquant@softpath@extractmaxxat@moveto#1#2{%
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \dimen4=\pgf@x %
-   \dimen6=\pgf@y %
+   \dimen4=\yquant@pgf@x %
+   \dimen6=\yquant@pgf@y %
 }
 
 \protected\def\yquant@softpath@extractmaxxat@lineto#1#2{%
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \ifyquant@OR{\ifdim\dimen4>\dimen0 }{\ifdim\pgf@x>\dimen0 }{%
+   \ifyquant@OR{\ifdim\yquant@direction@plus\dimen4>\yquant@direction@plus\dimen0 }%
+               {\ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\dimen0 }{%
       \ifdim\dimen6=\dimen2 %
          \yquant@softpath@extractmaxxat@update{\dimen4}%
       \else%
          \ifdim\dimen6<\dimen2 %
-            \unless\ifdim\pgf@y<\dimen2 %
+            \unless\ifdim\yquant@pgf@y<\dimen2 %
                \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
                   \dimen4+% x0
-                  \dimexpr\pgf@x-\dimen4\relax*% (x1-x0)
-                  \dimexpr\dimen2-\dimen6\relax/\dimexpr\pgf@y-\dimen6\relax% (y-y0)/(y1-y0)
+                  \dimexpr\yquant@pgf@x-\dimen4\relax*% (x1-x0)
+                  \dimexpr\dimen2-\dimen6\relax/\dimexpr\yquant@pgf@y-\dimen6\relax% (y-y0)/(y1-y0)
                \relax}%
             \fi%
          \else%
-            \unless\ifdim\pgf@y>\dimen2 %
+            \unless\ifdim\yquant@pgf@y>\dimen2 %
                \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
                   \dimen4+% x0
-                  \dimexpr\pgf@x-\dimen4\relax*% (x1-x0)
-                  \dimexpr\dimen2-\dimen6\relax/\dimexpr\pgf@y-\dimen6\relax% (y-y0)/(y1-y0)
+                  \dimexpr\yquant@pgf@x-\dimen4\relax*% (x1-x0)
+                  \dimexpr\dimen2-\dimen6\relax/\dimexpr\yquant@pgf@y-\dimen6\relax% (y-y0)/(y1-y0)
                \relax}%
             \fi%
          \fi%
       \fi%
    }\relax%
-   \dimen4=\pgf@x%
-   \dimen6=\pgf@y%
+   \dimen4=\yquant@pgf@x%
+   \dimen6=\yquant@pgf@y%
 }
 
 \protected\def\yquant@softpath@extractmaxxat@curveto@checkx{%
@@ -542,18 +544,18 @@
    % Likewise for y:
    %       y0 = \dimen6 (the moveto point), ya = #2, yb = #4, y1 = #6.
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \pgf@xa=\pgf@x%
-   \pgf@ya=\pgf@y%
+   \pgf@xa=\yquant@pgf@x%
+   \pgf@ya=\yquant@pgf@y%
    \pgfpointtransformed{\pgfqpoint{#3}{#4}}%
-   \pgf@xb=\pgf@x%
-   \pgf@yb=\pgf@y%
+   \pgf@xb=\yquant@pgf@x%
+   \pgf@yb=\yquant@pgf@y%
    \pgfpointtransformed{\pgfqpoint{#5}{#6}}%
-   \pgf@xc=\pgf@x%
-   \pgf@yc=\pgf@y%
+   \pgf@xc=\yquant@pgf@x%
+   \pgf@yc=\yquant@pgf@y%
    % We first solve the third-order polynomial for t using the y value, then plug it back into the x value.
    % TODO: this is accurate to approx. 3 digits. Can this be improved by reformulating Cardanos formula to involve less divisions?
    \begingroup%
-      % We need so may dimensions that we break with TeX's convention for their use.
+      % We need so many dimensions that we break with TeX's convention for their use.
       % for the multiplications with and divisions by dimensions, we exploit that eTeX fuses muldiv to 64 bits. Further note that each dimension has a scaling factor of 65535 for sp<->pt conversion. This is why don't factor out divisions (which would be more efficient, but not give the benefit of 64bit accuracy).
       % a = 3(ya - yb) + (y1 - y0)
       \dimen1=\dimexpr3\pgf@ya-3\pgf@yb+\pgf@yc-\dimen6\relax%
@@ -676,15 +678,15 @@
 \protected\def\yquant@softpath@extractmaxxat@rectto#1#2\pgfsyssoftpath@rectsizetoken#3#4{%
    % #1: lower left x, #2: lower left y, #3: width, #4: height
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \pgf@xa=\pgf@x%
-   \pgf@ya=\pgf@y%
+   \pgf@xa=\yquant@pgf@x%
+   \pgf@ya=\yquant@pgf@y%
    \pgfpointtransformed{\pgfqpoint{\dimexpr#1+#3\relax}{\dimexpr#2+#4\relax}}%
    % (\pgf@xa, \pgf@ya) one corner, (\pgf@x, \pgf@y) other corner
-   \ifdim\pgf@y>\pgf@ya %
+   \ifdim\yquant@pgf@y>\pgf@ya %
       \unless\ifdim\pgf@ya>\dimen2 %
-         \unless\ifdim\pgf@y<\dimen2 %
-            \ifdim\pgf@x>\pgf@xa %
-               \yquant@softpath@extractmaxxat@update\pgf@x%
+         \unless\ifdim\yquant@pgf@y<\dimen2 %
+            \ifdim\yquant@pgf@x>\pgf@xa %
+               \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%
             \fi%
@@ -692,9 +694,9 @@
       \fi%
    \else%
       \unless\ifdim\pgf@ya<\dimen2 %
-         \unless\ifdim\pgf@y>\dimen2 %
-            \ifdim\pgf@x>\pgf@xa %
-               \yquant@softpath@extractmaxxat@update\pgf@x%
+         \unless\ifdim\yquant@pgf@y>\dimen2 %
+            \ifdim\yquant@pgf@x>\pgf@xa %
+               \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%
             \fi%

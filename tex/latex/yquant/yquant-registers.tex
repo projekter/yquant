@@ -882,13 +882,13 @@
    \def#9{#4}%
 }%
 
-% Set #1 to the maximum x value found between #2 and #3
+% Set #1 to the maximum x (vertical: minimum y) value found between #2 and #3
 \protected\def\yquant@register@get@maxxrange#1#2#3{%
    \begingroup%
-      \dimen0=-16383.99999pt %
+      \dimen0=\yquant@direction@minus16383.99999pt %
       \yquant@for \yquant@register@get@maxx@i := #2 to #3 {%
          \dimen2=\yquant@register@get@x{\yquant@register@get@maxx@i}\relax%
-         \ifdim\dimen0<\dimen2 %
+         \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus\dimen2 %
             \dimen0=\dimen2 %
          \fi%
       }%
@@ -897,13 +897,13 @@
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
 }
 
-% Set #1 to the maximum x value found in the list #2
+% Set #1 to the maximum x (vertical: minimum y) value found in the list #2
 \protected\def\yquant@register@get@maxxlist#1#2{%
    \begingroup%
-      \dimen0=-16383.99999pt %
+      \dimen0=\yquant@direction@minus16383.99999pt %
       \def\do##1{%
          \dimen2=\yquant@register@get@x{##1}\relax%
-         \ifdim\dimen0<\dimen2 %
+         \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus\dimen2 %
             \dimen0=\dimen2 %
          \fi%
       }%

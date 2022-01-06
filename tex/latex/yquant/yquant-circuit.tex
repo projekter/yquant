@@ -6,9 +6,9 @@
          \edef\wirexpos{\the\dimen0}%
       \else%
          \pgfpointanchor{yquantbox}{#2}%
-         \edef\wirexpos{\the\pgf@x}%
+         \edef\wirexpos{\the\yquant@pgf@x}%
       \fi%
-      \ifdim\wirexpos>0pt % may be negative for init gates
+      \ifdim\yquant@direction@plus\wirexpos>0pt % may be negative for init gates
          \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
          \ifnum\wiretype=\yquant@register@type@none%
@@ -41,10 +41,14 @@
    % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
    \ifyquant@env@seamless{%
       \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
-         \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\yquant@config@operator@sep}%
+         \dimdef\yquant@circuit@endwires@x{%
+            \yquant@circuit@endwires@x\yquant@direction@plus\yquant@config@operator@sep%
+         }%
       \fi%
    }{%
-      \dimdef\yquant@circuit@endwires@x{\yquant@circuit@endwires@x+\yquant@config@operator@sep}%
+      \dimdef\yquant@circuit@endwires@x{%
+         \yquant@circuit@endwires@x\yquant@direction@plus\yquant@config@operator@sep%
+      }%
    }%
    \let\yquant@circuit@endwires@finalize=\relax%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
@@ -52,9 +56,9 @@
       \ifcsname\yquant@prefix registermap@\yquant@circuit@endwires@i\endcsname%
          \xifinlistcs\yquant@circuit@endwires@i{\yquant@prefix inonly}{%
             % however, the wire is to be discarded after this circuit
-            \edef\storedleft{\the\pgf@picminx}%
+            \edef\storedleft{\the\yquant@pgf@picminx}%
             \yquant@draw@wire\yquant@circuit@endwires@i1%
-            \global\pgf@picminx=\storedleft%
+            \global\yquant@pgf@picminx=\storedleft%
             \eappto\yquant@circuit@endwires@finalize{%
                \yquant@register@set@type%
                   \yquant@circuit@endwires@i\noexpand\yquant@register@type@none%
@@ -100,7 +104,7 @@
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- (#2,\the\pgf@y)%
+            -- \yquant@coords(#2,\the\yquant@pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
@@ -110,9 +114,9 @@
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\dimexpr#2-2\@tempdima\relax,\the\pgf@y)%
+            -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
             \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\dimexpr#2+2\@tempdima\relax,\the\pgf@y)%
+            -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
@@ -122,11 +126,11 @@
       \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
          \eappto\yquant@circuit@extendcontrolline@cmd{%
             \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\dimexpr#2-2\@tempdima\relax,\the\pgf@y)%
+            -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
             \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\dimexpr#2\relax,\the\pgf@y)%
+            -- \yquant@coords(\the\dimexpr#2\relax,\the\yquant@pgf@y)%
             \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- (\the\dimexpr#2+2\@tempdima\relax,\the\pgf@y)%
+            -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
          }%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
@@ -138,9 +142,9 @@
 
 \protected\def\yquant@circuit@extendcontrolline@store#1{%
    \edef\yquant@circuit@extendcontrolline@prev{%
-      {(\the\dimexpr#1-2\@tempdima\relax,\the\pgf@y)}%
-      {(\the\dimexpr#1\relax,\the\pgf@y)}%
-      {(\the\dimexpr#1+2\@tempdima\relax,\the\pgf@y)}%
+      {\yquant@coords(\the\dimexpr#1-2\@tempdima\relax,\the\yquant@pgf@y)}%
+      {\yquant@coords(\the\dimexpr#1\relax,\the\yquant@pgf@y)}%
+      {\yquant@coords(\the\dimexpr#1+2\@tempdima\relax,\the\yquant@pgf@y)}%
    }%
 }
 
@@ -157,11 +161,11 @@
    \pgfpointanchor{yquantbox}{center}%
    \unless\ifx\yquant@circuit@extendmultiline@prev\relax%
       \eappto\yquant@circuit@extendmultiline@cmd{%
-         \yquant@circuit@extendmultiline@prev -- (#1,\the\pgf@y)%
+         \yquant@circuit@extendmultiline@prev -- \yquant@coords(#1,\the\yquant@pgf@y)%
       }%
    \fi%
    \edef\yquant@circuit@extendmultiline@prev{%
-      (\the\dimexpr#1\relax,\the\pgf@y)%
+      \yquant@coords(\the\dimexpr#1\relax,\the\yquant@pgf@y)%
    }%
 }
 % END_FOLD
