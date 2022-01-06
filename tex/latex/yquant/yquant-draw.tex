@@ -904,9 +904,11 @@
                      \fi%
                      \pgf@relevantforpicturesizefalse%
                         \pgfpathrectanglecorners%
-                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos-2\pgflinewidth\relax}%
+                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@direction@minus%
+                                                      2\pgflinewidth\relax}%
                                              {\@tempdima}}%
-                           {\yquant@pgfqpoint{\dimexpr\wirexpos+2\pgflinewidth\relax}%
+                           {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@direction@plus%
+                                                      2\pgflinewidth\relax}%
                                              {\@tempdimb}}%
                      \pgf@relevantforpicturesizetrue%
                      \pgfseteorule% even-odd to properly invert the clipping

@@ -566,7 +566,7 @@
 
 \protected\def\yquant@prepare@subcircuit@getmaxx#1{%
    \begingroup%
-      \dimen0=-16383.99999pt %
+      \dimen0=\yquant@direction@minus16383.99999pt %
       \def\do##1{%
          \ifcsname\yquant@prefix xpos@##1\endcsname%
             \dimen2=\csname\yquant@prefix xpos@##1\endcsname\relax%
@@ -598,9 +598,15 @@
       \yquant@set{#3}%
       \let\next=\endgroup%
       \ifyquant@config@operator@position@rightalign%
-         \ifdim#1>-\yquant@pgf@picminx%
-            \global\yquant@pgf@picminx=-\dimexpr#1\relax%
-         \fi%
+         \ifyquanthorz{%
+            \ifdim#1>-\pgf@picminx%
+               \global\pgf@picminx=-\dimexpr#1\relax%
+            \fi%
+         }{%
+            \ifdim#1>\pgf@picmaxy%
+               \global\pgf@picmaxy=#1 %
+            \fi%
+         }%
       \else%
          \ifyquant@env@seamless{%
             \ifdim\newx=0pt %
@@ -661,7 +667,7 @@
       \fi%
    }{%
       \ifdim\newx<\pgf@picminy%
-         \global\pgf@picminy=\new%
+         \global\pgf@picminy=\newx %
       \fi%
    }%
 }
@@ -679,7 +685,7 @@
    \else%
       % if we have outputs, those will be realized as additional drawing groups following this macro, so increasing the picture at this point is rather pointless. Instead, we adjust the wire positions appropriately. The additional separation will be inserted by the outputs.
       \begingroup%
-         \dimen0=-16383.99999pt %
+         \dimen0=\yquant@direction@minus16383.99999pt %
          \yquant@fordown \i := \csname\yquant@prefix registers\endcsname downto 1 {%
             \ifcsname\yquant@prefix xpos@\i\endcsname%
                \dimen2=\csname\yquant@prefix xpos@\i\endcsname\relax%
@@ -780,20 +786,21 @@
                }{%
                   \ifdim\pgf@picmaxy>0pt %
                      \global\advance\pgf@picminy by -\yquant@config@operator@sep\relax%
+                  \fi%
                }%
             }\relax%
             \ifyquanthorz{%
                \global\wd\yquant@prepare@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
             }{%
                \global\ht\yquant@prepare@subcircuit@box=\pgf@picmaxy%
-               \global\dp\yquant@prepare@subcircuit@box=\pgf@picminy%
+               \global\dp\yquant@prepare@subcircuit@box=-\pgf@picminy%
             }%
          \endgroup%
          \edef\yquant@prepare@subcircuit@width{%
             {\ifyquanthorz{\the\wd\yquant@prepare@subcircuit@box}% inner width
                           {\the\dimexpr\ht\yquant@prepare@subcircuit@box+\dp\yquant@prepare@subcircuit@box\relax}}%
             {\noexpand\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax}% outer width
-            {\ifyquanthorz{\the\pgf@picminx}{\the\pgf@picmaxy}}% left margin
+            {\ifyquanthorz{\the\pgf@picminx}{-\the\pgf@picmaxy}}% left margin
          }%
          \pgfresetboundingbox%
          \path%
