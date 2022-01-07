@@ -597,13 +597,29 @@
    }%
 }
 
+% The line shape is aware of the circuit direction (it always extends in space dimension with constant time)
 \pgfdeclareshape{yquant-line}{%
    \saveddimen\xradius{%
       % we only need this for the border anchor; the value is automatically correct in the paths.
-      \pgf@x=.5\pgflinewidth%
+      \ifyquanthorz{%
+         \pgf@x=.5\pgflinewidth%
+      }{%
+         \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}+.5*\yquant@config@register@sep}%
+      }%
    }%
    \saveddimen\yradius{%
-      \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}+.5*\yquant@config@register@sep}%
+      \ifyquanthorz{%
+         \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/y radius}+.5*\yquant@config@register@sep}%
+      }{%
+         \pgf@x=.5\pgflinewidth%
+      }%
+   }%
+   \savedmacro\ifhorz{%
+      \ifyquanthorz{%
+         \def\ifhorz{\noexpand\@firstoftwo}%
+      }{%
+         \def\ifhorz{\noexpand\@secondoftwo}%
+      }%
    }%
    \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
@@ -611,19 +627,36 @@
    \inheritanchorborder[from=yquant-rectangle]%
    \backgroundpath{%
       % manually shorten for the bounding box
-      \pgf@xa=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
-      \pgf@ya=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
-      \pgf@shorten@end@additional=0pt %
-      \pgf@shorten@start@additional=0pt %
-      \pgfpathmoveto{\pgfqpoint{0pt}{\pgf@xa}}%
-      \pgfpathlineto{\pgfqpoint{0pt}{-\pgf@ya}}%
+      \ifhorz{%
+         \pgf@xa=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
+         \pgf@ya=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
+         \pgf@shorten@end@additional=0pt %
+         \pgf@shorten@start@additional=0pt %
+         \pgfpathmoveto{\pgfqpoint{0pt}{\pgf@xa}}%
+         \pgfpathlineto{\pgfqpoint{0pt}{-\pgf@ya}}%
+      }{%
+         \pgf@xa=\dimexpr\xradius-\pgf@shorten@end@additional\relax%
+         \pgf@ya=\dimexpr\xradius-\pgf@shorten@start@additional\relax%
+         \pgf@shorten@end@additional=0pt %
+         \pgf@shorten@start@additional=0pt %
+         \pgfpathmoveto{\pgfqpoint{\pgf@xa}{0pt}}%
+         \pgfpathlineto{\pgfqpoint{-\pgf@ya}{0pt}}%
+      }%
    }%
    \clippath{%
-      \@tempdima=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
-      \@tempdimb=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
-      \pgfpathrectanglecorners%
-         {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
-         {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
+      \ifhorz{%
+         \@tempdima=\dimexpr\yradius-\pgf@shorten@end@additional\relax%
+         \@tempdimb=\dimexpr\yradius-\pgf@shorten@start@additional\relax%
+         \pgfpathrectanglecorners%
+            {\pgfqpoint{-.5\pgflinewidth}{\@tempdima}}%
+            {\pgfqpoint{.5\pgflinewidth}{-\@tempdimb}}%
+      }{%
+         \@tempdima=\dimexpr\xradius-\pgf@shorten@end@additional\relax%
+         \@tempdimb=\dimexpr\xradius-\pgf@shorten@start@additional\relax%
+         \pgfpathrectanglecorners%
+            {\pgfqpoint{\@tempdima}{-.5\pgflinewidth}}%
+            {\pgfqpoint{-\@tempdimb}{.5\pgflinewidth}}%
+      }%
    }%
 }
 
