@@ -228,8 +228,9 @@
       {shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw},
    % every h is implicitly defined during gate declaration
    operators/every inspect/.style=%
-      {shape=yquant-output, align=left, outer timesep=.3333em, space radius=2.47mm,%
-       /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}},%
+      {shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center},
+       outer timesep/.expanded=.3333em, space radius=2.47mm,%
+       /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}},%
    operators/every measure/.style=%
       {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
    operators/every measure meter/.style=%
