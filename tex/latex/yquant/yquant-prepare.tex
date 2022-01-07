@@ -566,11 +566,11 @@
 
 \protected\def\yquant@prepare@subcircuit@getmaxx#1{%
    \begingroup%
-      \dimen0=\yquant@direction@minus16383.99999pt %
+      \dimen0=\yquant@orientation@minus16383.99999pt %
       \def\do##1{%
          \ifcsname\yquant@prefix xpos@##1\endcsname%
             \dimen2=\csname\yquant@prefix xpos@##1\endcsname\relax%
-            \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus\dimen2 %
+            \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
                \dimen0=\dimen2 %
             \fi%
          \else%
@@ -611,16 +611,16 @@
          \ifyquant@env@seamless{%
             \ifdim\newx=0pt %
                \dimdef\newx{%
-                  \newx\yquant@direction@plus#1%
+                  \newx\yquant@orientation@plus#1%
                }%
             \else%
                \dimdef\newx{%
-                  \newx\yquant@direction@plus\yquant@config@operator@sep\yquant@direction@plus#1%
+                  \newx\yquant@orientation@plus\yquant@config@operator@sep\yquant@orientation@plus#1%
                }%
             \fi%
          }{%
             \dimdef\newx{%
-               \newx\yquant@direction@plus\yquant@config@operator@sep\yquant@direction@plus#1%
+               \newx\yquant@orientation@plus\yquant@config@operator@sep\yquant@orientation@plus#1%
             }%
          }%
          \ifyquanthorz{%
@@ -659,7 +659,7 @@
 
 \protected\def\yquant@prepare@subcircuit@hspace#1#2{%
    \yquant@prepare@subcircuit@getmaxx{#1}%
-   \dimdef\newx{\newx\yquant@direction@plus#2}%
+   \dimdef\newx{\newx\yquant@orientation@plus#2}%
    \forlistloop\yquant@prepare@subcircuit@move@loop{#1}%
    \ifyquanthorz{%
       \ifdim\newx>\pgf@picmaxx %
@@ -685,11 +685,11 @@
    \else%
       % if we have outputs, those will be realized as additional drawing groups following this macro, so increasing the picture at this point is rather pointless. Instead, we adjust the wire positions appropriately. The additional separation will be inserted by the outputs.
       \begingroup%
-         \dimen0=\yquant@direction@minus16383.99999pt %
+         \dimen0=\yquant@orientation@minus16383.99999pt %
          \yquant@fordown \i := \csname\yquant@prefix registers\endcsname downto 1 {%
             \ifcsname\yquant@prefix xpos@\i\endcsname%
                \dimen2=\csname\yquant@prefix xpos@\i\endcsname\relax%
-               \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus\dimen2 %
+               \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
                   \dimen0=\dimen2 %
                \fi%
             \else%

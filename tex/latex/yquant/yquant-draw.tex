@@ -62,19 +62,19 @@
          \ifyquant@env@seamless{%
             \unless\ifdim\yquant@draw@@x=\yquant@draw@subcircuit@leftpos%
                \dimdef\yquant@draw@@x{%
-                  \yquant@draw@@x\yquant@direction@plus\yquant@config@operator@sep%
+                  \yquant@draw@@x\yquant@orientation@plus\yquant@config@operator@sep%
                }%
             \fi%
          }{%
             \dimdef\yquant@draw@@x{%
-               \yquant@draw@@x\yquant@direction@plus\yquant@config@operator@sep%
+               \yquant@draw@@x\yquant@orientation@plus\yquant@config@operator@sep%
             }%
          }%
          \ifyquant@config@operator@position@advance%
-            \dimdef\newx{\yquant@draw@@x\yquant@direction@plus#1}%
+            \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus#1}%
             \forlistloop\yquant@draw@group@advance{#6}%
          \fi%
-         \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@direction@plus.5\dimexpr#1\relax}%
+         \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr#1\relax}%
       \fi%
 }
 
@@ -245,7 +245,7 @@
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               /yquant/internal/multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
               space radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
-                     .5*\noexpand\pgfkeysvalueof{/tikz/\yquant@direction@y\space radius}\fi,%
+                     .5*\noexpand\pgfkeysvalueof{/tikz/\yquant@orientation@y\space radius}\fi,%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \pgfshapeclippath{yquantbox}%
@@ -271,7 +271,7 @@
 
 \protected\def\yquant@draw@multiinit#1#2#3#4#5{%
    \let\idx=\yquant@draw@@idx@content%
-   \@tempdima=\yquant@direction@minus.5\dimexpr\yquant@config@register@sep\relax%
+   \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
    \dimdef\yquant@draw@multiinit@@total{%
@@ -383,7 +383,7 @@
 
 \protected\long\def\yquant@draw@output@multi#1#2#3#4#5{%
    \let\idx=\yquant@draw@@idx@content%
-   \@tempdima=\yquant@direction@minus.5\dimexpr\yquant@config@register@sep\relax%
+   \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
    \dimdef\yquant@draw@multiinit@@total{%
@@ -457,7 +457,7 @@
       \let\pgf@path@size@hook=\pgfutil@empty%
       % now we must take care of extending all the wires appropriately until the beginning of the box. #4 contains width of this box, #5 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
       \dimdef\newx{%
-         \yquant@draw@@x\yquant@direction@minus%
+         \yquant@draw@@x\yquant@orientation@minus%
          .5\dimexpr\@secondofthree#4\relax%
       }%
       \dimen0=\newx%
@@ -466,8 +466,8 @@
       \forlistloop\yquant@draw@move@loop{#5}%
       % but the new positions are not at the beginning of the box, but inside (with possible margin)
       \dimdef\newx{%
-         \yquant@draw@@x\yquant@direction@minus%
-         .5\dimexpr\@firstofthree#4\relax\yquant@direction@minus%
+         \yquant@draw@@x\yquant@orientation@minus%
+         .5\dimexpr\@firstofthree#4\relax\yquant@orientation@minus%
          \@thirdofthree#4%
       }%
       \forlistloop\yquant@draw@group@advance{#5}%
@@ -624,7 +624,7 @@
       \fi%
    \endgroup%
    % Now that the subcircuit is finished, we need advance all the wires
-   \dimdef\newx{\yquant@draw@@x\yquant@direction@plus.5\dimexpr\yquant@draw@@width\relax}%
+   \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
    \forlistloop\yquant@draw@group@advance{#5}%
    % name mangling
    \ifcase\yquant@config@operator@subcircuit@mangling\relax%
@@ -850,7 +850,7 @@
          \else%
             \let\wirexpos=\yquant@circuit@endwires@x%
          \fi%
-         \ifdim\yquant@direction@plus\wirexpos>\yquant@direction@plus\wirexprevpos %
+         \ifdim\yquant@orientation@plus\wirexpos>\yquant@orientation@plus\wirexprevpos %
             \edef\wirestyle{\noexpand\tikzset{%
                /yquant/this wire/.style={%
                   /yquant/every wire,%
@@ -904,10 +904,10 @@
                      \fi%
                      \pgf@relevantforpicturesizefalse%
                         \pgfpathrectanglecorners%
-                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@direction@minus%
+                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@orientation@minus%
                                                       2\pgflinewidth\relax}%
                                              {\@tempdima}}%
-                           {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@direction@plus%
+                           {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@orientation@plus%
                                                       2\pgflinewidth\relax}%
                                              {\@tempdimb}}%
                      \pgf@relevantforpicturesizetrue%
@@ -961,7 +961,7 @@
 \protected\def\yquant@draw@hspace#1#2{%
    \begingroup%
       \yquant@register@get@maxxlist\newx{#1}%
-      \dimdef\newx{\newx\yquant@direction@plus#2}%
+      \dimdef\newx{\newx\yquant@orientation@plus#2}%
       \dimen0=\newx%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#1}%

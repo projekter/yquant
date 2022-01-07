@@ -477,10 +477,10 @@
    \ifyquantdebug%
       \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
          \ifcsname\yquant@prefix registermap@\i\endcsname%
-            \message{^^J \yquant@direction@y(#1, \i): external}%
+            \message{^^J \yquant@orientation@y(#1, \i): external}%
          \else%
-            \message{^^J \yquant@direction@y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
-            % do not use \yquant@direction@minus: this will lead to an explicit + in vertical mode, and the value of the register y position is directly used for TikZ coordinates. However, those are parsed using \pgfmathsetlength, which will skip pgf's parser if the value starts with an explicit +. We don't want this.
+            \message{^^J \yquant@orientation@y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
+            % do not use \yquant@orientation@minus: this will lead to an explicit + in vertical mode, and the value of the register y position is directly used for TikZ coordinates. However, those are parsed using \pgfmathsetlength, which will skip pgf's parser if the value starts with an explicit +. We don't want this.
             \yquant@register@set@y\i{\ifyquanthorz{-}{}\csname\yquant@prefix env@endy@\i\endcsname}%
          \fi%
       }%

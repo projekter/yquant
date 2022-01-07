@@ -458,7 +458,7 @@
 % If the circuit is currently vertical, we extract the minimum y position at the x position specified in #2.
 \protected\def\yquant@softpath@extractmaxxat#1#2{%
    \begingroup%
-      \dimen0=\yquant@direction@minus16000pt %
+      \dimen0=\yquant@orientation@minus16000pt %
       \dimen2=#2 %
       \pgftransforminvert%
       \let\pgfsyssoftpath@movetotoken=\yquant@softpath@extractmaxxat@moveto%
@@ -474,7 +474,7 @@
 }
 
 \protected\def\yquant@softpath@extractmaxxat@update#1{%
-   \ifdim\yquant@direction@plus\dimen0<\yquant@direction@plus#1 %
+   \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus#1 %
       \dimen0=#1 %
    \fi%
 }
@@ -487,8 +487,8 @@
 
 \protected\def\yquant@softpath@extractmaxxat@lineto#1#2{%
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \ifyquant@OR{\ifdim\yquant@direction@plus\dimen4>\yquant@direction@plus\dimen0 }%
-               {\ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\dimen0 }{%
+   \ifyquant@OR{\ifdim\yquant@orientation@plus\dimen4>\yquant@orientation@plus\dimen0 }%
+               {\ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\dimen0 }{%
       \ifdim\dimen6=\dimen2 %
          \yquant@softpath@extractmaxxat@update{\dimen4}%
       \else%
@@ -705,7 +705,7 @@
    \ifdim\yquant@pgf@y>\pgf@ya %
       \unless\ifdim\pgf@ya>\dimen2 %
          \unless\ifdim\yquant@pgf@y<\dimen2 %
-            \ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\pgf@xa %
+            \ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%
@@ -715,7 +715,7 @@
    \else%
       \unless\ifdim\pgf@ya<\dimen2 %
          \unless\ifdim\yquant@pgf@y>\dimen2 %
-            \ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\pgf@xa %
+            \ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%

@@ -460,7 +460,7 @@
    }%
 }
 
-% The dmeter shape is aware of the circuit direction
+% The dmeter shape is aware of the circuit orientation
 \pgfdeclareshape{yquant-dmeter}{%
    \saveddimen\xradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
@@ -597,7 +597,7 @@
    }%
 }
 
-% The line shape is aware of the circuit direction (it always extends in space dimension with constant time)
+% The line shape is aware of the circuit orientation (it always extends in space dimension with constant time)
 \pgfdeclareshape{yquant-line}{%
    \saveddimen\xradius{%
       % we only need this for the border anchor; the value is automatically correct in the paths.
@@ -811,7 +811,7 @@
 }
 % END_FOLD
 
-% The init and output shapes are tightly connected to quantum circuits, so they will depend on the current circuit direction!
+% The init and output shapes are tightly connected to quantum circuits, so they will depend on the current circuit orientation!
 \pgfdeclareshape{yquant-init}{%
    \saveddimen\xradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%

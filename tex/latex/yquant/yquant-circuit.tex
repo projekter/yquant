@@ -8,7 +8,7 @@
          \pgfpointanchor{yquantbox}{#2}%
          \edef\wirexpos{\the\yquant@pgf@x}%
       \fi%
-      \ifdim\yquant@direction@plus\wirexpos>0pt % may be negative for init gates
+      \ifdim\yquant@orientation@plus\wirexpos>0pt % may be negative for init gates
          \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
          \ifnum\wiretype=\yquant@register@type@none%
@@ -42,12 +42,12 @@
    \ifyquant@env@seamless{%
       \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
          \dimdef\yquant@circuit@endwires@x{%
-            \yquant@circuit@endwires@x\yquant@direction@plus\yquant@config@operator@sep%
+            \yquant@circuit@endwires@x\yquant@orientation@plus\yquant@config@operator@sep%
          }%
       \fi%
    }{%
       \dimdef\yquant@circuit@endwires@x{%
-         \yquant@circuit@endwires@x\yquant@direction@plus\yquant@config@operator@sep%
+         \yquant@circuit@endwires@x\yquant@orientation@plus\yquant@config@operator@sep%
       }%
    }%
    \let\yquant@circuit@endwires@finalize=\relax%

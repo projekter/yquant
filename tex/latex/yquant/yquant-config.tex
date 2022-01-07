@@ -156,19 +156,19 @@
    operator/if multi/.code=%
       {\ifyquant@config@operator@multi\pgfkeysalso{#1}\fi},%
    circuit/seamless/.is if=yquant@config@circuit@seamless,%
-   circuit/direction/.is choice,%
-   circuit/direction/horizontal/.code={%
+   circuit/orientation/.is choice,%
+   circuit/orientation/horizontal/.code={%
       \ifyquant@config@circuitsetup%
-         \yquant@config@circuit@direction@horizontal%
+         \yquant@config@circuit@orientation@horizontal%
       \else%
-         \PackageError{yquant.sty}{`circuit/direction' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}
+         \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
       \fi%
    },%
-   circuit/direction/vertical/.code={%
+   circuit/orientation/vertical/.code={%
       \ifyquant@config@circuitsetup%
-         \yquant@config@circuit@direction@vertical%
+         \yquant@config@circuit@orientation@vertical%
       \else%
-         \PackageError{yquant.sty}{`circuit/direction' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}
+         \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
       \fi%
    },%
    every post measurement control/.is choice,
@@ -312,7 +312,7 @@
 \fi
 % END_FOLD
 
-\protected\def\yquant@config@circuit@direction@horizontal{%
+\protected\def\yquant@config@circuit@orientation@horizontal{%
    \let\ifyquanthorz=\@firstoftwo%
    \tikzset{%
       % in principle, these are all /.forward to handlers, but we want them non-accumulative
@@ -334,13 +334,13 @@
    \let\yquant@pgfqpoint=\pgfqpoint%
    \let\yquant@coords=\empty%
    \let\pgfshapeclippath=\yquant@pgfshapeclippath@horz%
-   \def\yquant@direction@x{x}%
-   \def\yquant@direction@y{y}%
-   \def\yquant@direction@plus{+}%
-   \def\yquant@direction@minus{-}%
+   \def\yquant@orientation@x{x}%
+   \def\yquant@orientation@y{y}%
+   \def\yquant@orientation@plus{+}%
+   \def\yquant@orientation@minus{-}%
 }
 
-\protected\def\yquant@config@circuit@direction@vertical{%
+\protected\def\yquant@config@circuit@orientation@vertical{%
    \let\ifyquanthorz=\@secondoftwo%
    \tikzset{%
       % in principle, these are all /.forward to handlers, but we want them non-accumulative
@@ -362,10 +362,10 @@
    \def\yquant@pgfqpoint##1##2{\pgfqpoint{##2}{##1}}%
    \def\yquant@coords(##1,##2){({##2},{##1})}%
    \let\pgfshapeclippath=\yquant@pgfshapeclippath@vert%
-   \def\yquant@direction@x{y}%
-   \def\yquant@direction@y{x}%
-   \def\yquant@direction@plus{-}%
-   \def\yquant@direction@minus{+}%
+   \def\yquant@orientation@x{y}%
+   \def\yquant@orientation@y{x}%
+   \def\yquant@orientation@plus{-}%
+   \def\yquant@orientation@minus{+}%
 }
 
 \let\yquant@pgfshapeclippath@horz=\pgfshapeclippath
@@ -416,7 +416,7 @@
 \newif\ifyquant@config@operator@multi
 \newif\ifyquant@config@circuitsetup
 \yquant@config@circuitsetuptrue
-\yquant@config@circuit@direction@horizontal
+\yquant@config@circuit@orientation@horizontal
 
 \protected\def\yquant@config@operator@subcircuit@mangling@set#1{%
    \ifyquant@config@operator@subcircuit@manglingreset%
