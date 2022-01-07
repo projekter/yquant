@@ -871,7 +871,7 @@
          \fi%
          % outer ysep is (a lower bound) from the top end of the border to the top end of the text
          \pgfmathsetlength\pgf@xb{\pgfkeysvalueof{/pgf/outer ysep}}%
-         \@tempdima=\dimexpr\ht\pgfnodeparttextbox+.5\pgf@xa+.5\pgf@xb\relax%
+         \@tempdima=.5\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox+\pgf@xa+\pgf@xb\relax%
          \ifdim\@tempdima>\pgf@x%
             \pgf@x=\@tempdima%
          \fi%
@@ -1025,7 +1025,7 @@
          \fi%
          % outer ysep is (a lower bound) from the bottom end of the border to the bottom end of the text
          \pgfmathsetlength\pgf@xb{\pgfkeysvalueof{/pgf/outer ysep}}%
-         \@tempdima=\dimexpr\ht\pgfnodeparttextbox+.5\pgf@xa+.5\pgf@xb\relax%
+         \@tempdima=.5\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox+\pgf@xa+\pgf@xb\relax%
          \ifdim\@tempdima>\pgf@x%
             \pgf@x=\@tempdima%
          \fi%
