@@ -56,9 +56,15 @@
       \ifcsname\yquant@prefix registermap@\yquant@circuit@endwires@i\endcsname%
          \xifinlistcs\yquant@circuit@endwires@i{\yquant@prefix inonly}{%
             % however, the wire is to be discarded after this circuit
-            \edef\storedleft{\the\yquant@pgf@picminx}%
-            \yquant@draw@wire\yquant@circuit@endwires@i1%
-            \global\yquant@pgf@picminx=\storedleft%
+            \ifyquanthorz{%
+               \edef\storedleft{\the\pgf@picminx}%
+               \yquant@draw@wire\yquant@circuit@endwires@i1%
+               \global\pgf@picminx=\storedleft%
+            }{%
+               \edef\storedtop{\the\pgf@picmaxy}%
+               \yquant@draw@wire\yquant@circuit@endwires@i1%
+               \global\pgf@picmaxy=\storedtop%
+            }%
             \eappto\yquant@circuit@endwires@finalize{%
                \yquant@register@set@type%
                   \yquant@circuit@endwires@i\noexpand\yquant@register@type@none%

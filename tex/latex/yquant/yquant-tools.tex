@@ -705,7 +705,7 @@
    \ifdim\yquant@pgf@y>\pgf@ya %
       \unless\ifdim\pgf@ya>\dimen2 %
          \unless\ifdim\yquant@pgf@y<\dimen2 %
-            \ifdim\yquant@pgf@x>\pgf@xa %
+            \ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%
@@ -715,7 +715,7 @@
    \else%
       \unless\ifdim\pgf@ya<\dimen2 %
          \unless\ifdim\yquant@pgf@y>\dimen2 %
-            \ifdim\yquant@pgf@x>\pgf@xa %
+            \ifdim\yquant@direction@plus\yquant@pgf@x>\yquant@direction@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
                \yquant@softpath@extractmaxxat@update\pgf@xa%
