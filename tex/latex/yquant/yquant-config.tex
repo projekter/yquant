@@ -354,6 +354,9 @@
       outer timesep/.code={\pgfkeys{/tikz/outer xsep={##1}}},%
       outer spacesep/.code={\pgfkeys{/tikz/outer ysep={##1}}}%
    }%
+   \def\yquant@config@register@minimum@height@default{1.5mm}%
+   \def\yquant@config@register@minimum@depth@default{1.5mm}%
+   \def\yquant@config@operator@minimum@width@default{5mm}%
    \let\yquant@pgf@picminx=\pgf@picminx%
    \let\yquant@pgf@picmaxx=\pgf@picmaxx%
    \let\yquant@pgf@picminy=\pgf@picminy%
@@ -382,6 +385,9 @@
       outer timesep/.code={\pgfkeys{/tikz/outer ysep={##1}}},%
       outer spacesep/.code={\pgfkeys{/tikz/outer xsep={##1}}}%
    }%
+   \def\yquant@config@register@minimum@height@default{2.5mm}%
+   \def\yquant@config@register@minimum@depth@default{2.5mm}%
+   \def\yquant@config@operator@minimum@width@default{3mm}%
    \let\yquant@pgf@picminx=\pgf@picminy%
    \let\yquant@pgf@picmaxx=\pgf@picmaxy%
    \let\yquant@pgf@picminy=\pgf@picminx%
@@ -428,11 +434,14 @@
 
 \def\yquant@config@register@default@name{\regidx}
 \let\yquant@config@register@default@lazyname=\empty
-\def\yquant@config@register@minimum@height{1.5mm}
-\def\yquant@config@register@minimum@depth{1.5mm}
+\def\yquant@config@register@minimum@height{\yquant@config@register@minimum@height@default}
+\def\yquant@config@register@minimum@height@default{1.5mm}
+\def\yquant@config@register@minimum@depth{\yquant@config@register@minimum@depth@default}
+\def\yquant@config@register@minimum@depth@default{1.5mm}
 \def\yquant@config@register@sep{1mm}
 \def\yquant@config@operator@sep{1mm}
-\def\yquant@config@operator@minimum@width{5mm}
+\def\yquant@config@operator@minimum@width{\yquant@config@operator@minimum@width@default}
+\def\yquant@config@operator@minimum@width@default{5mm}
 \newif\ifyquant@config@internal@multi@main%
 \yquant@config@internal@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
