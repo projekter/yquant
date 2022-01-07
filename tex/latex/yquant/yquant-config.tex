@@ -26,7 +26,11 @@
       register/minimum height/.code=%
          {\dimdef\yquant@config@register@minimum@height{#1}},%
       register/minimum depth/.code=%
-         {\dimdef\yquant@config@register@minimum@depth{#1}}%
+         {\dimdef\yquant@config@register@minimum@depth{#1}},%
+      register/minimum left/.forward to=/yquant/register/minimum height,%
+      register/minimum right/.forward to=/yquant/register/minimum depth,%
+      register/minimum before/.forward to=/yquant/register/minimum height,%
+      register/minimum after/.forward to=/yquant/register/minimum after%
    }
 \fi
 \pgfqkeys{/yquant}{%
@@ -34,6 +38,8 @@
       {\dimdef\yquant@config@register@sep{#1}},%
    operator/minimum width/.code=%
       {\dimdef\yquant@config@operator@minimum@width{#1}},%
+   operator/minimum height/.forward to=/yquant/operator/minimum width,%
+   operator/minimum extent/.forward to=/yquant/operator/minimum width,%
    operator/separation/.code=%
       {\dimdef\yquant@config@operator@sep{#1}},%
    operator/multi warning/.is if=%
@@ -65,7 +71,7 @@
 \fi
 \pgfqkeys{/yquant}{
    every initial label/.style=%
-      {anchor/.expanded=\ifyquanthorz{east}{south}},%
+      {anchor/.expanded=\ifyquanthorz{east}{south}, /yquant/internal/autorotate init},%
    every qubit label/.style=%
       {},%
    every cbit label/.style=%
@@ -85,7 +91,8 @@
    \pgfqkeys{/yquant}{%
       every output/.style=%
          {shape=yquant-output, anchor/.expanded=\ifyquanthorz{west}{north},%
-          align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt},%
+          align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt,%
+          /yquant/internal/autorotate output},%
       every multi output/.style=%
          {draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}%
    }
@@ -94,7 +101,8 @@
       every output/.style=%
          {shape=yquant-output, anchor/.expanded=\ifyquanthorz{west}{north},%
           align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt,%
-          /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}}%
+          /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate},%
+          /yquant/internal/autorotate output}%
    }
 \fi
 \pgfqkeys{/yquant}{%
@@ -159,6 +167,8 @@
    circuit/orientation/.is choice,%
    circuit/orientation/horizontal/.code={%
       \ifyquant@config@circuitsetup%
+         \pgfkeysalso{/yquant/internal/autorotate init/.style={},%
+            /yquant/internal/autorotate output/.style={}}%
          \yquant@config@circuit@orientation@horizontal%
       \else%
          \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
@@ -171,6 +181,24 @@
          \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
       \fi%
    },%
+   horizontal/.forward to=/yquant/circuit/orientation/horizontal,%
+   vertical/.code={%
+      \pgfkeysalso{/yquant/circuit/orientation/vertical}%
+      \unless\ifdim#1 pt=0pt %
+         \ifdefined\adjustbox%
+            \pgfkeysalso{%
+               /yquant/internal/autorotate init/.style={%
+                  /tikz/execute at begin node={\adjustbox{rotate=#1}}%
+               }, /yquant/internal/autorotate output/.style={%
+                  /tikz/execute at begin node={\adjustbox{rotate=-#1}}%
+               }%
+            }%
+         \else%
+            \PackageWarning{yquant.sty}{In order to use the automatic rotation of initial labels for vertical circuits, you need to load the `adjustbox' package.}%
+         \fi%
+      \fi%
+   },%
+   vertical/.default=0,%
    every post measurement control/.is choice,
    every post measurement control/indirect/.code={%
       \undef\yquant@lang@attr@directcontrol%
@@ -298,7 +326,9 @@
    internal/multi main/.is if=%
       yquant@config@internal@multi@main,%
    internal/setup done/.code=%
-      {\yquant@config@circuitsetupfalse}%
+      {\yquant@config@circuitsetupfalse},%
+   internal/autorotate init/.style={},%
+   internal/autorotate output/.style={},%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
