@@ -460,13 +460,14 @@
    }%
 }
 
+% The dmeter shape is aware of the circuit direction
 \pgfdeclareshape{yquant-dmeter}{%
    \saveddimen\xradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
       \ifdim\wd\pgfnodeparttextbox=0pt %
          \pgf@xa=0pt %
       \else%
-         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}+.5mm}%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner xsep}\ifyquanthorz{+.5mm}{}}%
       \fi%
       \ifdim\dimexpr.5\wd\pgfnodeparttextbox+\pgf@xa\relax>\pgf@x%
          \pgf@x=\dimexpr.5\wd\pgfnodeparttextbox+\pgf@xa\relax%
@@ -477,7 +478,7 @@
       \ifdim\dimexpr\ht\pgfnodeparttextbox+\dp\pgfnodeparttextbox\relax=0pt %
          \pgf@xa=0pt %
       \else%
-         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner ysep}}%
+         \pgfmathsetlength\pgf@xa{\pgfkeysvalueof{/pgf/inner ysep}\ifyquanthorz{}{+.325mm}}%
       \fi%
       \@tempdima=\dimexpr.5\ht\pgfnodeparttextbox+.5\dp\pgfnodeparttextbox+\pgf@xa\relax%
       \ifdim\@tempdima>\pgf@x%
@@ -485,9 +486,24 @@
       \fi%
    }%
    \savedanchor\stext{%
-      \pgfqpoint%
-         {-\dimexpr.5\wd\pgfnodeparttextbox+1mm\relax}%
-         {-\dimexpr.5\ht\pgfnodeparttextbox-.5\dp\pgfnodeparttextbox\relax}%
+      \ifyquanthorz{%
+         \pgfqpoint%
+            {-\dimexpr.5\wd\pgfnodeparttextbox+1mm\relax}%
+            {-\dimexpr.5\ht\pgfnodeparttextbox-.5\dp\pgfnodeparttextbox\relax}%
+      }{%
+         % \pgf@x is still \yradius
+         \@tempdima=\pgf@x%
+         \pgfqpoint%
+            {-\dimexpr.5\wd\pgfnodeparttextbox\relax}%
+            {-\dimexpr.5\ht\pgfnodeparttextbox-.5\dp\pgfnodeparttextbox-.75mm\relax}%
+      }%
+   }%
+   \savedmacro\ifhorz{%
+      \ifyquanthorz{%
+         \def\ifhorz{\noexpand\@firstoftwo}%
+      }{%
+         \def\ifhorz{\noexpand\@secondoftwo}%
+      }%
    }%
    \foreach \anc in {center, north, south, south west, west, north west, text} {%
       \inheritanchor[from=yquant-rectangle]{\anc}%
@@ -498,32 +514,85 @@
    \anchorborder{%
       \@tempdima=\pgf@x%
       \@tempdimb=\pgf@y%
-      \ifdim\pgf@x>\dimexpr\xradius-3mm\relax%
-         \pgfpointborderellipse{\pgfqpoint{\dimexpr\@tempdima-\xradius+3mm\relax}%
-                                          {\@tempdimb}}%
-                               {\pgfqpoint{3mm}%
-                                          {.707107\dimexpr\yradius\relax}}%
-         \advance\pgf@x by \dimexpr\xradius-3mm\relax%
-      \else%
-         \pgfpointborderrectangle{\pgfqpoint{\@tempdima}{\@tempdimb}}%
-                                 {\pgfqpoint{\xradius}{\yradius}}%
-      \fi%
+      \pgfpointborderrectangle{\pgfqpoint{\@tempdima}{\@tempdimb}}%
+                              {\pgfqpoint{\xradius}{\yradius}}%
+      % for very distorted shapes, we lose a lot of accuracy in these calculations
+      \ifhorz{%
+         \ifdim\pgf@x>\dimexpr\xradius-3mm\relax%
+            \pgf@xa=\dimexpr\xradius-3mm\relax% shift of the ellipse
+            \pgf@xb=\dimexpr\@tempdimb*65536/\@tempdima\relax%
+            \pgf@xb=\dimexpr\pgf@xb*\pgf@xb/65536\relax% slope^2
+            \pgf@ya=72.86009pt % xradius^2 of ellipse (72.86009pt = 3mm^2/65536)
+            \pgf@yb=\yradius\relax%
+            \pgf@yb=\dimexpr\pgf@yb*\pgf@yb/65536\relax% yradius^2
+            % sqrt(slope^2 * (xradius^2 - shift^2) + yradius^2)
+            \pgfmathsqrt@{\the\dimexpr\pgf@xb*\dimexpr\pgf@ya-\pgf@xa*\pgf@xa/65536\relax/65536+%
+                                      \pgf@yb\relax\@gobbletwo}%
+            % yradius (shift yradius + xradius sqrt(...)) / (slope^2 xradius^2 + yradius^2)
+            \pgf@x=\dimexpr\dimexpr\yradius\relax*%
+                           \dimexpr\pgf@xa*\dimexpr\yradius\relax/65536+%
+                                   9\dimexpr\pgfmathresult pt\relax% 9 = 3mm/65536
+                                   \relax/%
+                           \dimexpr\pgf@xb*\pgf@ya/65536+\pgf@yb\relax%
+                   \relax%
+            % y = slope x
+            \pgf@y=\dimexpr\@tempdimb*\pgf@x/\@tempdima\relax%
+         \fi%
+      }{%
+         \ifdim\pgf@y<\dimexpr-\yradius+3mm\relax%
+            \pgf@xa=\dimexpr-\yradius+3mm\relax% shift of the ellipse
+            \pgf@xb=\dimexpr\@tempdima*65536/\@tempdimb\relax%
+            \pgf@xb=\dimexpr\pgf@xb*\pgf@xb/65536\relax% 1/slope^2
+            \pgf@ya=\xradius\relax% xradius
+            \pgf@ya=\dimexpr\pgf@ya*\pgf@ya/65535\relax% xradius^2
+            \pgf@yb=72.86009pt % yradius^2 of ellipse (72.86009pt = 3mm^2/65536)
+            % sqrt(1/slope^2 * (yradius^2 - shift^2) + xradius^2)
+            \pgfmathsqrt@{\the\dimexpr\pgf@xb*\dimexpr\pgf@yb-\pgf@xa*\pgf@xa/65536\relax/65536+%
+                                      \pgf@ya\relax\@gobbletwo}%
+            % xradius (shift xradius - yradius sqrt(...)) / (1/slope^2 yradius^2 + xradius^2)
+            \pgf@y=\dimexpr\dimexpr\xradius\relax*%
+                           \dimexpr\pgf@xa*\dimexpr\xradius\relax/65536-%
+                                   9\dimexpr\pgfmathresult pt\relax% 9 = 3mm/65536
+                                   \relax/%
+                           \dimexpr\pgf@xb*\pgf@yb/65536+\pgf@ya\relax%
+                   \relax%
+            % x = 1/slope y
+            \pgf@x=\dimexpr\@tempdima*\pgf@y/\@tempdimb\relax%
+         \fi%
+      }%
    }%
    \backgroundpath{%
-      \pgfpathmoveto{\pgfqpoint{-\xradius}{\yradius}}%
-      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}{\yradius}}%
-      \pgfpatharc{90}{-90}{3mm and \yradius}%
-      \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
+      \ifhorz{%
+         \pgfpathmoveto{\pgfqpoint{-\xradius}{\yradius}}%
+         \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}{\yradius}}%
+         \pgfpatharc{90}{-90}{3mm and \yradius}%
+         \pgfpathlineto{\pgfqpoint{-\xradius}{-\yradius}}%
+      }{%
+         \pgfpathmoveto{\pgfqpoint{\xradius}{\yradius}}%
+         \pgfpathlineto{\pgfqpoint{\xradius}{\dimexpr-\yradius+3mm\relax}}%
+         \pgfpatharc{0}{-180}{\xradius and 3mm}%
+         \pgfpathlineto{\pgfqpoint{-\xradius}{\yradius}}%
+      }%
       \pgfpathclose%
    }%
    \clippath{%
-      \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
-                               {\dimexpr\yradius+.5\pgflinewidth\relax}}%
-      \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}%
-                               {\dimexpr\yradius+.5\pgflinewidth\relax}}%
-      \pgfpatharc{90}{-90}{3mm+.5\pgflinewidth and \yradius+.5\pgflinewidth}%
-      \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
-                               {-\dimexpr\yradius+.5\pgflinewidth\relax}}%
+      \ifhorz{%
+         \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                                  {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+         \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-3mm\relax}%
+                                  {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+         \pgfpatharc{90}{-90}{3mm+.5\pgflinewidth and \yradius+.5\pgflinewidth}%
+         \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                                  {-\dimexpr\yradius+.5\pgflinewidth\relax}}%
+      }{%
+         \pgfpathmoveto{\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth\relax}%
+                                  {\dimexpr\yradius+.5\pgflinewidth\relax}}%
+         \pgfpathlineto{\pgfqpoint{\dimexpr\xradius+.5\pgflinewidth\relax}%
+                                  {\dimexpr-\yradius+3mm\relax}}%
+         \pgfpatharc{0}{-180}{\xradius+.5\pgflinewidth and 3mm+.5\pgflinewidth}%
+         \pgfpathlineto{\pgfqpoint{-\dimexpr\xradius+.5\pgflinewidth\relax}%
+                                  {\dimexpr\yradius+.5\pgflinewidth}}%
+      }%
       \pgfpathclose%
    }%
 }
