@@ -16,7 +16,7 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
 \usepackage[compat=newest]{yquant}
-\usepackage{braket,hyphenat,microtype,hologo,minted,import,ragged2e}
+\usepackage{braket,hyphenat,microtype,hologo,minted,import,ragged2e,booktabs}
 \usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
 \useyquantlanguage{qasm,groups}
 \usepackage{amsmath,adjustbox,cleveref}
@@ -219,7 +219,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.6 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.7 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -628,14 +628,31 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Note that the backend interface changed in version~0.4.
          For the declaration of custom shapes, see \texttt{yquant-shapes.tex} for examples.
 
+      \subsection[The flow of time: horizontal and vertical layout]{\compat{New in 0.7}The flow of time: horizontal and vertical layout}
+         By default, quantum circuits are oriented \emph{horizontally}, i.e., time flows from left to right.
+         Sometimes, this is problematic when printed on a portrait page layout and a \emph{vertical} layout would be better suited.
+         \Yquant{} supports this by simply passing the configuration option \style{/yquant/vertical} to the circuit (this can even be done globally, so that all circuits are rendered vertically).
+
+         The vertical layout is supposed to work exactly as the horizontal layout; however, most testing occurs for horizontal mode only (basically, for every release, the examples in this manual comprise the testsuite).
+         Hence, if something weird happens in vertical mode, please file a bug report.
+
+         Most of the internal and exposed nomenclature in \Yquant{} is designed for the horizontal case (names such as ``height'' or ``width'').
+         For some of the exposed configuration options, synonyms are provided which are more meaningful in vertical mode or that are more orientation\hyp agnostic.
+         These synonyms are merely conveniences, they do not provide any new functionality.
+         As a general rule of thumb, everything that was ``atop'' becomes ``left.''
+
+         Some relevant \TikZ{} options refer to a fixed direction, namely \texttt{[x|y] radius} and \texttt{[inner|outer] [x|y]sep}.
+         If you think that maybe you want to change the orientation of your circuit at some point, you should never use the original \TikZ{} styles---their meaning would depend on the current orientation.
+         Instead, consider using the \Yquant{} alternatives \texttt{[time|space] radius} and \texttt{[inner|outer] [time|space]sep}.
+
    \section{Configuration}\label{sec:config}
       \Yquant{} uses \pkg{pgfkeys} to control its options, which are located in the path \texttt{/yquant}.
       The following list contains all options and styles that are recognized, apart from gate arguments.
       Those are listed together with their operations.
 
       \subsection{Circuit layout}\unskipOpt
-         \begin{option}[Changed in 0.4]{register/minimum height}!1.5mm!
-            \Yquant{} automatically determines the height (extent from wire to top boundary) of a register as the height of the largest operation.
+         \begin{option}[Changed in 0.7, 0.4]{register/minimum height}!1.5mm!
+            \Yquant{} automatically determines the height (extent from wire to top boundary; in vertical mode: from wire to left boundary) of a register as the height of the largest operation.
             This might be too small for two reasons:
             \begin{itemize}
                \item if the register is used only with small gates (e.g., only as a control, or as a swap), and it does not have a label (or one containing only x\hyp height letters).
@@ -645,19 +662,39 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This key provides an easy alleviation of the problem by requiring a minimal height for every register.
             As the value of this key is relevant at the time of register declaration, it can also be changed for each register individually.
 
+            Note that in vertical mode, the default of this setting is \tex!2.5mm!.
+
             Note that this key is affected by the \texttt{compat} setting.
             Before version \texttt{0.4}, there was no \style{/yquant/register/minimum depth} key.
             In this compatibility setting, passing the value $x$ to this key will set both height and depth to $\frac x2$.
             The default for $x$ is then \texttt{3mm}.
          \end{option}
 
-         \begin{option}[New in 0.4]{register/minimum depth}!1.5mm!
+         \begin{option}[Changed in 0.4\\New in 0.4]{register/minimum depth}!1.5mm!
             \emph{see} \style{/yquant/register/minimum height}
 
-            This key allows to specify a minimum depth (extent from wire to bottom boundary) for a register.
+            This key allows to specify a minimum depth (extent from wire to bottom boundary; in vertical mode: from wire to right boundary) for a register.
+
+            Note that in vertical mode, the default of this setting is \tex!2.5mm!.
 
             Note that this key is affected by the \texttt{compat} setting.
             Before version \texttt{0.4}, this key will not be available.
+         \end{option}
+
+         \begin{option}[New in 0.7]{register/minimum left}!1.5mm!
+            This is a synonym for \style{/yquant/register/minimum height}, as this naming makes more sense for vertical circuits.
+         \end{option}
+
+         \begin{option}[New in 0.7]{register/minimum right}!1.5mm!
+            This is a synonym for \style{/yquant/register/minimum depth}, as this naming makes more sense for vertical circuits.
+         \end{option}
+
+         \begin{option}[New in 0.7]{register/minimum before}!1.5mm!
+            This is a synonym for \style{/yquant/register/minimum height}, which provides a naming that makes sense in both horizontal and vertical mode.
+         \end{option}
+
+         \begin{option}[New in 0.7]{register/minimum after}!1.5mm!
+            This is a synonym for \style{/yquant/register/minimum depth}, which provides a naming that makes sense in both horizontal and vertical mode.
          \end{option}
 
          \begin{option}{register/separation}!1mm!
@@ -665,11 +702,17 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Half of this value is also the length that multi\hyp\gate{init} or multi\hyp\gate{output} braces extend beyond the mid position of the register.
          \end{option}
 
-         \begin{option}{operator/minimum width}!3mm!
-            \Yquant{} automatically determines the width of an operator according to its content.
+         \begin{option}[Changed in 0.7]{operator/minimum width}!5mm!
+            \Yquant{} automatically determines the width (in vertical mode: the vertical extent) of an operator according to its content.
             However, single\hyp letter boxes are among the most common operators, and giving them slightly different widths would result in a very uneven spacing, as \Yquant{} does not use a grid layout but stacks the operators horizontally one after each other.
             Hence, this key provides a minimum width that will be set for every operator.
             This does not imply that the \emph{visual} appearance (i.e., the \texttt{x radius} key) is enlarged, but that operators of a smaller actual width will be centered in a virtual box of the minimum width.
+
+            Note that in vertical mode, the default of this setting is \tex!3mm!.
+         \end{option}
+
+         \begin{option}[New in 0.7]{operator/minimum extent}!3mm!
+            This is a synonym for \style{/yquant/operator/minimum width}, which provides a naming that makes sense in both horizontal and vertical mode.
          \end{option}
 
          \begin{option}{operator/separation}!1mm!
@@ -700,18 +743,20 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Note that this default setting is not used when the register is created via an \gate{init} gate---its value always overwrites the default.
          \end{option}
 
-         \begin{option}[Changed in 0.4]{every label}!shape=yquant-init, anchor=center, align=right, outer xsep=2pt, /yquant/operator/if multi={draw, decoration={gapped brace, mirror, raise=2pt}, decorate}!
+         \begin{option}[Changed in 0.7, 0.4]{every label}!shape=yquant-init, anchor=center, align/.expanded=\ifyquanthorz{right}{center}, outer timesep=2pt, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{mirror}{}}, decorate}!
             This style is installed for every single register name label (i.e., upon creation and when used with the \gate{init} gate).
             The default style allows to use line breaks in the labels.
-            The node shape, \texttt{yquant-init}, will generate a path at its right side, which is replaced by the \texttt{gapped brace} decoration if the gate is used in a multi\hyp register fashion.
+            The node shape, \texttt{yquant-init}, will generate a path at its right side (in vertical mode: at its bottom side), which is replaced by the \texttt{gapped brace} decoration if the gate is used in a multi\hyp register fashion.
             The decoration is similar to \TikZ's \texttt{brace} decoration, but additionally allows specify the regions in which a line should be drawn by using the \texttt{/tikz/decoration/from to} key, which expects a comma\hyp separated list of dimension ranges, and which is automatically populated by \Yquant.
 
             Note that if the \texttt{compat} key is below \texttt{0.3}, the multi options are instead read from \style{/yquant/every multi label}.
          \end{option}
 
-         \begin{option}{every initial label}!anchor=east!
+         \begin{option}[Changed in 0.7]{every initial label}!anchor/.expanded=\ifyquanthorz{east}{south}, /yquant/internal/autorotate init!
             This style is installed for every single register name label at the left border of the circuit.
             \compat{Changed in 0.4}It is therefore used if a label is specified upon declaration and also for the \gate{init} gate if it happens to be the first gate on an unlabelled register (use a zero\hyp width \gate{hspace} gate before if you want to suppress this).
+
+            \compat{New in 0.7}The automatic rotation will be set up by using the \style{/yquant/vertical} style with an argument; by default, it is empty.
          \end{option}
 
          \begin{option}{every qubit label}!!
@@ -740,12 +785,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{option}
 
       \subsection{Register outputs}\unskipOpt
-         \begin{option}[Changed in 0.4]{every output}!shape=yquant-output, anchor=west, align=left, outer xsep=2pt, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}!
+         \begin{option}[Changed in 0.7, 0.4]{every output}!shape=yquant-output, anchor/.expanded=\ifyquanthorz{west}{north}, align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}, /yquant/internal/autorotate output!
             This style is installed for every \gate{output} label at the end of the circuit.
             The default style allows to use line breaks in the labels.
 
-            The node shape, \texttt{yquant-output}, will generate a path at its left side, which is replaced by the \texttt{gapped brace} decoration in the case of multi\hyp register usage.
+            The node shape, \texttt{yquant-output}, will generate a path at its left side (in vertical mode: at its top side), which is replaced by the \texttt{gapped brace} decoration in the case of multi\hyp register usage.
             See \style{/yquant/every label} for a more detailed explanation.
+
+            \compat{New in 0.7}The automatic rotation will be set up by using the \style{/yquant/vertical} style with an argument; by default, it is empty.
          \end{option}
 
          \begin{option}{every qubit output}!!
@@ -861,6 +908,58 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Only access it via \style{/yquant/operators/subcircuit/seamless}.
          \end{option}
 
+         \begin{option}[New in 0.7]{circuit/orientation}!horizontal!
+            This setting allows two possible values, \texttt{horizontal} and \texttt{vertical}.
+            It must only be changed before a circuit or at latest with the option arguments to the \tex!yquant! environment, but not within a circuit.
+
+            In the default \texttt{horizontal} mode, time flows from left to right and registers will be created from top to bottom.
+            In the alternative \texttt{vertical} mode, time flows from top to bottom and registers will be created from left to right.
+
+            Note that this setting influences the behavior of various macros and styles:
+            \begin{center}
+               \begin{tabular}{lrr}
+                  \toprule
+                  Macro/Style & \texttt{horizontal} meaning & \texttt{vertical} meaning \\\midrule
+                  \tex!\ifyquanthorz{a}{b}! & \tex!a! & \tex!b! \\
+                  \texttt{/tikz/time radius} & \texttt{/tikz/x radius} & \texttt{/tikz/y radius} \\
+                  \texttt{/tikz/space radius} & \texttt{/tikz/y radius} & \texttt{/tikz/x radius} \\
+                  \texttt{/tikz/inner timesep} & \texttt{/tikz/inner xsep} & \texttt{/tikz/inner ysep} \\
+                  \texttt{/tikz/inner spacesep} & \texttt{/tikz/inner ysep} & \texttt{/tikz/inner xsep} \\
+                  \texttt{/tikz/outer timesep} & \texttt{/tikz/outer xsep} & \texttt{/tikz/outer ysep} \\
+                  \texttt{/tikz/outer spacesep} & \texttt{/tikz/outer ysep} & \texttt{/tikz/outer xsep} \\
+                  \bottomrule
+               \end{tabular}
+            \end{center}
+            Additionally, this setting influences the default values of various \Yquant{} styles---note that if a style was once overwritten, the user\hyp supplied value will be never be changed!
+            Here, we use the orientation\hyp independent names of the styles, although all their synonyms are equivalent.
+            \begin{center}
+               \begin{tabular}{lrr}
+                  \toprule
+                  Style & \texttt{horizontal} def. & \texttt{vertical} def. \\\midrule
+                  \style{/yquant/register/minimum before} & \tex!1.5mm! & \tex!2.5mm! \\
+                  \style{/yquant/register/minimum after} & \tex!1.5mm! & \tex!2.5mm! \\
+                  \style{/yquant/operator/minimum extent} & \tex!5mm! & \tex!3mm! \\
+                  \bottomrule
+               \end{tabular}
+            \end{center}
+         \end{option}
+
+         \begin{option}[New in 0.7]{horizontal}
+            This style is a shorthand that sets \style{/yquant/circuit/orientation} to the \texttt{horizontal} value (which is the default).
+         \end{option}
+
+         \begin{option}[New in 0.7]{vertical}!0!
+            This style is a shorthand that sets \style{/yquant/circuit/orientation} to the \texttt{vertical} value.
+            Additionally, it accepts a parameter which should be an angle value (in degrees) between \tex!-180! and \tex!180!.
+            This is a rotation that is automatically applied to the text in every \gate{init} gate at the beginning of a circuit; the inverse rotation is automatically applied to the text in every \gate{output} gate at the end of a circuit.
+
+            Note that the gates themselves are \emph{not} rotated.
+            This would be counterproductive for multi\hyp qubit gates that contain braces---those should still be orthogonal to the wire lines.
+            In order to achieve this, the macro will use internal \TikZ{} details and exploit that the \texttt{execute at begin node} key is directly followed by the braced content of the node.
+            Hence, it will add a corresponding \tex!\adjustbox{rotate=#1}! to this style.
+            Therefore, \Yquant{} will raise a warning if the argument is used and the \pkg{adjustbox} package is not loaded, in which case the rotation is just ignored.
+         \end{option}
+
          \begin{option}[New in 0.4]{every post measurement control}!indirect!
             This style determines the default arrangement of measurements that are followed by positive controls.
 
@@ -899,7 +998,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Note that with the \texttt{compat} key set before \texttt{0.4}, this style instead defaults to \tex!/yquant/operators/subcircuit/frameless, /yquant/register/default name=!.
          \end{option}
 
-         \begin{option}{operators/every dmeter}!shape=yquant-dmeter, x radius=2mm, y radius=2mm, fill=white, draw!
+         \begin{option}[Changed in 0.7]{operators/every dmeter}!shape=yquant-dmeter, time radius=2mm, space radius=2mm, fill=white, draw!
             This style is installed for every \gate{dmeter} gate.
             The \texttt{yquant-dmeter} shape consists of a rectangle whose right side is replaced by a circle, resembling the letter ``D.''
          \end{option}
@@ -908,9 +1007,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{h} (Hadamard) operator.
          \end{option}
 
-         \begin{option}{operators/every inspect}!shape=yquant-output, align=left, outer xsep=.3333em, y radius=2.47mm, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}!
+         \begin{option}[Changed in 0.7]{operators/every inspect}!shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center}, outer timesep=.3333em, space radius=2.47mm, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}!
             This style is installed for every \gate{inspect} gate.
-            It does not have any shape on its own, apart from multi\hyp register uses, in which it will contain a brace on its left.
+            It does not have any shape on its own, apart from multi\hyp register uses, in which it will contain a brace on its left (in vertical mode: on its top).
          \end{option}
 
          \begin{option}{operators/every measure}!shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw!
@@ -937,7 +1036,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{phase} gate $\ketbra00 + \ee^{\ii\phi} \ketbra11$.
          \end{option}
 
-         \begin{option}[New in 0.6]{operators/every rectangular box}!shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
+         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every rectangular box}!shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm!
             This style is not associated to any particular gate, but will be inherited by a lot of gates that have a rectangular box frame with some text.
             This style should not be used with a \texttt{compat} setting strictly smaller than~\texttt{0.6}.
          \end{option}
@@ -1020,7 +1119,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The \texttt{yquant-swap} shape consists of a single cross.
          \end{option}
 
-         \begin{option}[New in 0.6]{operators/every text}!shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
+         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every text}!shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm!
             This style is installed for every \gate{text} gate.
          \end{option}
 
@@ -1138,8 +1237,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{itemize}
             \item \texttt{true} (default if no value given, combines \texttt{multi}, \texttt{height}, and \texttt{depth}),
             \item \texttt{multi} (short \texttt{m}),
-            \item \texttt{height} (short \texttt{ht}, \texttt{h}),
-            \item \texttt{depth} (short \texttt{dp}, \texttt{d}),
+            \item \texttt{height} (short \texttt{ht}, \texttt{h}), equivalent to \texttt{left} (short \texttt{l}) and \texttt{before} (short \texttt{bef}, \texttt{b}), which sound more meaningful for vertical and generic circuit orientations,
+            \item \texttt{depth} (short \texttt{dp}, \texttt{d}), equivalent to \texttt{right} (short \texttt{r}) and \texttt{after} (short \texttt{aft}, \texttt{a}), which sound more meaningful for vertical and generic circuit orientations,
             \item \texttt{single} (short \texttt{s}, combines \texttt{height} and \texttt{depth}), and
             \item \texttt{false} (useless, default if attribute not given).
          \end{itemize}
@@ -1340,7 +1439,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          It may only be specified once per register.
          It may span multiple registers, but does not allow for controls.
          The style \style{/yquant/every output} is installed, and also the style \texttt{/yquant/every <type> output}, where \texttt{<type>} is the type of the affected register (at the time of printout).
-         \compat{New in 0.6}Note that while outputs can be named, the name will only become available after the \texttt{yquant} environment itself was ended (but of course before the outer \texttt{tikzpicture} was closed).
+         \compat{New in 0.6}Note that while outputs can be named, the name will only become available after the \tex!yquant! environment itself was ended (but of course before the outer \texttt{tikzpicture} was closed).
 
          \emph{Possible attributes:}
          \begin{itemize}
@@ -3387,7 +3486,7 @@ $=$
                   Since they will always follow in this order, we also define a \tex!\cnotBlock! abbreviation that executes these configurations together with their intermediate \gate{barrier}.
                   We do not include the final barrier, since it is not present in the last block.
 
-                  Now, we start the \texttt{yquant} environment.
+                  Now, we start the \tex!yquant! environment.
                   We give some options for a nicer spacing and initialize the registers.
                   In the \pkg{qpic} example, the registers are $1$\hyp indexed, so we use \tex!\The\numexpr\idx+1! to give back the value of the current register index (\tex!\idx!) plus one; we also conditionally color the register name in red if the index coincides with the parameter.
                   Note that here we use \Yquant's shorthand for \tex!\protect\the!, \tex!\protect\ifnum!, and \tex!\protect\fi!, which are \tex!\The!, \tex!\Ifnum!, and \tex!\Fi!, to get the correct expansion behavior.
@@ -3462,25 +3561,24 @@ $=$
             \paragraph{2.3 Example 3: Shor's Algorithm}\leavevmode
             \begingroup%
                \mdfapptodefinestyle{bdBox}{%
-                  leftmargin=-.12\linewidth,
-                  rightmargin=-.12\linewidth
+                  leftmargin=-.04\linewidth,
+                  rightmargin=-.02\linewidth
                }%
-               \begin{example}
+               \begin{example}<Updated in 0.7>
                   \begin{codeexample*}
-\begin{tikzpicture}[rotate=-90, yscale=-1, every node/.append style={rotate=90, xscale=-1}]
+\begin{tikzpicture}
    \def\explain#1#2{%
       \yquant
-      [anchor=east] text {#1} explainLeft;
-      [anchor=west] text {$\displaystyle#2$} explainRight;
+      [anchor=east, overlay=right] text {#1} explainLeft;
+      [anchor=west, overlay=left] text {$\displaystyle#2$} explainRight;
       align -;
    }
-   \begin{yquant}[every initial label/.style={anchor=south},
-                  every output/.style={anchor=north},
+   \begin{yquant}[vertical,
                   every control/.append style={radius=1.5mm},
                   operators/every slash/.append style={x radius=3mm, y radius=1.5mm},
                   operators/every box/.append style={y radius=4mm},
                   operators/every measure/.append style={y radius=4mm},
-                  operator/minimum width=1.32cm]
+                  operator/minimum extent=1.32cm]
       nobit explainLeft;
       qubit {$\ket{0\dotsm0}$} x; slash x;
       qubit {$\ket{0\dotsm0}$} y; slash y;
@@ -3509,27 +3607,14 @@ $=$
 \end{tikzpicture}
                   \end{codeexample*}
                   Once again, this is a very interesting example.
-                  \Yquant{} does not support a vertical circuit layout \emph{officially}.
-                  However, \Yquant{} is built on top of \TikZ, so we can certainly try to emulate a vertical layout by means of rotations.
-                  First of all, we rotate the whole \texttt{tikzpicture}, saying \tex!rotate=-90!, so that the circuit grows downwards.
-                  While this is very straightforward, it leads to two immediate problems:
-                  \begin{itemize}
-                     \item The registers were declared in top\hyp to\hyp bottom order; if we rotate everything, this becomes a right\hyp to\hyp left order.
-                        In order to change this to a left\hyp to\hyp right order, we must mirror every horizontal coordinate; due to the rotation, this corresponds to \tex!yscale=-1! (not \tex!xscale!).
-                     \item The gates themselves should not be rotated.
-                        In fact, no text should be rotated.
-                        However, as by default, the \style{/yquant/every circuit} style will install the \texttt{transform shape} option to every node as of version~0.4, the nodes will also be rotated.
-                        The first idea to disable \texttt{transform shape} does not turn out to work well, as the spacings are somehow messed up.
-                        Instead, we just undo the rotation and scaling (note that now we need \tex!xscale=-1!, as after the reverse rotation, we are back to the ``proper'' coordinate system).
-                  \end{itemize}
-                  Then, there are some minor issues regarding the anchors of initial labels and output.
-                  The default settings for them, \texttt{east} and \texttt{west} are of course inappropriate in a rotated layout, so those must be changed.
-                  All the rest of the options that are given to the \texttt{yquant} environment just serve to match the appearance given in the \pkg{qpic} manual: we enlarge the \gate{slash}, the \gate{box}es and the \gate{measure}ments, and we also increase the global value of \style{/yquant/operator/minimum width}.
-                  Remember that this is the minimum ``width'' (in the rotated scenario, it becomes a height) that \Yquant{} reserves for every single operator (unless it is larger), and it will center the operator within an invisible rectangle of this width if it is smaller.
-                  So by matching this value to the largest height that occurs in the explanations in the circuit, we achieve an approximate vertical centering.
-
-                  Finally, there is some repetitive structure within the circuit, which we defer to a custom macro \tex!\explain!: We always want to draw a \gate{text} gate in our first invisible register \yquant!explainLeft!; however, this should not be centered, but rather aligned to the right, so we give the proper \tex!anchor=east!.
-                  We also need the same thing on the right, just mirrored and with a \tex!\displaystyle! math environment; and after all the explanations are done, we \gate{align} all registers (if the minimum width/height was chosen to be exactly larger or equal to the actual height of every gate, this would not be necessary; but with two decimals, this is probably not precisely the case).
+                  The circuit itself is very standard (though it is the first one in vertical mode).
+                  In order to output the explanations, we define two invisible wires together with a macro that populates the corresponding \gate{text} gates on those wires.
+                  Note that usually, in a vertical layout, all gates would be center\hyp aligned.
+                  In order to align the left explanations to the right and the right explanations to the left, we just redefine the \texttt{anchor}s of the gates.
+                  However, since \Yquant{} expects the gates to connect at the \texttt{center} anchor and hence equally distributes the required space for the wire to its left and right, this would lead to a very large gap between the explanations and the circuit itself.
+                  Here, we don't need \Yquant's wire extent calculations at all---the explanation wires are invisible and at the border of the circuit.
+                  Therefore, we just disable the calculations using the \texttt{overlay} attribute.
+                  After all the explanations are done, we \gate{align} all registers (if the minimum extent was chosen to be exactly larger or equal to the actual vertical extent of every gate, this would not be necessary; but with two decimals, this is probably not precisely the case).
 
                   Note that the code example above would work exactly in this way in traditional \LaTeX{} documents; however, this document is set with \pkg{unicode-math}.
                   This leads to a problem when using \tex!\bmod!, which has to be \tex!\protect!ed---or, as we did here, just say \tex!\robustify\bmod! somewhere before its usage and after loading all the packages.
@@ -3538,60 +3623,62 @@ $=$
 
             \clearpage
             \paragraph{2.4 Example 4: Teleportation}
-               \begin{example}
+               \begin{example}<Updated in 0.7>
                   \begin{codeexample*}
-\begin{tikzpicture}[rotate=-90, yscale=-1, every node/.append style={rotate=90, xscale=-1}]
-   \begin{yquant}[every initial label/.style={anchor=south},
-                  every output/.style={anchor=north},
-                  operators/every barrier/.append style={rotate=-90}]
-      nobit explainLeft;
+\begin{tikzpicture}
+   \newcommand\leftExplain[2][]{
+      \yquantsecondpass{
+         \draw[decoration={brace, mirror}, decorate, #1]
+            let \p1=(leftComments), \p2=(explainTop-0.north), \p3=(explainBottom-0.south) in
+            (\x1, \y2) -- (\x1, \y3) node[midway, left=2pt, align=right] {#2};
+      }
+   }
+   \newcommand\rightExplain[2][]{
+      \yquantsecondpass{
+         \draw[decoration=brace, decorate, #1]
+            let \p1=(rightComments), \p2=(explainTop-0.north), \p3=(explainBottom-0.south) in
+            (\x1, \y2) -- (\x1, \y3) node[midway, right=2pt, align=left] {#2};
+      }
+   }
+   \begin{yquant}[vertical]
+      [name=leftComments] nobit explainLeft;
       qubit {\color{red}$\ket\phi$} q;
       qubit {$\ket0$} q[+2];
-      nobit explainRight;
+      [name=rightComments] nobit explainRight;
       setstyle {red} q[0];
 
+      [name=explainTop]
       h q[1];
+      [name=explainBottom]
       cnot q[2] | q[1];
+      \rightExplain{Alice and Bob form an\\entangled pair of qubits}
       setstyle {red} q[1];
       setstyle {blue} q[2];
-      [y radius=5mm, anchor=west]
-      inspect {Alice and Bob form an\\entangled pair of qubits} (explainRight);
-      [operator/separation=0pt]
       barrier (q);
-      align -;
 
-      [style=red, operator/separation=0pt] cnot q[1] | q[0];
+      [style=red, operator/separation=0pt, name=explainTop] cnot q[1] | q[0];
       [red] h q[0];
-      [red] measure q[0, 1];
-      [red, y radius=9mm, anchor=east, align=right, shape=yquant-init, decoration={mirror}]
-      inspect {Alice entangles\\and measures} (explainLeft);
-      align -;
+      [red, name=explainBottom] measure q[0, 1];
+      \leftExplain[red]{Alice entangles\\and measures}
 
-      [style=blue] x q[2] | q[1];
-      [style=blue] z q[2] | q[0];
+      [style=blue, name=explainTop] x q[2] | q[1];
+      [style=blue, name=explainBottom] z q[2] | q[0];
       discard q[0, 1];
-      [blue, y radius=5.5mm, anchor=west]
-      inspect {Bob applies gates based on\\Alice's measurements} (explainRight);
+      \rightExplain[blue]{Bob applies gates based on\\Alice's measurements}
 
       output {\color{blue}$\ket\phi$} q[2];
    \end{yquant}
 \end{tikzpicture}
                   \end{codeexample*}
-                  Again, we ignore that it is not possible to render the circuit in this way and do it anyway.
-                  The structure is similar to what we previously did.
-                  For some reason, the \gate{barrier} shape is not content with the back\hyp rotation and we must again rotate it.
-
-                  We now use \gate{inspect} gates to mimic the state information.
-                  This gate will automatically draw curly braces as soon as it encounters a multi\hyp register use; hence, despite the fact that \yquant!explainRight! and \yquant!explainLeft! are single registers, we use them in a multi\hyp register fashion.
-                  Next, the brace would only be high enough to incorporate the text (since it knows nothing about what goes on in the rest of the circuit); hence, we manually give it a \texttt{y radius} value that has to be determined appropriately.
-
-                  Since the default operator separation before and after the \gate{barrier} look a bit large, we set them to zero (\style{/yquant/operator/separation} will always affect the distance of the current operator to the previous one, so we need this for the \gate{barrier} and for the first \gate{cnot} gate after the \gate{barrier}).
-
-                  The \gate{inspect} gate on the left\hyp hand side needs some special attention.
-                  In a horizontal layout, the brace will of course always be drawn left to the text, as the \gate{inspect} gate is supposed to denote the current state of the registers.
-                  Therefore, we need to mirror the brace itself (\tex!decoration={mirror}!), and we also need to put it to the right\hyp hand side.
-                  Coincidentally, the \texttt{yquant-init} style has the brace at its right\hyp hand side, so we just choose to change the style.
-                  Using the \gate{init} gate instead would directly have invoked the correct \texttt{shape}; however, semantically, it is wrong, it would have changed the wire type to something visible (requiring a \gate{discard} directly afterwards) and it is also not scalable via \texttt{y radius}.
+                  This example shows a different way of providing explanations along the circuit, which this time also works for hints encompassing more than a single gate.
+                  We define the macros \tex!\leftExplain! and \tex!\rightExplain!, which in the circuit will do the job.
+                  They rely on the existent of a couple of named nodes: The node \texttt{leftComments} (or \texttt{rightComments}) is the named node created at the beginning of the circuit when declaring the two invisible wires.
+                  They will serve with their horizontal position.
+                  Additionally, we require the named gates \texttt{explainTop} and \texttt{explainBottom}, which should correspond to the first and last gate that is supposed to be enclosed in the brace.
+                  We then use \TikZ's \texttt{let} functionality in order to extract the required coordinates and draw the nodes.
+                  Note that the macros \tex!\p!, \tex!\x!, and \tex!\y! come into existence only when the \tex!\draw! command is executed; hence, just writing the \tex!\draw! call would lead to an error: \Yquant{} would first try to add (using \tex!\protected@edef!) the content of the macro to its output routine for the second pass, then call it in the first pass.
+                  We don't need the execution in the first pass---though it would not do harm---but we cannot allow for the expansion at this stage.
+                  Hence, we wrap the whole command in \tex!\yquantsecondpass! (which automatically restarts the parser afterwards, so we don't have to do this).
                \end{example}
 
          \subsubsection{3.1 Wires}
@@ -3790,16 +3877,16 @@ $=$
 
                \begin{example}
                   \begin{codeexample}
-\begin{tikzpicture}[rotate=-90]
-   \begin{yquant*}[every initial label/.style={anchor=east}]
-      box {\rotatebox{90}{$M$}} (c, b) | a;
-      box {\rotatebox{90}{GATE}} (-);
-      box {\rotatebox{90}{$M^{-1}$}} (c, b) | a;
-   \end{yquant*}
+\begin{tikzpicture}
+   \begin{yquant}[vertical=-90]
+      qubit a; qubit b; qubit c;
+      box {$M$} (c, b) | a;
+      box {GATE} (-);
+      box {$M^{-1}$} (c, b) | a;
+   \end{yquant}
 \end{tikzpicture}
                   \end{codeexample}
-                  Remember that \Yquant{} doesn't really support vertical layout, so it is always a bit of an experiment to make this work.
-                  Multi\hyp register gates don't work too well when trying to apply the back\hyp rotation trick of before.
+                  Here, we use the automatic rotation feature that the \style{/yquant/vertical} style provides.
                \end{example}
 
                \begin{example}
@@ -3881,30 +3968,31 @@ $=$
 
          \subsubsection{3.3 Attributes}
             \paragraph{Size Attributes}
-               \begin{example}
-                  \begin{codeexample}
+               \begin{example}<Changed in 0.7>
+                  \begin{codeexample*}
 \begin{tikzpicture}
    \begin{yquant*}
       [y radius=20pt] box {HIGH} (a, b);
       [x radius=20pt] box {WIDE} (-);
+      [time radius=20pt] box {LONG} (-);
+      [space radius=20pt] box {BROAD} (-);
    \end{yquant*}
 \end{tikzpicture}
-                  \end{codeexample}
-                  Note that \texttt{LONG} and \texttt{BROAD} do not make sense, as \Yquant{} does not support vertical layout.
+                  \end{codeexample*}
+                  In horizontal mode, \texttt{time radius} is a synonym for \texttt{x radius}, while \texttt{space radius} is a synonym for \texttt{y radius}.
                \end{example}
 
-               \begin{example}
+               \begin{example}<Changed in 0.7>
                   \begin{codeexample}
-\begin{tikzpicture}[rotate=-90, yscale=-1, every node/.append style={yscale=-1}]
-   \begin{yquant*}[every initial label/.style={rotate=45, anchor=east, shift={(.15, .15)}}]
-      [x radius=20pt]
-      box {\rotatebox{90}{HIGH}} (a, b);
-      [y radius=20pt]
-      box {\rotatebox{90}{WIDE}} (a, b);
+\begin{tikzpicture}
+   \begin{yquant*}[vertical=45]
+      [y radius=20pt] box {HIGH} (a, b);
+      [x radius=20pt] box {WIDE} (-);
+      [time radius=20pt] box {LONG} (-);
+      [space radius=20pt] box {BROAD} (-);
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  Again, trying to properly adjust the position of the initial labels is more trial\hyp and\hyp error than anything else, and very fragile with respect to changes in the circuit.
                \end{example}
 
                \begin{example}
@@ -4638,7 +4726,7 @@ $=$
                The background path deserves more attention.
                We draw the two circles and the vertical and horizontal lines; but note that we disable the \pkg{pgf}'s size protocol for all but the right circle.
                Hence, when this shape is used, \TeX{} and \Yquant{} will actually think that it only occupies space for the right circle; the left one will protrude in the margin.
-               (Actually, we could wrap this in a test such as \tex!\ifdefined\yquant@prefix! to only discard protocoling within a \texttt{yquant} environment, so that the shape is properly usable outside.)
+               (Actually, we could wrap this in a test such as \tex!\ifdefined\yquant@prefix! to only discard protocoling within a \tex!yquant! environment, so that the shape is properly usable outside.)
 
                Next, we must take care of re\hyp inserting this ``lost'' margin whenever the gate is used; and we also define a style that appropriately uses the shape:
                \begin{codeexample*}
@@ -4685,7 +4773,7 @@ $=$
                We append the style that we just defined to the list of attributes, and execute the gate preparation.
                Finally, we also declare the attributes that this gate takes---no required and no optional attributes.
 
-               After all this work, which can be saved in some shared document and used whenever necessary, we can come to the application, which is now very straightforward.
+               After all this work, which can be saved in some shared document and used whenever necessary, we can come to the application, which is now very straightforward (however, note that our gate declaration was too simplistic for vertical mode; but an adaptation is not difficult).
 
                \begin{codeexample}
 \begin{tikzpicture}
@@ -4731,7 +4819,7 @@ $=$
       \compat{New in 0.3}\Yquant{} not only understands its own language, but also others.
       \compat{New in 0.5}Although we refer to ``foreign languages,'' additional extension packages of the \Yquant{} language itself are also covered in this section and can be loaded by the same syntax.
 
-      \subsection[groups]{\compat{New in 0.5}groups}\label{sec:foreign:groups}
+      \subsection[groups]{\compat{Updated in 0.7\\New in 0.5}groups}\label{sec:foreign:groups}
          By saying \tex!\useyquantlanguage{groups}! in the preamble after loading \Yquant{} itself, additional support for groups of \Yquant{} circuits is loaded.
          Various circuits in a group share a common set of registers, are appropriately aligned horizontally if on the same line and can also be aligned vertically among multiple lines.
          The main intended use is for circuit equations.
@@ -4834,59 +4922,74 @@ $=$
                Typically, you will not want to refer to named gates in a circuit on a different page; remember that if you need this feature, you must pass the \texttt{remember picture} key in the \style{/yquant/preamble} option, as this is a reference to another \tex!tikzpicture!.
                Also don't forget to use the (\TikZ) \texttt{overlay} key on the corresponding path that references the node in order not to mess up with the bounding box (see the \TikZ{} documentation for those two keys).
 
-            \subsubsection{Configuration}
-               Loading the \pkg{groups} language extension will define several new configuration keys.
+         \subsubsection{Configuration}
+            Loading the \pkg{groups} language extension will define several new configuration keys.
 
-               \begin{option}{group/every group}!!
-                  Style that is installed for every \tex!yquantgroup! and \tex!yquantgroup*! environment, as if it had been given as an option.
-                  The style's default path is \texttt{/tikz}.
-               \end{option}
+            \begin{option}{group/every group}!!
+               Style that is installed for every \tex!yquantgroup! and \tex!yquantgroup*! environment, as if it had been given as an option.
+               The style's default path is \texttt{/tikz}.
+            \end{option}
 
-               \begin{option}{group/line separation}!5mm!
-                  This is the default vertical line separation that is inserted whenever a new line is issued in a \tex!yquantgroup!.
-               \end{option}
+            \begin{option}{group/line separation}!5mm!
+               This is the default vertical line separation that is inserted whenever a new line is issued in a \tex!yquantgroup!.
+            \end{option}
 
-               \begin{option}{group/aligned}!false!
-                  This boolean flag defines whether \tex!\shiftright! is automatically issued after \tex!\\! and the starred page breaking commands.
-               \end{option}
+            \begin{option}{group/aligned}!false!
+               This boolean flag defines whether \tex!\shiftright! is automatically issued after \tex!\\! and the starred page breaking commands.
+            \end{option}
 
-               \begin{option}{preamble}!!
-                  This style may only be passed to the \tex!yquantgroup! alignment directly as an option; it is not available via \tex!\yquantset! and the like.
-                  It is only relevant if the \tex!yquantgroup! is not contained in a \tex!tikzpicture!.
-                  The content of this style will be given as an optional argument to the \tex!tikzpicture!; this is the recommended way to specify \TikZ{} options, as they are automatically preserved among page breaks.
-               \end{option}
+            \begin{option}{preamble}!!
+               This style may only be passed to the \tex!yquantgroup! alignment directly as an option; it is not available via \tex!\yquantset! and the like.
+               It is only relevant if the \tex!yquantgroup! is not contained in a \tex!tikzpicture!.
+               The content of this style will be given as an optional argument to the \tex!tikzpicture!; this is the recommended way to specify \TikZ{} options, as they are automatically preserved among page breaks.
+            \end{option}
 
-               \begin{option}{operators/every group circuit}!/yquant/operators/every subcircuit, /yquant/operators/subcircuit/frameless, /yquant/operators/subcircuit/name mangling=transparent!
-                  This style is installed for the \gate{subcircuit} that implicitly wraps each \tex!\circuit!.
-                  Note that some magic is carried out to ensure that the name mangling setting only applies to the \emph{direct} content of the \tex!\circuit!; any \gate{subcircuit}s within the \tex!\circuit! will use the default name mangling scheme.
-               \end{option}
+            \begin{option}{operators/every group circuit}!/yquant/operators/every subcircuit, /yquant/operators/subcircuit/frameless, /yquant/operators/subcircuit/name mangling=transparent!
+               This style is installed for the \gate{subcircuit} that implicitly wraps each \tex!\circuit!.
+               Note that some magic is carried out to ensure that the name mangling setting only applies to the \emph{direct} content of the \tex!\circuit!; any \gate{subcircuit}s within the \tex!\circuit! will use the default name mangling scheme.
+            \end{option}
 
-               \begin{option}{operators/every group equals}!shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
-                  This style is installed for every \tex!\equals!, which is internally realized similarly to a \gate{box} gate.
-               \end{option}
+            \begin{option}[Changed in 0.7]{operators/every group equals}!shape=yquant-rectangle, align=center, anchor/.expanded=\ifyquanthorz{center}{north west}, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
+               This style is installed for every \tex!\equals!, which is internally realized similarly to a \gate{box} gate.
+            \end{option}
 
-            \subsubsection{Gates and operations}
-               No gates or operations may be used directly within the \tex!yquantgroup! environment, but all the usual \Yquant{} gates and operations are available within \tex!\registers! and \tex!\circuit!.
-               Additionally, within \tex!\circuit!, the \gate{import} gate is available.
+         \subsubsection{Gates and operations}
+            No gates or operations may be used directly within the \tex!yquantgroup! environment, but all the usual \Yquant{} gates and operations are available within \tex!\registers! and \tex!\circuit!.
+            Additionally, within \tex!\circuit!, the \gate{import} gate is available.
 
-               \paragraph*{\yquant!import!}\label{gate:import}\leavevmode\\
-                  Syntax: \yquant!import <target>;! \\
-                  This is a pseudo\hyp gate that makes all the outer registers given in \tex!<target>! available in the current circuit.
-                  Consequently, the register names that are specified in \tex!<target>!, also ranges, do not refer to the registers in the \emph{current} \tex!\circuit!, but instead to those defined via \tex!\registers!.
-                  Therefore, it is for example possible to import all outer registers at once using \yquant!import -;!.
-                  Vector registers can also be imported partially.
+            \paragraph*{\yquant!import!}\label{gate:import}\leavevmode\\
+               Syntax: \yquant!import <target>;! \\
+               This is a pseudo\hyp gate that makes all the outer registers given in \tex!<target>! available in the current circuit.
+               Consequently, the register names that are specified in \tex!<target>!, also ranges, do not refer to the registers in the \emph{current} \tex!\circuit!, but instead to those defined via \tex!\registers!.
+               Therefore, it is for example possible to import all outer registers at once using \yquant!import -;!.
+               Vector registers can also be imported partially.
 
-                  If additional content (\TeX{} commands such as \TikZ{} paths, non\hyp creation gates) is used within \tex!\registers!, everything that comes \emph{before} the declaration of a register will be copied into the \tex!\circuit! when the register is imported; for a vector, this refers to the index zero.
-                  Additionally, any additional content that comes \emph{after} the declaration of the last register will be copied directly after the last register was imported.
+               If additional content (\TeX{} commands such as \TikZ{} paths, non\hyp creation gates) is used within \tex!\registers!, everything that comes \emph{before} the declaration of a register will be copied into the \tex!\circuit! when the register is imported; for a vector, this refers to the index zero.
+               Additionally, any additional content that comes \emph{after} the declaration of the last register will be copied directly after the last register was imported.
 
-                  \begin{warning}[Out-of-order importing]
-                     Note that it is principle possible to import registers out\hyp of\hyp order.
-                     Since matching outer and inner wires in subcircuits is done in the order in which they appear, this will lead to inner registers with names that do not match their outer registers and is probably highly undesirable.
-                  \end{warning}
+               \begin{warning}[Out-of-order importing]
+                  Note that it is principle possible to import registers out\hyp of\hyp order.
+                  Since matching outer and inner wires in subcircuits is done in the order in which they appear, this will lead to inner registers with names that do not match their outer registers and is probably highly undesirable.
+               \end{warning}
 
-                  Usually, this gate will not be needed as \Yquant{} will automatically import an outer register upon its first use.
+               Usually, this gate will not be needed as \Yquant{} will automatically import an outer register upon its first use.
 
-                  \emph{Possible attributes:} none
+               \emph{Possible attributes:} none
+
+         \subsubsection[Vertical layout]{\compat{New in 0.7}Vertical layout}
+            This library is aware of vertical circuits.
+            Note that the layout \emph{between} the circuits will always be the same, irrespective of the actual circuit orientation: Circuit will be set from left to right, and line breaks will always lead to a vertical shift and a reset of the horizontal position.
+
+            That said, the circuits may \emph{internally} be set in vertical mode.
+            Every invocation of \tex!\circuit! will then always restart a new \tex!yquant! environment.
+            While the content will still be put in a lonely \gate{subcircuit}---to keep consistency in the styling options---no inter\hyp circuit wire alignment will be carried out.
+
+            There is an additional complication regarding the vertical alignment of circuit and equality signs within one ``line.''
+            Now, the circuits can very well have a varying height, so vertically centering the circuits with respect to each other would not lead to a satisfying layout.
+            We might desire to vertically center the equality sign between its two enclosing circuits.
+            However, what if the line contains more than a two circuits and they all have different heights?
+            Then, the equality signs would be at different positions.
+            For this reason, all \tex!\circuit!s and \tex!\equals! will be aligned at their top.
 
       \subsection{qasm}\label{sec:foreign:qasm}
          By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \pkg{qasm} (not OpenQASM) is loaded.
@@ -4985,7 +5088,7 @@ $=$
             \emph{Symptom:} Unexpected error messages
          \item Does the macro depend on other macros defined \emph{within} the circuit?
             The double pass may lead to problems.
-            If possible, define your macros outside of the \texttt{yquant} environment.
+            If possible, define your macros outside of the \tex!yquant! environment.
             If this is not possible, make sure the definitions are expandable, then at measurement stage, \Yquant{} will do the expansion, so that you get the correct results. \\
             \emph{Symptom:} Only the latest assignment will show up whenever the macro is used; the vertical spacing (for subcircuits, possibly also the horizontal spacing) may even be screwed.
          \item Does the macro create output, using its own font?
@@ -5160,5 +5263,10 @@ $=$
          New configuration: \style{/yquant/register/default lazy name} \\
          Documentation: Replace the wishlist by a section on integration with other packages. \\
          Documentation: Include the examples of \pkg{qpic} in this manual.
+
+      \subsection*{2022-??-??: Version 0.7}
+         New: Support for vertical layout. \\
+         Various bugfixes. \\
+         Internal change of the loading order of the package files.
 %END_FOLD
 \end{document}
