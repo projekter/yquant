@@ -6,6 +6,7 @@ yquant is a pure-LaTeX solution - i.e., it requires no external program - that i
 It builds on and interacts with TiKZ, which brings an enourmous flexibility for customization of individual circuit.
 
 Important features in the latest updates (for a much more complete list, see the documentation):
+- Support for vertical circuit layout (only on master)
 - Support the `beamer` package (since 0.6)
 - New `text` gate, which replaces the common `[draw=none] box` situation (since 0.6)
 - Integration of all qpic examples in the manual, showcasing some very advanced circuits (since 0.6)
