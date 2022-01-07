@@ -84,7 +84,7 @@
          \expandafter%
       \endpgfinterruptboundingbox%
       \expandafter\dimen\expandafter0\expandafter=%
-         \the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
       \ifdim\dimen0>\dimen2 %
          \dimen2=\dimen0 %
       \fi%
@@ -375,8 +375,8 @@
          (0pt, 0pt)%
          node[/yquant/every operator, #2, /yquant/this operator,%
               name prefix=, name suffix=, name=] {#1};%
-      \yquant@register@update@height{#3}{\the\pgf@picmaxy}%
-      \yquant@register@update@depth{#3}{\the\dimexpr-\pgf@picminy\relax}%
+      \yquant@register@update@height{#3}{\the\yquant@pgf@picmaxy}%
+      \yquant@register@update@depth{#3}{\the\dimexpr-\yquant@pgf@picminy\relax}%
 }
 
 \protected\def\yquant@prepare@multi#1#2#3{%
@@ -397,7 +397,7 @@
       \def\yquant@prepare@style{#2}%
       \let\yquant@register@multi@contiguous=\yquant@prepare@multi@contiguous%
       \@fifthoffive#3%
-      \ifdim\pgf@picmaxy=-16000pt %
+      \ifdim\yquant@pgf@picmaxy=-16000pt %
          % if there was no single contiguous part before, determine the width now
          \path%
             (0pt, 0pt)%
@@ -407,8 +407,8 @@
 }
 
 \protected\def\yquant@prepare@multi@contiguous#1#2#3{%
-   \global\pgf@picmaxy=-16000pt %
-   \global\pgf@picminy=16000pt %
+   \global\yquant@pgf@picmaxy=-16000pt %
+   \global\yquant@pgf@picminy=16000pt %
    \edef\cmd{%
       \noexpand\path (0pt, 0pt)%
          node[/yquant/every operator, \yquant@prepare@style, /yquant/this operator,%
@@ -419,10 +419,10 @@
    \cmd%
    \ifnum#1=#2 %
       % this is a single register in disguise
-      \yquant@register@update@height{#1}{\the\pgf@picmaxy}%
-      \yquant@register@update@depth{#1}{\the\dimexpr-\pgf@picminy\relax}%
+      \yquant@register@update@height{#1}{\the\yquant@pgf@picmaxy}%
+      \yquant@register@update@depth{#1}{\the\dimexpr-\yquant@pgf@picminy\relax}%
    \else%
-      \yquant@register@update@multispace{#1}{#2}{\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
+      \yquant@register@update@multispace{#1}{#2}{\the\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax}%
    \fi%
 }
 
@@ -454,14 +454,14 @@
       \fi%
       \ifnum\@secondoffive#3=\@thirdoffive#3 %
          % this is a single register in disguise
-         \yquant@register@update@height{\first}{\the\pgf@picmaxy}%
-         \yquant@register@update@depth{\first}{\the\dimexpr-\pgf@picminy\relax}%
+         \yquant@register@update@height{\first}{\the\yquant@pgf@picmaxy}%
+         \yquant@register@update@depth{\first}{\the\dimexpr-\yquant@pgf@picminy\relax}%
       \else%
          % this may not be sufficient. Since the text position need not necessarily be at the center (if the register corresponding to the visual center is excluded), we may require some space here which we will later only use in parts, but then extend where we should not. However, resolving this would require a special handling when calculating the y positions at the end, meaning we could not use the multispace facility. Let's assume discontiguous init registers are so scarce that this does not matter (disable the acquiration by using the operator/overlay key).
          \edef\upd{%
             \yquant@register@update@multispace%
                {\first}{\@thirdoffive#3}%
-               {\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
+               {\the\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax}%
          }%
          \upd%
       \fi%
@@ -502,8 +502,8 @@
                  name prefix=, name suffix=, name=] {\unexpanded{#1}};%
       }%
       \cmd%
-      \yquant@register@update@height{#3}{\the\pgf@picmaxy}%
-      \yquant@register@update@depth{#3}{\the\dimexpr-\pgf@picminy\relax}%
+      \yquant@register@update@height{#3}{\the\yquant@pgf@picmaxy}%
+      \yquant@register@update@depth{#3}{\the\dimexpr-\yquant@pgf@picminy\relax}%
 }
 
 \protected\long\def\yquant@prepare@output@multi#1#2#3{%
@@ -545,14 +545,14 @@
       \cmd%
       \ifnum\@secondoffive#3=\@thirdoffive#3 %
          % this is a single register in disguise
-         \yquant@register@update@height{\first}{\the\pgf@picmaxy}%
-         \yquant@register@update@depth{\first}{\the\dimexpr-\pgf@picminy\relax}%
+         \yquant@register@update@height{\first}{\the\yquant@pgf@picmaxy}%
+         \yquant@register@update@depth{\first}{\the\dimexpr-\yquant@pgf@picminy\relax}%
       \else%
          % this may not be sufficient. Since the text position need not necessarily be at the center (if the register corresponding to the visual center is excluded), we may require some space here which we will later only use in parts, but then extend where we should not. However, resolving this would require a special handling when calculating the y positions at the end, meaning we could not use the multispace facility. Let's assume discontiguous output registers are so scarce that this does not matter (disable the acquiration by using the operator/overlay key).
          \edef\upd{%
             \yquant@register@update@multispace%
                {\first}{\@thirdoffive#3}%
-               {\the\dimexpr\pgf@picmaxy-\pgf@picminy\relax}%
+               {\the\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax}%
          }%
          \upd%
       \fi%
@@ -566,11 +566,11 @@
 
 \protected\def\yquant@prepare@subcircuit@getmaxx#1{%
    \begingroup%
-      \dimen0=-16383.99999pt %
+      \dimen0=\yquant@orientation@minus16383.99999pt %
       \def\do##1{%
          \ifcsname\yquant@prefix xpos@##1\endcsname%
             \dimen2=\csname\yquant@prefix xpos@##1\endcsname\relax%
-            \ifdim\dimen0<\dimen2 %
+            \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
                \dimen0=\dimen2 %
             \fi%
          \else%
@@ -598,28 +598,40 @@
       \yquant@set{#3}%
       \let\next=\endgroup%
       \ifyquant@config@operator@position@rightalign%
-         \ifdim#1>-\pgf@picminx%
-            \global\pgf@picminx=-\dimexpr#1\relax%
-         \fi%
+         \ifyquanthorz{%
+            \ifdim#1>-\pgf@picminx%
+               \global\pgf@picminx=-\dimexpr#1\relax%
+            \fi%
+         }{%
+            \ifdim#1>\pgf@picmaxy%
+               \global\pgf@picmaxy=#1 %
+            \fi%
+         }%
       \else%
          \ifyquant@env@seamless{%
             \ifdim\newx=0pt %
                \dimdef\newx{%
-                  \newx+#1%
+                  \newx\yquant@orientation@plus#1%
                }%
             \else%
                \dimdef\newx{%
-                  \newx+\yquant@config@operator@sep+#1%
+                  \newx\yquant@orientation@plus\yquant@config@operator@sep\yquant@orientation@plus#1%
                }%
             \fi%
          }{%
             \dimdef\newx{%
-               \newx+\yquant@config@operator@sep+#1%
+               \newx\yquant@orientation@plus\yquant@config@operator@sep\yquant@orientation@plus#1%
             }%
          }%
-         \ifdim\newx>\pgf@picmaxx%
-            \global\pgf@picmaxx=\newx%
-         \fi%
+         \ifyquanthorz{%
+            \ifdim\newx>\pgf@picmaxx%
+               \global\pgf@picmaxx=\newx%
+            \fi%
+         }{%
+            \ifdim\newx<\pgf@picminy%
+               \global\pgf@picminy=\newx%
+            \fi%
+         }%
          \ifyquant@config@operator@position@advance%
             \edef\next{%
                \endgroup%
@@ -647,27 +659,37 @@
 
 \protected\def\yquant@prepare@subcircuit@hspace#1#2{%
    \yquant@prepare@subcircuit@getmaxx{#1}%
-   \dimdef\newx{\newx+#2}%
+   \dimdef\newx{\newx\yquant@orientation@plus#2}%
    \forlistloop\yquant@prepare@subcircuit@move@loop{#1}%
-   \ifdim\newx>\pgf@picmaxx %
-      \global\pgf@picmaxx=\newx %
-   \fi%
+   \ifyquanthorz{%
+      \ifdim\newx>\pgf@picmaxx %
+         \global\pgf@picmaxx=\newx %
+      \fi%
+   }{%
+      \ifdim\newx<\pgf@picminy%
+         \global\pgf@picminy=\newx %
+      \fi%
+   }%
 }
 
 \protected\def\yquant@prepare@subcircuit@endwires{%
    \expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
       % to have a symmetric situation, we extend again one separation at the end, unless this is supposed to be seamless and we don't have outputs (for seamless circuits with outputs, extend - since this extension will be between last register and output)
       \ifyquant@env@seamless\relax{%
-         \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
+         \ifyquanthorz{%
+            \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
+         }{%
+            \global\advance\pgf@picminy by -\yquant@config@operator@sep\relax%
+         }%
       }%
    \else%
       % if we have outputs, those will be realized as additional drawing groups following this macro, so increasing the picture at this point is rather pointless. Instead, we adjust the wire positions appropriately. The additional separation will be inserted by the outputs.
       \begingroup%
-         \dimen0=-16383.99999pt %
+         \dimen0=\yquant@orientation@minus16383.99999pt %
          \yquant@fordown \i := \csname\yquant@prefix registers\endcsname downto 1 {%
             \ifcsname\yquant@prefix xpos@\i\endcsname%
                \dimen2=\csname\yquant@prefix xpos@\i\endcsname\relax%
-               \ifdim\dimen0<\dimen2 %
+               \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
                   \dimen0=\dimen2 %
                \fi%
             \else%
@@ -746,27 +768,39 @@
             \let\endtikz@scope@env=\yquant@env@substikz@endscope%
             \let\endscope=\endtikz@scope@env%
             \let\stopscope=\endscope%
-            \global\pgf@picmaxx=0pt %
-            \global\pgf@picminx=0pt %
+            \global\yquant@pgf@picmaxx=0pt %
+            \global\yquant@pgf@picminx=0pt %
             \global\setbox\yquant@prepare@subcircuit@box=\vbox to 1sp{%
                \csname\yquant@prefix draw\endcsname%
             }%
-            \ifdim\pgf@picmaxy=-16000pt %
-               \global\pgf@picmaxy=0pt %
-               \global\pgf@picminy=0pt %
+            \ifdim\yquant@pgf@picmaxy=-16000pt %
+               \global\yquant@pgf@picmaxy=0pt %
+               \global\yquant@pgf@picminy=0pt %
             \fi%
             \ifyquant@env@seamless{%
                % for seamless circuits, we do not have an initial separation. However, if there is a label to registers (which you should not do for seamless subcircuits), the "initial" separation is in fact an inner one, so we need it.
-               \ifdim\pgf@picminx<0pt %
-                  \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
-               \fi%
+               \ifyquanthorz{%
+                  \ifdim\pgf@picminx<0pt %
+                     \global\advance\pgf@picmaxx by \yquant@config@operator@sep\relax%
+                  \fi%
+               }{%
+                  \ifdim\pgf@picmaxy>0pt %
+                     \global\advance\pgf@picminy by -\yquant@config@operator@sep\relax%
+                  \fi%
+               }%
             }\relax%
-            \global\wd\yquant@prepare@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
+            \ifyquanthorz{%
+               \global\wd\yquant@prepare@subcircuit@box=\dimexpr\pgf@picmaxx-\pgf@picminx\relax%
+            }{%
+               \global\ht\yquant@prepare@subcircuit@box=\pgf@picmaxy%
+               \global\dp\yquant@prepare@subcircuit@box=-\pgf@picminy%
+            }%
          \endgroup%
          \edef\yquant@prepare@subcircuit@width{%
-            {\the\wd\yquant@prepare@subcircuit@box}% inner width
-            {\noexpand\the\dimexpr\pgf@picmaxx-\pgf@picminx\relax}% outer width
-            {\the\pgf@picminx}% left margin
+            {\ifyquanthorz{\the\wd\yquant@prepare@subcircuit@box}% inner width
+                          {\the\dimexpr\ht\yquant@prepare@subcircuit@box+\dp\yquant@prepare@subcircuit@box\relax}}%
+            {\noexpand\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax}% outer width
+            {\ifyquanthorz{\the\pgf@picminx}{-\the\pgf@picmaxy}}% left margin
          }%
          \pgfresetboundingbox%
          \path%
@@ -774,12 +808,12 @@
             node[/yquant/every operator, #1,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
-                 name prefix=, name suffix=, name=, y radius=0pt]%
+                 name prefix=, name suffix=, name=, space radius=0pt]%
             {\box\yquant@prepare@subcircuit@box};%
          % the extra height is taken care for by manually inserting it to the height of the first and last register in the subcircuit
-         \yquant@register@inject@extents{\pgf@picmaxy}{-\pgf@picminy}%
+         \yquant@register@inject@extents{\yquant@pgf@picmaxy}{-\yquant@pgf@picminy}%
          \edef\cmd{%
-            \dimen0=\the\dimexpr\pgf@picmaxx-\pgf@picminx\relax\relax%
+            \dimen0=\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
             \yquant@prepare@subcircuit@add%
          }%
          \expandafter%

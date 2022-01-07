@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-groups}[2021/08/14 v0.6 yquant-groups]
+\ProvidesPackage{yquantlanguage-groups}[2022/01/07 v0.7 yquant-groups]
 
-\RequirePackage{yquant}[2021/12/24]
+\RequirePackage{yquant}[2022/01/07]
 
 % BEGIN_FOLD Config
 \newif\ifyquantgroup@config@aligned
@@ -39,7 +39,11 @@
          }%
       \fi%
    },%
-   operators/every group equals/.style={shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}
+   operators/every group equals/.style={%
+      shape=yquant-rectangle, align=center,
+      anchor/.expanded=\ifyquanthorz{center}{north west},%
+      inner xsep=1mm, x radius=2mm, y radius=2.47mm%
+   }
 }
 \def\yquantgroup@config@lineseparation{5mm}%
 % END_FOLD
@@ -66,7 +70,7 @@
    \let\equals=\yquantgroup@equals%
    \let\shiftright=\yquantgroup@shiftright%
    \let\\=\yquantgroup@linebreak%
-   % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately set since at pgf 3.1.2.
+   % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately set since at least pgf 3.1.2.
    \let\ifyquantgroup@inpicture=\ifpgfpicture%
    \pgfkeysgetvalue{/yquant/preamble}\yquantgroup@save@preamble%
    \ifpgfpicture%
@@ -127,6 +131,10 @@
 
 % BEGIN_FOLD Register declaration
 \protected\long\def\yquantgroup@registers#1{%
+   \def\registers{%
+      \PackageError{yquant.sty}{Double invocation of \string\registers}%
+                   {All registers must be specified once at the beginning of the group. Multiple declarations or later additions are not allowed.}%
+   }%
    \begingroup%
       \gdef\yquantgroup@registers@text{#1}%
       \let\yquantgroup@save@lang@create@parse=\yquant@lang@create@parse@name%
@@ -151,10 +159,6 @@
                #1%
             \yquant@env@end%
          \endpgfinterruptboundingbox%
-      }%
-      \def\registers{%
-         \PackageError{yquant.sty}{Double invocation of \string\registers}%
-                      {All registers must be specified once at the beginning of the group. Multiple declarations or later additions are not allowed.}%
       }%
       \unless\ifx\yquantgroup@registers@text\empty%
          \csxappto{\yquantgroup@prefix import@\csname\yquantgroup@prefix registers\endcsname}{%
@@ -248,14 +252,25 @@
    \fi%
    % since \registers is in subcircuit mode, that the existence of the macro implies that it is greater than zero
    \ifdef\yquant@prefix{%
-      % We already started the yquant environment - but this means that potentially, we could have changed our wire styles. The underlying subcircuit architecture will preserve these changes, but since in our context, we treat the circuits as independent, this is not the desired behavior: remove all styles.
-      \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-         % we don't really need to flush a wire, since it is discarded anyway
-         \csxappto{\yquant@prefix draw}{%
-            \yquant@register@set@style{\i}{}%
+      \ifyquanthorz{%
+         % We already started the yquant environment - but this means that potentially, we could have changed our wire styles. The underlying subcircuit architecture will preserve these changes, but since in our context, we treat the circuits as independent, this is not the desired behavior: remove all styles.
+         \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+            % we don't really need to flush a wire, since it is discarded anyway
+            \csxappto{\yquant@prefix draw}{%
+               \yquant@register@set@style{\i}{}%
+            }%
+         }%
+         \@gobble%
+      }{%
+         % We already started the yquant environment, but it was a vertical one. We are unable to perform wire alignment with vertical circuits. We want to place the next circuit to its right, which means that we acutually need to end the environment.
+         \expandafter%
+         \yquant@env@end%
+         \expandafter\def\expandafter\yquantgroup@currentxpos\expandafter{\the\dimexpr%
+            \pgf@picmaxx+\yquant@config@operator@sep%
          }%
       }%
-   }{%
+   }\@firstofone%
+   {%
       \yquant@env@begin[/tikz/shift={(\yquantgroup@currentxpos, \yquantgroup@currentypos)}]%
          % we re-create all the outer registers, but without the names.
          % sync with yquant-registers/\yquant@register@define
@@ -377,18 +392,48 @@
 }
 
 \protected\long\def\yquantgroup@equals@ii#1[#2]{%
-   \yquantgroup@startenvironments%
-   \ifx0#1%
-      \yquant group\space equals {#2} (-);%
-   \else%
+   \unless\ifx0#1%
       \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
-      % hopefully no prefixes/suffixes are installed - if we reset them here, it will also reset them for the content, which we don't want to do; but this will then give an error when we try to access the node. Probably never a problem.
-      \yquant [name=yquantgroup@internal@alignment@\yquantgroup@alignments]%
-         group\space equals {#2} (-);%
+   \fi%
+   \ifyquanthorz{%
+      \yquantgroup@startenvironments%
+      \ifx0#1%
+         \yquant group\space equals {#2} (-);%
+      \else%
+         % hopefully no prefixes/suffixes are installed - if we reset them here, it will also reset them for the content, which we don't want to do; but this will then give an error when we try to access the node. Probably never a problem.
+         \yquant [name=yquantgroup@internal@alignment@\yquantgroup@alignments]%
+            group\space equals {#2} (-);%
+      \fi%
+   }{%
+      % in vertical mode, we must be very careful: we cannot place the box in a circuit, as it would go under the others. In principle, it would be nice to place the equals vertically centered to the right of the last circuit, but the circuits may well have different vertical extents, so a centering does not make sense. Therefore, we place it to the top.
+      \ifdefined\yquant@prefix%
+         \edef\yquantgroup@handlesize{%
+            \global\pgf@picmaxx=-16000pt %
+            \yquant@env@end%
+            \edef\noexpand\yquantgroup@currentxpos{%
+               \noexpand\the\dimexpr\pgf@picmaxx+%
+                                    \noexpand\yquant@config@operator@sep\relax%
+            }%
+            \noexpand\ifdim\pgf@picmaxx<\the\pgf@picmaxx\space%
+               \global\pgf@picmaxx=\the\pgf@picmaxx\space%
+            \noexpand\fi%
+         }%
+         \yquantgroup@handlesize%
+      \fi%
+      \node[/yquant/operators/every group equals] (yquantnode) at (\yquantgroup@currentxpos, \yquantgroup@currentypos) {#2};
+      \unless\ifx0#1%
+         \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}%
+                       {\pgfqpoint{\dimexpr\yquantgroup@currentxpos+\yquant@config@operator@sep}%
+                                  {\yquantgroup@currentypos}}%
+      \fi%
+      \pgfpointanchor{yquantnode}{north east}
+      \dimdef\yquantgroup@currentxpos{\pgf@x+\yquant@config@operator@sep}%
+   }%
+   \unless\ifx0#1%
       \ifnum\yquantgroup@alignments>1 %
-         \pgfcoordinate{yquantgroup@internal@alignment@\the\numexpr\yquantgroup@alignments-1\relax}{west}%
+         \pgfpointanchor{yquantgroup@internal@alignment@\the\numexpr\yquantgroup@alignments-1\relax}{west}%
          \pgf@xa=\pgf@x%
-         \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
+         \pgfpointanchor{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
          \unless\ifdim\pgf@x>\pgf@xa%
             \PackageError{yquant.sty}{Invalid alignment mark position}%
                          {The desired alignment mark position would be to the left of an already existing mark.}%
@@ -431,7 +476,7 @@
    }%
    \ifx1#1%
       \ifnum\yquantgroup@alignments>0 %
-         \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
+         \pgfpointanchor{yquantgroup@internal@alignment@\yquantgroup@alignments}{west}%
          \unless\ifdim\dimexpr\yquantgroup@currentxpos+\yquant@config@operator@sep\relax>\pgf@x%
             \PackageError{yquant.sty}{Invalid alignment mark position}%
                          {The desired alignment mark position would be to the left of an already existing mark.}%

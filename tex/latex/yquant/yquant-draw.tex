@@ -62,19 +62,19 @@
          \ifyquant@env@seamless{%
             \unless\ifdim\yquant@draw@@x=\yquant@draw@subcircuit@leftpos%
                \dimdef\yquant@draw@@x{%
-                  \yquant@draw@@x+\yquant@config@operator@sep%
+                  \yquant@draw@@x\yquant@orientation@plus\yquant@config@operator@sep%
                }%
             \fi%
          }{%
             \dimdef\yquant@draw@@x{%
-               \yquant@draw@@x+\yquant@config@operator@sep%
+               \yquant@draw@@x\yquant@orientation@plus\yquant@config@operator@sep%
             }%
          }%
          \ifyquant@config@operator@position@advance%
-            \dimdef\newx{\yquant@draw@@x+#1}%
+            \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus#1}%
             \forlistloop\yquant@draw@group@advance{#6}%
          \fi%
-         \dimdef\yquant@draw@@x{\yquant@draw@@x+.5\dimexpr#1\relax}%
+         \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr#1\relax}%
       \fi%
 }
 
@@ -196,7 +196,7 @@
    \let\idx=\yquant@draw@@idx@content%
    \yquant@config@operator@multifalse%
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \yquant@register@get@y{#1})%
+      \noexpand\path \yquant@coords(\yquant@draw@@x, \yquant@register@get@y{#1})%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               name prefix=, name suffix=, name=yquantbox]%
          {\unexpanded\expandafter{\yquant@draw@@content}};%
@@ -239,13 +239,13 @@
 \protected\def\yquant@draw@multi@contiguous#1#2#3{%
    % We need to somehow extract the y radius
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\dimexpr%
+      \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimexpr.5\dimexpr%
                          \yquant@register@get@y{#1}+\yquant@register@get@y{#2}\relax%
                       \relax)%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               /yquant/internal/multi main=\ifnum#3=1 true\else false\fi\unless\ifnum#1=#2 ,%
-              y radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
-                     .5*\noexpand\pgfkeysvalueof{/tikz/y radius}\fi,%
+              space radius/.expanded=\the\dimexpr.5\dimexpr\yquant@register@get@ydist{#1}{#2}\relax\relax+%
+                     .5*\noexpand\pgfkeysvalueof{/tikz/\yquant@orientation@y\space radius}\fi,%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \pgfshapeclippath{yquantbox}%
@@ -271,7 +271,7 @@
 
 \protected\def\yquant@draw@multiinit#1#2#3#4#5{%
    \let\idx=\yquant@draw@@idx@content%
-   \@tempdima=-.5\dimexpr\yquant@config@register@sep\relax%
+   \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
    \dimdef\yquant@draw@multiinit@@total{%
@@ -285,13 +285,13 @@
    \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \the\dimexpr.5\dimexpr%
+      \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
          node[/yquant/every operator, \yquant@draw@@style,
               \ifnum\yquant@compat<2 /yquant/every multi label,\fi%
               /yquant/this operator,%
-              y radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
+              space radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \pgfshapeclippath{yquantbox}%
@@ -353,7 +353,7 @@
    \let\idx=\yquant@draw@@idx@content%
    \yquant@config@operator@multifalse%
    \edef\cmd{%
-      \noexpand\path (\yquant@circuit@endwires@x, \yquant@register@get@y{#1})%
+      \noexpand\path \yquant@coords(\yquant@circuit@endwires@x, \yquant@register@get@y{#1})%
          node[\ifnum\yquant@compat>1 /yquant/every operator,\fi%
               /yquant/every output,%
               /yquant/every \yquant@register@type@tostring{\yquant@register@get@type{#1}} output,%
@@ -383,7 +383,7 @@
 
 \protected\long\def\yquant@draw@output@multi#1#2#3#4#5{%
    \let\idx=\yquant@draw@@idx@content%
-   \@tempdima=-.5\dimexpr\yquant@config@register@sep\relax%
+   \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
    \dimdef\yquant@draw@multiinit@@total{%
@@ -397,14 +397,14 @@
    \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
    \edef\cmd{%
-      \noexpand\path (\yquant@circuit@endwires@x, \the\dimexpr.5\dimexpr%
+      \noexpand\path \yquant@coords(\yquant@circuit@endwires@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
          node[\ifnum\yquant@compat>1 /yquant/every operator,\fi /yquant/every output,%
               \yquant@draw@@style,%
               \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
               /yquant/this operator,%
-              y radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
+              space radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
       \ifdefined\yquant@parent%
@@ -449,15 +449,16 @@
    \global\cslet\yquant@draw@subcircuit@nodelist\empty%
    % \pgfinterruptboundingbox, but just for y
    \begingroup%
-      \edef\pgf@interrupt@savemaxy{\the\pgf@picmaxy}%
-      \edef\pgf@interrupt@saveminy{\the\pgf@picminy}%
-      \pgf@picmaxy=-16000pt %
-      \pgf@picminy=16000pt %
+      \edef\pgf@interrupt@savemaxy{\the\yquant@pgf@picmaxy}%
+      \edef\pgf@interrupt@saveminy{\the\yquant@pgf@picminy}%
+      \yquant@pgf@picmaxy=-16000pt %
+      \yquant@pgf@picminy=16000pt %
       \pgf@size@hookedfalse%
       \let\pgf@path@size@hook=\pgfutil@empty%
       % now we must take care of extending all the wires appropriately until the beginning of the box. #4 contains width of this box, #5 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
       \dimdef\newx{%
-         \yquant@draw@@x-.5\dimexpr\@secondofthree#4\relax%
+         \yquant@draw@@x\yquant@orientation@minus%
+         .5\dimexpr\@secondofthree#4\relax%
       }%
       \dimen0=\newx%
       \let\yquant@draw@subcircuit@leftpos=\newx% seamless subcircuits: do not add another separation if we are there
@@ -465,7 +466,9 @@
       \forlistloop\yquant@draw@move@loop{#5}%
       % but the new positions are not at the beginning of the box, but inside (with possible margin)
       \dimdef\newx{%
-         \yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax-\@thirdofthree#4%
+         \yquant@draw@@x\yquant@orientation@minus%
+         .5\dimexpr\@firstofthree#4\relax\yquant@orientation@minus%
+         \@thirdofthree#4%
       }%
       \forlistloop\yquant@draw@group@advance{#5}%
       \setbox\yquant@prepare@subcircuit@box=\hbox{{%
@@ -514,48 +517,48 @@
          \endgroup%
          % BEGIN_FOLD bounding box
          % Completely empty wires did not yet affect the bounding box
-         % Problem: we compare an user-mode TikZ position (register y position) with a system-level pgf position (picture boundary box). If shifts or scalings are in effect, we must first transform the point appropriately. Note that negative scalings may upset our assumption of which is the minimum and which is the maximum! If additionally rotations are in effect, we must even consider those transformations for the leftmost and the rightmost point, which makes all of this far more complicated than it should be. For this reason, we have a shortcut in action in case no nontranslation transformations are present.
+         % Problem: we compare a user-mode TikZ position (register y position) with a system-level pgf position (picture boundary box). If shifts or scalings are in effect, we must first transform the point appropriately. Note that negative scalings may upset our assumption of which is the minimum and which is the maximum! If additionally rotations are in effect, we must even consider those transformations for the leftmost and the rightmost point, which makes all of this far more complicated than it should be. For this reason, we have a shortcut in action in case no nontranslation transformations are present.
          \ifpgf@pt@identity%
-            \dimen0=\dimexpr\yquant@register@get@y1+\pgf@pt@y\relax%
-            \ifdim\dimen0>\pgf@picmaxy %
-               \global\pgf@picmaxy=\dimen0 %
+            \dimen0=\dimexpr\yquant@register@get@y1+\yquant@pgf@pt@y\relax%
+            \ifdim\dimen0>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\dimen0 %
             \fi%
-            \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}+\pgf@pt@y\relax%
-            \ifdim\dimen0<\pgf@picminy %
-               \global\pgf@picminy=\dimen0 %
+            \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}+\yquant@pgf@pt@y\relax%
+            \ifdim\dimen0<\yquant@pgf@picminy %
+               \global\yquant@pgf@picminy=\dimen0 %
             \fi%
          \else%
             % first wire, left end
-            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
-            \ifdim\pgf@y>\pgf@picmaxy %
-               \global\pgf@picmaxy=\pgf@y %
+            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
-            \ifdim\pgf@y<\pgf@picminy % negative scaling
-               \global\pgf@picminy=\pgf@y %
+            \ifdim\yquant@pgf@y<\yquant@pgf@picminy % negative scaling
+               \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % first wire, right end
-            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
-            \ifdim\pgf@y>\pgf@picmaxy %
-               \global\pgf@picmaxy=\pgf@y %
+            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
-            \ifdim\pgf@y<\pgf@picminy % negative scaling
-               \global\pgf@picminy=\pgf@y %
+            \ifdim\yquant@pgf@y<\yquant@pgf@picminy % negative scaling
+               \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % last wire, left end
-            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
-            \ifdim\pgf@y>\pgf@picmaxy %
-               \global\pgf@picmaxy=\pgf@y %
+            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
-            \ifdim\pgf@y<\pgf@picminy % negative scaling
-               \global\pgf@picminy=\pgf@y %
+            \ifdim\yquant@pgf@y<\yquant@pgf@picminy % negative scaling
+               \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % last wire, right end
-            \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
-            \ifdim\pgf@y>\pgf@picmaxy %
-               \global\pgf@picmaxy=\pgf@y %
+            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
-            \ifdim\pgf@y<\pgf@picminy % negative scaling
-               \global\pgf@picminy=\pgf@y %
+            \ifdim\yquant@pgf@y<\yquant@pgf@picminy % negative scaling
+               \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
          \fi%
          % END_FOLD
@@ -581,46 +584,47 @@
          \fi%
       }}%
       \ifpgf@pt@identity%
-         \dimen0=\dimexpr.5\pgf@picminy+.5\pgf@picmaxy-\pgf@pt@y\relax%
-         \dimen2=\dimexpr\pgf@picmaxy-\pgf@picminy\relax%
+         \dimen0=\dimexpr.5\yquant@pgf@picminy+.5\yquant@pgf@picmaxy-\yquant@pgf@pt@y\relax%
+         \dimen2=\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax%
       \else%
          \begingroup%
             \pgftransforminvert%
             \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-            \@tempdima=\pgf@y%
+            \@tempdima=\yquant@pgf@y%
             \pgfpointtransform{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-            \edef\cmd{\@tempdima=\the\@tempdima\space\@tempdimb=\the\@tempdimb\space}%
+            \edef\cmd{\@tempdima=\the\@tempdima\space\@tempdimb=\the\yquant@pgf@y\space}%
             \expandafter%
          \endgroup%
          \cmd%
-         \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x}%
-                                        {.5\dimexpr\@tempdima+\@tempdimb\relax}}%
-         \dimen0=\pgf@y%
-         \pgfpointtransformed{\pgfqpoint{\yquant@draw@@x}%
-                                        {\dimexpr\@tempdimb-\@tempdima\relax}}%
-         \dimen2=\pgf@y%
+         \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x}%
+                                               {.5\dimexpr\@tempdima+\@tempdimb\relax}}%
+         \dimen0=\yquant@pgf@y%
+         \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x}%
+                                               {\dimexpr\@tempdimb-\@tempdima\relax}}%
+         \dimen2=\yquant@pgf@y%
       \fi%
       \edef\cmd{%
-         \noexpand\path (\yquant@draw@@x, \the\dimen0)%
+         \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimen0)%
             node[/yquant/every operator, \yquant@draw@@style,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
                  /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
-            {\vbox to \the\dimen2 {\hbox to \@firstofthree#4 {}}};%
+            {\ifyquanthorz{\vbox to \the\dimen2 {\hbox to \@firstofthree#4 {}}}%
+                          {\hbox to \the\dimen2 {\vbox to \@firstofthree#4 {}}}};%
       }%
       \cmd%
       \unhbox\yquant@prepare@subcircuit@box%
    % \endpgfinterruptboundingbox + increase
-      \ifdim\pgf@interrupt@savemaxy>\pgf@picmaxy%
-         \global\pgf@picmaxy=\pgf@interrupt@savemaxy%
+      \ifdim\pgf@interrupt@savemaxy>\yquant@pgf@picmaxy%
+         \global\yquant@pgf@picmaxy=\pgf@interrupt@savemaxy%
       \fi%
-      \ifdim\pgf@interrupt@saveminy<\pgf@picminy%
-         \global\pgf@picminy=\pgf@interrupt@saveminy%
+      \ifdim\pgf@interrupt@saveminy<\yquant@pgf@picminy%
+         \global\yquant@pgf@picminy=\pgf@interrupt@saveminy%
       \fi%
    \endgroup%
    % Now that the subcircuit is finished, we need advance all the wires
-   \dimdef\newx{\yquant@draw@@x+.5\dimexpr\yquant@draw@@width\relax}%
+   \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
    \forlistloop\yquant@draw@group@advance{#5}%
    % name mangling
    \ifcase\yquant@config@operator@subcircuit@mangling\relax%
@@ -738,7 +742,7 @@
 
 \protected\def\yquant@draw@control#1#2#3{%
    \edef\cmd{%
-      \noexpand\path (\yquant@draw@@x, \yquant@register@get@y{#2})%
+      \noexpand\path \yquant@coords(\yquant@draw@@x, \yquant@register@get@y{#2})%
          node[/yquant/every control, /yquant/every #1 control, /yquant/this control,%
               name prefix=, name suffix=, name=yquantbox]%
          {};%
@@ -846,7 +850,7 @@
          \else%
             \let\wirexpos=\yquant@circuit@endwires@x%
          \fi%
-         \ifdim\wirexpos>\wirexprevpos %
+         \ifdim\yquant@orientation@plus\wirexpos>\yquant@orientation@plus\wirexprevpos %
             \edef\wirestyle{\noexpand\tikzset{%
                /yquant/this wire/.style={%
                   /yquant/every wire,%
@@ -884,12 +888,12 @@
                         \fi%
                         \pgftransforminvert%
                         \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                        \global\@tempdima=\pgf@y%
+                        \global\@tempdima=\yquant@pgf@y%
                         \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-                        \global\@tempdimb=\pgf@y%
+                        \global\@tempdimb=\yquant@pgf@y%
                      \endgroup%
                      % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
-                     % This may be insufficient if there no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
+                     % This may be insufficient if there is no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
                      \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
                         \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
                         \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
@@ -900,10 +904,12 @@
                      \fi%
                      \pgf@relevantforpicturesizefalse%
                         \pgfpathrectanglecorners%
-                           {\pgfqpoint{\dimexpr\wirexprevpos-2\pgflinewidth\relax}%
-                                      {\@tempdima}}%
-                           {\pgfqpoint{\dimexpr\wirexpos+2\pgflinewidth\relax}%
-                                      {\@tempdimb}}%
+                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@orientation@minus%
+                                                      2\pgflinewidth\relax}%
+                                             {\@tempdima}}%
+                           {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@orientation@plus%
+                                                      2\pgflinewidth\relax}%
+                                             {\@tempdimb}}%
                      \pgf@relevantforpicturesizetrue%
                      \pgfseteorule% even-odd to properly invert the clipping
                      \pgfusepathqclip%
@@ -921,7 +927,7 @@
 \protected\csdef{yquant@draw@wire@\yquant@register@type@q}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
-         (\wirexprevpos,\wireypos) -- (\wirexpos,\wireypos);%
+         \yquant@coords(\wirexprevpos,\wireypos) -- \yquant@coords(\wirexpos,\wireypos);%
    }%
    \cmd%
 }
@@ -930,8 +936,10 @@
 \protected\csdef{yquant@draw@wire@\yquant@register@type@c}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
-         (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
-         (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
+         \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --
+         \yquant@coords(\wirexpos,\wireypos+2\pgflinewidth)%
+         \yquant@coords(\wirexprevpos,\wireypos-2\pgflinewidth) --
+         \yquant@coords(\wirexpos,\wireypos-2\pgflinewidth);%
    }%
    \cmd%
 }
@@ -940,9 +948,12 @@
 \protected\csdef{yquant@draw@wire@\yquant@register@type@qs}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
-         (\wirexprevpos,\wireypos+2\pgflinewidth)--(\wirexpos,\wireypos+2\pgflinewidth)%
-         (\wirexprevpos,\wireypos)--(\wirexpos,\wireypos)%
-         (\wirexprevpos,\wireypos-2\pgflinewidth)--(\wirexpos,\wireypos-2\pgflinewidth);%
+         \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --
+         \yquant@coords(\wirexpos,\wireypos+2\pgflinewidth)%
+         \yquant@coords(\wirexprevpos,\wireypos) --
+         \yquant@coords(\wirexpos,\wireypos)%
+         \yquant@coords(\wirexprevpos,\wireypos-2\pgflinewidth) --
+         \yquant@coords(\wirexpos,\wireypos-2\pgflinewidth);%
    }%
    \cmd%
 }
@@ -950,7 +961,7 @@
 \protected\def\yquant@draw@hspace#1#2{%
    \begingroup%
       \yquant@register@get@maxxlist\newx{#1}%
-      \dimdef\newx{\newx+#2}%
+      \dimdef\newx{\newx\yquant@orientation@plus#2}%
       \dimen0=\newx%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#1}%

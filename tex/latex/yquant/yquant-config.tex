@@ -26,7 +26,11 @@
       register/minimum height/.code=%
          {\dimdef\yquant@config@register@minimum@height{#1}},%
       register/minimum depth/.code=%
-         {\dimdef\yquant@config@register@minimum@depth{#1}}%
+         {\dimdef\yquant@config@register@minimum@depth{#1}},%
+      register/minimum left/.forward to=/yquant/register/minimum height,%
+      register/minimum right/.forward to=/yquant/register/minimum depth,%
+      register/minimum before/.forward to=/yquant/register/minimum height,%
+      register/minimum after/.forward to=/yquant/register/minimum after%
    }
 \fi
 \pgfqkeys{/yquant}{%
@@ -34,6 +38,7 @@
       {\dimdef\yquant@config@register@sep{#1}},%
    operator/minimum width/.code=%
       {\dimdef\yquant@config@operator@minimum@width{#1}},%
+   operator/minimum extent/.forward to=/yquant/operator/minimum width,%
    operator/separation/.code=%
       {\dimdef\yquant@config@operator@sep{#1}},%
    operator/multi warning/.is if=%
@@ -50,20 +55,22 @@
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       every label/.style=%
-         {shape=yquant-init, anchor=center, align=right, outer xsep=2pt},%
+         {shape=yquant-init, anchor=center,%
+          align/.expanded=\ifyquanthorz{right}{center}, outer timesep=2pt},%
       every multi label/.style=%
-         {draw, decoration={gapped brace, mirror, raise=2pt}, decorate}%
+         {draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{mirror}{}}, decorate}%
    }
 \else
    \pgfqkeys{/yquant}{%
       every label/.style=%
-         {shape=yquant-init, anchor=center, align=right, outer xsep=2pt,%
-          /yquant/operator/if multi={draw, decoration={gapped brace, mirror, raise=2pt}, decorate}}%
+         {shape=yquant-init, anchor=center,%
+          align/.expanded=\ifyquanthorz{right}{center}, outer timesep=2pt,%
+          /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{mirror}{}}, decorate}}%
     }
 \fi
 \pgfqkeys{/yquant}{
    every initial label/.style=%
-      {anchor=east},%
+      {anchor/.expanded=\ifyquanthorz{east}{south}, /yquant/internal/autorotate init},%
    every qubit label/.style=%
       {},%
    every cbit label/.style=%
@@ -82,15 +89,19 @@
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
       every output/.style=%
-         {shape=yquant-output, anchor=west, align=left, outer xsep=2pt},%
+         {shape=yquant-output, anchor/.expanded=\ifyquanthorz{west}{north},%
+          align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt,%
+          /yquant/internal/autorotate output},%
       every multi output/.style=%
-         {draw, decoration={gapped brace, raise=2pt}, decorate}%
+         {draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}%
    }
 \else
    \pgfqkeys{/yquant}{%
       every output/.style=%
-         {shape=yquant-output, anchor=west, align=left, outer xsep=2pt,%
-          /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}}%
+         {shape=yquant-output, anchor/.expanded=\ifyquanthorz{west}{north},%
+          align/.expanded=\ifyquanthorz{left}{center}, outer timesep=2pt,%
+          /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate},%
+          /yquant/internal/autorotate output}%
    }
 \fi
 \pgfqkeys{/yquant}{%
@@ -152,6 +163,41 @@
    operator/if multi/.code=%
       {\ifyquant@config@operator@multi\pgfkeysalso{#1}\fi},%
    circuit/seamless/.is if=yquant@config@circuit@seamless,%
+   circuit/orientation/.is choice,%
+   circuit/orientation/horizontal/.code={%
+      \ifyquant@config@circuitsetup%
+         \pgfkeysalso{/yquant/internal/autorotate init/.style={},%
+            /yquant/internal/autorotate output/.style={}}%
+         \yquant@config@circuit@orientation@horizontal%
+      \else%
+         \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
+      \fi%
+   },%
+   circuit/orientation/vertical/.code={%
+      \ifyquant@config@circuitsetup%
+         \yquant@config@circuit@orientation@vertical%
+      \else%
+         \PackageError{yquant.sty}{`circuit/orientation' can only be modified in the environment options or globally.}{Don't modify this within a circuit.}%
+      \fi%
+   },%
+   horizontal/.forward to=/yquant/circuit/orientation/horizontal,%
+   vertical/.code={%
+      \pgfkeysalso{/yquant/circuit/orientation/vertical}%
+      \unless\ifdim#1 pt=0pt %
+         \ifdefined\adjustbox%
+            \pgfkeysalso{%
+               /yquant/internal/autorotate init/.style={%
+                  /tikz/execute at begin node={\adjustbox{rotate=#1}}%
+               }, /yquant/internal/autorotate output/.style={%
+                  /tikz/execute at begin node={\adjustbox{rotate=-#1}}%
+               }%
+            }%
+         \else%
+            \PackageWarning{yquant.sty}{In order to use the automatic rotation of initial labels for vertical circuits, you need to load the `adjustbox' package.}%
+         \fi%
+      \fi%
+   },%
+   vertical/.default=0,%
    every post measurement control/.is choice,
    every post measurement control/indirect/.code={%
       \undef\yquant@lang@attr@directcontrol%
@@ -175,7 +221,7 @@
 \fi
 \pgfqkeys{/yquant}{%
    operators/every text/.style=%
-      {shape=yquant-rectangle, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}%
+      {shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm}%
 }
 \ifnum\yquant@compat<3 %
    \pgfqkeys{/yquant}{%
@@ -183,12 +229,12 @@
       operators/every rectangular box/.style=%
          {/yquant/operators/every box},%
       operators/every box/.style=%
-         {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm}%
+         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm}%
    }
 \else
    \pgfqkeys{/yquant}{%
       operators/every rectangular box/.style=%
-         {shape=yquant-rectangle, draw, align=center, inner xsep=1mm, x radius=2mm, y radius=2.47mm},%
+         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm},%
       operators/every box/.style=%
          {/yquant/operators/every rectangular box}%
    }
@@ -206,11 +252,12 @@
 \fi
 \pgfqkeys{/yquant}{%
    operators/every dmeter/.style=%
-      {shape=yquant-dmeter, x radius=2mm, y radius=2mm, draw},
+      {shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw},
    % every h is implicitly defined during gate declaration
    operators/every inspect/.style=%
-      {shape=yquant-output, align=left, outer xsep=.3333em, y radius=2.47mm,%
-       /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt}, decorate}},%
+      {shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center},
+       outer timesep=.3333em, space radius=2.47mm,%
+       /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}},%
    operators/every measure/.style=%
       {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
    operators/every measure meter/.style=%
@@ -277,6 +324,10 @@
        \fi},
    internal/multi main/.is if=%
       yquant@config@internal@multi@main,%
+   internal/setup done/.code=%
+      {\yquant@config@circuitsetupfalse},%
+   internal/autorotate init/.style={},%
+   internal/autorotate output/.style={},%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
@@ -291,13 +342,105 @@
 \fi
 % END_FOLD
 
+\protected\def\yquant@config@circuit@orientation@horizontal{%
+   \let\ifyquanthorz=\@firstoftwo%
+   \tikzset{%
+      % in principle, these are all /.forward to handlers, but we want them non-accumulative
+      time radius/.code={\pgfkeys{/tikz/x radius={##1}}},%
+      space radius/.code={\pgfkeys{/tikz/y radius={##1}}},%
+      inner timesep/.code={\pgfkeys{/tikz/inner xsep={##1}}},%
+      inner spacesep/.code={\pgfkeys{/tikz/inner ysep={##1}}},%
+      outer timesep/.code={\pgfkeys{/tikz/outer xsep={##1}}},%
+      outer spacesep/.code={\pgfkeys{/tikz/outer ysep={##1}}}%
+   }%
+   \def\yquant@config@register@minimum@height@default{1.5mm}%
+   \def\yquant@config@register@minimum@depth@default{1.5mm}%
+   \def\yquant@config@operator@minimum@width@default{5mm}%
+   \let\yquant@pgf@picminx=\pgf@picminx%
+   \let\yquant@pgf@picmaxx=\pgf@picmaxx%
+   \let\yquant@pgf@picminy=\pgf@picminy%
+   \let\yquant@pgf@picmaxy=\pgf@picmaxy%
+   \let\yquant@pgf@x=\pgf@x%
+   \let\yquant@pgf@y=\pgf@y%
+   \let\yquant@pgf@pt@x=\pgf@pt@x%
+   \let\yquant@pgf@pt@y=\pgf@pt@y%
+   \let\yquant@pgfqpoint=\pgfqpoint%
+   \let\yquant@coords=\empty%
+   \let\pgfshapeclippath=\yquant@pgfshapeclippath@horz%
+   \def\yquant@orientation@x{x}%
+   \def\yquant@orientation@y{y}%
+   \def\yquant@orientation@plus{+}%
+   \def\yquant@orientation@minus{-}%
+}
+
+\protected\def\yquant@config@circuit@orientation@vertical{%
+   \let\ifyquanthorz=\@secondoftwo%
+   \tikzset{%
+      % in principle, these are all /.forward to handlers, but we want them non-accumulative
+      time radius/.code={\pgfkeys{/tikz/y radius={##1}}},%
+      space radius/.code={\pgfkeys{/tikz/x radius={##1}}},%
+      inner timesep/.code={\pgfkeys{/tikz/inner ysep={##1}}},%
+      inner spacesep/.code={\pgfkeys{/tikz/inner xsep={##1}}},%
+      outer timesep/.code={\pgfkeys{/tikz/outer ysep={##1}}},%
+      outer spacesep/.code={\pgfkeys{/tikz/outer xsep={##1}}}%
+   }%
+   \def\yquant@config@register@minimum@height@default{2.5mm}%
+   \def\yquant@config@register@minimum@depth@default{2.5mm}%
+   \def\yquant@config@operator@minimum@width@default{3mm}%
+   \let\yquant@pgf@picminx=\pgf@picminy%
+   \let\yquant@pgf@picmaxx=\pgf@picmaxy%
+   \let\yquant@pgf@picminy=\pgf@picminx%
+   \let\yquant@pgf@picmaxy=\pgf@picmaxx%
+   \let\yquant@pgf@x=\pgf@y%
+   \let\yquant@pgf@y=\pgf@x%
+   \let\yquant@pgf@pt@x=\pgf@pt@y%
+   \let\yquant@pgf@pt@y=\pgf@pt@x%
+   \def\yquant@pgfqpoint##1##2{\pgfqpoint{##2}{##1}}%
+   \def\yquant@coords(##1,##2){({##2},{##1})}%
+   \let\pgfshapeclippath=\yquant@pgfshapeclippath@vert%
+   \def\yquant@orientation@x{y}%
+   \def\yquant@orientation@y{x}%
+   \def\yquant@orientation@plus{-}%
+   \def\yquant@orientation@minus{+}%
+}
+
+\let\yquant@pgfshapeclippath@horz=\pgfshapeclippath
+\let\yquant@pgfshapeclippath@vert=\pgfshapeclippath
+\patchcmd\yquant@pgfshapeclippath@vert{%
+   \global\let\pgfshapeclippathhorzresult=\pgfshapeclippathresult%
+   \ifcsname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+      % different clipping in vertical direction
+      \pgfsyssoftpath@setcurrentpath\pgfutil@empty%
+      \csname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+      \pgfsyssoftpath@getcurrentpath\pgfshapeclippathresult%
+      \pgfprocessround{\pgfshapeclippathresult}{\pgfshapeclippathresult}%
+   \fi%
+   \global\let\pgfshapeclippathvertresult=\pgfshapeclippathresult%
+}{%
+   \global\let\pgfshapeclippathvertresult=\pgfshapeclippathresult%
+   \ifcsname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+      % different clipping in vertical direction
+      \pgfsyssoftpath@setcurrentpath\pgfutil@empty%
+      \csname pgf@sh@clipvert@\csname pgf@sh@ns@#1\endcsname\endcsname%
+      \pgfsyssoftpath@getcurrentpath\pgfshapeclippathresult%
+      \pgfprocessround{\pgfshapeclippathresult}{\pgfshapeclippathresult}%
+   \fi%
+   \global\let\pgfshapeclippathhorzresult=\pgfshapeclippathresult%
+}{}{%
+   \PackageError{yquant.sty}{Unable to path \string\pgfshapeclippath}%
+                {Vertical layout will not work.}%
+}
+
 \def\yquant@config@register@default@name{\regidx}
 \let\yquant@config@register@default@lazyname=\empty
-\def\yquant@config@register@minimum@height{1.5mm}
-\def\yquant@config@register@minimum@depth{1.5mm}
+\def\yquant@config@register@minimum@height{\yquant@config@register@minimum@height@default}
+\def\yquant@config@register@minimum@height@default{1.5mm}
+\def\yquant@config@register@minimum@depth{\yquant@config@register@minimum@depth@default}
+\def\yquant@config@register@minimum@depth@default{1.5mm}
 \def\yquant@config@register@sep{1mm}
 \def\yquant@config@operator@sep{1mm}
-\def\yquant@config@operator@minimum@width{5mm}
+\def\yquant@config@operator@minimum@width{\yquant@config@operator@minimum@width@default}
+\def\yquant@config@operator@minimum@width@default{5mm}
 \newif\ifyquant@config@internal@multi@main%
 \yquant@config@internal@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
@@ -310,6 +453,9 @@
 \newif\ifyquant@config@operator@subcircuit@manglingreset
 \yquant@config@operator@subcircuit@manglingresettrue
 \newif\ifyquant@config@operator@multi
+\newif\ifyquant@config@circuitsetup
+\yquant@config@circuitsetuptrue
+\yquant@config@circuit@orientation@horizontal
 
 \protected\def\yquant@config@operator@subcircuit@mangling@set#1{%
    \ifyquant@config@operator@subcircuit@manglingreset%
