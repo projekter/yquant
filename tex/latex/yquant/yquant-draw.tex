@@ -512,6 +512,8 @@
             /yquant/this operator, /yquant/internal/multi main=true,%
          }%
          \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
+         % #18: The styles may have set this subcircuit box again, but we disallow this. The "this" style is only supposed to effect the actual box and nothing else, so it should not permeat in the inner of the circuit. This is what every subcircuit box is for!
+         \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
          \begingroup%
             \csname\yquant@prefix draw\endcsname%
          \endgroup%
