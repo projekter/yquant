@@ -157,9 +157,11 @@
    \fi%
    \edef\process{%
          \endgroup%
-         \def\noexpand\yquant@circuit@extendcontrolline@clip{%
-            \unexpanded\expandafter{\yquant@circuit@extendcontrolline@clip}%
-         }%
+         \ifyquant@config@draw@quality%
+            \def\noexpand\yquant@circuit@extendcontrolline@clip{%
+               \unexpanded\expandafter{\yquant@circuit@extendcontrolline@clip}%
+            }%
+         \fi%
          \def\noexpand\yquant@circuit@extendcontrolline@prev{%
             \unexpanded\expandafter{\yquant@circuit@extendcontrolline@prev}%
          }%
@@ -200,9 +202,11 @@
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               name prefix=, name suffix=, name=yquantbox]%
          {\unexpanded\expandafter{\yquant@draw@@content}};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, \yquant@draw@@style,%
-                        /yquant/this operator}%
+      \ifyquant@config@draw@quality%
+         \pgfshapeclippath{yquantbox}%
+                          {/yquant/every operator, \yquant@draw@@style,%
+                           /yquant/this operator}%
+      \fi%
    }%
    \cmd%
    \yquant@circuit@extendwire{#1}{center}%
@@ -248,9 +252,11 @@
                      .5*\noexpand\pgfkeysvalueof{/tikz/\yquant@orientation@y\space radius}\fi,%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, \yquant@draw@@style,%
-                        /yquant/this operator}%
+      \ifyquant@config@draw@quality%
+         \pgfshapeclippath{yquantbox}%
+                          {/yquant/every operator, \yquant@draw@@style,%
+                           /yquant/this operator}%
+      \fi%
    }%
    \cmd%
    \yquant@for \i := #1 to #2 {%
@@ -294,10 +300,12 @@
               space radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every operator, \yquant@draw@@style,%
-                        \ifnum\yquant@compat<2 /yquant/every multi label,\fi%
-                        /yquant/this operator}%
+      \ifyquant@config@draw@quality%
+         \pgfshapeclippath{yquantbox}%
+                          {/yquant/every operator, \yquant@draw@@style,%
+                           \ifnum\yquant@compat<2 /yquant/every multi label,\fi%
+                           /yquant/this operator}%
+      \fi%
    }%
    \cmd%
    \yquant@for \i := #1 to #2 {%
@@ -360,13 +368,15 @@
               \yquant@draw@@style, /yquant/this operator,%
               name prefix=, name suffix=, name=yquantbox]%
          {\unexpanded\expandafter{\yquant@draw@@content}};%
-      \ifdefined\yquant@parent%
-         \pgfshapeclippath{yquantbox}%
-                          {\ifnum\yquant@compat>1 /yquant/every operator,\fi%
-                           /yquant/every output,%
-                           /yquant/every \yquant@register@type@tostring{\yquant@register@get@type{#1}} output,%
-                           \yquant@draw@@style,%
-                           /yquant/this operator}%
+      \ifyquant@config@draw@quality%
+         \ifdefined\yquant@parent%
+            \pgfshapeclippath{yquantbox}%
+                             {\ifnum\yquant@compat>1 /yquant/every operator,\fi%
+                              /yquant/every output,%
+                              /yquant/every \yquant@register@type@tostring{\yquant@register@get@type{#1}} output,%
+                              \yquant@draw@@style,%
+                              /yquant/this operator}%
+         \fi%
       \fi%
    }%
    \cmd%
@@ -407,12 +417,14 @@
               space radius=\yquant@abs{\the\dimexpr.5\dimexpr\yquant@draw@multiinit@@total\relax\relax},%
               name prefix=, name suffix=, name=yquantbox]%
             {\unexpanded\expandafter{\yquant@draw@@content}};%
-      \ifdefined\yquant@parent%
-         \pgfshapeclippath{yquantbox}%
-                          {\ifnum\yquant@compat>1 /yquant/every operator,\fi /yquant/every output,%
-                           \yquant@draw@@style,
-                           \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
-                           /yquant/this operator}%
+      \ifyquant@config@draw@quality%
+         \ifdefined\yquant@parent%
+            \pgfshapeclippath{yquantbox}%
+                             {\ifnum\yquant@compat>1 /yquant/every operator,\fi /yquant/every output,%
+                              \yquant@draw@@style,
+                              \ifnum\yquant@compat<2 /yquant/every multi output,\fi%
+                              /yquant/this operator}%
+         \fi%
       \fi%
    }%
    \cmd%
@@ -615,7 +627,17 @@
             {\ifyquanthorz{\vbox to \the\dimen2 {\hbox to \@firstofthree#4 {}}}%
                           {\hbox to \the\dimen2 {\vbox to \@firstofthree#4 {}}}};%
       }%
-      \cmd%
+      \ifyquant@config@draw@quality%
+         \cmd%
+      \else%
+         % we draw the box on the behindwires layer. In this way, the box can even be filled without overshadowing the wires. However, this implies that the frame of the box will also be drawn behind the wires. If the color of the frame is different from the color of the wires, this may not be desired. In this case, there's no alternative to the quality layout.
+         \begingroup%
+            \let\pgfonlayer@assert@is@active=\relax%
+            \pgfonlayer{behindwires}%
+               \cmd%
+            \endpgfonlayer%
+         \endgroup%
+      \fi%
       \unhbox\yquant@prepare@subcircuit@box%
    % \endpgfinterruptboundingbox + increase
       \ifdim\pgf@interrupt@savemaxy>\yquant@pgf@picmaxy%
@@ -685,18 +707,29 @@
 \protected\long\def\yquant@draw@subcircuit@single#1#2#3#4#5{%
    \yquant@config@operator@multifalse%
    \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#5}{#1}%
-   \edef\cmd{%
-      \pgfshapeclippath{yquantbox}{%
-          /yquant/every operator, \yquant@draw@@style,%
-          /yquant/operators/every subcircuit box, /yquant/this operator,%
-          /yquant/operators/this subcircuit box,%
+   \ifyquant@config@draw@quality%
+      \edef\cmd{%
+         \pgfshapeclippath{yquantbox}{%
+             /yquant/every operator, \yquant@draw@@style,%
+             /yquant/operators/every subcircuit box, /yquant/this operator,%
+             /yquant/operators/this subcircuit box,%
+         }%
       }%
-   }%
-   \cmd%
-   % see comment in draw@subcircuit@multi
-   \yquant@softpath@extractmaxxat\pgfshapeclippathhorzresult{\yquant@register@get@y{#1}}%
-   \let\pgfshapeclippathhorzresult=\empty%
-   \yquant@circuit@extendwire{#1}*%
+      \cmd%
+      % see comment in draw@subcircuit@multi
+      \yquant@softpath@extractmaxxat\pgfshapeclippathhorzresult{\yquant@register@get@y{#1}}%
+      \let\pgfshapeclippathhorzresult=\empty%
+      \yquant@circuit@extendwire{#1}*%
+   \else%
+      \ifyquanthorz{%
+         \pgfpointanchor{yquantbox}{east}%
+         \dimen0=\pgf@x%
+      }{%
+         \pgfpointanchor{yquantbox}{south}%
+         \dimen0=\pgf@y%
+      }%
+      \yquant@circuit@extendwire{#1}*%
+   \fi%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
       {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
    % check for empty name parameter
@@ -710,30 +743,48 @@
    \yquant@config@operator@multitrue%
    % there is no contiguous slicing for subcircuits, as they may have all kinds of wire operations that can extend beyond the individual slices, let alone ancillas
    \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#8}{#4}%
-   \edef\cmd{%
-      \pgfshapeclippath{yquantbox}{%
-          /yquant/every operator, \yquant@draw@@style,%
-          /yquant/operators/every subcircuit box, /yquant/this operator,%
-          /yquant/operators/this subcircuit box,%
-          /yquant/internal/multi main=true,%
+   \ifyquant@config@draw@quality%
+      \edef\cmd{%
+         \pgfshapeclippath{yquantbox}{%
+             /yquant/every operator, \yquant@draw@@style,%
+             /yquant/operators/every subcircuit box, /yquant/this operator,%
+             /yquant/operators/this subcircuit box,%
+             /yquant/internal/multi main=true,%
+         }%
       }%
-   }%
-   \cmd%
-   % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
-   \let\nonaffectedpgfshapeclippathhorzresult=\pgfshapeclippathhorzresult%
-   \yquant@for \i := #1 to #2 {%
-      \xifinlist{\i}{#4}{%
-         % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but allows to specify even more complicated ones) and place the wire at this position without clipping.
-         % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of the operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
-         \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
-                                       {\yquant@register@get@y\i}%
-         \let\pgfshapeclippathhorzresult=\empty%
-         \yquant@circuit@extendwire\i*%
+      \cmd%
+      % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
+      \let\nonaffectedpgfshapeclippathhorzresult=\pgfshapeclippathhorzresult%
+      \yquant@for \i := #1 to #2 {%
+         \xifinlist{\i}{#4}{%
+            % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but allows to specify even more complicated ones) and place the wire at this position without clipping.
+            % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of the operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
+            \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
+                                          {\yquant@register@get@y\i}%
+            \let\pgfshapeclippathhorzresult=\empty%
+            \yquant@circuit@extendwire\i*%
+         }{%
+            \let\pgfshapeclippathhorzresult=\nonaffectedpgfshapeclippathhorzresult%
+            \yquant@circuit@extendwire\i{center}%
+         }%
+      }%
+   \else%
+      % we don't fill subcircuits, so the nonaffected wires will be drawn through (we deliberatly fill the subcircuit on the behindwires layer, so that the wires within a subcircuit will be visible despite the filling; but we cannot differentiate between "good" internal and "bad" nonaffected wires). If such a constellation arises, better use the quality layout
+      \ifyquanthorz{%
+         \pgfpointanchor{yquantbox}{east}%
+         \dimen0=\pgf@x%
       }{%
-         \let\pgfshapeclippathhorzresult=\nonaffectedpgfshapeclippathhorzresult%
-         \yquant@circuit@extendwire\i{center}%
+         \pgfpointanchor{yquantbox}{south}%
+         \dimen0=\pgf@y%
       }%
-   }%
+      \yquant@for \i := #1 to #2 {%
+         \xifinlist{\i}{#4}{%
+            \yquant@circuit@extendwire\i*%
+         }{%
+            \yquant@circuit@extendwire\i{center}%
+         }%
+      }%
+   \fi%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
       {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
    \ifstrempty{#6}\relax{%
@@ -748,9 +799,11 @@
          node[/yquant/every control, /yquant/every #1 control, /yquant/this control,%
               name prefix=, name suffix=, name=yquantbox]%
          {};%
-      \pgfshapeclippath{yquantbox}%
-                       {/yquant/every control, /yquant/every #1 control,%
-                        /yquant/this control}%
+      \ifyquant@config@draw@quality%
+         \pgfshapeclippath{yquantbox}%
+                          {/yquant/every control, /yquant/every #1 control,%
+                           /yquant/this control}%
+      \fi%
    }%
    \cmd%
    \yquant@circuit@extendwire{#2}{center}%
@@ -775,31 +828,50 @@
    \numdef\yquant@draw@@idx@ncontrol{\yquant@draw@@idx@ncontrol+1}%
 }
 
+\protected\long\def\yquant@draw@onwires#1{%
+   \begingroup%
+      \let\pgfonlayer@assert@is@active=\relax%
+      \pgfonlayer{wires}%
+         #1%
+      \endpgfonlayer%
+   \endgroup%
+}
+
 \protected\def\yquant@draw@cline{%
-   \pgfscope%
-      % install the clipping
-      \pgfsyssoftpath@setcurrentpath\yquant@circuit@extendcontrolline@clip%
-      % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
-      \ifyquantdebug%
-         \pgfsetfillcolor{teal}%
-         \pgfsetfillopacity{.3}%
-         \pgfusepathqfill%
-      \else%
-         \begingroup%
-            \pgftransformreset%
-            \pgfpathrectanglecorners%
-               {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-               {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-            \pgfseteorule% even-odd to properly invert the clipping
-            \pgfusepathqclip%
-         \endgroup%
-      \fi%
-      \edef\cmd{%
-         \noexpand\path[/yquant/every control line]%
-            \yquant@circuit@extendcontrolline@cmd;%
+   \ifyquant@config@draw@quality%
+      \pgfscope%
+         % install the clipping
+         \pgfsyssoftpath@setcurrentpath\yquant@circuit@extendcontrolline@clip%
+         % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
+         \ifyquantdebug%
+            \pgfsetfillcolor{teal}%
+            \pgfsetfillopacity{.3}%
+            \pgfusepathqfill%
+         \else%
+            \begingroup%
+               \pgftransformreset%
+               \pgfpathrectanglecorners%
+                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \pgfseteorule% even-odd to properly invert the clipping
+               \pgfusepathqclip%
+            \endgroup%
+         \fi%
+         \edef\cmd{%
+            \noexpand\path[/yquant/every control line]%
+               \yquant@circuit@extendcontrolline@cmd;%
+         }%
+         \cmd%
+      \endpgfscope%
+   \else%
+      \yquant@draw@onwires{%
+         \edef\cmd{%
+            \noexpand\path[/yquant/every control line]%
+               \yquant@circuit@extendcontrolline@cmd;%
+         }%
+         \cmd%
       }%
-      \cmd%
-   \endpgfscope%
+   \fi%
 }
 
 \protected\def\yquant@draw@mline@prep{%
@@ -811,27 +883,33 @@
 }
 
 \protected\def\yquant@draw@mline#1#2{%
-   \pgfscope%
-      % install the clipping
-      \def\pgfsyssoftpath@thepath{#1}%
-      \pgfsyssoftpath@setcurrentpath\pgfsyssoftpath@thepath%
-      % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
-      \ifyquantdebug%
-         \pgfsetfillcolor{teal}%
-         \pgfsetfillopacity{.3}%
-         \pgfusepathqfill%
-      \else%
-         \begingroup%
-            \pgftransformreset%
-            \pgfpathrectanglecorners%
-               {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-               {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-            \pgfseteorule% even-odd to properly invert the clipping
-            \pgfusepathqclip%
-         \endgroup%
-      \fi%
-      \path[/yquant/every multi line] #2;%
-   \endpgfscope%
+   \ifyquant@config@draw@quality%
+      \pgfscope%
+         % install the clipping
+         \def\pgfsyssoftpath@thepath{#1}%
+         \pgfsyssoftpath@setcurrentpath\pgfsyssoftpath@thepath%
+         % and invert it. It is sufficient to cover the current bounding box, as the wire will be drawn between existing operators.
+         \ifyquantdebug%
+            \pgfsetfillcolor{teal}%
+            \pgfsetfillopacity{.3}%
+            \pgfusepathqfill%
+         \else%
+            \begingroup%
+               \pgftransformreset%
+               \pgfpathrectanglecorners%
+                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \pgfseteorule% even-odd to properly invert the clipping
+               \pgfusepathqclip%
+            \endgroup%
+         \fi%
+         \path[/yquant/every multi line] #2;%
+      \endpgfscope%
+   \else%
+      \yquant@draw@onwires{%
+         \path[/yquant/every multi line] #2;%
+      }%
+   \fi%
 }
 
 \protected\def\yquant@draw@alias#1{%
@@ -861,65 +939,71 @@
                }, /yquant/this wire%
             }}%
             \wirestyle%
-            % load all clippings
-            \edef\wireclipping{%
-               \unexpanded\expandafter\expandafter\expandafter{%
-                  \expandafter\@thirdandfourthoffour\wirelast%
+            \ifyquant@config@draw@quality%
+               % load all clippings
+               \edef\wireclipping{%
+                  \unexpanded\expandafter\expandafter\expandafter{%
+                     \expandafter\@thirdandfourthoffour\wirelast%
+                  }%
                }%
-            }%
-            \pgfscope%
-               \unless\ifx\wireclipping\empty% may happen if the style is altered to be invisible, though the type is not none
-                  % install the clipping
-                  \pgfsyssoftpath@setcurrentpath\wireclipping%
-                  % invert the clipping
-                  \ifyquantdebug%
-                     \pgfsetfillcolor{orange}%
-                     \pgfsetfillopacity{.3}%
-                     \pgfusepathqfill%
-                  \else%
-                     % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
-                     \begingroup%
-                        \ifdim\pgf@picminx>\pgf@picmaxx%
-                           % nothing drawn yet (or bounding box reset)
-                           \pgf@picminx=0pt %
-                           \pgf@picmaxx=0pt %
+               \pgfscope%
+                  \unless\ifx\wireclipping\empty% may happen if the style is altered to be invisible, though the type is not none
+                     % install the clipping
+                     \pgfsyssoftpath@setcurrentpath\wireclipping%
+                     % invert the clipping
+                     \ifyquantdebug%
+                        \pgfsetfillcolor{orange}%
+                        \pgfsetfillopacity{.3}%
+                        \pgfusepathqfill%
+                     \else%
+                        % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
+                        \begingroup%
+                           \ifdim\pgf@picminx>\pgf@picmaxx%
+                              % nothing drawn yet (or bounding box reset)
+                              \pgf@picminx=0pt %
+                              \pgf@picmaxx=0pt %
+                           \fi%
+                           \ifdim\pgf@picminy>\pgf@picmaxy%
+                              \pgf@picminy=0pt %
+                              \pgf@picmaxy=0pt %
+                           \fi%
+                           \pgftransforminvert%
+                           \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+                           \global\@tempdima=\yquant@pgf@y%
+                           \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+                           \global\@tempdimb=\yquant@pgf@y%
+                        \endgroup%
+                        % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
+                        % This may be insufficient if there is no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
+                        \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
+                           \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
+                           \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
                         \fi%
-                        \ifdim\pgf@picminy>\pgf@picmaxy%
-                           \pgf@picminy=0pt %
-                           \pgf@picmaxy=0pt %
+                        \ifdim\dimexpr\@tempdimb-\@tempdima\relax<1cm %
+                           \@tempdima=\dimexpr\wireypos-5mm\relax%
+                           \@tempdimb=\dimexpr\wireypos+5mm\relax%
                         \fi%
-                        \pgftransforminvert%
-                        \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                        \global\@tempdima=\yquant@pgf@y%
-                        \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-                        \global\@tempdimb=\yquant@pgf@y%
-                     \endgroup%
-                     % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
-                     % This may be insufficient if there is no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
-                     \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
-                        \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
-                        \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
+                        \pgf@relevantforpicturesizefalse%
+                           \pgfpathrectanglecorners%
+                              {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@orientation@minus%
+                                                         2\pgflinewidth\relax}%
+                                                {\@tempdima}}%
+                              {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@orientation@plus%
+                                                         2\pgflinewidth\relax}%
+                                                {\@tempdimb}}%
+                        \pgf@relevantforpicturesizetrue%
+                        \pgfseteorule% even-odd to properly invert the clipping
+                        \pgfusepathqclip%
                      \fi%
-                     \ifdim\dimexpr\@tempdimb-\@tempdima\relax<1cm %
-                        \@tempdima=\dimexpr\wireypos-5mm\relax%
-                        \@tempdimb=\dimexpr\wireypos+5mm\relax%
-                     \fi%
-                     \pgf@relevantforpicturesizefalse%
-                        \pgfpathrectanglecorners%
-                           {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@orientation@minus%
-                                                      2\pgflinewidth\relax}%
-                                             {\@tempdima}}%
-                           {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@orientation@plus%
-                                                      2\pgflinewidth\relax}%
-                                             {\@tempdimb}}%
-                     \pgf@relevantforpicturesizetrue%
-                     \pgfseteorule% even-odd to properly invert the clipping
-                     \pgfusepathqclip%
                   \fi%
-               \fi%
-               % the clip inversion is left to the drawing commands (clip two \pgflinewidth more to avoid renderer artifacts)
-               \csname yquant@draw@wire@\wiretype\endcsname{#1}%
-            \endpgfscope%
+                  % the clip inversion is left to the drawing commands (clip two \pgflinewidth more to avoid renderer artifacts)
+                  \csname yquant@draw@wire@\wiretype\endcsname{#1}%
+               \endpgfscope%
+            \else%
+               \yquant@draw@onwires{%
+                  \csname yquant@draw@wire@\wiretype\endcsname{#1}%
+               }%
+            \fi%
          \fi%
       \fi%
    \endgroup%

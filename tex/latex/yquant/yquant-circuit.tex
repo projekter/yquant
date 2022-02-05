@@ -15,7 +15,9 @@
             % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
             \yquant@register@set@lastwire{#1}{%
                {\wirexprevpos}{\wirexpos}{}%
-               {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+               {\ifyquant@config@draw@quality%
+                   \unexpanded\expandafter{\pgfshapeclippathhorzresult}%
+                \fi}%
             }%
          \else%
             % append the previous `last' clipping to the old list and insert the new one
@@ -25,7 +27,9 @@
                    \expandafter\@thirdandfourthoffour\wirelast%
                 }%
                }%
-               {\unexpanded\expandafter{\pgfshapeclippathhorzresult}}%
+               {\ifyquant@config@draw@quality%
+                  \unexpanded\expandafter{\pgfshapeclippathhorzresult}%
+                \fi}%
             }%
          \fi%
       \fi%
@@ -94,9 +98,11 @@
 % BEGIN_FOLD Drawing control lines
 % populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
 \protected\def\yquant@circuit@extendcontrolline#1#2{%
-   \eappto\yquant@circuit@extendcontrolline@clip{%
-      \unexpanded\expandafter{\pgfshapeclippathvertresult}%
-   }%
+   \ifyquant@config@draw@quality%
+      \eappto\yquant@circuit@extendcontrolline@clip{%
+         \unexpanded\expandafter{\pgfshapeclippathvertresult}%
+      }%
+   \fi%
    \begingroup%
       \tikzset{/yquant/every control line}%
       \expandafter%
@@ -160,9 +166,11 @@
       \tikzset{/yquant/every multi line}%
       \expandafter%
    \endgroup%
-   \eappto\yquant@circuit@extendmultiline@clip{%
-      \unexpanded\expandafter{\pgfshapeclippathvertresult}%
-   }%
+   \ifyquant@config@draw@quality%
+      \eappto\yquant@circuit@extendmultiline@clip{%
+         \unexpanded\expandafter{\pgfshapeclippathvertresult}%
+      }%
+   \fi%
    \expandafter\@tempdima\the\pgflinewidth%
    \pgfpointanchor{yquantbox}{center}%
    \unless\ifx\yquant@circuit@extendmultiline@prev\relax%

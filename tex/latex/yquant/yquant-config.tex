@@ -33,6 +33,59 @@
       register/minimum after/.forward to=/yquant/register/minimum after%
    }
 \fi
+\def\yquant@config@draw@ensurelayers@addwires#1,main,#2\yquant@stop{%
+   \ifstrempty{#2}{%
+      % main was the last item in the list, so we needed to add the comma
+      \edef\pgf@layerlist{\@gobble#1,wires,main}%
+   }{%
+      % there were more items in the list, so we have a spurious comma in #2
+      \expandafter\yquant@config@draw@ensurelayers@addwires@%
+         \expandafter,\pgf@layerlist\yquant@stop%
+   }%
+}
+\def\yquant@config@draw@ensurelayers@addwires@#1,main,#2\yquant@stop{%
+   \edef\pgf@layerlist{\@gobble#1,wires,main,#2}%
+}
+\def\yquant@config@draw@ensurelayers@haswires#1,wires,#2\yquant@stop{%
+   \ifstrempty{#2}{%
+      % wires not present yet, take action
+      \expandafter\yquant@config@draw@ensurelayers@addwires%
+         \expandafter,\pgf@layerlist,\yquant@stop%
+   }\relax%
+}
+\def\yquant@config@draw@ensurelayers@addbehindwires#1,wires,#2\yquant@stop{%
+   \ifstrempty{#2}{%
+      % wires was the last item in the list, so we needed to add the comma (should never happen)
+      \edef\pgf@layerlist{\@gobble#1,behindwires,wires}%
+      \PackageWarning{yquant.sty}{The wires layer was set on top of the main layer - expect undesirable outcomes.}%
+   }{%
+      % there were more items in the list, so we have a spurious comma in #2
+      \expandafter\yquant@config@draw@ensurelayers@addbehindwires@%
+         \expandafter,\pgf@layerlist\yquant@stop%
+   }%
+}
+\def\yquant@config@draw@ensurelayers@addbehindwires@#1,wires,#2\yquant@stop{%
+   \edef\pgf@layerlist{\@gobble#1,behindwires,wires,#2}%
+}
+\def\yquant@config@draw@ensurelayers@hasbehindwires#1,behindwires,#2\yquant@stop{%
+   \ifstrempty{#2}{%
+      % wires not present yet, take action
+      \expandafter\yquant@config@draw@ensurelayers@addbehindwires%
+         \expandafter,\pgf@layerlist,\yquant@stop%
+   }\relax%
+}
+\def\yquant@config@draw@ensurelayers{%
+   \expandafter\yquant@config@draw@ensurelayers@haswires%
+      \expandafter,\pgf@layerlist,wires,\yquant@stop%
+   \expandafter\yquant@config@draw@ensurelayers@hasbehindwires%
+      \expandafter,\pgf@layerlist,behindwires,\yquant@stop%
+   \ifyquant@config@draw@quality%
+      % maybe the option was set outside of a tikzpicture, then we need to keep this
+      \global\let\endpgfpicture=\yquant@old@endpgfpicture%
+      \global\yquant@config@requirelayersfalse%
+   \fi%
+}
+
 \pgfqkeys{/yquant}{%
    register/separation/.code=%
       {\dimdef\yquant@config@register@sep{#1}},%
@@ -42,7 +95,30 @@
    operator/separation/.code=%
       {\dimdef\yquant@config@operator@sep{#1}},%
    operator/multi warning/.is if=%
-      yquant@config@operator@multi@warn%
+      yquant@config@operator@multi@warn,%
+   drawing mode/.is choice,%
+   drawing mode/quality/.code=%
+      {\yquant@config@draw@qualitytrue%
+       \pgfkeysalso{/yquant/default background=none}%
+       \unless\ifpgfpicture%
+          % we do not reset the special layer injection (there may be multiple yquant environments, and only one of them had the "size" drawing mode; then, we still need the layers), unless this is actually set outside of a tikzpicture
+          \ifdefined\yquant@old@endpgfpicture% only if we changed before
+            \global\let\endpgfpicture=\yquant@old@endpgfpicture%
+            \global\yquant@config@requirelayersfalse%
+          \fi%
+       \fi},%
+   drawing mode/size/.code=%
+      {\yquant@config@draw@qualityfalse%
+       \pgfkeysalso{/yquant/default background=white}%
+       \unless\ifyquant@config@requirelayers%
+          \global\let\yquant@old@endpgfpicture=\endpgfpicture%
+          \gpreto\endpgfpicture\yquant@config@draw@ensurelayers%
+       \fi%
+       \global\yquant@config@requirelayerstrue},%
+   default background/.initial=%
+      {none},%
+   default fill/.style={%
+      fill/.expanded=\pgfkeysvalueof{/yquant/default background}}
 }%
 % END_FOLD
 % BEGIN_FOLD Register creation
@@ -140,7 +216,7 @@
    every positive control/.style=%
       {fill=black},%
    every negative control/.style=%
-      {draw},%
+      {draw, /yquant/default fill},%
    every operator/.style=%
       {anchor=center},%
    every multi line/.style=%
@@ -221,7 +297,7 @@
 \fi
 \pgfqkeys{/yquant}{%
    operators/every text/.style=%
-      {shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm}%
+      {shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill}%
 }
 \ifnum\yquant@compat<3 %
    \pgfqkeys{/yquant}{%
@@ -229,12 +305,12 @@
       operators/every rectangular box/.style=%
          {/yquant/operators/every box},%
       operators/every box/.style=%
-         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm}%
+         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill}%
    }
 \else
    \pgfqkeys{/yquant}{%
       operators/every rectangular box/.style=%
-         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm},%
+         {shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill},%
       operators/every box/.style=%
          {/yquant/operators/every rectangular box}%
    }
@@ -252,18 +328,18 @@
 \fi
 \pgfqkeys{/yquant}{%
    operators/every dmeter/.style=%
-      {shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw},
+      {shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw, /yquant/default fill},
    % every h is implicitly defined during gate declaration
    operators/every inspect/.style=%
       {shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center},
-       outer timesep=.3333em, space radius=2.47mm,%
+       outer timesep=.3333em, space radius=2.47mm, /yquant/default fill,%
        /yquant/operator/if multi={draw, decoration/.expanded={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}},%
    operators/every measure/.style=%
-      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw},%
+      {shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw, /yquant/default fill},%
    operators/every measure meter/.style=%
       {draw, -{Latex[length=2.5pt]}},%
    operators/every not/.style=%
-      {shape=yquant-oplus, radius=1.3mm, draw},%
+      {shape=yquant-oplus, radius=1.3mm, draw, /yquant/default fill},%
    operators/every pauli/.style=%
       {/yquant/operators/every rectangular box},%
    operators/every phase/.style=%
@@ -273,7 +349,7 @@
    operators/every subcircuit/.style=%
       {},%
    operators/every subcircuit box/.style=%
-      {/yquant/operators/every rectangular box},%
+      {/yquant/operators/every rectangular box, fill=none},%
    subcircuit box style/.style=%
       {/yquant/operators/every subcircuit box/.append style={#1}},%
    operators/this subcircuit box/.style=%
@@ -307,7 +383,7 @@
       {shape=yquant-circle, radius=.5mm, fill},%
    % every x is implicitly defined during gate declaration
    operators/every xx/.style=%
-      {shape=yquant-rectangle, radius=.75mm, draw},%
+      {shape=yquant-rectangle, radius=.75mm, draw, /yquant/default fill},%
    % every y is implicitly defined during gate declaration
    % every z is implicitly defined during gate declaration
    operators/every zz/.style=%
@@ -456,6 +532,9 @@
 \newif\ifyquant@config@circuitsetup
 \yquant@config@circuitsetuptrue
 \yquant@config@circuit@orientation@horizontal
+\newif\ifyquant@config@draw@quality
+\yquant@config@draw@qualitytrue
+\newif\ifyquant@config@requirelayers
 
 \protected\def\yquant@config@operator@subcircuit@mangling@set#1{%
    \ifyquant@config@operator@subcircuit@manglingreset%
