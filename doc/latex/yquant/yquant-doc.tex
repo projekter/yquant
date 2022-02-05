@@ -394,6 +394,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Deviations are noted in this manual.
 
          Valid values for
+         \begingroup%
+            % since v2.6 of minted, \PYG is no longer universally defined, so bring it into scope
+            \minted@defstyle{\minted@get@opt{style}{default}}%
          \begin{BVerbatim}[commandchars=\\\{\}]
 \PYG{n+ni}{?command?}
          \end{BVerbatim}
@@ -416,7 +419,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{BVerbatim}[commandchars=\\\{\}]
 \PYG{l+s+s2}{\PYGZdq{}+\PYGZdq{}}
          \end{BVerbatim}
-         ).
+         ).\endgroup
 
       \subsection{Registers}\label{sec:registers}
          Every quantum circuit is structured by means of \emph{registers}.
@@ -725,6 +728,22 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             You may disable this warning globally, on a per\hyp circuit, or even on a per\hyp gate basis.
          \end{option}
 
+         \begin{option}[New in 0.7]{drawing mode}!quality!
+            This key determines which drawing pipeline is enabled.
+            For more details, see \cref{sec:pipeline}.
+            The option should not be changed within a circuit (though only the last value will be relevant).
+            Allowed values are \texttt{quality} for the default clipping\hyp based pipeline, and \texttt{size} of the filling\hyp based one.
+            Note that choosing \texttt{quality} will set \style{/yquant/default background} to \texttt{none}; choosing \texttt{size} will set it to \texttt{white} (though this can be changed after setting the option).
+         \end{option}
+
+         \begin{option}[New in 0.7]{default background}!none!
+            This key contains the default color that is used to fill all gates with a nonempty interior.
+         \end{option}
+
+         \begin{option}[New in 0.7]{default fill}!fill/.expanded=\pgfkeysvalueof{/yquant/default background}!
+            Use this style if you want to apply the default filling to a user\hyp defined gate.
+         \end{option}
+
       \subsection{Register creation}\unskipOpt
          \begin{option}{register/default name}!\regidx!
             The printed name that is used by default if a new register is created explicitly (\gate{qubit}, \gate{cbit}, \gate{qubits}; not used for \gate{nobit} or for implicit declarations) and no value is specified.
@@ -853,7 +872,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every positive control (i.e., one that conditions on the register being in state $\ket1$ or $1$).
          \end{option}
 
-         \begin{option}{every negative control}!draw!
+         \begin{option}[Changed in 0.7]{every negative control}!draw, /yquant/default fill!
             This style is installed for every negative control (i.e., one that conditions on the register being in state $\ket0$ or $0$).
          \end{option}
 
@@ -998,7 +1017,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Note that with the \texttt{compat} key set before \texttt{0.4}, this style instead defaults to \tex!/yquant/operators/subcircuit/frameless, /yquant/register/default name=!.
          \end{option}
 
-         \begin{option}[Changed in 0.7]{operators/every dmeter}!shape=yquant-dmeter, time radius=2mm, space radius=2mm, fill=white, draw!
+         \begin{option}[Changed in 0.7]{operators/every dmeter}!shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw, /yquant/default fill!
             This style is installed for every \gate{dmeter} gate.
             The \texttt{yquant-dmeter} shape consists of a rectangle whose right side is replaced by a circle, resembling the letter ``D.''
          \end{option}
@@ -1007,12 +1026,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{h} (Hadamard) operator.
          \end{option}
 
-         \begin{option}[Changed in 0.7]{operators/every inspect}!shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center}, outer timesep=.3333em, space radius=2.47mm, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}!
+         \begin{option}[Changed in 0.7]{operators/every inspect}!shape=yquant-output, align/.expanded=\ifyquanthorz{left}{center}, outer timesep=.3333em, space radius=2.47mm, /yquant/default fill, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{}{mirror}}, decorate}!
             This style is installed for every \gate{inspect} gate.
             It does not have any shape on its own, apart from multi\hyp register uses, in which it will contain a brace on its left (in vertical mode: on its top).
          \end{option}
 
-         \begin{option}{operators/every measure}!shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw!
+         \begin{option}[Changed in 0.7]{operators/every measure}!shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw, /yquant/default fill!
             This style is installed for every \gate{measure} gate.
             The \texttt{yquant-measure} shape is a rectangle that contains a ``meter'' symbol.
             It allows for a text to be put inside (e.g., a basis), which then shifts the meter symbol accordingly.
@@ -1036,7 +1055,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \gate{phase} gate $\ketbra00 + \ee^{\ii\phi} \ketbra11$.
          \end{option}
 
-         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every rectangular box}!shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm!
+         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every rectangular box}!shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill!
             This style is not associated to any particular gate, but will be inherited by a lot of gates that have a rectangular box frame with some text.
             This style should not be used with a \texttt{compat} setting strictly smaller than~\texttt{0.6}.
          \end{option}
@@ -1050,7 +1069,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             Note that all styles given here will also apply to every element in the subcircuit; in a way, this is an addition to \style{/yquant/every circuit} (which is also again put into effect at the beginning of a subcircuit).
          \end{option}
 
-         \begin{option}[New in 0.2]{operators/every subcircuit box}!/yquant/operators/every box!
+         \begin{option}[New in 0.2]{operators/every subcircuit box}!/yquant/operators/every rectangular box, fill=none!
             This style is installed for every \gate{subcircuit}.
             Note that in contrast to all other styles such as \style{/yquant/operators/every subcircuit} or \style{/yquant/this operator}, this style is only applied to the ``container'' node of the subcircuit, but not to the elements in the subcircuit themselves.
             Also note that the box style by default contains an \texttt{inner xsep} that will be added as an inside padding.
@@ -1119,7 +1138,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The \texttt{yquant-swap} shape consists of a single cross.
          \end{option}
 
-         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every text}!shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm!
+         \begin{option}[Changed in 0.7\\New in 0.6]{operators/every text}!shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill!
             This style is installed for every \gate{text} gate.
          \end{option}
 
@@ -1131,7 +1150,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every Pauli operator $\sigma_x$, i.e., \gate{x}.
          \end{option}
 
-         \begin{option}{operators/every xx}!shape=yquant-rectangle, radius=.75mm, draw!
+         \begin{option}[Changed in 0.7]{operators/every xx}!shape=yquant-rectangle, radius=.75mm, draw, /yquant/default fill!
             This style is installed for every \gate{xx} gate in symmetrized notation ($\ketbra{++}{++} + \ketbra{+-}{+-} + \ketbra{-+}{-+} - \ketbra{--}{--}$).
          \end{option}
 
@@ -1205,6 +1224,30 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                   \item Remove the clipping paths stored so far on this register, apart from the clipping on the last gate (which will be needed again if this was not the end of the circuit).
                \end{itemize}
          \end{itemize}
+
+         \compat{New in 0.7}Note that \Yquant{} also supports a simplified drawing pipeline which does not involve clipping paths.
+         It can be enabled by setting the \style{/yquant/drawing mode} option to \texttt{size}.
+         The simplified pipeline has the following benefits:
+         \begin{itemize}
+            \item \TeX{} has to compute a bit less, so the compilation process can be sped up.
+            \item PDF readers may render the circuit faster.
+            \item The size of the output files is decreased.
+            \item Compatibility with very simplistic clients that don't support clipping well is improved (this may be an issue for some PDF to image converters, for example).
+            \item Theoretically, you may use any kind of predefined shape in this mode (from \TikZ{} or other packages), since the clipping paths are no longer required.
+         \end{itemize}
+         However, with it come certain drawbacks:
+         \begin{itemize}
+            \item Gates are no longer transparent, but filled with some fixed background color, so if transparency is important for you, this just does not work.
+            \item \Yquant{} relies on \TikZ's layering capabilities; if you use layers by yourself, you have to pay some attention to do it correctly.
+            \item The z\hyp order may not be as you expect it; in particular:
+               All the gates will be drawn on the \texttt{main} layer; all the wires on the \texttt{wires} layer, which is behind \texttt{main}; so if you don't use layers by yourself, everything that you draw will overshadow the wires, but not necessarily the gates.
+            \item If you were to fill a subcircuit, this would then erase all the internal wires.
+               Hence, the box of a subcircuit is drawn on the \texttt{behindwires} layer; but this implies that also the \emph{frame} of the box is drawn behind the wires and that this box is also overshadowed by any of your drawing.
+            \item Wires that visually cross gates which are not part of the gate may be displayed differently from the standard pipeline.
+         \end{itemize}
+         Unless you use \tex!\pgfsetlayers! to add the layers \texttt{wires} and \texttt{behindwires} manually, \Yquant{} will automatically place the \texttt{wires} layer directly before \texttt{main}; then it will place \texttt{behindwires} directly before \texttt{wires}.
+         This in particular ensures full compatibility with the \texttt{backgrounds} library: the background layer is still the very first in the layer list.
+         In contrast to \pkg{pgfplots}, this automatism should work even if the \Yquant{} environment is placed within groups.
 
       \subsection{Overwriting the height and depth calculation}
          \Yquant{} automatically takes care of calculating the height and depth of all registers, so that their final vertical positions are chosen without overlap.
@@ -2536,7 +2579,6 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   \end{codeexample}
                   We support measurements with vertical outputs, but only if they replace the positive control of some action.
                   Here, we fake this behavior by introducing an invisible register at the bottom, which will contain the outputs.
-                  In order to disable the line around the \gate{box}es, we used the \style{/yquant/operators/every box} style, which here was most convenient, as the only \gate{box}es in use are those without an outline.
                   Note that if we were to give style options to the \gate{text}s, they would also affect the measurements.
                   The reason for this is that internally, the measurement will be nested within the same scope that draws the \gate{text}---so the options given to the \gate{text} will be inherited by the \gate{measure}ment.
                   As an operator style overwrites default styles, this will also apply to the measurements.
@@ -5264,10 +5306,12 @@ $=$
          Documentation: Replace the wishlist by a section on integration with other packages. \\
          Documentation: Include the examples of \pkg{qpic} in this manual.
 
-      \subsection*{2022-??-??: Version 0.7}
+      \subsection*{2022-02-05: Version 0.7}
          New: Support for vertical layout. \\
          Various bugfixes. \\
          Internal change of the loading order of the package files. \\
-         Fix \href{https://github.com/projekter/yquant/issues/18}{\#18}: Subcircuit boxes don't render in \texttt{groups} environment. Now, styles can properly modify the \style{/yquant/operators/this subcircuit box} style without affecting the content of the subcircuit, only the box.
+         Fix \href{https://github.com/projekter/yquant/issues/18}{\#18}: Subcircuit boxes don't render in \texttt{groups} environment.
+         Now, styles can properly modify the \style{/yquant/operators/this subcircuit box} style without affecting the content of the subcircuit, only the box. \\
+         New: Support for a simplified drawing pipeline without clipping paths.
 %END_FOLD
 \end{document}
