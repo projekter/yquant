@@ -52,40 +52,36 @@
       % we need to capture every non-attribute (which means filtering them out).
       \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/attrs/}{%
          % the key is in /yquant/attrs. Does it actually exist (but not as a handler, which would define non-existing keys)?
-         \if\pgfkeyscasenumber1%
-            \pgfkeysfiltercontinuetrue%
-         \else%
-            \if\pgfkeyscasenumber2%
+         \ifnum\pgfkeyscasenumber=0 % unknown
+            % let's check it for the global attributes (and already change the current-macros)
+            \edef\pgfkeyscurrentkey{/yquant/global attrs/\pgfkeyscurrentkeyRAW}%
+            \pgfkeyssplitpath%
+            \pgfkeysifassignable{\pgfkeyscurrentpath}{%
                \pgfkeysfiltercontinuetrue%
-            \else%
-               % 0 or 3 for our case means non-existing - now we need to check whether we can find it in the global attributes.
-               \pgfkeysifassignable{/yquant/global attrs/\pgfkeyscurrentkeyRAW}{%
+            }{%
+               \pgfkeysfiltercontinuefalse%
+            }%
+         \else%
+            \ifnum\pgfkeyscasenumber=3 % handler
+               % handlers are tricky. The existence does not rely on the question whether the key itself exists, but the handler. This is not what we want for attributes. We strip the handler (the handler is in \pgfkeyscurrentname, while the original key is fully contained in \pgfkeyscurrentpath) and check whether it existed (think of handlers such as .expanded, which for sure should be valid, while we don't want to define new arguments).
+               \pgfkeysifassignable{\pgfkeyscurrentkey}{%
+                  % case 1 and 2
                   \pgfkeysfiltercontinuetrue%
                }{%
-                  % it is not, so it is not a known attribute for this operator. Filter.
-                  \pgfkeysfiltercontinuefalse%
+                  % don't have to worry about option 3, so this is 0. But maybe this was actually a global attribute? Again, we have to discard our handler. Note that this change to the current-macros will affect further processing!
+                  \edef\pgfkeyscurrentkey{/yquant/global attrs/\pgfkeyscurrentkeyRAW}%
+                  \pgfkeyssplitpath%
+                  \pgfkeysifassignable{\pgfkeyscurrentpath}{%
+                     \pgfkeysfiltercontinuetrue%
+                  }{%
+                     \pgfkeysfiltercontinuefalse%
+                  }%
                }%
+            \else% command key or contains value
+               \pgfkeysfiltercontinuetrue%
             \fi%
          \fi%
-      }{%
-         % the key is not in /yquant/attrs. Is it a global attribute (usually, the user should not access this explicitly, but let's be tolerant here)?
-         \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/global attrs/}{%
-            % the key is in /yquant/global attrs. Does it actually exist?
-            \if\pgfkeyscasenumber1%
-               \pgfkeysfiltercontinuetrue%
-            \else%
-               \if\pgfkeyscasenumber2%
-                  \pgfkeysfiltercontinuetrue%
-               \else%
-                  % no - that's it.
-                  \pgfkeysfiltercontinuefalse%
-               \fi%
-            \fi%
-         }{%
-            % the key is no known attribute
-            \pgfkeysfiltercontinuefalse%
-         }%
-      }%
+      }\relax%
    },%
    /yquant/attr filter/.style={%
       /pgf/key filters/attr filter/.install key filter,%
@@ -100,10 +96,7 @@
 \protected\def\yquant@langhelper@setup@attrs#1#2#3{%
    \begingroup%
       \lowercase{\edef\cmd{#1}}%
-      \edef\keyscmd{%
-         \noexpand\pgfkeyslet{/yquant/attrs/\cmd/.unknown/.@cmd}%
-                             \yquant@langhelper@setup@attrs@unknown%
-      }%
+      \let\keyscmd=\relax%
       \let\keysset=\relax%
       \let\keyscheck=\relax%
       \def\do##1{%
@@ -143,25 +136,6 @@
       \expandafter%
    \endgroup%
    \keyscmd%
-}
-
-\protected\def\yquant@langhelper@setup@attrs@unknown#1\pgfeov{%
-   % This is in its essence /.search also={/yquant/global attrs}, but with filtering interrupted
-   \pgfkeysinterruptkeyfilter%
-      \ifpgfkeysaddeddefaultpath%
-         % only process keys for which no full path has been provided:
-         \pgfkeyssuccessfalse%
-         \let\pgfkeys@searchalso@name=\pgfkeyscurrentkeyRAW%
-         % We interrupt the filtering process because we only want to append the very top-level command to the remaining-macro.
-         \unless\ifpgfkeyssuccess%
-            \pgfqkeys{/yquant/global attrs}%
-                     {\pgfkeys@searchalso@name={#1}}%
-         \fi%
-      \else%
-         % the /.search also implementation defines this in an unexpanded macro, which is then executed. Any reason?
-         \pgfkeysvalueof{/handlers/.unknown/.@cmd}#1\pgfeov%
-      \fi%
-   \endpgfkeysinterruptkeyfilter%
 }
 
 \protected\def\yquant@langhelper@setup@attrs@missing#1{%
