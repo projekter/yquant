@@ -244,6 +244,10 @@
          \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
                 {{\the\dimen2}{\the\dimen4}}%
       \fi%
+      % now we must be careful (#21) - we emulate the line by rectangles, but rectangles are sensitive to the current scaling, while lines are not. So we must undo the scaling, which may be different for x and y direction. Let's hope there is no rotation, we'd get a mix of different scalings...
+      \pgftransformationadjustments%
+      \dimen2=\dimexpr\pgfhorizontaltransformationadjustment\dimen2\relax%
+      \dimen4=\dimexpr\pgfverticaltransformationadjustment\dimen4\relax%
       \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
                                {-\dimexpr\yradius-\dimen2\relax}}%
       \pgfpathlineto{\pgfqpoint{\dimexpr\xradius-\dimen4\relax}%
@@ -290,6 +294,10 @@
          \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
                 {{\the\dimen2}{\the\dimen4}}%
       \fi%
+      % now we must be careful (#21) - we emulate the line by rectangles, but rectangles are sensitive to the current scaling, while lines are not. So we must undo the scaling, which may be different for x and y direction. Let's hope there is no rotation, we'd get a mix of different scalings...
+      \pgftransformationadjustments%
+      \dimen2=\dimexpr\pgfhorizontaltransformationadjustment\dimen2\relax%
+      \dimen4=\dimexpr\pgfverticaltransformationadjustment\dimen4\relax%
       \dimen6=\dimexpr\dimen2*\dimexpr\xradius\relax/\dimexpr\yradius\relax+%
                       \dimen2*\dimexpr\yradius\relax/\dimexpr\xradius\relax\relax%
       \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
@@ -334,6 +342,10 @@
          \csxdef{yquant@math@cache1@\xradius @\yradius @\the\pgflinewidth}%
                 {{\the\dimen2}{\the\dimen4}}%
       \fi%
+      % now we must be careful (#21) - we emulate the line by rectangles, but rectangles are sensitive to the current scaling, while lines are not. So we must undo the scaling, which may be different for x and y direction. Let's hope there is no rotation, we'd get a mix of different scalings...
+      \pgftransformationadjustments%
+      \dimen2=\dimexpr\pgfhorizontaltransformationadjustment\dimen2\relax%
+      \dimen4=\dimexpr\pgfverticaltransformationadjustment\dimen4\relax%
       \dimen6=\dimexpr\dimen4*\dimexpr\xradius\relax/\dimexpr\yradius\relax+%
                       \dimen4*\dimexpr\yradius\relax/\dimexpr\xradius\relax\relax%
       \pgfpathmoveto{\pgfqpoint{-\dimexpr\xradius+\dimen4\relax}%
