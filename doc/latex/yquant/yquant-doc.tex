@@ -219,7 +219,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.7 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.7.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -904,9 +904,13 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This is a shorthand that modifies the appearance of both the current operator and any controls or control lines.
          \end{option}
 
-         \begin{option}[New in 0.1.2]{operator/multi as single}!/yquant/every multi line/.style=/yquant/every control line!
+         \begin{option}[Changed in 0.7.1\\New in 0.1.2]{operator/multi as single}!/yquant/every multi line/.style=/yquant/every control line!
             This style is automatically set for certain gates such as the \gate{swap} or the \gate{zz} gate.
             For those gates, neighboring registers will be treated as discontiguous; and this style will enforce their connecting line to have the style used by control lines.
+
+            \compat{New in 0.7.1}This style actually checks whether control lines are present in the gate and in this case, it is equal to \tex!draw=none!, i.e., it suppresses the multi\hyp register line.
+            This is due to the fact that this line would be drawn on top of (a segment of) the control line with an identical style, so that it cannot be seen unless there were some bug in the renderer.
+            Note that the check for control lines is embedded into the style (the default value shown here is a simplification); so if you change it, you will overwrite the style for \emph{all} cases, not only when there is no control line.
 
             The default \style{/yquant/every multi line} is a wavy line; this allows to distinguish discontiguous multi\hyp qubit gates from multiple single\hyp qubit gates when using controls.
             Still, some gates have such an established appearance that---despite being logically misleading---we rather use the same style as for a control line.
@@ -5302,7 +5306,7 @@ $=$
          This new behavior is compatibility\hyp protected. \\
          Bugfix: \gate{output}s can now be named. \\
          Bugfix: Border angles of \texttt{yquant-ellipse} now work properly. \\
-         New configuration: \style{/yquant/register/default lazy name} \\
+         New configuration: \style{/yquant/register/default lazy name}. \\
          Documentation: Replace the wishlist by a section on integration with other packages. \\
          Documentation: Include the examples of \pkg{qpic} in this manual.
 
@@ -5313,5 +5317,9 @@ $=$
          Fix \href{https://github.com/projekter/yquant/issues/18}{\#18}: Subcircuit boxes don't render in \texttt{groups} environment.
          Now, styles can properly modify the \style{/yquant/operators/this subcircuit box} style without affecting the content of the subcircuit, only the box. \\
          New: Support for a simplified drawing pipeline without clipping paths.
+
+      \subsection*{2022-05-07: Version 0.7.1}
+         Fix issues with using handlers for attributes. \\
+         Fix \href{https://github.com/projekter/yquant/issues/21}{\#21}: CSWAP scaling problems. Now the clipping of the \gate{swap} and \gate{slash} gate scale appropriately when scaling canvas transformations are in effect (no guarantee with rotations!). Multi-register lines in the same style as control lines (\style{/yquant/operator/multi as single}) will be automatically hidden if control lines are present---they would be drawn on top of each other in the exact same style.
 %END_FOLD
 \end{document}
