@@ -219,7 +219,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.7.1 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.7.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -1035,6 +1035,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             It does not have any shape on its own, apart from multi\hyp register uses, in which it will contain a brace on its left (in vertical mode: on its top).
          \end{option}
 
+         \begin{option}[New in 0.7.2]{operators/every iswap}!shape=yquant-oplus, radius=1.3mm, rotate=45, draw!
+            This style is installed for every \gate{iswap} gate that interchanges two qubits and conditionally adds phases.
+            The \texttt{yquant-iswap} shape is a cross enclosed in a circle.
+         \end{option}
+
          \begin{option}[Changed in 0.7]{operators/every measure}!shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw, /yquant/default fill!
             This style is installed for every \gate{measure} gate.
             The \texttt{yquant-measure} shape is a rectangle that contains a ``meter'' symbol.
@@ -1435,6 +1440,18 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item \yquant![value=<value>]! (required) \\
                Denotes the text that is to be printed.
          \end{itemize}
+
+      \subsection[\texorpdfstring{\yquant!iswap!}{iswap}]{\compat{New in 0.7.2}\yquant!iswap!}\label{gate:iswap}
+         Syntax: \yquant!iswap <targets> | <pcontrol> ~ <ncontrol>;! \\
+         This is the two\hyp qubit i\textsc{swap} gate $\ketbra{00}{00} + \ii\ketbra{01}{10} + \ii\ketbra{10}{01} + \ketbra{11}{11}$ that exchanges two qubits and conditionally adds phases.
+         It is denoted by crosses within circles at the affected registers which are connected by a control line.
+         It may span multiple registers (in fact, it should always span exactly two registers, though \Yquant{} does not enforce this), and it allows for controls.
+         However, refrain from combining \emph{multiple} two\hyp qubit targets \emph{together} with controls.
+         The control line will extend from the first to the last of all registers involved in the operation, so that it is impossible to discern visually which registers should actually be swapped.
+         Using multiple swaps without controls in one operation is fine, as well as a single controlled swap.
+         The style \style{/yquant/operators/every iswap} is installed.
+
+         \emph{Possible attributes:} none
 
       \subsection[\texorpdfstring{\yquant!measure!}{measure}]{\compat{Changed in 0.4}\yquant!measure!}\label{gate:measure}
          Syntax: \yquant!measure <target>;! \\
@@ -5321,5 +5338,8 @@ $=$
       \subsection*{2022-05-07: Version 0.7.1}
          Fix issues with using handlers for attributes. \\
          Fix \href{https://github.com/projekter/yquant/issues/21}{\#21}: CSWAP scaling problems. Now the clipping of the \gate{swap} and \gate{slash} gate scale appropriately when scaling canvas transformations are in effect (no guarantee with rotations!). Multi-register lines in the same style as control lines (\style{/yquant/operator/multi as single}) will be automatically hidden if control lines are present---they would be drawn on top of each other in the exact same style.
+
+      \subsection*{2022-11-29: Version 0.7.2}
+         Fix \href{https://github.com/projekter/yquant/issues/23}{\#23}: Add the \gate{iswap} gate.
 %END_FOLD
 \end{document}
