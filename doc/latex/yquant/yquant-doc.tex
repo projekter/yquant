@@ -1035,7 +1035,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             It does not have any shape on its own, apart from multi\hyp register uses, in which it will contain a brace on its left (in vertical mode: on its top).
          \end{option}
 
-         \begin{option}[New in 0.7.2]{operators/every iswap}!shape=yquant-oplus, radius=1.3mm, rotate=45, draw!
+         \begin{option}[New in 0.7.2]{operators/every iswap}!shape=yquant-ocross, radius=.75mm, draw!
             This style is installed for every \gate{iswap} gate that interchanges two qubits and conditionally adds phases.
             The \texttt{yquant-iswap} shape is a cross enclosed in a circle.
          \end{option}
@@ -5339,7 +5339,7 @@ $=$
          Fix issues with using handlers for attributes. \\
          Fix \href{https://github.com/projekter/yquant/issues/21}{\#21}: CSWAP scaling problems. Now the clipping of the \gate{swap} and \gate{slash} gate scale appropriately when scaling canvas transformations are in effect (no guarantee with rotations!). Multi-register lines in the same style as control lines (\style{/yquant/operator/multi as single}) will be automatically hidden if control lines are present---they would be drawn on top of each other in the exact same style.
 
-      \subsection*{2022-11-29: Version 0.7.2}
+      \subsection*{2022-12-24: Version 0.7.2}
          Fix \href{https://github.com/projekter/yquant/issues/23}{\#23}: Add the \gate{iswap} gate.
 %END_FOLD
 \end{document}

@@ -388,6 +388,26 @@
    \inheritclippath[from=yquant-circle]%
 }
 
+\pgfdeclareshape{yquant-ocross}{%
+   \inheritsavedanchors[from=yquant-slash]%
+   \foreach \anc in {center, north, north east, east, south east, south, south west, west, north west} {%
+      \inheritanchor[from=yquant-circle]{\anc}%
+   }%
+   \inheritanchorborder[from=yquant-circle]%
+   \backgroundpath{%
+      \dimen2=.70710678\dimexpr\xradius\relax%
+      \dimen4=.70710678\dimexpr\yradius\relax
+      \pgfpathmoveto{\pgfqpoint{\dimen2}{\dimen4}}%
+      \pgfpathlineto{\pgfqpoint{-\dimen2}{-\dimen4}}%
+      \pgfpathmoveto{\pgfqpoint{-\dimen2}{\dimen4}}%
+      \pgfpathlineto{\pgfqpoint{\dimen2}{-\dimen4}}%
+      \pgfpathellipse{\pgfpointorigin}%
+                     {\pgfqpoint{\xradius}{0pt}}%
+                     {\pgfqpoint{0pt}{\yradius}}%
+   }%
+   \inheritclippath[from=yquant-circle]%
+}
+
 \pgfdeclareshape{yquant-measure}{%
    \saveddimen\xradius{%
       \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/tikz/x radius}}%
