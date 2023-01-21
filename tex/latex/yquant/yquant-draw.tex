@@ -849,10 +849,11 @@
             \pgfusepathqfill%
          \else%
             \begingroup%
+               \pgf@relevantforpicturesizefalse%
                \pgftransformreset%
-               \pgfpathrectanglecorners%
-                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \pgfpathrectangle%
+                  {\yquant@pgfqpoint{-.5\maxdimen}{-.5\maxdimen}}%
+                  {\yquant@pgfqpoint{\maxdimen}{\maxdimen}}%
                \pgfseteorule% even-odd to properly invert the clipping
                \pgfusepathqclip%
             \endgroup%
@@ -895,10 +896,11 @@
             \pgfusepathqfill%
          \else%
             \begingroup%
+               \pgf@relevantforpicturesizefalse%
                \pgftransformreset%
-               \pgfpathrectanglecorners%
-                  {\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                  {\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \pgfpathrectangle%
+                  {\yquant@pgfqpoint{-.5\maxdimen}{-.5\maxdimen}}%
+                  {\yquant@pgfqpoint{\maxdimen}{\maxdimen}}%
                \pgfseteorule% even-odd to properly invert the clipping
                \pgfusepathqclip%
             \endgroup%
@@ -956,42 +958,14 @@
                         \pgfsetfillopacity{.3}%
                         \pgfusepathqfill%
                      \else%
-                        % We need to access the current bounding box as well as other positions in the local coordinate frame. For this, transform the bounding box to the current frame (though this is expensive). Does this capture rotations correctly?
                         \begingroup%
-                           \ifdim\pgf@picminx>\pgf@picmaxx%
-                              % nothing drawn yet (or bounding box reset)
-                              \pgf@picminx=0pt %
-                              \pgf@picmaxx=0pt %
-                           \fi%
-                           \ifdim\pgf@picminy>\pgf@picmaxy%
-                              \pgf@picminy=0pt %
-                              \pgf@picmaxy=0pt %
-                           \fi%
-                           \pgftransforminvert%
-                           \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-                           \global\@tempdima=\yquant@pgf@y%
-                           \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-                           \global\@tempdimb=\yquant@pgf@y%
+                           \pgf@relevantforpicturesizefalse%
+                           \pgftransformreset%
+                           % everything serves as clipping inversion, which smells like a rectangle from (-\maxdimen, -\maxdimen) to (\maxdimen, \maxdimen). However, this is translated into a base point plus a direction vector, and since neither is allowed to exceed \maxdimen, we must just hope that the circuit is never drawn outside of .5\maxdimen - which is a fair assumption.
+                           \pgfpathrectangle%
+                              {\yquant@pgfqpoint{-.5\maxdimen}{-.5\maxdimen}}%
+                              {\yquant@pgfqpoint{\maxdimen}{\maxdimen}}%
                         \endgroup%
-                        % To avoid rendering artifacts at all zoom levels with all renderers, we need to make the clipping region large. Let's try the current bounding box first.
-                        % This may be insufficient if there is no or a tiny wire label and only registers of a small height. In this case, take ten times the line width or at least 1cm, but don't let it affect the bounding box.
-                        \ifdim\dimexpr\@tempdimb-\@tempdima\relax<10\pgflinewidth %
-                           \@tempdima=\dimexpr\wireypos-5\pgflinewidth\relax%
-                           \@tempdimb=\dimexpr\wireypos+5\pgflinewidth\relax%
-                        \fi%
-                        \ifdim\dimexpr\@tempdimb-\@tempdima\relax<1cm %
-                           \@tempdima=\dimexpr\wireypos-5mm\relax%
-                           \@tempdimb=\dimexpr\wireypos+5mm\relax%
-                        \fi%
-                        \pgf@relevantforpicturesizefalse%
-                           \pgfpathrectanglecorners%
-                              {\yquant@pgfqpoint{\dimexpr\wirexprevpos\yquant@orientation@minus%
-                                                         2\pgflinewidth\relax}%
-                                                {\@tempdima}}%
-                              {\yquant@pgfqpoint{\dimexpr\wirexpos\yquant@orientation@plus%
-                                                         2\pgflinewidth\relax}%
-                                                {\@tempdimb}}%
-                        \pgf@relevantforpicturesizetrue%
                         \pgfseteorule% even-odd to properly invert the clipping
                         \pgfusepathqclip%
                      \fi%
