@@ -259,17 +259,9 @@
       \listremove\noexpand\redolist{#1}%
       \expandafter\noexpand\csname yquant@env@end@calcypositions@#1@\i\endcsname%
       \expandafter\unless\expandafter\ifx\csname\yquant@prefix subcircuits\endcsname\empty%
-         \ifinlist{#1}\noexpand\redolist{%
-            \noexpand\forlistloop%
-               \yquant@env@end@calcypositions@run%
-               \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
-         }{%
-            \noexpand\ifyquant@env@end@calcypositions@godeep%
-               \noexpand\forlistloop%
-                  \yquant@env@end@calcypositions@run%
-                  \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
-            \noexpand\fi%
-         }%
+         \noexpand\forlistloop%
+            \yquant@env@end@calcypositions@run%
+            \expandafter\noexpand\csname\yquant@prefix subcircuits\endcsname%
       \fi%
    }%
    % END_FOLD
@@ -416,8 +408,20 @@
    \csname yquant@env@end@calcypositions@#1\endcsname%
 }
 
+\protected\def\yquant@env@end@calcypositions@redo@min#1{%
+   \ifnum#1<\redoitem\space %
+      \def\redoitem{#1}%
+   \fi%
+}
+
 \protected\def\yquant@env@end@calcypositions@redo{%
-   \forlistloop\yquant@env@end@calcypositions@run\redolist%
+   % instead of looping through the list, we only check the lowest item - since running it may actually remove some other items from the list. Note that the lowest item is not necessarily the outermost, but for sure the topmost wire that should be redone is contained in it.
+   \unless\ifx\redolist\empty%
+      \def\redoitem{2147483647}%
+      \forlistloop\yquant@env@end@calcypositions@redo@min\redolist%
+      % this will automatically remove the item from the list
+      \expandafter\yquant@env@end@calcypositions@run\expandafter{\redoitem}%
+   \fi%
    \unless\ifx\redolist\empty%
       \expandafter\yquant@env@end@calcypositions@redo%
    \fi%

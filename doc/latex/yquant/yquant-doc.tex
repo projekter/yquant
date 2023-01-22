@@ -5357,5 +5357,6 @@ $=$
 
       \subsection*{2023-01-21: Version 0.7.3}
          Fix \href{https://github.com/projekter/yquant/issues/24}{\#24}: Clipping in subcircuits can under very special circumstances fail. Change all clipping paths to a most conservative huge rectangle---before, we tried to be economical.
+         Also use a more meticulous way of subcircuit position alignment (which will probably consume more resources during compilation, but multiple subcircuits may cancel each other in height and depth calculation if we don't do it).
 %END_FOLD
 \end{document}
