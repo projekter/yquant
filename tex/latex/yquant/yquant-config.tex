@@ -286,6 +286,78 @@
    },%
    every post measurement control/direct/.code={%
       \let\yquant@lang@attr@directcontrol=\relax%
+   },%
+}
+\def\yquant@config@only@multi#1#2#3#4\yquant@sep{%
+   \yquant@config@only{#1}{#2}{#3}%
+   \ifstrempty{#4}\relax{%
+      \yquant@config@only@multi{#1}#4\yquant@sep%
+   }%
+}
+\protected\def\yquant@config@only#1#2#3{%
+   \begingroup%
+      \let\yquant@config@onlyloop@idxs=\empty%
+      \forcsvlist\yquant@config@onlyloop{#2}%
+      \let\ifdoit=\iffalse%
+      \ifdefined\yquant@config@onlyloop@allupto%
+         \unless\ifnum\idx>\yquant@config@onlyloop@allupto\space%
+            \csletcs{ifdoit}{iftrue}%
+         \fi%
+      \fi%
+      \ifdefined\yquant@config@onlyloop@allfrom%
+         \unless\ifnum\idx<\yquant@config@onlyloop@allfrom\space%
+            \csletcs{ifdoit}{iftrue}%
+         \fi%
+      \fi%
+      \unless\ifdoit%
+         \xifinlist\idx\yquant@config@onlyloop@idxs{%
+            \csletcs{ifdoit}{iftrue}%
+         }\relax%
+      \fi%
+      \expandafter%
+   \endgroup%
+   #1\ifdoit
+      \pgfkeysalso{#3}%
+   \fi%
+}
+\protected\def\yquant@config@onlyloop#1{%
+   \yquant@config@onlyloop@checkrange#1-\yquant@sep%
+}
+\protected\def\yquant@config@onlyloop@checkrange#1-#2\yquant@sep{%
+   \ifstrempty{#2}{%
+      \listeadd\yquant@config@onlyloop@idxs{#1}%
+   }{%
+      \yquant@config@onlyloop@range#1-#2\yquant@sep%
+   }%
+}
+\protected\def\yquant@config@onlyloop@range#1-#2-\yquant@sep{%
+   \ifblank{#1}{%
+      \ifblank{#2}{%
+         % pretty meaningless, but let's allow for it
+         \def\yquant@config@onlyloop@allfrom{0}%
+      }{%
+         \ifdefined\yquant@config@onlyloop@allupto%
+            \ifnum#2>\yquant@config@onlyloop@allupto\space%
+               \numdef\yquant@config@onlyloop@allupto{#2}%
+            \fi%
+         \else%
+            \numdef\yquant@config@onlyloop@allupto{#2}%
+         \fi%
+      }
+   }{%
+      \ifblank{#2}{%
+         \ifdefined\yquant@config@onlyloop@allfrom%
+            \ifnum#1<\yquant@config@onlyloop@allfrom\space%
+               \numdef\yquant@config@onlyloop@allfrom{#1}%
+            \fi%
+         \else%
+            \numdef\yquant@config@onlyloop@allfrom{#1}%
+         \fi%
+      }{%
+         \yquant@for \i := #1 to #2 {%
+            \listeadd\yquant@config@onlyloop@idxs\i%
+         }%
+      }%
    }%
 }
 % END_FOLD
@@ -412,6 +484,10 @@
       {\yquant@config@circuitsetupfalse},%
    internal/autorotate init/.style={},%
    internal/autorotate output/.style={},%
+   internal/before styles/.style={%
+      /tikz/only at/.code=\yquant@config@only@multi{}##1\yquant@sep,
+      /tikz/not at/.code=\yquant@config@only@multi\unless##1\yquant@sep
+   },
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%

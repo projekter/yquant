@@ -69,6 +69,7 @@
    \else%
       \let\yquant@prepare@list=\empty%
    \fi%
+   \pgfkeys{/yquant/internal/before styles}%
    % BEGIN_FOLD register
    \def\do##1{%
       \ifx\yquant@lang@attr@name\empty%
@@ -237,10 +238,33 @@
             {#2}% register index
             {\nodename}%
       }%
-      \numdef\idx{\idx+1}%
       \unless\ifdefined\yquant@prepare@controltype%
          \edef\yquant@prepare@controltype{#2}%
       \fi%
+      \pgfinterruptboundingbox%
+         \yquant@config@operator@multifalse%
+         \yquant@env@virtualize@path%
+         \ifx#1p
+            \path%
+               (0pt, 0pt)%
+               node[/yquant/every control, /yquant/every positive control, /yquant/this control,%
+                    name prefix=, name suffix=, name=] {};%
+         \else%
+            \path%
+               (0pt, 0pt)%
+               node[/yquant/every control, /yquant/every negative control, /yquant/this control,%
+                    name prefix=, name suffix=, name=] {};%
+         \fi
+         \yquant@register@update@height{#2}{\the\yquant@pgf@picmaxy}%
+         \yquant@register@update@depth{#2}{\the\dimexpr-\yquant@pgf@picminy\relax}%
+         \expandafter%
+      \endpgfinterruptboundingbox%
+      \expandafter\dimen\expandafter0\expandafter=%
+         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
+      \ifdim\dimen0>\dimen2 %
+         \dimen2=\dimen0 %
+      \fi%
+      \numdef\idx{\idx+1}%
    \fi%
 }
 

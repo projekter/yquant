@@ -898,11 +898,13 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \end{option}
 
          \begin{option}{this operator}!!
-            This style is appended to the current style installed for an operator; it should be used only locally to overwrite any global configuration effect.
+            This style is appended to the current style installed for an operator; it should be used only locally to overwrite any global configuration effect. \\
+            \compat{New in 0.7.3}Consider using \style{/tikz/only at} and \style{/tikz/not at} \emph{within this style} if you want to selectively address certain operators when there are multiple.
          \end{option}
 
          \begin{option}{this control}!!
-            This style is appended to the current style installed for a control; it should be used only locally to overwrite any global configuration effect.
+            This style is appended to the current style installed for a control; it should be used only locally to overwrite any global configuration effect. \\
+            \compat{New in 0.7.3}Consider using \style{/tikz/only at} and \style{/tikz/not at} \emph{within this style} if you want to selectively address certain controls when there are multiple.
          \end{option}
 
          \begin{option}{operator style}!/yquant/this operator/.append style={#1}!
@@ -916,6 +918,33 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}{style}!/yquant/operator style={#1}, /yquant/control style={#1}!
             This is a shorthand that modifies the appearance of both the current operator and any controls or control lines.
          \end{option}
+
+         \begin{option*}[New in 0.7.3]{tikz}{only at}!!
+            This is a style which is available within \style{/yquant/this operator} and \style{/yquant/this control}.
+            It allows to selectively apply its contents only to a certain part of a multi\hyp partite operator.
+            The style expects an even number of parameters.
+            The first (third, ...) parameter contains the index of the operator/control where the style should apply.
+            This index corresponds to the values that \tex!\idx! can take; i.e., it will be zero for the topmost operator/control (leftmost for vertical circuits) and then increment by one.
+            The indices of operators, positive, and negative controls are all independent.
+            You may not only give a single index, but instead also a comma\hyp separated list, and you may also use index ranges (where both the first and second part of the range can be omitted, which then means ``from the first'' or ``to the last'').
+            The second (fourth, ...) parameter then contains all the styles that should actually be applied.
+
+            \begin{codeexample}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit q[7];
+      [operator style={only at={1, 3-}{fill=yellow}
+                               {0}{ultra thick}},
+       control style={only at={0}{fill=orange}}]
+      h q[-2, 4, 5] | q[3, 6];
+   \end{yquant}
+\end{tikzpicture}
+            \end{codeexample}
+         \end{option*}
+
+         \begin{option*}[New in 0.7.3]{tikz}{not at}!!
+            See \style{/tikz/not at}; this style does the same, but instead only acts if the current register is \emph{not} the one given in the odd arguments.
+         \end{option*}
 
          \begin{option}[Changed in 0.7.1\\New in 0.1.2]{operator/multi as single}!/yquant/every multi line/.style=/yquant/every control line!
             This style is automatically set for certain gates such as the \gate{swap} or the \gate{zz} gate.
@@ -5357,6 +5386,9 @@ $=$
 
       \subsection*{2023-01-21: Version 0.7.3}
          Fix \href{https://github.com/projekter/yquant/issues/24}{\#24}: Clipping in subcircuits can under very special circumstances fail. Change all clipping paths to a most conservative huge rectangle---before, we tried to be economical.
-         Also use a more meticulous way of subcircuit position alignment (which will probably consume more resources during compilation, but multiple subcircuits may cancel each other in height and depth calculation if we don't do it).
+         Also use a more meticulous way of subcircuit position alignment (which will probably consume more resources during compilation, but multiple subcircuits may cancel each other in height and depth calculation if we don't do it). \\
+         Address \href{https://github.com/projekter/yquant/issues/25}{\#25}: We now provide the styles \style{/tikz/only at} and \style{/tikz/not at} that allow to easily use styles on an multi\hyp register operator that just affect some parts of their register representation. \\
+         Now the size of controls is taken into account when calculating the size of an operation---so extremely large controls will appropriate enlarge the height/depth or horizontal increment.
+         This is more useful when putting labels to controls.
 %END_FOLD
 \end{document}
