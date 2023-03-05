@@ -65,11 +65,7 @@
    \let\yquantgroup@save@linebreak=\\%
    \let\yquantgroup@save@gatecallback=\yquant@langhelper@gatecallback%
    % assign the new meaning
-   \let\registers=\yquantgroup@registers%
-   \let\circuit=\yquantgroup@circuit%
-   \let\equals=\yquantgroup@equals%
-   \let\shiftright=\yquantgroup@shiftright%
-   \let\\=\yquantgroup@linebreak%
+   \yquantgroup@set@cmds%
    % This is a bit inconsistent, we should check \iftikz@inside@picture, but this is no longer appropriately set since at least pgf 3.1.2.
    \let\ifyquantgroup@inpicture=\ifpgfpicture%
    \pgfkeysgetvalue{/yquant/preamble}\yquantgroup@save@preamble%
@@ -127,6 +123,22 @@
 }{%
    \endyquantgroup%
 }
+
+\protected\def\yquantgroup@set@cmds{%
+   \let\registers=\yquantgroup@registers%
+   \let\circuit=\yquantgroup@circuit%
+   \let\equals=\yquantgroup@equals%
+   \let\shiftright=\yquantgroup@shiftright%
+   \let\\=\yquantgroup@linebreak%
+}
+
+\protected\def\yquantgroup@reset@cmds{%
+   \let\registers=\yquantgroup@save@registers%
+   \let\circuit=\yquantgroup@save@circuit%
+   \let\equals=\yquantgroup@save@equals%
+   \let\shiftright=\yquantgroup@save@shiftright%
+   \let\\=\yquantgroup@save@linebreak%
+}
 % END_FOLD
 
 % BEGIN_FOLD Register declaration
@@ -140,6 +152,7 @@
       \let\yquantgroup@save@lang@create@parse=\yquant@lang@create@parse@name%
       \let\yquant@lang@create@parse@name=\yquantgroup@registers@create@parse%
       \let\yquant@env@begin@generic=\yquantgroup@registers@env@generic%
+      \yquantgroup@reset@cmds%
       \appto\yquant@langhelper@setup@attrs@set@nobit{%
          \let\yquantgroup@registers@remember@attrs=\yquant@langhelper@list@attrs%
       }%
@@ -301,9 +314,11 @@
 }
 
 \long\def\yquantgroup@circuit@i[#1]#2{%
+   \yquantgroup@reset@cmds%
    \yquantgroup@startenvironments%
    \yquant [{#1}] group\space circuit {#2} (-);%
    discard -;
+   \yquantgroup@set@cmds%
 }
 
 \yquant@langhelper@declare@command@uncontrolled%
@@ -392,6 +407,7 @@
 }
 
 \protected\long\def\yquantgroup@equals@ii#1[#2]{%
+   \yquantgroup@reset@cmds%
    \unless\ifx0#1%
       \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
    \fi%
@@ -440,6 +456,7 @@
          \fi%
       \fi%
    \fi%
+   \yquantgroup@set@cmds%
 }
 % END_FOLD
 

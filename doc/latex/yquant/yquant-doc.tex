@@ -232,7 +232,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.7.3 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.7.4 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -5390,5 +5390,9 @@ $=$
          Address \href{https://github.com/projekter/yquant/issues/25}{\#25}: We now provide the styles \style{/tikz/only at} and \style{/tikz/not at} that allow to easily use styles on an multi\hyp register operator that just affect some parts of their register representation. \\
          Now the size of controls is taken into account when calculating the size of an operation---so extremely large controls will appropriate enlarge the height/depth or horizontal increment.
          This is more useful when putting labels to controls.
+
+      \subsection*{2023-03-05: Version 0.7.4}
+         Fix \href{https://github.com/projekter/yquant/issues/26}{\#25}: Reset all the special groups\hyp related commands that are only valid \emph{directly} in a \tex!yquantgroups! environment when parsing the arguments of \tex!\registers!, \tex!\circuit!, or \tex!\equals!.
+         Most notably, this affects \tex!\\!, which can now be used properly within a grouped circuit.
 %END_FOLD
 \end{document}
