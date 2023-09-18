@@ -933,7 +933,22 @@
    \let\yquant@register@multi@contiguous=\yquant@prepare@finalize@ctrl@multi@contiguous%
    \ifyquant@circuit@operator@hasControls%
       \ifyquant@config@operator@multi@warn%
-         \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{0}%
+         \ifx\yquant@register@multi@splitparts\yquant@register@multi@splitparts@sepall%
+            % In the multi as single case, we assume it can be implicitly understood that we always have a maximal multi gate. Only if there are two, we are in trouble.
+            \ifdefined\yquant@prepare@finalize@ctrl@multi@contiguous@warn%
+               \ifnum\yquant@prepare@finalize@ctrl@multi@contiguous@warn=1 %
+                  \PackageWarning{yquant.sty}{Ambiguous operation: multiple multi-register operations in combination with controls make it impossible to visually determine on which registers the gates act on.}%
+                  \yquant@config@operator@multi@warnfalse%
+                  \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{2}%
+               \else%
+                  \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{1}%
+               \fi%
+            \else%
+               \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{1}%
+            \fi%
+         \else%
+            \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{0}%
+         \fi%
       \else%
          \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{2}%
       \fi%
@@ -947,15 +962,17 @@
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@multi@contiguous#1#2#3{%
-   \ifnum\yquant@prepare@finalize@ctrl@multi@contiguous@warn=1 %
-      \PackageWarning{yquant.sty}{Ambiguous operation: multiple discontiguous multi-register operations in combination with controls make it hard to visually determine on which registers the gates act on.}%
-      % switch the warning off for this group (which is a single operation)
-      \yquant@config@operator@multi@warnfalse%
-      \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{2}%
-   \else%
-      \numdef\yquant@prepare@finalize@ctrl@multi@contiguous@warn{%
-         \yquant@prepare@finalize@ctrl@multi@contiguous@warn+1%
-      }%
+   \unless\ifx\yquant@register@multi@splitparts\yquant@register@multi@splitparts@sepall%
+      \ifnum\yquant@prepare@finalize@ctrl@multi@contiguous@warn=1 %
+         \PackageWarning{yquant.sty}{Ambiguous operation: multiple discontiguous multi-register operations in combination with controls make it hard to visually determine on which registers the gates act on.}%
+         % switch the warning off for this group (which is a single operation)
+         \yquant@config@operator@multi@warnfalse%
+         \def\yquant@prepare@finalize@ctrl@multi@contiguous@warn{2}%
+      \else%
+         \numdef\yquant@prepare@finalize@ctrl@multi@contiguous@warn{%
+            \yquant@prepare@finalize@ctrl@multi@contiguous@warn+1%
+         }%
+      \fi%
    \fi%
    {% save \body
       \yquant@for \yquant@i := #1 to #2 {{% let inner loop mess up with macros
