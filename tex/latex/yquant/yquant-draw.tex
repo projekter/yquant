@@ -544,7 +544,7 @@
             \fi%
          \else%
             % first wire, left end
-            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \pgfpointtransformed{\yquant@pgfqpoint{\dimexpr\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax\relax}{\yquant@register@get@y1\relax}}%
             \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
                \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
@@ -552,7 +552,7 @@
                \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % first wire, right end
-            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y1\relax}}%
+            \pgfpointtransformed{\yquant@pgfqpoint{\dimexpr\yquant@draw@@x+.5\dimexpr\@firstofthree#4\relax\relax}{\yquant@register@get@y1\relax}}%
             \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
                \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
@@ -560,7 +560,7 @@
                \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % last wire, left end
-            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \pgfpointtransformed{\yquant@pgfqpoint{\dimexpr\yquant@draw@@x-.5\dimexpr\@firstofthree#4\relax\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
             \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
                \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
@@ -568,7 +568,7 @@
                \global\yquant@pgf@picminy=\yquant@pgf@y %
             \fi%
             % last wire, right end
-            \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x+.5\dimenxpr\@firstofthree#4\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
+            \pgfpointtransformed{\yquant@pgfqpoint{\dimexpr\yquant@draw@@x+.5\dimexpr\@firstofthree#4\relax\relax}{\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}\relax}}%
             \ifdim\yquant@pgf@y>\yquant@pgf@picmaxy %
                \global\yquant@pgf@picmaxy=\yquant@pgf@y %
             \fi%
@@ -606,7 +606,7 @@
             \pgftransforminvert%
             \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
             \@tempdima=\yquant@pgf@y%
-            \pgfpointtransform{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+            \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
             \edef\cmd{\@tempdima=\the\@tempdima\space\@tempdimb=\the\yquant@pgf@y\space}%
             \expandafter%
          \endgroup%
