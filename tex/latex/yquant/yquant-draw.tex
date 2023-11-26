@@ -603,20 +603,49 @@
          \dimen2=\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax%
       \else%
          \begingroup%
-            \pgftransforminvert%
-            \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
-            \@tempdima=\yquant@pgf@y%
-            \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-            \edef\cmd{\@tempdima=\the\@tempdima\space\@tempdimb=\the\yquant@pgf@y\space}%
+            \ifdim\pgf@pt@ab pt=0pt% may also be reflection
+               % no rotations, not too hard
+               \pgftransforminvert%
+               \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
+               \@tempdima=\yquant@pgf@y%
+               \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
+               \dimen2=\dimexpr\yquant@pgf@y-\@tempdima\relax%
+               \ifdim\dimen2<0pt % reflections
+                  \dimen2=-\dimen2 %
+               \fi%
+               \dimen0=\dimexpr.5\dimexpr\@tempdima+\yquant@pgf@y\relax\relax%
+            \else%
+               % We must figure out the size manually. pgf@picminy/pgf@picmaxy are not trustworthy, as they describe the height over the outer unrotated rectangle that completely covers the rotated one.
+               % TODO: Well, that's as it should be, but it doesn't appear to be correct. Upon rotation, they turn out to be much smaller than they should be. Why?
+               \PackageWarning{yquant.sty}{Arbitrary-degree rotations are badly broken with subcircuits. Make sure not to draw the circuit's outline.}%
+               % Let a be the true width of the rotated rectangle and b its height. We are looking for b.
+               % If alpha is the rotation angle, the outer rectangle has height Y
+               %    Y = a sin alpha + b cos alpha
+               % and width
+               %    X = a cos alpha + b sin alpha
+               % so that b = (Y cos alpha - X sin alpha) / (cos^2 alpha - sin^2 alpha)
+               % In the transformation matrix, we already have - if there's no scaling -
+               %    sin alpha = \pgf@pt@ab, cos alpha = \pgf@pt@aa.
+               % And if there's scaling, these entries are scaled, so in total we divide by the scaling exactly once, which is the inversion, as it should be.
+               \@tempdima=\dimexpr\pgf@picmaxx-\pgf@picminx\relax% \@tempdima is X
+               \@tempdimb=\dimexpr\pgf@picmaxy-\pgf@picminy\relax% \@tempdimb is Y
+               \@tempdimc=\dimexpr\pgf@pt@aa\dimexpr\pgf@pt@aa pt\relax-%
+                                  \pgf@pt@ab\dimexpr\pgf@pt@ab pt\relax\relax% denominator
+               \dimen2=\dimexpr\dimexpr\pgf@pt@aa\@tempdimb-\pgf@pt@ab\@tempdima\relax*65536/%
+                                       \@tempdimc\relax%
+               % We now have the height, we still need the middle point. We can start from an outer y position, which is also a true extremal y position, and simply add half the height.
+               \dimen0=\dimexpr\pgf@picminy+.5\dimen2\relax
+               \ifdim\dimen2<0pt % reflections
+                  \dimen2=-\dimen2 %
+               \fi%
+            \fi%
+            \edef\cmd{%
+               \dimen0=\the\dimen0 %
+               \dimen2=\the\dimen2 %
+            }%
             \expandafter%
          \endgroup%
          \cmd%
-         \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x}%
-                                               {.5\dimexpr\@tempdima+\@tempdimb\relax}}%
-         \dimen0=\yquant@pgf@y%
-         \pgfpointtransformed{\yquant@pgfqpoint{\yquant@draw@@x}%
-                                               {\dimexpr\@tempdimb-\@tempdima\relax}}%
-         \dimen2=\yquant@pgf@y%
       \fi%
       \edef\cmd{%
          \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimen0)%
