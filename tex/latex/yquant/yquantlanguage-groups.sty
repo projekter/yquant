@@ -314,8 +314,8 @@
 }
 
 \long\def\yquantgroup@circuit@i[#1]#2{%
-   \yquantgroup@reset@cmds%
    \yquantgroup@startenvironments%
+   \yquantgroup@reset@cmds%
    \yquant [{#1}] group\space circuit {#2} (-);%
    discard -;
    \yquantgroup@set@cmds%
@@ -407,12 +407,12 @@
 }
 
 \protected\long\def\yquantgroup@equals@ii#1[#2]{%
-   \yquantgroup@reset@cmds%
    \unless\ifx0#1%
       \numgdef\yquantgroup@alignments{\yquantgroup@alignments+1}%
    \fi%
    \ifyquanthorz{%
       \yquantgroup@startenvironments%
+      \yquantgroup@reset@cmds%
       \ifx0#1%
          \yquant group\space equals {#2} (-);%
       \else%
@@ -436,6 +436,7 @@
          }%
          \yquantgroup@handlesize%
       \fi%
+      \yquantgroup@reset@cmds%
       \node[/yquant/operators/every group equals] (yquantnode) at (\yquantgroup@currentxpos, \yquantgroup@currentypos) {#2};
       \unless\ifx0#1%
          \pgfcoordinate{yquantgroup@internal@alignment@\yquantgroup@alignments}%
