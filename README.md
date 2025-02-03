@@ -33,6 +33,7 @@ Support the development:
 
 ## Examples
 Many more examples and explanations can be found in the [PDF version](https://github.com/projekter/yquant/blob/master/doc/latex/yquant/yquant-doc.pdf) of this Readme.
+Only the interesting part is shown here; `\usepackage[compat=0.6]{yquant}` is required for every example and `\usepackage{braket}` where the bra/ket notation is used.
 
 ### Simple teleportation circuit
 ![ex-01.png](https://github.com/projekter/yquant/blob/master/markdown/ex-01.png)
