@@ -6,6 +6,7 @@ yquant is a pure-LaTeX solution - i.e., it requires no external program - that i
 It builds on and interacts with TiKZ, which brings an enourmous flexibility for customization of individual circuit.
 
 Important features in the latest updates (for a much more complete list, see the documentation):
+- Support for custom attributes in custom gates and boxes, making them effectively parameteric (since 0.8)
 - Support for vertical circuit layout (since 0.7)
 - Support for a simplified drawing pipeline (since 0.7)
 - Support the `beamer` package (since 0.6)
@@ -28,8 +29,6 @@ The arXiv runs on version 0.3.2 - please download the latest version from the re
 
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
-- ![Bitcoin](https://img.shields.io/badge/donate-BTC-blue.svg?style=flat) 3KBFpoJuA4eSPLGXEf3jicqaV1czhK36fH
-- ![Ethereum](https://img.shields.io/badge/donate-ETH-blue.svg?style=flat) 0xE0F774221290b1E41ea62c2dd9af5dbD3df7c685
 
 ## Examples
 Many more examples and explanations can be found in the [PDF version](https://github.com/projekter/yquant/blob/master/doc/latex/yquant/yquant-doc.pdf) of this Readme.
