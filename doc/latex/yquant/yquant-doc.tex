@@ -45,6 +45,8 @@
 
 % BEGIN_FOLD Block environments (options, code examples, ...)
 \def\unskipOpt{\vskip-5mm }
+\def\MintedPygmentize{mamba run -n base pygmentize}
+\renewcommand{\TestAppExists}[1]{\AppExiststrue}%
 \ifdefined\minted@inline@iii
    % < v2.7
    \let\unpatched@minted@inline@iii=\minted@inline@iii%
@@ -232,7 +234,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.7.5 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.8 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -317,8 +319,6 @@
       Since it runs entirely within \TeX, you can at any time interject \Yquant{} code with arbitrary \TeX{} or \TikZ{} code (though if it is ``too arbitrary,'' you may need to restart the \Yquant{} interpreter).
 
       \subsection{General usage}
-         \begin{minted}[escapeinside=||]{tex}
-% preamble: |\compat{Changed in 0.4}|\usepackage[compat=<version>]{yquant}
          \begin{minted}[mathescape]{tex}
 % preamble: $\compat{Changed in 0.4}$\usepackage[compat=<version>]{yquant}
 \begin{tikzpicture}% tikz options possible
@@ -586,8 +586,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             All gate declarations are always global.
          \end{warning}
 
-         \compat{New in 0.2.1}If you want to define a gate that corresponds to a single \gate{box} gate with a certain pre\hyp defined content, you may use the macro\\
-         \tex!\yquantdefinebox{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \tex!\yquantdefinegate! introduced below.
+         \compat{Changed in 0.8\\New in 0.2.1}If you want to define a gate that corresponds to a single \gate{box} gate with a certain pre\hyp defined content, you may use the macro\\
+         \tex!\yquantdefinebox[<attributes>]{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \tex!\yquantdefinegate! introduced below.
          It only allows for single\hyp register usage; use \compat{New in 0.4}\tex!\yquantdefinemultibox! with the same arguments if you want to allow the gate to be used in a multi\hyp register gate fashion.
          The macros work in the following way:
          \begin{itemize}
@@ -597,14 +597,29 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item They create a style \style{/yquant/operators/every <name>} and assign the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \style{/yquant/operators/every rectangular box}\compat{Changed in 0.6}.
                If a \texttt{compat} version before \texttt{0.6} is chosen, \style{/yquant/operators/every box} will instead be the ancestor.
+            \item \compat{New in 0.8}They define attributes for the gate as specified in \texttt{<attributes>}, where \texttt{<attributes>} is one of the following:
+               \begin{itemize}
+                  \item \tex!required attrs={<list of attributes>}!
+                  \item \tex!optional attrs={<list of attributes>}!
+               \end{itemize}
+               or both, comma separated.
+               The \texttt{<list of attributes>} is a comma\hyp separated list of attribute names that are known to \Yquant.
+               You may declare custom attributes using \tex!\yquantdeclareattr!; note that an attribute is just a \pkg{pgfkeys} style.
+               Hence, if you want to define an attribute \texttt{myattr} that stores a value in the macro \tex!\myattr!, you may say\\\tex!\yquantdeclareattr{myattr/.store in=\myattr}!.
             \item They define \texttt{<content>} to be the value that is written into the box.
-               This \texttt{<content>} is expanded in a protected manner at the time of gate declaration.
                You may need to prefix fragile macros by \tex!\protect!.
+               \compat{Changed in 0.8}By default, the \texttt{<content>} is not expanded; use \tex!\yquantedefinebox! to expand it in a protected manner.
+               In this case only, if you stored some content in a macro by means of an attribute definition, you should prefix the macro by \tex!\noexpand!; hence, in the previous example, you'd write \tex!\noexpand\myattr! whenever you want to print the content of \tex!\myattr!.
+
+               \compat{New in 0.8}Note that if you want to use the \texttt{value} attribute which holds whatever is passed to the gate in curly brackets, a more convenient way exists.
+               You do not have to specify \texttt{value} manually in \texttt{required attrs}, and you don't have to use a special macro to access its value; instead, you can simply say \tex!#1! in the \texttt{<content>}.
+               If this \TeX{} parameter slot is found, \texttt{value} will automatically be made into a required attribute, and \tex!#1! will be replaced by the actual value.
+
+               Note that before version~0.8, the behavior of \tex!\yquantdefinebox! was to expand during definition; the old behavior is restored with a \texttt{compat} version smaller than~0.8.
          \end{itemize}
 
-         \compat{New in 0.2}Sometimes, you may wish to define gates that are more than just a single box---perhaps a succession of multiple gates or even multi\hyp register gates with individual operations on the input registers.
-         \Yquant{} provides a simple macro that allows this.
-         The macro \tex!\yquantdefinegate{<name>}[<style>]{<content>}! works in the following way:
+         \compat{Changed in 0.8\\New in 0.2}Sometimes, you may wish to define gates that are more than just a single box---perhaps a succession of multiple gates or even multi\hyp register gates with individual operations on the input registers.
+         \Yquant{} provides a simple macro that allows this; \tex!\yquantdefinegate[<attributes>]{<name>}[<style>]{<content>}! works in the following way:
          \begin{itemize}
             \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other built\hyp in gates.
                Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
@@ -612,8 +627,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item It creates a style \style{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \style{/yquant/operators/every custom gate}.
                This will make the gate ``seamless,'' i.e., avoid highlighting the fact that this is a custom gate.
-            \item It defines a macro that contains \texttt{<content>} (expanded in a protected manner) and that will be inserted as a subcircuit whenever this gate is invoked.
-               This in particular means that if you use \hyperref[sec:import]{\tex!\yquantimport!} within the gate, the file will only be loaded once at the time of declaration.
+            \item It assigns attributes according to \texttt{<attributes>} to the gate as before.
+            \item It defines a macro that contains \texttt{<content>} (unexpanded; to expand it in a protected manner, use \tex!\yquantedefinegate!) and that will be inserted as a subcircuit whenever this gate is invoked.
+               All that was said for \tex!\yquantdefinebox! still holds; however, note one intricacy with attributes: they are assigned when the gate is used.
+               The attributes defined by \Yquant, except for \texttt{value} (which is available through \tex!#1!), are applied only to the gate \emph{as a whole}, but they are reset before the content is inserted as a subcircuit.
+               This makes sure that the attributes are not applied to each gate within the custom gate individually, but only to the box.
+               However, \Yquant{} will not reset custom attributes (which is basically impossible, as it does not know which effect such an attribute has).
+               Therefore, a custom attribute will keep its value while the custom gate is applied and may affect gates inside---which could be intended or not.
+               If it is not, you must make sure to reset the attributes by yourself at an appropriate position.
          \end{itemize}
          When the gate is later drawn, the styles are invoked in the following order---remember custom gates are implemented by means of subcircuits---:
          \begin{enumerate}
@@ -629,12 +650,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{warning}[Redefining existing gates]
             The above macros will issue an error if the gate already exists.
-            You can use \tex!\yquantredefinebox!, \tex!\yquantredefinemultibox! (use the appropriate command for the \emph{new} definition), or \tex!\yquantredefinegate! to overwrite existing gate definitions.
+            You can use \tex!\yquantredefinebox!, \tex!\yquantredefinemultibox! (use the appropriate command for the \emph{new} definition), or \tex!\yquantredefinegate!, or their expanded counterparts to overwrite existing gate definitions.
             Note that this will overwrite \emph{any} gate, even the built\hyp in ones.
 
             Generally, it is discouraged to make use of this possibility.
             For custom gates, if you redefine a gate as a box which was previously a general subcircuit\hyp based gate, the macro that contains the subcircuit will still be held in memory.
-            Overwriting built\hyp in gates will not clear the attributes associated to this gate (though required attributes will no longer be required afterwards).
+            Overwriting built\hyp in gates will not clear the attributes previously associated to this gate (though required attributes will no longer be required afterwards).
             Again, this is not a problem but prevents \Yquant{} from issuing potentially helpful error message if such a---now meaningless---attribute is used.
 
             Finally, once a built\hyp in gate is overwritten, it cannot be restored.
@@ -5399,5 +5420,12 @@ $=$
 
       \subsection*{2023-11-26: Version 0.7.5}
          Fix \href{https://github.com/projekter/yquant/issues/29}{\#29}: Scaling the whole picture would lead to compilation failures and wrong output with subcircuits.
+
+      \subsection*{2025-06-14: Version 0.8}
+         Fix an issue with linebreak in a \tex!yquantgroup! environment. \\
+         New (\href{https://github.com/projekter/yquant/issues/32}{\#32}): add a possibility to define attributes---and hence, pass parameters---to custom gates. \\
+         Changed: \tex!\yquantdefinebox! and \tex!\yquantdefinegate! now do no longer expand their content at the time of definition.
+         The expanding behavior can be obtained with the new macros \tex!\yquantedefinebox! and \tex!\yquantedefinegate!.
+         This is compatibility\hyp protected.
 %END_FOLD
 \end{document}
