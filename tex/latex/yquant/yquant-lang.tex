@@ -283,27 +283,102 @@
 % END_FOLD
 
 % BEGIN_FOLD Define own gates
-\def\yquantdefinegate#1{%
-   \ifcsname yquant@lang@#1\endcsname%
+% if the argument contains #2, replace it by #1 and add value as a required attribute
+\protected\def\yquantdefinegate@parsearg#1#2{%
+   \def\yquantdefinegate@parsearg@check##1{#2}%
+   \edef\yquantdefinegate@parsearg@replaced{%
+      \unexpanded\expandafter{\yquantdefinegate@parsearg@check{#1}}%
+   }%
+   \edef\yquantdefinegate@parsearg@compare{%
+      \unexpanded\expandafter{\yquantdefinegate@parsearg@check\dummy}%
+   }%
+   \unless\ifx\yquantdefinegate@parsearg@replaced\yquantdefinegate@parsearg@compare%
+      \preto\yquantdefinegate@requiredattrs{value,}%
+   \fi%
+}
+
+\let\yquantdeclareattr=\yquant@langhelper@declare@attr
+
+\pgfqkeys{/yquant/definegate}{%
+   required attrs/.store in=\yquantdefinegate@requiredattrs,%
+   optional attrs/.store in=\yquantdefinegate@optionalattrs
+}
+
+\ifnum\yquant@compat<4 %
+   \protected\def\yquantdefinegate@compaterror#1{%
+      \protected\def#1{%
+         \PackageError{yquant.sty}{Undefined control sequence \string#1\space}%
+                      {Command \string#1\space requires compat version at least 0.8.}%
+      }
+   }
+
+   \protected\def\yquantdefinegate{%
+      \yquantdefinegate@{\yquantdefinegate@namecheck\yquantredefinegate}\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquantedefinegate
+
+   \protected\def\yquantredefinegate{%
+      \yquantdefinegate@{\yquantredefinegate@namecheck\yquantdefinegate}\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquanteredefinegate
+\else
+   \protected\def\yquantdefinegate{%
+      \yquantdefinegate@{\yquantdefinegate@namecheck\yquantredefinegate}\expandonce%
+   }
+
+   \protected\def\yquantedefinegate{%
+      \yquantdefinegate@{\yquantdefinegate@namecheck\yquanteredefinegate}\@firstofone%
+   }
+
+   \protected\def\yquantredefinegate{%
+      \yquantdefinegate@{\yquantredefinegate@namecheck\yquantdefinegate}\expandonce%
+   }
+
+   \protected\def\yquanteredefinegate{%
+      \yquantdefinegate@{\yquantredefinegate@namecheck\yquantedefinegate}\@firstofone%
+   }
+\fi
+
+\protected\def\yquantdefinegate@namecheck#1#2{%
+   \ifcsname yquant@lang@#2\endcsname%
       \PackageError{yquant.sty}{Gate redefined}%
-                   {The gate `#1' already exists. Use \string\yquantredefinegate\space if you really want to redefine it.}%
+                   {The gate `#2' already exists. Use \string#1\space if you really want to redefine it.}%
    \fi%
-   \@ifnextchar[{\yquantdefinegate@i{#1}}%
-                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
 }
 
-% while this command is provided to redefine gates, we do not clear the attributes that were once assigned to the previous one, so gate redefinition is discouraged!
-\def\yquantredefinegate#1{%
-   \unless\ifcsname yquant@lang@#1\endcsname%
+\protected\def\yquantredefinegate@namecheck#1#2{%
+   \unless\ifcsname yquant@lang@#2\endcsname%
       \PackageError{yquant.sty}{Unknown gate redefined}%
-                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinegate\space to define it.}%
+                   {The gate `#2' is unknown and cannot be redefined. Use \string#1\space to define it.}%
    \fi%
-   \@ifnextchar[{\yquantdefinegate@i{#1}}%
-                {\yquantdefinegate@i{#1}[/yquant/operators/every custom gate]}%
 }
 
-\protected\long\def\yquantdefinegate@i#1[#2]#3{%
+\protected\def\yquantdefinegate@#1#2{%
+   \@ifnextchar[{\yquantdefinegate@i{#1}{#2}}
+                {\yquantdefinegate@i{#1}{#2}[]}%
+}
+
+\protected\def\yquantdefinegate@i#1#2[#3]#4{%
+   % #1: namecheck macro
+   % #2: what to do with expansion
+   % #3: attributes
+   % #4: gate name
+   #1{#4}%
    \begingroup%
+      \let\yquantdefinegate@requiredattrs=\empty%
+      \let\yquantdefinegate@optionalattrs=\empty%
+      \pgfqkeys{/yquant/definegate}{#3}%
+      \@ifnextchar[{\yquantdefinegate@ii{#2}{#4}}%
+                   {\yquantdefinegate@ii{#2}{#4}[/yquant/operators/every custom gate]}%
+}
+
+\protected\long\def\yquantdefinegate@ii#1#2[#3]#4{%
+   % #1: what to do with expansion
+   % #2: gate name
+   % #3: style
+   % #4: content
       \yquant@prepare@ifs@set%
       % usually, we will not be in a tikzpicture here, so all the commands that abbreviate some path operation are undefined!
       \tikz@installcommands%
@@ -313,81 +388,149 @@
       \let\scope=\path%
       \let\endscope=\path%
       \let\stopscope=\path%
+      \ifx#1\@firstofone%
+         \yquantdefinegate@parsearg{\noexpand\yquantdefinegate@attr@value}{#4}%
+      \else%
+         \yquantdefinegate@parsearg\yquantdefinegate@attr@value{#4}%
+      \fi%
       \protected@edef\yquantdefinegate@do{%
          \endgroup%
-         \noexpand\pgfkeys{/yquant/operators/every #1/.code={%
+         \noexpand\pgfkeys{/yquant/operators/every #2/.code={%
             \yquant@config@operator@subcircuit@mangling@set{%
                \yquant@config@operator@subcircuit@mangling%
             }%
-            \noexpand\pgfkeysalso{\unexpanded{#2}}%
+            \noexpand\pgfkeysalso{\unexpanded{#3}}%
          }}%
          \yquant@langhelper@declare@command%
-            {#1}%
+            {#2}%
             \yquant@register@get@multiaslist%
             {%
-               \let\noexpand\yquant@lang@attr@value=\expandafter\noexpand\csname yquant@lang@@#1\endcsname%
-               \yquant@prepare@subcircuit{/yquant/operators/every #1}%
+               \let\noexpand\yquant@circuit@subcircuit@content=\expandafter\noexpand\csname yquant@lang@@#2\endcsname%
+               % the value attribute will be reset for the subcircuit, so we'll preserve it
+               \let\noexpand\yquantdefinegate@attr@value=\noexpand\yquant@lang@attr@value%
+               \yquant@prepare@subcircuit{/yquant/operators/every #2}%
             }%
          % This does not clear the attributes for redefines, but makes at least sure nothing is marked as required that should not be.
-         \yquant@langhelper@setup@attrs{#1}{}{}%
+         \yquant@langhelper@setup@attrs{#2}{\yquantdefinegate@requiredattrs}%
+                                           {\yquantdefinegate@optionalattrs}%
          % Now define the gate's content as a macro
-         \def\expandafter\noexpand\csname yquant@lang@@#1\endcsname{%
-            #3%
+         \def\expandafter\noexpand\csname yquant@lang@@#2\endcsname{%
+            #1{\yquantdefinegate@parsearg@replaced}%
          }%
       }%
    \yquantdefinegate@do%
 }
 
-\def\yquantdefinebox#1{%
-   \ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Gate redefined}%
-                   {The gate `#1' already exists. Use \string\yquantredefinebox\space if you really want to redefine it.}%
-   \fi%
-   \yquantdefinebox@{#1}{}%
+\ifnum\yquant@compat<4 %
+   \protected\def\yquantdefinebox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquantredefinebox}{}\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquantedefinebox
+
+   \protected\def\yquantredefinebox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantdefinebox}{}\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquanteredefinebox
+
+   \protected\def\yquantdefinemultibox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquantredefinemultibox}%
+                       \yquant@register@get@allowmultitrue\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquantedefinemultibox
+
+   \protected\def\yquantredefinemultibox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantdefinemultibox}%
+                       \yquant@register@get@allowmultitrue\@firstofone%
+   }
+
+   \yquantdefinegate@compaterror\yquanteredefinemultibox
+\else
+   \protected\def\yquantdefinebox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquantredefinebox}{}\expandonce%
+   }
+
+   \protected\def\yquantedefinebox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquanteredefinebox}{}\@firstofone%
+   }
+
+   \protected\def\yquantredefinebox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantdefinebox}{}\expandonce%
+   }
+
+   \protected\def\yquanteredefinebox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantedefinebox}{}\@firstofone%
+   }
+
+   \protected\def\yquantdefinemultibox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquantredefinemultibox}%
+                       \yquant@register@get@allowmultitrue\expandonce%
+   }
+
+   \protected\def\yquantedefinemultibox{%
+      \yquantdefinebox@{\yquantdefinegate@namecheck\yquanteredefinemultibox}%
+                       \yquant@register@get@allowmultitrue\@firstofone%
+   }
+
+   \protected\def\yquantredefinemultibox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantdefinemultibox}%
+                       \yquant@register@get@allowmultitrue\expandonce%
+   }
+
+   \protected\def\yquanteredefinemultibox{%
+      \yquantdefinebox@{\yquantredefinegate@namecheck\yquantedefinemultibox}%
+                       \yquant@register@get@allowmultitrue\@firstofone%
+   }
+\fi
+
+\protected\def\yquantdefinebox@#1#2#3{%
+   \@ifnextchar[{\yquantdefinebox@i{#1}{#2}{#3}}%
+                {\yquantdefinebox@i{#1}{#2}{#3}[]}%
 }
 
-\def\yquantdefinemultibox#1{%
-   \ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Gate redefined}%
-                   {The gate `#1' already exists. Use \string\yquantredefinemultibox\space if you really want to redefine it.}%
-   \fi%
-   \yquantdefinebox@{#1}\yquant@register@get@allowmultitrue%
-}
-
-\def\yquantredefinebox#1{%
-   \unless\ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Unknown gate redefined}%
-                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinebox\space to define it.}%
-   \fi%
-   \yquantdefinebox@{#1}{}%
-}
-
-\def\yquantredefinemultibox#1{%
-   \unless\ifcsname yquant@lang@#1\endcsname%
-      \PackageError{yquant.sty}{Unknown gate redefined}%
-                   {The gate `#1' is unknown and cannot be redefined. Use \string\yquantdefinemultibox\space to define it.}%
-   \fi%
-   \yquantdefinebox@{#1}\yquant@register@get@allowmultitrue%
-}
-
-\def\yquantdefinebox@#1#2{%
-   \@ifnextchar[{\yquantdefinebox@i{#1}{#2}}%
-                {\yquantdefinebox@i{#1}{#2}[/yquant/operators/every rectangular box]}%
-}
-
-\protected\long\def\yquantdefinebox@i#1#2[#3]#4{%
-   \pgfkeys{/yquant/operators/every #1/.style={#3}}%
+\protected\def\yquantdefinebox@i#1#2#3[#4]#5{%
+   % #1: namecheck macro
+   % #2: allow multi
+   % #3: what to do with expansion
+   % #4: attributes
+   % #5: gate name
+   #1{#5}%
    \begingroup%
+      \let\yquantdefinegate@requiredattrs=\empty%
+      \let\yquantdefinegate@optionalattrs=\empty%
+      \pgfqkeys{/yquant/definegate}{#4}%
+      \@ifnextchar[{\yquantdefinebox@ii{#2}{#3}{#5}}%
+                   {\yquantdefinebox@ii{#2}{#3}{#5}[/yquant/operators/every rectangular box]}%
+}
+
+\protected\long\def\yquantdefinebox@ii#1#2#3[#4]#5{%
+   % #1: allow multi
+   % #2: what to do with expansion
+   % #3: gate name
+   % #4: style
+   % #5: content
       \yquant@prepare@ifs@set%
+      \ifx#2\@firstofone%
+         \yquantdefinegate@parsearg{\noexpand\yquant@lang@attr@value}{#5}%
+      \else%
+         \yquantdefinegate@parsearg\yquant@lang@attr@value{#5}%
+      \fi%
       \protected@edef\yquantdefinebox@do{%
          \endgroup%
+         \unexpanded{\pgfkeys{/yquant/operators/every #3/.style={#4}}}%
          \yquant@langhelper@declare@command%
-            {#1}%
-            {\unexpanded{#2}}%
-            {\yquant@prepare{#4}{/yquant/operators/every #1}}%
+            {#3}%
+            {\unexpanded{#1}}%
+            {%
+               \yquant@prepare{#2{\yquantdefinegate@parsearg@replaced}}%
+                              {/yquant/operators/every #3}%
+            }%
+         \yquant@langhelper@setup@attrs{#3}{\yquantdefinegate@requiredattrs}%
+                                           {\yquantdefinegate@optionalattrs}%
       }%
-      \yquantdefinebox@do%
-   \yquant@langhelper@setup@attrs{#1}{}{}%
+   \yquantdefinebox@do%
 }
 % END_FOLD
 
@@ -430,6 +573,7 @@
    {subcircuit}%
    \yquant@register@get@multiaslist%
    {%
+      \let\yquant@circuit@subcircuit@content=\yquant@lang@attr@value%
       \yquant@prepare@subcircuit{/yquant/operators/every subcircuit}%
    }
 \yquant@langhelper@setup@attrs{subcircuit}{value}{frameless,seamless,name mangling}

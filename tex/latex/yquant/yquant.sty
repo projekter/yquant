@@ -15,7 +15,7 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquant}[2023/11/26 v0.7.5 Yet another quantum circuit library for LaTeX]
+\ProvidesPackage{yquant}[2025/06/14 v0.8.0 Yet another quantum circuit library for LaTeX]
 
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
@@ -23,16 +23,16 @@
 \RequirePackage{xkeyval}[2005/05/07]
 \usetikzlibrary{arrows.meta,decorations.pathreplacing,decorations.pathmorphing}
 
-\define@choicekey+{yquant.sty}{compat}[\val\yquant@compat]{newest,0.3,0.4,0.6}{
+\define@choicekey+{yquant.sty}{compat}[\val\yquant@compat]{newest,0.3,0.4,0.6,0.8}{
    \ifnum\yquant@compat=0 %
-      \def\yquant@compat{3} % current version
+      \def\yquant@compat{4} % current version
    \fi%
 }{
    \PackageWarning{yquant.sty}{Invalid value for `compat` key specified. Using `0.3`.}
 }
 \ProcessOptionsX
 \unless\ifdefined\yquant@compat
-   \PackageWarning{yquant.sty}{Please specify the `compat` key for yquant. Using `0.3`. Current compatibility version `0.6`.}
+   \PackageWarning{yquant.sty}{Please specify the `compat` key for yquant. Using `0.3`. Current compatibility version `0.8`.}
    \def\yquant@compat{1}
 \fi
 

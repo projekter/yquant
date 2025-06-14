@@ -269,9 +269,10 @@
       \tikzset{/yquant/every operator, #1,%
                /yquant/this operator, /yquant/operators/this subcircuit box/.style={}}%
       % execute the subcircuit
+      \expandafter\undef\expandafter\yquant@circuit@subcircuit@content%
       \expandafter%
       \yquant@env@begin@noarg%
-         \yquant@lang@attr@value% this contains the subcircuit's content
+         \yquant@circuit@subcircuit@content%
          \expandafter\unless\expandafter\ifx\csname\yquant@prefix parameters\endcsname\empty%
             \PackageError{yquant.sty}{Invalid subcircuit parameters count}%
                          {Too many parameters given.}%
