@@ -17,7 +17,7 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
 \usepackage[compat=newest]{yquant}
-\usepackage{braket,hyphenat,microtype,hologo,minted,import,ragged2e,booktabs}
+\usepackage{braket,hyphenat,microtype,hologo,minted2,import,ragged2e,booktabs}
 \usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
 \useyquantlanguage{qasm,groups}
 \usepackage{amsmath,adjustbox,cleveref}
@@ -76,7 +76,7 @@
          \patch@mintinline%
          \raggedleft%
          \hspace*{-1cm}%
-         \phantomsection\label{style:/#2/#3}%
+         \phantomsection\label{{style:/#2/#3}}%
          \texttt{\ifstrempty{#1}\relax{\compat{#1}}\textcolor{gray}{/#2/}\textcolor{mintgreen}{#3}}\hfill default: %
          \tex}{%
    \end{minipage}}
@@ -319,6 +319,8 @@
       \subsection{General usage}
          \begin{minted}[escapeinside=||]{tex}
 % preamble: |\compat{Changed in 0.4}|\usepackage[compat=<version>]{yquant}
+         \begin{minted}[mathescape]{tex}
+% preamble: $\compat{Changed in 0.4}$\usepackage[compat=<version>]{yquant}
 \begin{tikzpicture}% tikz options possible
    % tikz commands go here
    \begin{yquant}% yquant options possible. Watch the newlines!
