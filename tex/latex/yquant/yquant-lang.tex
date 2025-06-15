@@ -167,6 +167,8 @@
    }%
 }
 
+\protected\def\yquant@lang@maybe@idx{}
+
 \protected\def\yquant@lang@create@do#1[#2]#3[;{%
    % parse length
    \ifstrempty{#3}{%
@@ -192,11 +194,15 @@
    \else%
       \def\idx{0}%
    \fi%
-   % define text macros
-   \ifnum\len=1 %
-      \let\regidx=\reg%
-   \else%
+   \ifnum\len>1
       \def\regidx{\reg[\idx]}%
+   \else%
+      \ifnum\yquant@compat<4 %
+         \let\regidx=\reg%
+      \else%
+         \def\regidx{\reg\vphantom[\yquant@lang@maybe@idx}%
+      \fi%
+      % Note: the \vphantom[ is a cheap excuse. We don't know yet whether our register will be a vector register. Currently, it is not, but it might be extended later on. But always putting the height of [ in here makes it larger than necessary. However, this should be acceptable, for unless the register contains only swaps and phases, it will be larger than the [ anyway. But this is breaking behavior, so we protect it.
    \fi%
    \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
    % create the registers
@@ -259,7 +265,7 @@
    }%
    {%
       % there are no multi inits in this context
-      \preto\yquant@attrs@remaining{internal/move label,}%
+      \epreto\yquant@attrs@remaining{internal/move label, internal/setregidx={\idx}{\reg}}%
       \def\yquant@config@operator@minimum@width{0pt}%
       \unless\ifx\yquant@lang@attr@value\empty%
          % make sure to immediately remove the "clear" marker again if we have a text

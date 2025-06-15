@@ -787,8 +787,17 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \begin{itemize}
                \item \tex!\reg! contains your name to identify this register.
                \item \tex!\idx! contains the index (zero\hyp based) of the current register within a vector register.
+                  \compat{Changed in 0.8}Note that before version~0.8, this was not strictly true; \tex!\idx! contained the index within the \emph{currently added} registers.
+                  Most often, this is the same; however, if you were adding, say, the second part of a discontinuous register (or you were using the \pkg{groups} library), then the indices would have started with zero again.
+                  Starting from \texttt{compat} version~0.8, \tex!\idx! will always contain the index of the complete vector register.
                \item \tex!\regidx! expands to \tex!\reg! if the register is of length one, and to \tex!\reg[\idx]! else.
+                  \compat{Changed in 0.8}Note that before version~0.8, this decision was made during the creation; therefore, if you first created a register of length one which you later added some further registers to, the first label would have expanded \tex!\regidx! to \tex!\reg!.
+                  Starting from \texttt{compat} version~0.8, this decision is deferred until the drawing stage, when the actual length is known.
+                  As a consequence, to measure the vertical extent of the label consistently, \tex!\regidx! will always be at least as high as the opening square bracket.
+                  This can make registers with no or only very small gates larger than before; therefore, this setting is compatibility\hyp protected.
                \item \tex!\len! contains the length of the current register vector.
+                  Note that \emph{current} means \emph{at the stage of creation}.
+                  As this was always documented in this way (while the behavior of the other macros did not match their documentation), the behavior is the same in all versions.
             \end{itemize}
          \end{option}
 
@@ -4985,7 +4994,11 @@ $=$
                Basically, if you follow the convention in a usual \Yquant{} circuit to first declare all the registers, then use the gates, then you would put the declaration part in the \tex!\registers! macro.
                However, note that it is in principle also possible to mix register declarations with other gates and \TikZ{} commands.
 
-               In case you do not use the \gate{import} gate in any of the circuits within the group and you do not declare own registers, the behavior is very straightforward: basically, the content of \tex!\registers! is copied verbatim at the beginning of each circuit.
+               In case you do not use the \gate{import} gate in any of the circuits within the group and you do not declare own registers, the behavior is very straightforward: basically, the content of \tex!\registers! is copied verbatim at the beginning of each circuit\footnote{%
+                  This is not strictly true.
+                  Vector registers will always be created one\hyp by\hyp one, as \Yquant{} cannot know (without undertaking some effort) whether they are complete or interspersed with others.
+                  This implies that for \texttt{compat} versions prior to~0.8, indexing will look very strange.
+               }.
                Otherwise, the general rule is: importing a register will ensure that all non\hyp declaration commands that preceded this register declaration are executed; and importing the last register will additionally execute all succeeding commands within \tex!\registers!.
 
             \paragraph*{\tex!\circuit[<style>]{<content>}!}
@@ -5421,11 +5434,15 @@ $=$
       \subsection*{2023-11-26: Version 0.7.5}
          Fix \href{https://github.com/projekter/yquant/issues/29}{\#29}: Scaling the whole picture would lead to compilation failures and wrong output with subcircuits.
 
-      \subsection*{2025-06-14: Version 0.8}
+      \subsection*{2025-06-15: Version 0.8}
          Fix an issue with linebreak in a \tex!yquantgroup! environment. \\
          New (\href{https://github.com/projekter/yquant/issues/32}{\#32}): add a possibility to define attributes---and hence, pass parameters---to custom gates. \\
          Changed: \tex!\yquantdefinebox! and \tex!\yquantdefinegate! now do no longer expand their content at the time of definition.
          The expanding behavior can be obtained with the new macros \tex!\yquantedefinebox! and \tex!\yquantedefinegate!.
-         This is compatibility\hyp protected.
+         This is compatibility\hyp protected. \\
+         Changed: \tex!\idx! and \tex!\regidx! will now evaluate only at the time of drawing, giving a correct index when used with discontiguous registers, and in particular, with the \pkg{groups} language.
+         As a consequence, \tex!\regidx! is now always contains an implicit \tex!\vphantom[! to have the same vertical extent during preparation as in drawing.
+         This can lead to larger spacings between very small registers and is therefore compatibility\hyp protected.
+         To use the newer version with smaller spacing, give the label at creation explicitly (or using \tex!\reg!).
 %END_FOLD
 \end{document}
