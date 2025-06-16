@@ -454,6 +454,18 @@
    \fi%
 }
 
+\def\ifyquant@AND#1#2{%
+   #1%
+      #2%
+         \expandafter\expandafter\expandafter\@firstoftwo%
+      \else%
+         \expandafter\expandafter\expandafter\@secondoftwo%
+      \fi%
+   \else%
+      \expandafter\@secondoftwo%
+   \fi%
+}
+
 % #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \dimen0, which is translated to the user coordinate system.
 % If the circuit is currently vertical, we extract the minimum y position at the x position specified in #2.
 \protected\def\yquant@softpath@extractmaxxat#1#2{%
@@ -517,23 +529,21 @@
 
 \protected\def\yquant@softpath@extractmaxxat@curveto@checkx{%
    % \dimen11 holds our only candidate for t. Is it within the curve?
-   \unless\ifdim\dimen11<0pt %
-      \unless\ifdim\dimen11>1pt %
-         % it is. \dimen4: x0, \pgf@xa: xa, \pgf@xb: xb, \pgf@xc: x1
-         \begingroup%
-            \dimen12=\dimexpr1pt-\dimen11\relax% 1 - t
-            \dimen13=\dimexpr\dimen11*\dimen11/65536\relax% t^2
-            \dimen14=\dimexpr\dimen12*\dimen12/65536\relax% (1 - t)^2
-            \dimen255=\dimexpr\dimen13*\dimen11/65536*\pgf@xc/65536+% t^3 x1
-                              3\dimen13*\dimen12/65536*\pgf@xb/65536+% t^2(1 - t) xb
-                              \dimen14*\dimen12/65536*\dimen4/65536+% (1 - t)^3 x0
-                              3\dimen11*\dimen14/65536*\pgf@xa/65536% 3t(1 - t)^2 xa
-                      \relax%
-            \expandafter%
-         \endgroup%
-         \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimen255}%
-      \fi%
-   \fi%
+   \ifyquant@AND{\unless\ifdim\dimen11<0pt }{\unless\ifdim\dimen11>1pt }{%
+      % it is. \dimen4: x0, \pgf@xa: xa, \pgf@xb: xb, \pgf@xc: x1
+      \begingroup%
+         \dimen12=\dimexpr1pt-\dimen11\relax% 1 - t
+         \dimen13=\dimexpr\dimen11*\dimen11/65536\relax% t^2
+         \dimen14=\dimexpr\dimen12*\dimen12/65536\relax% (1 - t)^2
+         \dimen255=\dimexpr\dimen13*\dimen11/65536*\pgf@xc/65536+% t^3 x1
+                           3\dimen13*\dimen12/65536*\pgf@xb/65536+% t^2(1 - t) xb
+                           \dimen14*\dimen12/65536*\dimen4/65536+% (1 - t)^3 x0
+                           3\dimen11*\dimen14/65536*\pgf@xa/65536% 3t(1 - t)^2 xa
+                   \relax%
+         \expandafter%
+      \endgroup%
+      \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimen255}%
+   }\relax%
 }
 
 \protected\def\yquant@softpath@extractmaxxat@curveto#1#2\pgfsyssoftpath@curvetosupportbtoken#3#4\pgfsyssoftpath@curvetotoken#5#6{%
@@ -559,12 +569,8 @@
       % for the multiplications with and divisions by dimensions, we exploit that eTeX fuses muldiv to 64 bits. Further note that each dimension has a scaling factor of 65536 for sp<->pt conversion. This is why don't factor out divisions (which would be more efficient, but not give the benefit of 64bit accuracy).
       % a = 3(ya - yb) + (y1 - y0)
       \dimen1=\dimexpr3\pgf@ya-3\pgf@yb+\pgf@yc-\dimen6\relax%
-      \ifdim\dimen1<1pt %
-         \ifdim\dimen1>-1pt %
-            \dimen1=0pt % this is almost a quadratic curve
-         \fi%
-      \fi%
-      \ifdim\dimen1=0pt %
+      \ifyquant@AND{\ifdim\dimen1<1pt }{\ifdim\dimen1>-1pt }{%
+         \dimen1=0pt % this is almost or exactly a quadratic curve
          % this is only a quadratic curve!
          % b = 3(y0 - 2ya + yb)
          \dimen3=3\dimexpr\dimen6-2\pgf@ya+\pgf@yb\relax%
@@ -572,19 +578,11 @@
          \dimen5=3\dimexpr\pgf@ya-\dimen6\relax%
          % d: y0 - <desired y>
          \dimen7=\dimexpr\dimen6-\dimen2\relax%
-         \ifdim\dimen3<1pt %
-            \expandafter\@firstofone%
-         \else%
-            \expandafter\@secondoftwo%
-         \fi{%
-            \ifdim\dimen3>-1pt %
-               % this is almost a linear curve!
-               \dimen11=\dimexpr-\dimen7*65536/\dimen5\relax%
-               \yquant@softpath@extractmaxxat@curveto@checkx%
-               \expandafter\@gobble%
-            \else%
-               \expandafter\@firstofone%
-            \fi%
+         \ifyquant@AND{\ifdim\dimen3<1pt }{\ifdim\dimen3>-1pt }{%
+            % this is almost a linear curve!
+            \dimen11=\dimexpr-\dimen7*65536/\dimen5\relax%
+            \yquant@softpath@extractmaxxat@curveto@checkx%
+            \expandafter\@gobble%
          }{%
             % check the discriminant of the equation
             \dimen8=\dimexpr\dimen3*\dimen3/65536-4\dimen3*\dimen7/65536\relax%
@@ -599,7 +597,7 @@
                \yquant@softpath@extractmaxxat@curveto@checkx%
             \fi%
          }%
-      \else%
+      }{%
          % We will simplify by directly dividing all coefficients by a
          % b = 3(y0 - 2ya + yb)
          \dimen3=\dimexpr3\dimexpr\dimen6-2\pgf@ya+\pgf@yb\relax*65536/\dimen1\relax%
@@ -686,7 +684,7 @@
                \yquant@softpath@extractmaxxat@curveto@checkx%
             \fi%
          \fi%
-      \fi%
+      }%
       % Now after all these calculations, \dimen0 was updated within the group. Make available outside.
       \expandafter%
    \endgroup%
