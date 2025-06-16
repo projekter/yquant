@@ -470,7 +470,7 @@
       #1%
       \expandafter%
    \endgroup%
-   \expandafter\dimen\expandafter0\expandafter=\the\dimen0  %
+   \expandafter\dimen\expandafter0\expandafter=\the\dimen0\relax%
 }
 
 \protected\def\yquant@softpath@extractmaxxat@update#1{%
@@ -690,7 +690,7 @@
       % Now after all these calculations, \dimen0 was updated within the group. Make available outside.
       \expandafter%
    \endgroup%
-   \expandafter\dimen\expandafter0\expandafter=\the\dimen0  %
+   \expandafter\dimen\expandafter0\expandafter=\the\dimen0\relax%
    \dimen4=\pgf@xc %
    \dimen6=\pgf@yc %
 }
