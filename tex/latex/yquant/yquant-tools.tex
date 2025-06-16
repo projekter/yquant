@@ -485,6 +485,10 @@
    \expandafter\dimen\expandafter0\expandafter=\the\dimen0\relax%
 }
 
+% We work with transformed coordinate systems and inversions, so it may happen that we don't end up exactly within a boundary, but are slightly off.
+\newdimen\yquant@softpath@extracttol
+\yquant@softpath@extracttol=99sp %
+
 \protected\def\yquant@softpath@extractmaxxat@update#1{%
    \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus#1 %
       \dimen0=#1 %
@@ -501,11 +505,12 @@
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
    \ifyquant@OR{\ifdim\yquant@orientation@plus\dimen4>\yquant@orientation@plus\dimen0 }%
                {\ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\dimen0 }{%
-      \ifdim\dimen6=\dimen2 %
+      \ifyquant@AND{\unless\ifdim\dimexpr\dimen6-\yquant@softpath@extracttol\relax>\dimen2 }%
+                   {\unless\ifdim\dimexpr\dimen6+\yquant@softpath@extracttol\relax<\dimen2 }{%
          \yquant@softpath@extractmaxxat@update{\dimen4}%
-      \else%
+      }{%
          \ifdim\dimen6<\dimen2 %
-            \unless\ifdim\yquant@pgf@y<\dimen2 %
+            \unless\ifdim\dimexpr\yquant@pgf@y+\yquant@softpath@extracttol\relax<\dimen2 %
                \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
                   \dimen4+% x0
                   \dimexpr\yquant@pgf@x-\dimen4\relax*% (x1-x0)
@@ -513,7 +518,7 @@
                \relax}%
             \fi%
          \else%
-            \unless\ifdim\yquant@pgf@y>\dimen2 %
+            \unless\ifdim\dimexpr\yquant@pgf@y-\yquant@softpath@extracttol\relax>\dimen2 %
                \expandafter\yquant@softpath@extractmaxxat@update\expandafter{\the\dimexpr%
                   \dimen4+% x0
                   \dimexpr\yquant@pgf@x-\dimen4\relax*% (x1-x0)
@@ -521,7 +526,7 @@
                \relax}%
             \fi%
          \fi%
-      \fi%
+      }%
    }\relax%
    \dimen4=\yquant@pgf@x%
    \dimen6=\yquant@pgf@y%
@@ -563,7 +568,7 @@
    \pgf@xc=\yquant@pgf@x%
    \pgf@yc=\yquant@pgf@y%
    % We first solve the third-order polynomial for t using the y value, then plug it back into the x value.
-   % TODO: this is accurate to approx. 3 digits. Can this be improved by reformulating Cardanos formula to involve less divisions?
+   % TODO: this is accurate to approx. 3 digits (so we don't use \yquant@softpath@extracttol, but much higher tolerances). Can this be improved by reformulating Cardanos formula to involve less divisions?
    \begingroup%
       % We need so many dimensions that we break with TeX's convention for their use.
       % for the multiplications with and divisions by dimensions, we exploit that eTeX fuses muldiv to 64 bits. Further note that each dimension has a scaling factor of 65536 for sp<->pt conversion. This is why don't factor out divisions (which would be more efficient, but not give the benefit of 64bit accuracy).
@@ -700,9 +705,10 @@
    \pgf@ya=\yquant@pgf@y%
    \pgfpointtransformed{\pgfqpoint{\dimexpr#1+#3\relax}{\dimexpr#2+#4\relax}}%
    % (\pgf@xa, \pgf@ya) one corner, (\pgf@x, \pgf@y) other corner
+   % We should include some tolerance; the transform inversion is not exact.
    \ifdim\yquant@pgf@y>\pgf@ya %
-      \unless\ifdim\pgf@ya>\dimen2 %
-         \unless\ifdim\yquant@pgf@y<\dimen2 %
+      \unless\ifdim\dimexpr\pgf@ya-\yquant@softpath@extracttol\relax>\dimen2 %
+         \unless\ifdim\dimexpr\yquant@pgf@y+\yquant@softpath@extracttol\relax<\dimen2 %
             \ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
@@ -711,8 +717,8 @@
          \fi%
       \fi%
    \else%
-      \unless\ifdim\pgf@ya<\dimen2 %
-         \unless\ifdim\yquant@pgf@y>\dimen2 %
+      \unless\ifdim\dimexpr\pgf@ya+\yquant@softpath@extracttol\relax<\dimen2 %
+         \unless\ifdim\dimexpr\yquant@pgf@y-\yquant@softpath@extracttol\relax>\dimen2 %
             \ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\pgf@xa %
                \yquant@softpath@extractmaxxat@update\yquant@pgf@x%
             \else%
