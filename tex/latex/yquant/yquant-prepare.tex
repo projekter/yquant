@@ -923,10 +923,12 @@
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@single#1#2{%
-   \eappto\yquant@prepare@append{%
-      \yquant@prepare@callback@draw{#1}%
-   }%
-   \yquant@prepare@callback@prepare{#1}%
+   \ifinlist{#1}\yquant@circuit@operator@targets{%
+      \eappto\yquant@prepare@append{%
+         \yquant@prepare@callback@draw{#1}%
+      }%
+      \yquant@prepare@callback@prepare{#1}%
+   }\relax%
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@multi#1#2#3#4#5{%
@@ -976,10 +978,12 @@
    \fi%
    {% save \body
       \yquant@for \yquant@i := #1 to #2 {{% let inner loop mess up with macros
-         \csxappto{\yquant@prefix finalize@ctrl@prepare@appto}{%
-            \expandafter\yquant@prepare@callback@draw\expandafter{\yquant@i}%
-         }%
-         \expandafter\yquant@prepare@callback@prepare\expandafter{\yquant@i}%
+         \xifinlist\yquant@i\yquant@circuit@operator@targets{%
+            \csxappto{\yquant@prefix finalize@ctrl@prepare@appto}{%
+               \expandafter\yquant@prepare@callback@draw\expandafter{\yquant@i}%
+            }%
+            \expandafter\yquant@prepare@callback@prepare\expandafter{\yquant@i}%
+         }\relax%
       }}%
    }%
 }
@@ -989,10 +993,12 @@
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi@loop#1{%
-   \eappto\yquant@prepare@append{%
-      \yquant@prepare@callback@draw{#1}%
-   }%
-   \yquant@prepare@callback@prepare{#1}%
+   \ifinlist{#1}\yquant@circuit@operator@targets{%
+      \eappto\yquant@prepare@append{%
+         \yquant@prepare@callback@draw{#1}%
+      }%
+      \yquant@prepare@callback@prepare{#1}%
+   }\relax%
 }
 
 \protected\def\yquant@prepare@finalize@ctrl@subcircuit@multi#1#2#3#4#5#6#7#8{%
