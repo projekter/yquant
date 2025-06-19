@@ -442,7 +442,7 @@
    }%
 }
 
-\def\ifyquant@OR#1#2{%
+\def\ifyquant@OR#1\fi#2\fi{%
    #1%
       \expandafter\@firstoftwo%
    \else%
@@ -454,7 +454,7 @@
    \fi%
 }
 
-\def\ifyquant@AND#1#2{%
+\def\ifyquant@AND#1\fi#2\fi{%
    #1%
       #2%
          \expandafter\expandafter\expandafter\@firstoftwo%
@@ -503,10 +503,10 @@
 
 \protected\def\yquant@softpath@extractmaxxat@lineto#1#2{%
    \pgfpointtransformed{\pgfqpoint{#1}{#2}}%
-   \ifyquant@OR{\ifdim\yquant@orientation@plus\dimen4>\yquant@orientation@plus\dimen0 }%
-               {\ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\dimen0 }{%
-      \ifyquant@AND{\unless\ifdim\dimexpr\dimen6-\yquant@softpath@extracttol\relax>\dimen2 }%
-                   {\unless\ifdim\dimexpr\dimen6+\yquant@softpath@extracttol\relax<\dimen2 }{%
+   \ifyquant@OR\ifdim\yquant@orientation@plus\dimen4>\yquant@orientation@plus\dimen0 \fi%
+               \ifdim\yquant@orientation@plus\yquant@pgf@x>\yquant@orientation@plus\dimen0 \fi{%
+      \ifyquant@AND\unless\ifdim\dimexpr\dimen6-\yquant@softpath@extracttol\relax>\dimen2 \fi%
+                   \unless\ifdim\dimexpr\dimen6+\yquant@softpath@extracttol\relax<\dimen2 \fi{%
          \yquant@softpath@extractmaxxat@update{\dimen4}%
       }{%
          \ifdim\dimen6<\dimen2 %
@@ -534,7 +534,7 @@
 
 \protected\def\yquant@softpath@extractmaxxat@curveto@checkx{%
    % \dimen11 holds our only candidate for t. Is it within the curve?
-   \ifyquant@AND{\unless\ifdim\dimen11<0pt }{\unless\ifdim\dimen11>1pt }{%
+   \ifyquant@AND\unless\ifdim\dimen11<0pt \fi\unless\ifdim\dimen11>1pt \fi{%
       % it is. \dimen4: x0, \pgf@xa: xa, \pgf@xb: xb, \pgf@xc: x1
       \begingroup%
          \dimen12=\dimexpr1pt-\dimen11\relax% 1 - t
@@ -574,7 +574,7 @@
       % for the multiplications with and divisions by dimensions, we exploit that eTeX fuses muldiv to 64 bits. Further note that each dimension has a scaling factor of 65536 for sp<->pt conversion. This is why don't factor out divisions (which would be more efficient, but not give the benefit of 64bit accuracy).
       % a = 3(ya - yb) + (y1 - y0)
       \dimen1=\dimexpr3\pgf@ya-3\pgf@yb+\pgf@yc-\dimen6\relax%
-      \ifyquant@AND{\ifdim\dimen1<1pt }{\ifdim\dimen1>-1pt }{%
+      \ifyquant@AND\ifdim\dimen1<1pt \fi\ifdim\dimen1>-1pt \fi{%
          \dimen1=0pt % this is almost or exactly a quadratic curve
          % this is only a quadratic curve!
          % b = 3(y0 - 2ya + yb)
@@ -583,7 +583,7 @@
          \dimen5=3\dimexpr\pgf@ya-\dimen6\relax%
          % d: y0 - <desired y>
          \dimen7=\dimexpr\dimen6-\dimen2\relax%
-         \ifyquant@AND{\ifdim\dimen3<1pt }{\ifdim\dimen3>-1pt }{%
+         \ifyquant@AND\ifdim\dimen3<1pt \fi\ifdim\dimen3>-1pt \fi{%
             % this is almost a linear curve!
             \dimen11=\dimexpr-\dimen7*65536/\dimen5\relax%
             \yquant@softpath@extractmaxxat@curveto@checkx%
