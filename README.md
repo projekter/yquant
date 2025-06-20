@@ -6,6 +6,8 @@ yquant is a pure-LaTeX solution - i.e., it requires no external program - that i
 It builds on and interacts with TiKZ, which brings an enourmous flexibility for customization of individual circuit.
 
 Important features in the latest updates (for a much more complete list, see the documentation):
+- Support for `\intertext` in groups (since 0.8)
+- Support for [corner-like gates](https://arxiv.org/abs/1709.06648) by allowing for controlled `init` and `discard` gates (since 0.8)
 - Support for custom attributes in custom gates and boxes, making them effectively parameteric (since 0.8)
 - Support for vertical circuit layout (since 0.7)
 - Support for a simplified drawing pipeline (since 0.7)
@@ -25,7 +27,7 @@ Important features in the latest updates (for a much more complete list, see the
 
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
-The arXiv runs on version 0.3.2 - please download the latest version from the releases section and include it in your submission.
+The arXiv runs on version 0.7.4 - you may download the latest version from the releases section and include it in your submission.
 
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
