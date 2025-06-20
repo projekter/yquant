@@ -74,6 +74,8 @@
       \let\newpage=\yquantgroup@nobreak%
       \let\clearpage=\yquantgroup@nobreak%
       \let\cleardoublepage=\yquantgroup@nobreak%
+      \let\intertext=\yquantgroup@nointertext%
+      \let\shortintertext=\yquantgroup@nointertext%
       \let\yquantgroup@start@tikzpicture=\relax%
       \let\yquantgroup@end@tikzpicture=\relax%
    \else%
@@ -85,6 +87,8 @@
       \let\clearpage=\yquantgroup@clearpage%
       \let\yquantgroup@save@cleardoublepage=\cleardoublepage%
       \let\cleardoublepage=\yquantgroup@cleardoublepage%
+      \let\intertext=\yquantgroup@intertext%
+      \let\shortintertext=\yquantgroup@shortintertext%
       \def\yquantgroup@start@tikzpicture{\tikzpicture \global\pgf@picminx=0pt }%
       \def\yquantgroup@end@tikzpicture{\endtikzpicture}%
       \pgfkeysdef{/yquant/preamble}{%
@@ -585,6 +589,54 @@
 
 \def\yquantgroup@cleardoublepage{%
    \yquantgroup@bigbreak\yquantgroup@save@cleardoublepage%
+}
+
+\def\yquantgroup@nointertext{%
+   \PackageError{yquant.sty}{Intertext disallowed in tikzpicture environment}%
+                {In order to allow for \string\intertext{} or \string\shortintertext{} in a yquantgroup environment, move it outside of the tikzpicture.}%
+}
+
+\def\yquantgroup@intertext{%
+   \@ifnextchar[\yquantgroup@intertext@i%
+                {\yquantgroup@intertext@i[\belowdisplayskip]}%
+}
+
+\def\yquantgroup@intertext@i[#1]{%
+   \@ifnextchar[{\yquantgroup@intertext@ii[{#1}]}%
+                {\yquantgroup@intertext@ii[{#1}][\abovedisplayskip]}%
+}
+
+\def\yquantgroup@shortintertext{%
+   \@ifnextchar[\yquantgroup@intertext@i%
+                {\yquantgroup@intertext@i[\belowdisplayshortskip]}%
+}
+
+\def\yquantgroup@shortintertext@i[#1]{%
+   \@ifnextchar[{\yquantgroup@intertext@ii[{#1}]}%
+                {\yquantgroup@intertext@ii[{#1}][\abovedisplayshortskip]}%
+}
+
+\long\def\yquantgroup@intertext@ii[#1][#2]#3{%
+   \ifdefined\yquant@prefix%
+      \yquant@env@end%
+   \else%
+      \PackageError{yquant.sty}{There is no circuit here to end}%
+                   {You did not start a circuit before requesting an intertext.}%
+   \fi%
+   \edef\tmp{%
+      \unexpanded{%
+         \yquantgroup@end@tikzpicture%
+         \par\penalty\postdisplaypenalty\vskip#1%
+         \noindent\ignorespaces#3%
+         \par\penalty\predisplaypenalty\vskip#2%
+         \yquantgroup@start@tikzpicture%
+      }%
+      \global\pgf@picminx=\the\pgf@picminx\space%
+      \ifyquantgroup@config@aligned%
+         \noexpand\yquantgroup@shiftright@ii0[1]%
+      \fi%
+   }%
+   \tmp%
 }
 % END_FOLD
 
