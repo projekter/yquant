@@ -770,7 +770,7 @@
          % In order to determine the width of the subcircuit, we must execute the draw command at preparation time, where we will remap all relevant commands to virtual ones so that this has no effect and is not very costly. Although nothing should be drawn, as a precaution, we "draw" everything in a box that is dropped afterwards.
          % There will still be some extra width and height taken by separations or other things related to the box itself.
          \yquant@env@virtualize@path%
-         \begingroup%
+         \yquant@begingroup%
             \let\yquant@parent=\yquant@prefix%
             \edef\yquant@prefix{yquant@env\yquant@circuit@subcircuit@id @}%
             \let\yquant@draw@init=\yquant@prepare@subcircuit@init%
@@ -819,7 +819,7 @@
                \global\ht\yquant@prepare@subcircuit@box=\pgf@picmaxy%
                \global\dp\yquant@prepare@subcircuit@box=-\pgf@picminy%
             }%
-         \endgroup%
+         \yquant@endgroup%
          \edef\yquant@prepare@subcircuit@width{%
             {\ifyquanthorz{\the\wd\yquant@prepare@subcircuit@box}% inner width
                           {\the\dimexpr\ht\yquant@prepare@subcircuit@box+\dp\yquant@prepare@subcircuit@box\relax}}%

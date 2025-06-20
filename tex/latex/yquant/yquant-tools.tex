@@ -466,6 +466,32 @@
    \fi%
 }
 
+% There are a couple of pgf states that are always set globally and only protected by a scope. We don't want this, so we provide our own grouping - essentially, a scope without the scope in the output. This is because we deem changes to the variables within the group as unlikely, but possible, so it is more economical (in the output) to reset them explicitly only if a change occurred.
+\protected\def\yquant@begingroup{%
+   \edef\pgfscope@linewidth{\the\pgflinewidth}%
+   \let\pgfscope@stroke@color=\pgf@strokecolor@global%
+   \let\pgfscope@fill@color=\pgf@fillcolor@global%
+   \begingroup%
+}
+
+\protected\def\yquant@endgroup{%
+   \endgroup%
+   \unless\ifdim\pgflinewidth=\pgfscope@linewidth\space%
+      % we can be sure that if it is not #1 in this group, it won't be globally, as it is always set globally (unless a bad user breaks this behavior).
+      \global\pgflinewidth=\pgfscope@linewidth%
+      % but we must make sure that this is also reflected in the PDF (since we didn't actually start a scope). So set it (and this is why we check for equality, as we don't need to pollute the PDF with unnecessary linewidth changes)
+      \pgfsys@setlinewidth{\the\pgflinewidth}%
+   \fi%
+   \unless\ifx\pgfscope@stroke@color\pgf@strokecolor@global%
+      \global\let\pgf@strokecolor@global=\pgfscope@stroke@color%
+      \expandafter\pgf@setstrokecolor\pgf@strokecolor@global%
+   \fi%
+   \unless\ifx\pgfscope@fill@color\pgf@fillcolor@global%
+      \global\let\pgf@fillcolor@global=\pgfscope@fill@color%
+      \expandafter\pgf@setfillcolor\pgf@fillcolor@global%
+   \fi%
+}
+
 % #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \dimen0, which is translated to the user coordinate system.
 % If the circuit is currently vertical, we extract the minimum y position at the x position specified in #2.
 \protected\def\yquant@softpath@extractmaxxat#1#2{%

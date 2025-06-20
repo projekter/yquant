@@ -372,7 +372,7 @@
    % #3: attributes
    % #4: gate name
    #1{#4}%
-   \begingroup%
+   \yquant@begingroup%
       \let\yquantdefinegate@requiredattrs=\empty%
       \let\yquantdefinegate@optionalattrs=\empty%
       \pgfqkeys{/yquant/definegate}{#3}%
@@ -400,7 +400,7 @@
          \yquantdefinegate@parsearg\yquantdefinegate@attr@value{#4}%
       \fi%
       \protected@edef\yquantdefinegate@do{%
-         \endgroup%
+         \yquant@endgroup%
          \noexpand\pgfkeys{/yquant/operators/every #2/.code={%
             \yquant@config@operator@subcircuit@mangling@set{%
                \yquant@config@operator@subcircuit@mangling%
@@ -503,7 +503,7 @@
    % #4: attributes
    % #5: gate name
    #1{#5}%
-   \begingroup%
+   \yquant@begingroup%
       \let\yquantdefinegate@requiredattrs=\empty%
       \let\yquantdefinegate@optionalattrs=\empty%
       \pgfqkeys{/yquant/definegate}{#4}%
@@ -524,7 +524,7 @@
          \yquantdefinegate@parsearg\yquant@lang@attr@value{#5}%
       \fi%
       \protected@edef\yquantdefinebox@do{%
-         \endgroup%
+         \yquant@endgroup%
          \unexpanded{\pgfkeys{/yquant/operators/every #3/.style={#4}}}%
          \yquant@langhelper@declare@command%
             {#3}%

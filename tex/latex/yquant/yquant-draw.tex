@@ -32,7 +32,7 @@
 
 \def\yquant@draw@subcircuit@leftpos{0pt}% outermost circuit: 0pt
 \protected\long\def\yquant@draw@group#1#2#3#4#5#6{%
-   \begingroup%
+   \yquant@begingroup%
       \yquant@register@get@maxxlist\yquant@draw@@x{#6}%
       \ifx F#2%
          \yquant@draw@@currentcontroltype=0 %
@@ -116,7 +116,7 @@
          \yquant@draw@alias@ctrl{#2}n%
       \fi%
       \yquant@circuit@extendmultiline@total%
-   \endgroup%
+   \yquant@endgroup%
 }
 
 \protected\def\yquant@draw@injectiongroup#1#2\yquant@draw@endinjectiongroup#3#4#5{%
@@ -127,7 +127,7 @@
 
 \protected\long\def\yquant@draw@begininjection#1#2#3#4#5#6{%
    % this is called within another draw group, so lots of things are already set up
-   \begingroup%
+   \yquant@begingroup%
       \def\yquant@draw@@style{#4}%
       \def\yquant@draw@@content{#5}%
       \let\yquant@draw@@idx@content=\yquant@draw@@idx@pcontrol%
@@ -157,7 +157,7 @@
       \yquant@draw@alias@ctrl{#2}n%
    \fi%
    \edef\process{%
-         \endgroup%
+         \yquant@endgroup%
          \ifyquant@config@draw@quality%
             \def\noexpand\yquant@circuit@extendcontrolline@clip{%
                \unexpanded\expandafter{\yquant@circuit@extendcontrolline@clip}%
@@ -461,7 +461,7 @@
    \edef\yquant@draw@subcircuit@nodelist{yquant@env#1@draw@subcircuit@nodelist}%
    \global\cslet\yquant@draw@subcircuit@nodelist\empty%
    % \pgfinterruptboundingbox, but just for y
-   \begingroup%
+   \yquant@begingroup%
       \edef\pgf@interrupt@savemaxy{\the\yquant@pgf@picmaxy}%
       \edef\pgf@interrupt@saveminy{\the\yquant@pgf@picminy}%
       \yquant@pgf@picmaxy=-16000pt %
@@ -527,9 +527,9 @@
          \expandafter\tikzset\expandafter{\yquant@draw@subcircuit@style}%
          % #18: The styles may have set this subcircuit box again, but we disallow this. The "this" style is only supposed to effect the actual box and nothing else, so it should not permeat in the inner of the circuit. This is what every subcircuit box is for!
          \pgfkeys{/yquant/operators/this subcircuit box/.style={}}%
-         \begingroup%
+         \yquant@begingroup%
             \csname\yquant@prefix draw\endcsname%
-         \endgroup%
+         \yquant@endgroup%
          % BEGIN_FOLD bounding box
          % Completely empty wires did not yet affect the bounding box
          % Problem: we compare a user-mode TikZ position (register y position) with a system-level pgf position (picture boundary box). If shifts or scalings are in effect, we must first transform the point appropriately. Note that negative scalings may upset our assumption of which is the minimum and which is the maximum! If additionally rotations are in effect, we must even consider those transformations for the leftmost and the rightmost point, which makes all of this far more complicated than it should be. For this reason, we have a shortcut in action in case no nontranslation transformations are present.
@@ -661,12 +661,12 @@
          \cmd%
       \else%
          % we draw the box on the behindwires layer. In this way, the box can even be filled without overshadowing the wires. However, this implies that the frame of the box will also be drawn behind the wires. If the color of the frame is different from the color of the wires, this may not be desired. In this case, there's no alternative to the quality layout.
-         \begingroup%
+         \yquant@begingroup%
             \let\pgfonlayer@assert@is@active=\relax%
             \pgfonlayer{behindwires}%
                \cmd%
             \endpgfonlayer%
-         \endgroup%
+         \yquant@endgroup%
       \fi%
       \unhbox\yquant@prepare@subcircuit@box%
    % \endpgfinterruptboundingbox + increase
@@ -676,7 +676,7 @@
       \ifdim\pgf@interrupt@saveminy<\yquant@pgf@picminy%
          \global\yquant@pgf@picminy=\pgf@interrupt@saveminy%
       \fi%
-   \endgroup%
+   \yquant@endgroup%
    % Now that the subcircuit is finished, we need advance all the wires
    \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
    \forlistloop\yquant@draw@group@advance{#5}%
@@ -859,12 +859,12 @@
 }
 
 \protected\long\def\yquant@draw@onwires#1{%
-   \begingroup%
+   \yquant@begingroup%
       \let\pgfonlayer@assert@is@active=\relax%
       \pgfonlayer{wires}%
          #1%
       \endpgfonlayer%
-   \endgroup%
+   \yquant@endgroup%
 }
 
 \protected\def\yquant@draw@cline{%
@@ -953,7 +953,7 @@
 }
 
 \protected\def\yquant@draw@wire#1#2{%
-   \begingroup%
+   \yquant@begingroup%
       \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
       \unless\ifnum\wiretype=\yquant@register@type@none%
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
@@ -1010,7 +1010,7 @@
             \fi%
          \fi%
       \fi%
-   \endgroup%
+   \yquant@endgroup%
 }
 
 % quantum wire

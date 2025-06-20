@@ -117,10 +117,10 @@
       \let\yquant@circuit@extendcontrolline@prev@old=\yquant@circuit@extendcontrolline@prev%
    \fi%
    \unless\ifnum#1=0 %
-      \begingroup%
+      \yquant@begingroup%
          \tikzset{/yquant/every control line}%
          \expandafter%
-      \endgroup%
+      \yquant@endgroup%
       \expandafter\@tempdima\the\pgflinewidth%
       \pgfpointanchor{yquantbox}{center}%
       \advance \yquant@pgf@y by #3\relax%
@@ -230,10 +230,10 @@
 
 % populates a drawing macro with the multi operation connector at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendmultiline@cmd must be \let to \empty and \yquant@circuit@extendmultiline@prev to \relax.
 \protected\def\yquant@circuit@extendmultiline#1{%
-   \begingroup%
+   \yquant@begingroup%
       \tikzset{/yquant/every multi line}%
       \expandafter%
-   \endgroup%
+   \yquant@endgroup%
    \ifyquant@config@draw@quality%
       \eappto\yquant@circuit@extendmultiline@clip{%
          \unexpanded\expandafter{\pgfshapeclippathvertresult}%
@@ -333,7 +333,7 @@
 \protected\def\yquant@circuit@subcircuit#1{%
    \numdef\yquant@circuit@subcircuit@id{\yquant@env+1}%
    \listcsxadd{\yquant@prefix subcircuits}{\yquant@circuit@subcircuit@id}%
-   \begingroup%
+   \yquant@begingroup%
       \tikzset{/yquant/every operator, #1,%
                /yquant/this operator, /yquant/operators/this subcircuit box/.style={}}%
       % execute the subcircuit
@@ -346,7 +346,7 @@
                          {Too many parameters given.}%
          \fi%
       \yquant@env@end%
-   \endgroup%
+   \yquant@endgroup%
 }
 
 % BEGIN_FOLD Helpers for operator callbacks
