@@ -771,7 +771,7 @@
             \let\yquant@env@beamer@onslideappdraw=\empty%
             \appto\yquant@env@beamer@onslideappdraw{\beamer@endpause}%
             \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname{%
-               \eappto\yquant@env@beamer@onslideappdraw{\noexpand\yquant@circuit@flushwire{\i}}%
+               \eappto\yquant@env@beamer@onslideappdraw{\yquant@circuit@flushwire{\i}}%
             }%
             \csxappto{\yquant@prefix draw}%
                      {\unexpanded\expandafter{\yquant@env@beamer@onslideappdraw}}%
