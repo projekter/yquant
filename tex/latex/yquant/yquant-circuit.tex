@@ -103,52 +103,50 @@
          \unexpanded\expandafter{\pgfshapeclippathvertresult}%
       }%
    \fi%
-   \begingroup%
-      \tikzset{/yquant/every control line}%
-      \expandafter%
-   \endgroup%
-   \expandafter\@tempdima\the\pgflinewidth%
-   \ifcase#1%
-      % no control (or to a discarded target, which we don't do)
-   \or%
-      % qubit
+   \unless\ifnum#1=0 %
+      \begingroup%
+         \tikzset{/yquant/every control line}%
+         \expandafter%
+      \endgroup%
+      \expandafter\@tempdima\the\pgflinewidth%
       \pgfpointanchor{yquantbox}{center}%
-      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
-            \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(#2,\the\yquant@pgf@y)%
-         }%
+      \ifcase#1 %
+         % no control (or to a discarded target, which we don't do)
+      \or%
+         % qubit
+         \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+            \eappto\yquant@circuit@extendcontrolline@cmd{%
+               \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(#2,\the\yquant@pgf@y)%
+            }%
+         \fi%
+      \or%
+         % cbit
+         \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+            \eappto\yquant@circuit@extendcontrolline@cmd{%
+               \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
+               \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
+            }%
+         \fi%
+      \or%
+         % quantum-bundle (very unusual, but perhaps for transversal operations?)
+         \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
+            \eappto\yquant@circuit@extendcontrolline@cmd{%
+               \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
+               \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(\the\dimexpr#2\relax,\the\yquant@pgf@y)%
+               \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
+               -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
+            }%
+         \fi%
+      \else%
+         \PackageError{yquant.sty}{Invalid control line type `#1'}%
+                      {yquant encountered an internal error.}%
       \fi%
       \yquant@circuit@extendcontrolline@store{#2}%
-   \or%
-      % cbit
-      \pgfpointanchor{yquantbox}{center}%
-      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
-            \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
-            \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
-         }%
-      \fi%
-      \yquant@circuit@extendcontrolline@store{#2}%
-   \or%
-      % quantum-bundle (very unusual, but perhaps for transversal operations?)
-      \pgfpointanchor{yquantbox}{center}%
-      \unless\ifx\yquant@circuit@extendcontrolline@prev\relax%
-         \eappto\yquant@circuit@extendcontrolline@cmd{%
-            \expandafter\@firstofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(\the\dimexpr#2-2\@tempdima\relax,\the\yquant@pgf@y)%
-            \expandafter\@secondofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(\the\dimexpr#2\relax,\the\yquant@pgf@y)%
-            \expandafter\@thirdofthree\yquant@circuit@extendcontrolline@prev%
-            -- \yquant@coords(\the\dimexpr#2+2\@tempdima\relax,\the\yquant@pgf@y)%
-         }%
-      \fi%
-      \yquant@circuit@extendcontrolline@store{#2}%
-   \else%
-      \PackageError{yquant.sty}{Invalid control line type `#1'}%
-                   {yquant encountered an internal error.}%
    \fi%
 }
 
