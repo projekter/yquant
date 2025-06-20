@@ -11,6 +11,15 @@
       \ifdim\yquant@orientation@plus\wirexpos>0pt % may be negative for init gates
          \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
+         \ifdefined\yquant@config@corner@at%
+            \ifinlist{#1}\yquant@config@corner@at{%
+               \ifnum\yquant@register@type@c>\yquant@draw@@currentcontroltype%
+                  \dimdef\wirexpos{\wirexpos\yquant@config@corner@xamount}%
+               \else%
+                  \dimdef\wirexpos{\wirexpos+5\dimexpr\yquant@config@corner@xamount\relax}%
+               \fi%
+            }\relax%
+         \fi%
          \ifnum\wiretype=\yquant@register@type@none%
             % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
             \yquant@register@set@lastwire{#1}{%
@@ -97,11 +106,15 @@
 
 % BEGIN_FOLD Drawing control lines
 % populates a drawing macro with the current control line with style #1 at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendcontrolline@cmd must be \let to \empty and \yquant@circuit@extendcontrolline@prev to \relax.
-\protected\def\yquant@circuit@extendcontrolline#1#2{%
+\protected\def\yquant@circuit@extendcontrolline#1#2#3{%
    \ifyquant@config@draw@quality%
       \eappto\yquant@circuit@extendcontrolline@clip{%
          \unexpanded\expandafter{\pgfshapeclippathvertresult}%
       }%
+   \fi%
+   \ifdefined\yquant@config@corner@at%
+      \let\yquant@circuit@extendcontrolline@cmd@old=\yquant@circuit@extendcontrolline@cmd%
+      \let\yquant@circuit@extendcontrolline@prev@old=\yquant@circuit@extendcontrolline@prev%
    \fi%
    \unless\ifnum#1=0 %
       \begingroup%
@@ -110,6 +123,7 @@
       \endgroup%
       \expandafter\@tempdima\the\pgflinewidth%
       \pgfpointanchor{yquantbox}{center}%
+      \advance \yquant@pgf@y by #3\relax%
       \ifcase#1 %
          % no control (or to a discarded target, which we don't do)
       \or%
@@ -156,6 +170,62 @@
       {\yquant@coords(\the\dimexpr#1\relax,\the\yquant@pgf@y)}%
       {\yquant@coords(\the\dimexpr#1+2\@tempdima\relax,\the\yquant@pgf@y)}%
    }%
+}
+
+\def\yquant@circuit@extendcontrolline@corner@hackprev#1#2#3{%
+   {\yquant@circuit@extendcontrolline@corner@hackprev@coord#1}%
+   {\yquant@circuit@extendcontrolline@corner@hackprev@coord#2}%
+   {\yquant@circuit@extendcontrolline@corner@hackprev@coord#3}%
+}
+
+\def\yquant@circuit@extendcontrolline@corner@hackprev@coord(#1,#2){%
+   \ifyquanthorz{%
+      (#1,\the\dimexpr#2+1.5\pgflinewidth\relax)%
+   }{%
+      (\the\dimexpr#1-1.5\pgflinewidth\relax,#2)%
+   }%
+}
+
+\protected\def\yquant@circuit@extendcontrolline@corner#1{%
+   \ifyquant@OR
+      \ifnum\yquant@config@corner@min=#1 \fi%
+      \ifnum\yquant@config@corner@max=#1 \fi{%
+      \ifnum\yquant@register@type@q<\yquant@register@get@type{#1} %
+         % the topmost/bottom-most register is a non-qubit target
+         \begingroup%
+            \edef\wiretype{\yquant@register@get@type{#1}}%
+            \edef\wirestyle{\noexpand\tikzset{%
+               /yquant/this wire/.style={%
+                  /yquant/every wire,%
+                  /yquant/every \yquant@register@type@tostring\wiretype\space wire,%
+                     \yquant@register@get@style{#1}%
+               }, /yquant/this wire%
+            }}%
+            \wirestyle%
+            \ifnum\yquant@config@corner@min=#1 %
+               % no line draw command was stored yet, only the previous position; modify it
+               \edef\extend{%
+                  \endgroup%
+                  \edef\noexpand\yquant@circuit@extendcontrolline@prev{%
+                     \expandafter\yquant@circuit@extendcontrolline@corner@hackprev%
+                        \yquant@circuit@extendcontrolline@prev%
+                  }%
+               }%
+            \else%
+               % the line draw command was already stored; revert to the previous state and re-compute the value
+               \edef\extend{%
+                  \endgroup%
+                  \unexpanded{%
+                     \let\pgfshapeclippathvertresult=\noexpand\empty%
+                     \let\yquant@circuit@extendcontrolline@prev=\yquant@circuit@extendcontrolline@prev@old%
+                     \let\yquant@circuit@extendcontrolline@cmd=\yquant@circuit@extendcontrolline@cmd@old%
+                  }%
+                  \yquant@circuit@extendcontrolline{\the\yquant@draw@@currentcontroltype}{\yquant@draw@@x}{\the\dimexpr\yquant@orientation@minus1.5\pgflinewidth\relax}%
+               }%
+            \fi%
+         \extend%
+      \fi%
+   }\relax%
 }
 
 % populates a drawing macro with the multi operation connector at position #2. Assumes a node called yquantbox is set up, and the \pgfshapeclippathvertresult was set up appropriately for this node. At the first call, \yquant@circuit@extendmultiline@cmd must be \let to \empty and \yquant@circuit@extendmultiline@prev to \relax.
@@ -285,6 +355,32 @@
    \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
       \yquant@circuit@flushwire{#1}%
       \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+   \fi%
+}
+
+\def\yquant@circuit@settype@beforenobit#1{%
+   % same, but possibly extend control line according to the style before the change
+   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+      \ifyquant@OR%
+         \ifnum\yquant@circuit@operator@minctrl=#1 \fi%
+         \ifnum\yquant@circuit@operator@maxctrl=#1 \fi{%
+         \yquant@circuit@extendcontrolline@corner{#1}%
+      }\empty%
+      \yquant@circuit@flushwire{#1}%
+      \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+   \fi%
+}
+
+\def\yquant@circuit@settype@afternobit#1{%
+   % same, but possibly extend control line according to the style before the change
+   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+      \yquant@circuit@flushwire{#1}%
+      \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
+      \ifyquant@OR%
+         \ifnum\yquant@circuit@operator@minctrl=#1 \fi%
+         \ifnum\yquant@circuit@operator@maxctrl=#1 \fi{%
+         \yquant@circuit@extendcontrolline@corner{#1}%
+      }\empty%
    \fi%
 }
 

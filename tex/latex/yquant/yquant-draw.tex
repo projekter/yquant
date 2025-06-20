@@ -212,7 +212,7 @@
    \cmd%
    \yquant@circuit@extendwire{#1}{center}%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
    % check for empty name parameter
    \ifstrempty{#2}\relax{%
       \pgfnodealias{\tikz@pp@name{#2}}{yquantbox}%
@@ -265,7 +265,7 @@
    }%
    \yquant@circuit@extendmultiline\yquant@draw@@x%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
    \unless\ifx\yquant@draw@multi@@name\empty%
       \ifnum\yquant@draw@@idx@multipart=0 %
          \pgfnodealias{\tikz@pp@name{\yquant@draw@multi@@name}}{yquantbox}%
@@ -761,7 +761,7 @@
       \yquant@circuit@extendwire{#1}*%
    \fi%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
    % check for empty name parameter
    \ifstrempty{#3}\relax{%
       \pgfnodealias{\tikz@pp@name{#3}}{yquantbox}%
@@ -816,7 +816,7 @@
       }%
    \fi%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
    \ifstrempty{#6}\relax{%
       \pgfnodealias{\tikz@pp@name{#6}}{yquantbox}%
    }%
@@ -839,7 +839,7 @@
    \yquant@circuit@extendwire{#2}{center}%
    \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
    % check for empty name parameter
    \ifstrempty{#3}\relax{%
       \pgfnodealias{\tikz@pp@name{#3}}{yquantbox}%

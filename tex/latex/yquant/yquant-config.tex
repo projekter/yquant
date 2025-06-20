@@ -487,7 +487,19 @@
    internal/before styles/.style={%
       /tikz/only at/.code=\yquant@config@only@multi{}##1\yquant@sep,
       /tikz/not at/.code=\yquant@config@only@multi\unless##1\yquant@sep
-   },
+   },%
+   internal/corner/.code n args={4}{%
+      \def\yquant@config@corner@at{#2}%
+      \def\yquant@config@corner@min{#3}%
+      \def\yquant@config@corner@max{#4}%
+      \begingroup%
+         \tikzset{/yquant/every control line}%
+         \edef\tmp{%
+            \endgroup%
+            \def\noexpand\yquant@config@corner@xamount{#1\the\dimexpr.5\pgflinewidth\relax}%
+         }%
+         \tmp%
+   }
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%

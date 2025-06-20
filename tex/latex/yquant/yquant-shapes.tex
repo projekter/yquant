@@ -1150,3 +1150,12 @@
    }%
    % END_FOLD
 }
+
+\pgfdeclareshape{yquant-nothing}{%
+   % this is an empty shape
+   % BEGIN_FOLD Operator anchors
+   \foreach \anc in {center, text, north, north east, east, south east, south, south west, west, north west, border} {%
+      \global\cslet{pgf@anchor@yquant-nothing@\anc}\pgfpointorigin%
+   }%
+   % END_FOLD
+}

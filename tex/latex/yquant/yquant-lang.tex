@@ -765,20 +765,29 @@
    }
 \yquant@langhelper@setup@attrs{hspace}{value}{}
 
-\yquant@langhelper@declare@command@uncontrolled%
+\yquant@langhelper@declare@command%
    {discard}%
    {}%
    {%
       \let\yquant@circuit@settype@to=\yquant@register@type@none%
-      \yquant@circuit@actonwires%
-         \yquant@circuit@settype@prepare%
-         \yquant@circuit@settype%
-         \yquant@circuit@operator@targets%
-         {}%
+      \ifyquant@circuit@operator@hasControls%
+         \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@plus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
+         \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
+         \let\yquant@prepare@callback@draw=\yquant@circuit@settype@beforenobit%
+         \yquant@prepare%
+            {}%
+            {shape=yquant-nothing}%
+      \else%
+         \yquant@circuit@actonwires%
+            \yquant@circuit@settype@prepare%
+            \yquant@circuit@settype%
+            \yquant@circuit@operator@targets%
+            {}%
+      \fi%
    }
 \yquant@langhelper@setup@attrs{discard}{}{}
 
-\yquant@langhelper@declare@command@uncontrolled%
+\yquant@langhelper@declare@command%
    {init}%
    {%
       \yquant@register@get@allowmultitrue%
@@ -801,8 +810,14 @@
             \yquant@register@type@tostring\yquant@circuit@settype@to%
          }%
       \fi%
+      \unless\ifdefined\yquant@lang@attr@value%
+         \let\yquant@lang@attr@value=\empty%
+      \fi%
+      \ifyquant@circuit@operator@hasControls%
+         \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@minus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
+      \fi%
       \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
-      \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
+      \let\yquant@prepare@callback@draw=\yquant@circuit@settype@afternobit%
       \let\yquant@prepare@multi=\yquant@prepare@multiinit%
       \ifnum\count8=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
          \def\yquant@config@operator@minimum@width{0pt}%
@@ -822,7 +837,7 @@
       \fi%
       \cmd%
    }
-\yquant@langhelper@setup@attrs{init}{value}{type}
+\yquant@langhelper@setup@attrs{init}{}{type,value}
 
 \protected\def\yquant@lang@@init@loop#1{%
    \ifyquant@firsttoken\yquant@register@multi{#1}{%
