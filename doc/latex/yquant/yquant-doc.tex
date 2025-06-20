@@ -218,7 +218,9 @@
 +endgroup
 \def\sanitize@link#1{yquant:\expandafter\sanitize@link@i\detokenize{#1}\sanitize@link@end}
 \def\sanitize@link@i#1#2\sanitize@link@end{%
-   \unless\ifx#1\sanitize@link@backslash%
+   \ifx#1\sanitize@link@backslash%
+      MACRO%
+   \else%
       #1%
    \fi%
    #2%
@@ -226,9 +228,14 @@
 \protected\def\link#1{\@ifnextchar[{\link@i{#1}}{\link@default{#1}}}
 \def\link@default#1#2{\link@i{#1}[{#2}]{#2}}
 \def\link@i#1[#2]#3{\expandafter\hyperref\expandafter[\sanitize@link{#2}]{#1{#3}}}
-\protected\def\linkdef#1{\phantomsection\expandafter\label\expandafter{\sanitize@link{#1}}}
+\protected\def\linkdef#1{%
+   \phantomsection\expandafter\label\expandafter{\sanitize@link{#1}}%
+   \ignorespaces%
+}
 \def\ttlink{\link\texttt}
 \def\texlink{\link\tex}
+\def\textlink{\link\@firstofone}
+\def\yquantlink{\link\yquant}
 \def\Yquant{\pkg{yquant}}
 \def\ii{{\symup i}}
 \def\ee{{\symup e}}
@@ -338,7 +345,7 @@
           and version~1.3c or later is part of all distributions of LaTeX version 2005/12/01 or later.
 
    \section{Basic elements of \Yquant}\label{sec:grammar}
-      \Yquant, as some of the aforementioned packages, builds on \TikZ.
+      \linkdef{yquant}\Yquant, as some of the aforementioned packages, builds on \TikZ.
       Its basic syntax is similar to \pkg{pgfplots}: Start a \tex!tikzpicture! environment (perhaps passing some options); inside, start a \tex!yquant! environment.
 
       Inside the \tex!yquant! environment, \TeX{} will now understand the \Yquant{} language---so \Yquant{} falls into the same category as \pkg{qasm} and \pkg{qpic}, providing a human\hyp readable language for the specification of the circuit that is not fixed to the actual layout.
@@ -370,7 +377,7 @@
             In this case, you can either declare the frame as fragile or (recommended) introduce a blank line between the environment and the options for the first gate.
          \end{warning}
 
-         \begin{warning}[\compat{New in 0.4}Compatibility mode]
+         \begin{warning}[\compat{New in 0.4}\linkdef{compat}Compatibility mode]
             Sometimes, continued development shows that certain choices of interfaces, configuration, or behavior are less ideal than originally thought.
             In other cases, bugs are detected and fixed.
             Both may lead to a change in the look of circuits developed with a previous version of \Yquant{} or even---though this should rarely, if ever, happen, and should be filed as a bug---prevent compilation in the new version.
@@ -387,17 +394,17 @@
             When starting a new document, it is recommended to leave out the compatibility key at first compilation.
             \Yquant{} will then issue a warning from which you can infer the recommended setting, corresponding to the current version.
             You should then pass the appropriate version to the \tex!\usepackage! command.
-            For example, this manual corresponds to \tex!\usepackage[compat=0.6]{yquant}!.
+            For example, this manual corresponds to \tex!\usepackage[compat=0.8]{yquant}!.
 
-            Allowed values for \texttt{compat} are \texttt{newest} (discouraged), which equals \texttt{0.6}, \texttt{0.4}, and \texttt{0.3} (default).
+            Allowed values for \texttt{compat} are \texttt{newest} (discouraged), which equals \texttt{0.8}, \texttt{0.6}, \texttt{0.4}, and \texttt{0.3} (default).
          \end{warning}
 
       \subsection{Starred vs. unstarred environment}
-         You may choose to use either the \tex!yquant! or the \tex!yquant*! environment.
+         \linkdef{yquant*}You may choose to use either the \texlink{yquant} or the \tex!yquant*! environment.
          The former one requires you to define all your registers before you use them (though you may decide to define a register after some operations on \emph{different} registers, but before its first usage).
 
          The starred form additionally supports the use of undeclared registers: it basically declares a registers upon its first usage.
-         This will always be a \texttt{qubit} register; but if you use the corresponding attribute and the first usage is an \ttlink{init} command, you may overwrite this.
+         This will always be a \ttlink{qubit} register; but if you use the corresponding attribute and the first usage is an \ttlink{init} command, you may overwrite this.
 
          \compat{New in 0.2}Subcircuits always use the unstarred form.
 
@@ -449,7 +456,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{BVerbatim}[commandchars=\\\{\}]
 \PYG{n+ni}{?pgfkeys?}
          \end{BVerbatim}
-         \space to describe any valid content passed to the \tex!\pgfkeys! macro (rather, \tex!\yquantset! is invoked with some subtleties); and by
+         \space to describe any valid content passed to the \tex!\pgfkeys! macro (rather, \texlink{\yquantset} is invoked with some subtleties); and by
          \begin{BVerbatim}[commandchars=\\\{\}]
 \PYG{n+ni}{?name?}
          \end{BVerbatim}
@@ -481,16 +488,16 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item \ttlink{nobit} is the most obscure type, corresponding to a non\hyp existing wire.
                Mostly, this register type arises by using the \ttlink{discard} command.
                However, it can also be directly declared, which on rare occasions might be necessary (its type can then be changed by means of an \ttlink{init} or \ttlink{setwire} pseudo\hyp gate).
-               If you want to declare a register only at a certain horizontal position in the circuit, consider using the \texttt{after} argument instead.
+               If you want to declare a register only at a certain horizontal position in the circuit, consider using the \ttlink{[after]} argument instead.
          \end{enumerate}
 
-         Registers must be declared before they can be used (though in the yquant* environment, this declaration may be implicit, creating a \ttlink{qubit} register).
+         Registers must be declared before they can be used (though in the \texlink{yquant*} environment, this declaration may be implicit, creating a \ttlink{qubit} register).
 
          Registers can have a vector character, i.e., not only a \emph{name}, but also an \emph{index} (or, in the declaration, a \emph{length}).
          The index (zero\hyp based) or length is specified in square brackets following the name, which closely mimics the OpenQASM language.
 
          \compat{New in 0.1.1}Vector registers may be non\hyp contiguous: Whenever you create a bunch of registers, it is put at the bottom of the circuit.
-         If you later on again create registers of the same name---either implicitly in the \tex!yquant*! environment, or explicitly by preceding the length of the vectors entries to be added by a plus, as in \yquant!qubit a[+3];!---they will be put to what is \emph{now} the bottom of the circuit, even if some other registers are interspersed.
+         If you later on again create registers of the same name---either implicitly in the \texlink{yquant*} environment, or explicitly by preceding the length of the vectors entries to be added by a plus, as in \yquant!qubit a[+3];!---they will be put to what is \emph{now} the bottom of the circuit, even if some other registers are interspersed.
 
          Registers are referenced---i.e., used in operations---by their name and index.
          If the latter is omitted, all indices of the register are targeted.
@@ -567,7 +574,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Note that commands may have required arguments.
          If a required argument is missing, an error will be issued.
 
-         The \texttt{value} attribute can alternatively be given inside curly brackets after the command name and before the register specification.
+         \linkdef{value}The \texttt{value} attribute can alternatively be given inside curly brackets after the command name and before the register specification.
          This has the advantage that special characters such as a closing square bracket need not be escaped.
          If both alternatives are present, the value inside curly brackets takes precedence and a warning is issued.
 
@@ -582,7 +589,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Preceded by a tilde (``\yquant!~!''), the list of negative controls then follows; this mimics the syntax of many programming languages that denote logical negation by a tilde.
          If there are no negative controls, the list may be empty or, together with the tilde, omitted.
 
-      \subsection[Importing circuit from files]{\compat{New in 0.2}Importing circuits from files}\label{sec:import}
+      \subsection[Importing circuit from files]{\compat{New in 0.2}Importing circuits from files}\label{sec:import}\linkdef\yquantimport
          \Yquant{} provides a simple way to import circuits that are stored in external files.
          The macro \tex!\yquantimport! can be used in three different contexts:
          \begin{itemize}
@@ -602,10 +609,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item Inside both a \TikZ{} picture environment and a \Yquant{} environment. \\
                The file will be inserted directly into the environment.
                \Yquant's parser is automatically restarted after this.
-               The content will always be put in a \TeX{} group; if additional options are provided, \Yquant{} also inserts a \TikZ{} \tex!scope! and executes \tex!\yquantset{<options>}! directly after the scope.
+               The content will always be put in a \TeX{} group; if additional options are provided, \Yquant{} also inserts a \TikZ{} \tex!scope! and executes \texlink[\yquantset]{\yquantset{<options>}} directly after the scope.
                If \tex!\yquantimport! is used, the content will be read as if the containing environment was an unstarred one; if \tex!\yquantimport*! is used, the content will be read as if the containing environment was a starred one.
          \end{itemize}
          Note that \Yquant{} internally uses plain \TeX's \tex!\import! command (i.e., \tex!\@@import! in \LaTeX).
+         \linkdef\yquantimportpath
          However, when the \pkg{import} package is loaded, it uses \\ \tex!\subimport{\yquantimportpath}{<filename>}!, where \tex!\yquantimportpath! defaults to \texttt{./}---so by changing this, files from other folders may be imported which by themselves again include other files, and the relative path resolution will work.
 
          Note that you may in particular import the content of a \ttlink{subcircuit}.
@@ -615,51 +623,58 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             All gate declarations are always global.
          \end{warning}
 
-         \compat{Changed in 0.8\\New in 0.2.1}If you want to define a gate that corresponds to a single \ttlink{box} gate with a certain pre\hyp defined content, you may use the macro\\
-         \tex!\yquantdefinebox[<attributes>]{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \tex!\yquantdefinegate! introduced below.
-         It only allows for single\hyp register usage; use \compat{New in 0.4}\tex!\yquantdefinemultibox! with the same arguments if you want to allow the gate to be used in a multi\hyp register gate fashion.
+         \compat{Changed in 0.8\\New in 0.2.1}\linkdef\yquantdefinebox
+         If you want to define a gate that corresponds to a single \ttlink{box} gate with a certain pre\hyp defined content, you may use the macro\\
+         \tex!\yquantdefinebox[<attributes>]{<name>}[<style>]{<content>}!, which is far more efficient than the much more general \texlink{\yquantdefinegate} introduced below.
+         It only allows for single\hyp register usage; use \compat{New in 0.4}\linkdef\yquantdefinemultibox\tex!\yquantdefinemultibox! with the same arguments if you want to allow the gate to be used in a multi\hyp register gate fashion.
          The macros work in the following way:
          \begin{itemize}
             \item They create a new gate with name \texttt{<name>} that can be accessed as all the other build\hyp in gates.
                Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
                Special characters are allowed if \TeX{} can cope with them (i.e., no comment signs, no unbalanced braces, no backslashes...).
-            \item They create a style \ttlink{/yquant/operators/every <name>} and assign the optional \texttt{<style>} to it.
+            \item They create a style \texttt{/yquant/operators/every <name>} and assign the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \ttlink{/yquant/operators/every rectangular box}\compat{Changed in 0.6}.
                If a \ttlink{compat} version before \texttt{0.6} is chosen, \ttlink{/yquant/operators/every box} will instead be the ancestor.
             \item \compat{New in 0.8}They define attributes for the gate as specified in \texttt{<attributes>}, where \texttt{<attributes>} is one of the following:
                \begin{itemize}
-                  \item \tex!required attrs={<list of attributes>}!
-                  \item \tex!optional attrs={<list of attributes>}!
+                  \item \linkdef{required attrs}\tex!required attrs={<list of attributes>}!
+                  \item \linkdef{optional attrs}\tex!optional attrs={<list of attributes>}!
                \end{itemize}
                or both, comma separated.
                The \texttt{<list of attributes>} is a comma\hyp separated list of attribute names that are known to \Yquant.
+               \linkdef\yquantdeclareattr
                You may declare custom attributes using \tex!\yquantdeclareattr!; note that an attribute is just a \pkg{pgfkeys} style.
                Hence, if you want to define an attribute \texttt{myattr} that stores a value in the macro \tex!\myattr!, you may say\\\tex!\yquantdeclareattr{myattr/.store in=\myattr}!.
             \item They define \texttt{<content>} to be the value that is written into the box.
                You may need to prefix fragile macros by \tex!\protect!.
-               \compat{Changed in 0.8}By default, the \texttt{<content>} is not expanded; use \tex!\yquantedefinebox! to expand it in a protected manner.
+               \compat{Changed in 0.8}\linkdef\yquantedefinebox
+               By default, the \texttt{<content>} is not expanded; use \tex!\yquantedefinebox! to expand it in a protected manner.
                In this case only, if you stored some content in a macro by means of an attribute definition, you should prefix the macro by \tex!\noexpand!; hence, in the previous example, you'd write \tex!\noexpand\myattr! whenever you want to print the content of \tex!\myattr!.
 
-               \compat{New in 0.8}Note that if you want to use the \texttt{value} attribute which holds whatever is passed to the gate in curly brackets, a more convenient way exists.
-               You do not have to specify \texttt{value} manually in \texttt{required attrs}, and you don't have to use a special macro to access its value; instead, you can simply say \tex!#1! in the \texttt{<content>}.
-               If this \TeX{} parameter slot is found, \texttt{value} will automatically be made into a required attribute, and \tex!#1! will be replaced by the actual value.
+               \compat{New in 0.8}Note that if you want to use the \ttlink{value} attribute which holds whatever is passed to the gate in curly brackets, a more convenient way exists.
+               You do not have to specify \ttlink{value} manually in \texttt{required attrs}, and you don't have to use a special macro to access its value; instead, you can simply say \tex!#1! in the \texttt{<content>}.
+               If this \TeX{} parameter slot is found, \ttlink{value} will automatically be made into a required attribute, and \tex!#1! will be replaced by the actual value.
 
-               Note that before version~0.8, the behavior of \tex!\yquantdefinebox! was to expand during definition; the old behavior is restored with a \texttt{compat} version smaller than~0.8.
+               Note that before version~0.8, the behavior of \tex!\yquantdefinebox! was to expand during definition; the old behavior is restored with a \ttlink{compat} version smaller than~0.8.
          \end{itemize}
 
-         \compat{Changed in 0.8\\New in 0.2}Sometimes, you may wish to define gates that are more than just a single box---perhaps a succession of multiple gates or even multi\hyp register gates with individual operations on the input registers.
+         \compat{Changed in 0.8\\New in 0.2}\linkdef\yquantdefinegate
+         Sometimes, you may wish to define gates that are more than just a single box---perhaps a succession of multiple gates or even multi\hyp register gates with individual operations on the input registers.
          \Yquant{} provides a simple macro that allows this; \tex!\yquantdefinegate[<attributes>]{<name>}[<style>]{<content>}! works in the following way:
          \begin{itemize}
             \item It creates a new gate with name \texttt{<name>} that can be accessed as all the other built\hyp in gates.
                Note that \texttt{<name>} is case\hyp insensitive and may not contain spaces.
                Special characters are allowed if \TeX{} can cope with them (i.e., no comment signs, no unbalanced braces, no backslashes...).
-            \item It creates a style \ttlink{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
+            \item It creates a style \texttt{/yquant/operators/every <name>} and assigns the optional \texttt{<style>} to it.
                If no style is provided, the default style will inherit from \ttlink{/yquant/operators/every custom gate}.
                This will make the gate ``seamless,'' i.e., avoid highlighting the fact that this is a custom gate.
             \item It assigns attributes according to \texttt{<attributes>} to the gate as before.
-            \item It defines a macro that contains \texttt{<content>} (unexpanded; to expand it in a protected manner, use \tex!\yquantedefinegate!) and that will be inserted as a subcircuit whenever this gate is invoked.
-               All that was said for \tex!\yquantdefinebox! still holds; however, note one intricacy with attributes: they are assigned when the gate is used.
-               The attributes defined by \Yquant, except for \texttt{value} (which is available through \tex!#1!), are applied only to the gate \emph{as a whole}, but they are reset before the content is inserted as a subcircuit.
+            \item It defines a macro that contains \texttt{<content>} and that will be inserted as a subcircuit whenever this gate is invoked.
+               You may need to prefix fragile macros by \tex!\protect!.
+               \compat{Changed in 0.8}\linkdef\yquantedefinegate
+               By default, the \texttt{<content>} is not expanded; use \tex!\yquantedefinegate! to expand it in a protected manner.
+               All that was said for \texlink{\yquantdefinebox} still holds; however, note one intricacy with attributes: they are assigned when the gate is used.
+               The attributes defined by \Yquant, except for \ttlink{value} (which is available through \tex!#1!), are applied only to the gate \emph{as a whole}, but they are reset before the content is inserted as a subcircuit.
                This makes sure that the attributes are not applied to each gate within the custom gate individually, but only to the box.
                However, \Yquant{} will not reset custom attributes (which is basically impossible, as it does not know which effect such an attribute has).
                Therefore, a custom attribute will keep its value while the custom gate is applied and may affect gates inside---which could be intended or not.
@@ -668,7 +683,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          When the gate is later drawn, the styles are invoked in the following order---remember custom gates are implemented by means of subcircuits---:
          \begin{enumerate}
             \item \ttlink{/yquant/every operator}
-            \item \ttlink{/yquant/operators/every <name>}
+            \item \texttt{/yquant/operators/every <name>}
             \item \ttlink{/yquant/operators/every subcircuit box}
             \item \ttlink{/yquant/this operator}
             \item \ttlink{/yquant/operators/this subcircuit box}
@@ -677,7 +692,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          They do not accept custom arguments, and it is not possible to declare own, custom shapes in this way (though other predefined shapes may be used).
          If they are used in a multi\hyp qubit manner, they will never be split into contiguous slices (but their content will be, so if you use the default style that turns off the box, the only way to notice this is that intermediate unaffected registers will not be allowed to have gates visually within the rectangle that would bound the custom gate).
 
-         \begin{warning}[Redefining existing gates]
+         \begin{warning}[Redefining existing gates\linkdef\yquantredefinebox\linkdef\yquantredefinemultibox\linkdef\yquantredefinegate\linkdef\yquantredefinemultigate\linkdef\yquanteredefinebox\linkdef\yquanteredefinemultibox\linkdef\yquanteredefinegate\linkdef\yquanteredefinemultigate]
             The above macros will issue an error if the gate already exists.
             You can use \tex!\yquantredefinebox!, \tex!\yquantredefinemultibox! (use the appropriate command for the \emph{new} definition), or \tex!\yquantredefinegate!, or their expanded counterparts to overwrite existing gate definitions.
             Note that this will overwrite \emph{any} gate, even the built\hyp in ones.
@@ -732,7 +747,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
             Note that in vertical mode, the default of this setting is \tex!2.5mm!.
 
-            Note that this key is affected by the \texttt{compat} setting.
+            Note that this key is affected by the \ttlink{compat} setting.
             Before version \texttt{0.4}, there was no \ttlink{/yquant/register/minimum depth} key.
             In this compatibility setting, passing the value $x$ to this key will set both height and depth to $\frac x2$.
             The default for $x$ is then \texttt{3mm}.
@@ -745,7 +760,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
             Note that in vertical mode, the default of this setting is \tex!2.5mm!.
 
-            Note that this key is affected by the \texttt{compat} setting.
+            Note that this key is affected by the \ttlink{compat} setting.
             Before version \texttt{0.4}, this key will not be available.
          \end{option}
 
@@ -814,24 +829,24 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The printed name that is used by default if a new register is created explicitly (\ttlink{qubit}, \ttlink{cbit}, \ttlink{qubits}; not used for \ttlink{nobit} or for implicit declarations) and no value is specified.
             The following macros are available:
             \begin{itemize}
-               \item \tex!\reg! contains your name to identify this register.
-               \item \tex!\idx! contains the index (zero\hyp based) of the current register within a vector register.
+               \item \linkdef\reg\tex!\reg! contains your name to identify this register.
+               \item \linkdef\idx\tex!\idx! contains the index (zero\hyp based) of the current register within a vector register.
                   \compat{Changed in 0.8}Note that before version~0.8, this was not strictly true; \tex!\idx! contained the index within the \emph{currently added} registers.
                   Most often, this is the same; however, if you were adding, say, the second part of a discontinuous register (or you were using the \langlink{groups} library), then the indices would have started with zero again.
-                  Starting from \texttt{compat} version~0.8, \tex!\idx! will always contain the index of the complete vector register.
-               \item \tex!\regidx! expands to \tex!\reg! if the register is of length one, and to \tex!\reg[\idx]! else.
+                  Starting from \ttlink{compat} version~0.8, \tex!\idx! will always contain the index of the complete vector register.
+               \item \linkdef\regidx\tex!\regidx! expands to \tex!\reg! if the register is of length one, and to \tex!\reg[\idx]! else.
                   \compat{Changed in 0.8}Note that before version~0.8, this decision was made during the creation; therefore, if you first created a register of length one which you later added some further registers to, the first label would have expanded \tex!\regidx! to \tex!\reg!.
-                  Starting from \texttt{compat} version~0.8, this decision is deferred until the drawing stage, when the actual length is known.
+                  Starting from \ttlink{compat} version~0.8, this decision is deferred until the drawing stage, when the actual length is known.
                   As a consequence, to measure the vertical extent of the label consistently, \tex!\regidx! will always be at least as high as the opening square bracket.
                   This can make registers with no or only very small gates larger than before; therefore, this setting is compatibility\hyp protected.
-               \item \tex!\len! contains the length of the current register vector.
+               \item \linkdef\len\tex!\len! contains the length of the current register vector.
                   Note that \emph{current} means \emph{at the stage of creation}.
                   As this was always documented in this way (while the behavior of the other macros did not match their documentation), the behavior is the same in all versions.
             \end{itemize}
          \end{option}
 
          \begin{option}[New in 0.6]{register/default lazy name}!!
-            The printed name that is used by default if a new register is created implicitly (i.e., without using any of \ttlink{qubit}, \ttlink{cbit}, \ttlink{qubits}, or \ttlink{nobit}, but inside a \texttt{yquant*} environment by just using the register).
+            The printed name that is used by default if a new register is created implicitly (i.e., without using any of \ttlink{qubit}, \ttlink{cbit}, \ttlink{qubits}, or \ttlink{nobit}, but inside a \texlink{yquant*} environment by just using the register).
             The same macros as with \ttlink{/yquant/register/default name} are available.
             Note that this default setting is not used when the register is created via an \ttlink{init} gate---its value always overwrites the default.
          \end{option}
@@ -839,10 +854,10 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[Changed in 0.7, 0.4]{every label}!shape=yquant-init, anchor=center, align/.expanded=\ifyquanthorz{right}{center}, outer timesep=2pt, /yquant/operator/if multi={draw, decoration={gapped brace, raise=2pt, \ifyquanthorz{mirror}{}}, decorate}!
             This style is installed for every single register name label (i.e., upon creation and when used with the \ttlink{init} gate).
             The default style allows to use line breaks in the labels.
-            The node shape, \texttt{yquant-init}, will generate a path at its right side (in vertical mode: at its bottom side), which is replaced by the \texttt{gapped brace} decoration if the gate is used in a multi\hyp register fashion.
+            \linkdef{yquant-init}\linkdef{gapped brace}The node shape, \texttt{yquant-init}, will generate a path at its right side (in vertical mode: at its bottom side), which is replaced by the \texttt{gapped brace} decoration if the gate is used in a multi\hyp register fashion.
             The decoration is similar to \TikZ's \texttt{brace} decoration, but additionally allows specify the regions in which a line should be drawn by using the \texttt{/tikz/decoration/from to} key, which expects a comma\hyp separated list of dimension ranges, and which is automatically populated by \Yquant.
 
-            Note that if the \texttt{compat} key is below \texttt{0.3}, the multi options are instead read from \ttlink{/yquant/every multi label}.
+            Note that if the \ttlink{compat} key is below \texttt{0.3}, the multi options are instead read from \ttlink{/yquant/every multi label}.
          \end{option}
 
          \begin{option}[Changed in 0.7]{every initial label}!anchor/.expanded=\ifyquanthorz{east}{south}, /yquant/internal/autorotate init!
@@ -867,14 +882,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[Removed in 0.4\\Changed in 0.1.2]{every multi label}!draw, decoration={gapped brace, mirror, raise=2pt}, decorate!
             This style is installed for every register name label that is attached to a multi\hyp qubit register by means of the \ttlink{init} gate.
 
-            Note that this key is only available if the \texttt{compat} setting is smaller than \texttt{0.4}.
+            Note that this key is only available if the \ttlink{compat} setting is smaller than \texttt{0.4}.
             In newer versions, this is incorporated in \ttlink{/yquant/every label}.
          \end{option}
 
          \begin{option}[Removed in 0.4\\New in 0.2]{every input label}!!
             This style is installed for every register name label in a \ttlink{subcircuit} when the register is an input (or input and output) register.
 
-            Note that this key is only available if the \texttt{compat} setting is smaller than \texttt{0.4}; and in this case, it behaves inconsistently, as it is only applied for labels directly specified during creation, but not for initial \ttlink{init} gates.
+            Note that this key is only available if the \ttlink{compat} setting is smaller than \texttt{0.4}; and in this case, it behaves inconsistently, as it is only applied for labels directly specified during creation, but not for initial \ttlink{init} gates.
          \end{option}
 
       \subsection{Register outputs}\unskipOpt
@@ -882,7 +897,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This style is installed for every \ttlink{output} label at the end of the circuit.
             The default style allows to use line breaks in the labels.
 
-            The node shape, \texttt{yquant-output}, will generate a path at its left side (in vertical mode: at its top side), which is replaced by the \texttt{gapped brace} decoration in the case of multi\hyp register usage.
+            \linkdef{yquant-output}The node shape, \texttt{yquant-output}, will generate a path at its left side (in vertical mode: at its top side), which is replaced by the \ttlink{gapped brace} decoration in the case of multi\hyp register usage.
             See \ttlink{/yquant/every label} for a more detailed explanation.
 
             \compat{New in 0.7}The automatic rotation will be set up by using the \ttlink{/yquant/vertical} style with an argument; by default, it is empty.
@@ -903,13 +918,13 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[Removed in 0.4\\Changed in 0.1.2]{every multi output}!draw, decoration={gapped brace, raise=2pt}, decorate!
             This style is installed for every \ttlink{output} label that is attached to a multi\hyp qubit register.
 
-            Note that this key is only available if the \texttt{compat} setting is smaller than \texttt{0.4}.
+            Note that this key is only available if the \ttlink{compat} setting is smaller than \texttt{0.4}.
             In newer versions, this is incorporated into \ttlink{/yquant/every output}.
          \end{option}
 
       \subsection{General styling}\unskipOpt
          \begin{option}[Changed in 0.4, 0.1.2]{every circuit}!every node/.prefix style={transform shape}!
-            Style that is installed for every \tex!yquant! and \tex!yquant*! environment, as if it had been given as an option.
+            Style that is installed for every \texlink{yquant} and \texlink{yquant*} environment, as if it had been given as an option.
             The style's default path is, as with all other styles, \texttt{/tikz}.
             The style is re\hyp applied for every subcircuit.
             The default style will make all nodes (which in particular means, all gates) respect outer canvas transformations.
@@ -985,7 +1000,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             It allows to selectively apply its contents only to a certain part of a multi\hyp partite operator.
             The style expects an even number of parameters.
             The first (third, ...) parameter contains the index of the operator/control where the style should apply.
-            This index corresponds to the values that \tex!\idx! can take; i.e., it will be zero for the topmost operator/control (leftmost for vertical circuits) and then increment by one.
+            This index corresponds to the values that \texlink{\idx} can take; i.e., it will be zero for the topmost operator/control (leftmost for vertical circuits) and then increment by one.
             The indices of operators, positive, and negative controls are all independent.
             You may not only give a single index, but instead also a comma\hyp separated list, and you may also use index ranges (where both the first and second part of the range can be omitted, which then means ``from the first'' or ``to the last'').
             The second (fourth, ...) parameter then contains all the styles that should actually be applied.
@@ -1036,7 +1051,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{option}[New in 0.7]{circuit/orientation}!horizontal!
             This setting allows two possible values, \texttt{horizontal} and \texttt{vertical}.
-            It must only be changed before a circuit or at latest with the option arguments to the \tex!yquant! environment, but not within a circuit.
+            It must only be changed before a circuit or at latest with the option arguments to the \texlink{yquant} environment, but not within a circuit.
 
             In the default \texttt{horizontal} mode, time flows from left to right and registers will be created from top to bottom.
             In the alternative \texttt{vertical} mode, time flows from top to bottom and registers will be created from left to right.
@@ -1089,10 +1104,10 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[New in 0.4]{every post measurement control}!indirect!
             This style determines the default arrangement of measurements that are followed by positive controls.
 
-            The default option \texttt{indirect} will draw the measurement at the position where it is specified.
+            \linkdef{indirect}The default option \texttt{indirect} will draw the measurement at the position where it is specified.
             Any later use of a control will be at the position of the controlled gate.
 
-            The option \texttt{direct} will defer the measurement.
+            \linkdef{direct}The option \texttt{direct} will defer the measurement.
             If later on, a controlled operation is used where the positive controls contain all of the targets of this measurement \emph{and} no other gate was executed meanwhile on any of the targets of this measurement, then the measurement gate will replace the corresponding positive control knobs (and might inherit \TikZ{} options of the embedding gate); otherwise, it will behave as if the \texttt{indirect} option had been specified.
 
             Some care must be taken when gates are named that are affected by this option.
@@ -1113,20 +1128,20 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{option}[Changed in 0.6]{operators/every box}!/yquant/operators/every rectangular box!
             This style is installed for every \ttlink{box} operator.
-            Note that with a \texttt{compat} setting strictly smaller than~\texttt{0.6}, the definition of this style was the one that is now \ttlink{/yquant/operators/every rectangular box}, and this style was also the base style from which all box\hyp like gates inherited.
-            With a \texttt{compat} setting of at least~\texttt{0.6}, no other gates apart from \ttlink{box} will use this style directly or indirectly.
+            Note that with a \ttlink{compat} setting strictly smaller than~\texttt{0.6}, the definition of this style was the one that is now \ttlink{/yquant/operators/every rectangular box}, and this style was also the base style from which all box\hyp like gates inherited.
+            With a \ttlink{compat} setting of at least~\texttt{0.6}, no other gates apart from \ttlink{box} will use this style directly or indirectly.
          \end{option}
 
          \begin{option}[Changed in 0.4\\New in 0.2]{operators/every custom gate}!/yquant/operators/subcircuit/seamless!
             This style is by default installed for every user\hyp defined gate.
             User\hyp defined gates are implemented via subcircuits; this style suppresses the box that surrounds the subcircuit and by default suppresses all register names.
             This allows a seamless integration of the gate/subcircuit into the main circuit, without putting particular emphasis to the fact that what was defined as the custom gate indeed belongs together.
-            Note that with the \texttt{compat} key set before \texttt{0.4}, this style instead defaults to \tex!/yquant/operators/subcircuit/frameless, /yquant/register/default name=!.
+            Note that with the \ttlink{compat} key set before \texttt{0.4}, this style instead defaults to \tex!/yquant/operators/subcircuit/frameless, /yquant/register/default name=!.
          \end{option}
 
          \begin{option}[Changed in 0.7]{operators/every dmeter}!shape=yquant-dmeter, time radius=2mm, space radius=2mm, draw, /yquant/default fill!
             This style is installed for every \ttlink{dmeter} gate.
-            The \texttt{yquant-dmeter} shape consists of a rectangle whose right side is replaced by a circle, resembling the letter ``D.''
+            \linkdef{yquant-dmeter}The \texttt{yquant-dmeter} shape consists of a rectangle whose right side is replaced by a circle, resembling the letter ``D.''
          \end{option}
 
          \begin{option}{operators/every h}!/yquant/operators/every rectangular box!
@@ -1140,23 +1155,23 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{option}[New in 0.7.2]{operators/every iswap}!shape=yquant-ocross, radius=.75mm, draw!
             This style is installed for every \ttlink{iswap} gate that interchanges two qubits and conditionally adds phases.
-            The \texttt{yquant-iswap} shape is a cross enclosed in a circle.
+            \linkdef{yquant-iswap}The \texttt{yquant-iswap} shape is a cross enclosed in a circle.
          \end{option}
 
          \begin{option}[Changed in 0.7]{operators/every measure}!shape=yquant-measure, x radius=4mm, y radius=2.5mm, draw, /yquant/default fill!
             This style is installed for every \ttlink{measure} gate.
-            The \texttt{yquant-measure} shape is a rectangle that contains a ``meter'' symbol.
+            \linkdef{yquant-measure}The \texttt{yquant-measure} shape is a rectangle that contains a ``meter'' symbol.
             It allows for a text to be put inside (e.g., a basis), which then shifts the meter symbol accordingly.
          \end{option}
 
          \begin{option}{operators/every measure meter}!draw, -{Latex[length=2.5pt]}!
-            This style is applied to the path that resembles the ``meter'' symbol that is drawn by the \texttt{yquant-measure} shape.
+            This style is applied to the path that resembles the ``meter'' symbol that is drawn by the \ttlink{yquant-measure} shape.
             Due to the default style, the \TikZ{} library \pkg{arrows.meta} is automatically loaded with \Yquant.
          \end{option}
 
          \begin{option}{operators/every not}!shape=yquant-oplus, radius=1.3mm, draw!
             This style is installed for every \ttlink{not} or \ttlink{cnot} gate (which are synonyms, and actually do the same as the Pauli~$\sigma_x$ gate).
-            The \texttt{yquant-oplus} shape resembles the addition\hyp modulo\hyp two symbol $\oplus$.
+            \linkdef{yquant-oplus}The \texttt{yquant-oplus} shape resembles the addition\hyp modulo\hyp two symbol $\oplus$.
          \end{option}
 
          \begin{option}{operators/every pauli}!/yquant/operators/every rectangular box!
@@ -1169,7 +1184,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{option}[Changed in 0.7\\New in 0.6]{operators/every rectangular box}!shape=yquant-rectangle, draw, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill!
             This style is not associated to any particular gate, but will be inherited by a lot of gates that have a rectangular box frame with some text.
-            This style should not be used with a \texttt{compat} setting strictly smaller than~\texttt{0.6}.
+            This style should not be used with a \ttlink{compat} setting strictly smaller than~\texttt{0.6}.
          \end{option}
 
          \begin{option}{operators/every slash}!shape=yquant-slash, x radius=.5mm, y radius=.7mm, draw!
@@ -1211,25 +1226,25 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[New in 0.5]{operators/subcircuit/name mangling}!prefix or discard!
             This option defines how named nodes within subcircuits are made available to the outer circuit:
             \begin{itemize}
-               \item \texttt{prefix or discard} \\
+               \item \linkdef{mangling/prefix or discard}\texttt{prefix or discard} \\
                   If the subcircuit itself has a name $s$ and the inner gate has a name $g$, the outer circuit can refer to the inner gate via the name \texttt{$s$-$g$}.
                   Note that $s$ itself may not only consist of the user\hyp specified name, but may instead already be suffixed by \texttt{-0}, \texttt{-1}, \dots, if the subcircuits were assigned to multiple targets.
 
-                  If the subcircuit itself has no name, works as \texttt{discard}.
-               \item \texttt{prefix or transparent} \\
-                  If the subcircuit itself has a name, as works as \texttt{prefix or discard}; else, works as \texttt{transparent}.
-               \item \texttt{transparent} \\
+                  If the subcircuit itself has no name, works as \ttlink[mangling/discard]{discard}.
+               \item \linkdef{mangling/prefix or transparent}\texttt{prefix or transparent} \\
+                  If the subcircuit itself has a name, as works as \ttlink[mangling/prefix or discard]{prefix or discard}; else, works as \ttlink[mangling/transparent]{transparent}.
+               \item \linkdef{mangling/transparent}\texttt{transparent} \\
                   The inner gates are always available in the outer circuit by their original names.
                   Note that this may potentially lead to naming conflicts, which are always resolved by the latest name overwriting all previous declarations without notice.
-               \item \texttt{discard} \\
+               \item \linkdef{mangling/discard}\texttt{discard} \\
                   The inner gates will not be available in the outer circuit.
             \end{itemize}
-            Note that if a new gate is defined via \tex!\yquantdefinegate!---which internally uses subcircuits---the value of this option at the time of declaration is the relevant one, not the one at the time of usage.
+            Note that if a new gate is defined via \texlink\yquantdefinegate---which internally uses subcircuits---the value of this option at the time of declaration is the relevant one, not the one at the time of usage.
             This can be influenced via \ttlink{/yquant/operators/subcircuit/name mangling reset}.
          \end{option}
 
          \begin{option}[New in 0.5]{operators/subcircuit/name mangling reset}!true!
-            The current value of \ttlink{/yquant/operators/subcircuit/name mangling} will be reset at the beginning of a subcircuit to the value it had upon declaration of the subcircuit only if this option is \texttt{true} upon \emph{using} the subcircuit (which typically will only make a difference if the subcircuit was defined via \tex!\yquantdefinegate! at some earlier stage).
+            The current value of \ttlink{/yquant/operators/subcircuit/name mangling} will be reset at the beginning of a subcircuit to the value it had upon declaration of the subcircuit only if this option is \texttt{true} upon \emph{using} the subcircuit (which typically will only make a difference if the subcircuit was defined via \texlink{\yquantdefinegate} at some earlier stage).
             \begin{warning}
                Setting this value to \tex!false! has the potential of breaking the corresponding subcircuit/custom gate, as it may internally reference gates by names that are no longer the correct ones.
                Do not use this property without a very good reason and thorough understanding of what is happening.
@@ -1247,7 +1262,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \begin{option}{operators/every swap}!shape=yquant-swap, radius=.75mm, draw!
             This style is installed for every \ttlink{swap} gate that interchanges two qubits.
-            The \texttt{yquant-swap} shape consists of a single cross.
+            \linkdef{yquant-swap}The \texttt{yquant-swap} shape consists of a single cross.
          \end{option}
 
          \begin{option}[Changed in 0.7\\New in 0.6]{operators/every text}!shape=yquant-rectangle, align=center, inner timesep=1mm, time radius=2mm, space radius=2.47mm, /yquant/default fill!
@@ -1284,12 +1299,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       However, since \Yquant{} is a layer on top of \TikZ, it should be very hard to find something (meaningful) that cannot be done by combining the power of both packages.
 
       \subsection{Mixing \texorpdfstring{\Yquant}{yquant} and \texorpdfstring{\TikZ}{TikZ} code}
+         \linkdef\yquant
          Before or after any gate, you may interrupt the \Yquant{} instructions to perform arbitrary \TikZ{} path operations.
          After every such operation, \Yquant{} will automatically restart its parser so that you can fluently jump between \Yquant{} and \TikZ{} code.
          You can even interject arbitrary \TeX{} code (or, say, low\hyp level \pkg{pgf} commands); however, then, \Yquant{} is not able to restart its parser.
          For this reason, after the last command in a block of \TeX{} commands, you must issue \tex!\yquant!, which then re\hyp enables the \Yquant{} language.
 
       \subsection{Accessing gates in \texorpdfstring{\TikZ}{TikZ}}
+         \linkdef{name}
          The feature to perform arbitrary \TikZ{} operations is powerful in itself, but would be of limited use were there no way to access the elements in the quantum circuit.
          \Yquant{} provides a global attribute \texttt{name} that can be assigned to every gate.
          All quantum operations are in fact \TikZ{} nodes, and the name you give to them then becomes a \TikZ{} name, which you can easily reference to get the coordinates of a particular operator.
@@ -1305,6 +1322,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \compat{New in 0.5}The prefixing behavior can be influenced by \ttlink{/yquant/operators/subcircuit/name mangling}.
 
       \subsection{Shapes and the drawing pipeline}\label{sec:pipeline}
+         \linkdef\protect
          All \Yquant{} shapes have the anchors available you would typically expect from a \TikZ{} shape of the given outline.
          The \texttt{center} anchor will be aligned to the wire.
          \compat{Changed in 0.1.2}In addition to the normal paths implemented by \TikZ{} shapes, the width and height of those fit for \Yquant{} at least twice as large as given by the \texttt{/tikz/x~radius} and \texttt{/tikz/y~radius}; and they must implement clipping paths, a \Yquant{} addition to \TikZ{} shapes.
@@ -1313,7 +1331,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          To understand clipping paths, \Yquant's drawing pipeline needs to be explained.
          \begin{itemize}
             \item In a first run---this is what happens directly at the position where you type the gate command---\Yquant{} will ``virtually'' draw the gates in order to determine their dimensions and calculate register heights.
-               The actual drawing commands are written to a macro (this is the cause that some macros must be preceded by \tex!\protect! if used in a gate \texttt{value}---in fact, if multiple registers are targeted in one gate, the style and values required for this gate are only stored once, so that for example \tex!\idx! is a \tex!\protected! macro until the very end).
+               The actual drawing commands are written to a macro (this is the cause that some macros must be preceded by \tex!\protect! if used in a gate \texttt{value}---in fact, if multiple registers are targeted in one gate, the style and values required for this gate are only stored once, so that for example \texlink{\idx} is a \tex!\protected! macro until the very end).
             \item \compat{New in 0.4}Deferred gates (measurements that may replace future control knobs) are stored temporarily and queried when the next gate is executed or at the end of the circuit.
                The corresponding commands---either re\hyp inserting if they must appear at their original position or substituting the controls---are inserted appropriately.
             \item When \tex!\end{yquant}! is encountered, the vertical positions are determined and the actual drawing commands are executed.
@@ -1351,7 +1369,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{itemize}
             \item Gates are no longer transparent, but filled with some fixed background color, so if transparency is important for you, this just does not work.
             \item \Yquant{} relies on \TikZ's layering capabilities; if you use layers by yourself, you have to pay some attention to do it correctly.
-            \item The z\hyp order may not be as you expect it; in particular:
+            \item \linkdef{layers}The z\hyp order may not be as you expect it; in particular:
                All the gates will be drawn on the \texttt{main} layer; all the wires on the \texttt{wires} layer, which is behind \texttt{main}; so if you don't use layers by yourself, everything that you draw will overshadow the wires, but not necessarily the gates.
             \item If you were to fill a subcircuit, this would then erase all the internal wires.
                Hence, the box of a subcircuit is drawn on the \texttt{behindwires} layer; but this implies that also the \emph{frame} of the box is drawn behind the wires and that this box is also overshadowed by any of your drawing.
@@ -1388,6 +1406,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Note that you may then, depending on the situation, obtain results with overlapping gates.
          You can use the keys \ttlink{/yquant/register/minimum height} and \ttlink{/yquant/register/minimum depth} when declaring the relevant register to manually specify a larger desired value, but you have to experiment with regard to what this value is.
 
+         \linkdef{overlay}
          The global attribute \texttt{overlay} (conveniently overshadowing \TikZ's \texttt{overlay} key, which should not be used for gates) can take the values
          \begin{itemize}
             \item \texttt{true} (default if no value given, combines \texttt{multi}, \texttt{height}, and \texttt{depth}),
@@ -1402,9 +1421,9 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
    \section{Reference: Gates and operations}\label{sec:gates}
       This section lists all operations \Yquant{} currently understands.
-      It also details all arguments that can be given to customize the operation, apart from \texttt{name} and \compat{New in 0.4}\texttt{overlay}, which are always available.
-      Note that the \tex![value=<value>]! attribute can (and should) alternatively be given as a braced expression that follows the name of the register.
-      Within \tex!<value>!, unless specified differently, the macro \tex!\idx! is always available and corresponds to the index of the current register in the list of targets.
+      It also details all arguments that can be given to customize the operation, apart from \ttlink{name} and \compat{New in 0.4}\ttlink{overlay}, which are always available.
+      Note that the \texlink[value]{[value=<value>]} attribute can (and should) alternatively be given as a braced expression that follows the name of the register.
+      Within \tex!<value>!, unless specified differently, the macro \texlink{\idx} is always available and corresponds to the index of the current register in the list of targets.
 
       \subsection[\texorpdfstring{\yquant{addstyle}}{addstyle}]{\compat{New in 0.1.2}\yquant!addstyle!}\linkdef{addstyle}
          Syntax: \yquant!setstyle <target>;! \\
@@ -1429,7 +1448,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
       \subsection{\texorpdfstring{\yquant{barrier}}{barrier}}\linkdef{barrier}
          Syntax: \yquant!barrier <target>;! \\
-         This is a pseudo\hyp gate that denotes some physical barrier that ensures execution with a specific timing; it is basically a visible version of the \hyperref[gate:align]{\yquant!align!} gate, denoted by a vertical line.
+         This is a pseudo\hyp gate that denotes some physical barrier that ensures execution with a specific timing; it is basically a visible version of the \yquantlink{align} gate, denoted by a vertical line.
          It may span multiple registers, but does not allow for controls.
          The style \ttlink{/yquant/operators/every barrier} is installed.
 
@@ -1451,7 +1470,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Syntax: \yquant!cbit <name>[<len>];! \\
          Declares a register of type \texttt{cbit}.
 
-         \emph{see \hyperref[gate:qubit]{\yquant!qubit!}}
+         \emph{see \yquantlink{qubit}}
 
       \subsection[\texorpdfstring{\yquant{correlate}}{correlate}]{\compat{New in 0.1.2}\yquant!correlate!}\linkdef{correlate}
          Syntax: \yquant!correlate <target>;! \\
@@ -1512,7 +1531,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                Gives the amount of white space that is to be inserted. Must be a valid (nonnegative) \TeX{} dimension.
          \end{itemize}
 
-      \subsection[\texorpdfstring{\yquant{init}}{init}]{\compat{Changed in 0.4}\yquant!init!}\linkdef{init}
+      \subsection[\texorpdfstring{\yquant{init}}{init}]{\compat{Changed in 0.8, 0.4}\yquant!init!}\linkdef{init}
          Syntax: \yquant!init <target>;! \\
          This is a pseudo\hyp gate that (re)initializes a registers to a given state.
          It may span multiple registers, but does not allow for controls.
@@ -1572,10 +1591,10 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             \item \yquant![value=<value>]! \\
                Allows to specify a text that will be included at the bottom of the rectangle (which will shift the meter symbol upwards accordingly).
                For outside texts, use \TikZ{} \texttt{label}s instead.
-            \item \yquant![direct control]! \\
-               Temporarily sets \ttlink{/yquant/every post measurement control}\tex!=direct! for this particular gate.
-            \item \yquant![indirect control]! \\
-               Temporarily sets \ttlink{/yquant/every post measurement control}\tex!=indirect! for this particular gate.
+            \item \linkdef{[direct control]}\yquant![direct control]! \\
+               Temporarily sets \texlink[/yquant/every post measurement control]{/yquant/every post measurement control=direct} for this particular gate.
+            \item \linkdef{[indirect control]}\yquant![indirect control]! \\
+               Temporarily sets \texlink[/yquant/every post measurement control]{/yquant/every post measurement control=indirect} for this particular gate.
          \end{itemize}
 
       \subsection{\texorpdfstring{\yquant{nobit}}{nobit}}\linkdef{nobit}
@@ -1595,7 +1614,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Syntax: \yquant!not <target> | <pcontrol> ~ <ncontrol>;! \\
          This is a \textsc{not} gate, $\ketbra01 + \ketbra10$, denoted by the $\oplus$ symbol.
          It may not span multiple registers, but allows for controls.
-         Due to its common usage, the synonymous gate \hyperref[gate:cnot]{\yquant!cnot!} is provided.
+         Due to its common usage, the synonymous gate \yquantlink{cnot} is provided.
          The style \ttlink{/yquant/operators/every not} is installed.
 
          \emph{Possible attributes:} none
@@ -1606,7 +1625,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          It may only be specified once per register.
          It may span multiple registers, but does not allow for controls.
          The style \ttlink{/yquant/every output} is installed, and also the style \texttt{/yquant/every <type> output}, where \texttt{<type>} is the type of the affected register (at the time of printout).
-         \compat{New in 0.6}Note that while outputs can be named, the name will only become available after the \tex!yquant! environment itself was ended (but of course before the outer \texttt{tikzpicture} was closed).
+         \compat{New in 0.6}Note that while outputs can be named, the name will only become available after the \texlink{yquant} environment itself was ended (but of course before the outer \texttt{tikzpicture} was closed).
 
          \emph{Possible attributes:}
          \begin{itemize}
@@ -1637,11 +1656,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          \emph{Possible attributes:}
          \begin{itemize}
-            \item \yquant![after=<regname>]! \\
+            \item \linkdef{[after]}\yquant![after=<regname>]! \\
                If given, the register will start not at the left of the circuit but instead at the position at which the last gate in the register \texttt{<regname>} ended.
 
                This attribute may not be given in combination with \yquant![in]! or \yquant![inout]!.
-            \item \compat{New in 0.2}\yquant![in]!, \yquant![out]!, \yquant![inout]!, or \yquant![ancilla]! \\
+            \item \linkdef{[in]}\linkdef{[out]}\linkdef{[inout]}\linkdef{[ancilla]}\compat{New in 0.2}\yquant![in]!, \yquant![out]!, \yquant![inout]!, or \yquant![ancilla]! \\
                Default: \yquant![ancilla]! for top\hyp level circuits (do not change there); \yquant![inout]! for subcircuits.
 
                Determines how a subcircuit interacts with its parent circuit.
@@ -1656,16 +1675,17 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                Registers declared with the \yquant![out]! attribute will expect a discarded outer wire to be present, which will be initialized to a \texttt{qubit} at the beginning of the subcircuit, and from then on be identical with the outer wire.
             \item \yquant![value=<value>]! \\
                Denotes the label that is printed to the left of the wire.
-               If the value is omitted, the default is used (\ttlink{/yquant/register/default name}, preinitialized to \tex!\regidx!).
+               If the value is omitted, the default is used (\ttlink{/yquant/register/default name}, preinitialized to \texlink\regidx).
 
-               Inside the value, \tex!\reg! expands to \texttt{<name>}, \tex!\len! expands to \texttt{<len>}, \tex!\idx! expands to the current index within the vector register ($0 \leq \text{\tex!\idx!} < \text{\texttt{<len>}}$), and \tex!\regidx! expands to \tex!\reg! if \texttt{<len>} is one, or to \tex!\reg[\idx]! else.
+               Inside the value, \texlink{\reg} expands to \texttt{<name>}, \texlink{\len} expands to \texttt{<len>}, \texlink{\idx} expands to the current index within the vector register (for new registers, $0 \leq \text{\tex!\idx!} < \text{\texttt{<len>}}$), and \texlink{\regidx} expands to \texlink{\reg} if \texttt{<len>} is one, or to \tex!\reg[\idx]! else.
+               For details about these macros and changes in version~0.8, see their documentation.
          \end{itemize}
 
       \subsection{\texorpdfstring{\yquant{qubits}}{qubits}}\linkdef{qubits}
          Syntax: \yquant!qubits <name>[<len>];! \\
          Declares a register of type \texttt{qubits}.
 
-         \emph{see \hyperref[gate:qubit]{\yquant!qubit!}}
+         \emph{see \yquantlink{qubit}}
 
       \subsection[\texorpdfstring{\yquant{setstyle}}{setstyle}]{\compat{New in 0.1.2}\yquant!setstyle!}\linkdef{setstyle}
          Syntax: \yquant!setstyle <target>;! \\
@@ -1689,7 +1709,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{itemize}
             \item \yquant![value=<qubit|cbit|qubits>]! (required) \\
                Denotes the new type that is assigned to all registers.
-               To change the type to \ttlink{nobit}, use the \hyperref[gate:discard]{\yquant!discard!} pseudo\hyp gate instead.
+               To change the type to \ttlink{nobit}, use the \yquantlink{discard} pseudo\hyp gate instead.
          \end{itemize}
 
       \subsection[\texorpdfstring{\yquant{setwire}}{setwire}]{\compat{Removed in 0.4\\Deprecated in 0.1.2}\yquant!setwire!}\linkdef{setwire}
@@ -1703,7 +1723,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          It is drawn as a short slash through the line of the register.
          The style \ttlink{/yquant/operators/every slash} is installed.
          Note that this gate will ignore the \ttlink{/yquant/operator/minimum width} key.
-         With a \texttt{compat} key of~0.3 or earlier, the gate was special in that it did not advance the horizontal position on the wire, which allows to use it on only some of the wires without leading to a ragged start of subsequent gates.
+         With a \ttlink{compat} key of~0.3 or earlier, the gate was special in that it did not advance the horizontal position on the wire, which allows to use it on only some of the wires without leading to a ragged start of subsequent gates.
          However, as \Yquant's default separation is not large enough to give a pleasant layout when the slash is squeezed in the initial separation, this was dropped as of version~0.4.
          Use the \ttlink{align} gate after all \ttlink{slash}es to get a better layout.
 
@@ -1976,14 +1996,15 @@ qubit {$\ket{<name>_{\idx}}$} <name>[<len>];
             \end{codeexample}
             Note that we left out two Hadamards at the end.
 
-            Another way to provide various initial values in a single command is by performing case discrimination on \tex!\idx!, for example in the following manner:
+            Another way to provide various initial values in a single command is by performing case discrimination on \texlink\idx, for example in the following manner:
 
             \begin{minted}{tex}
 qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
             \end{minted}
-            In principle, all \TeX{} conditionals that check against \tex!\idx! need to be prefixed by \tex!\protect!.
-            If the \texttt{compat} key is at least \texttt{0.4}, \Yquant{} will make the commands \tex!\Ifnum!, \tex!\Ifcase!, \tex!\Or!, \tex!\Else!, \tex!\Fi!, \tex!\Unless! and \tex!\The! available for use within gates; they correspond in a certain way to auto\hyp\tex!\protect!ed versions of the corresponding \TeX{} primitives.
-            Most likely, you will never need them inside values if not in the exact combination with \tex!\idx!.
+            In principle, all \TeX{} conditionals that check against \texlink{\idx} need to be prefixed by \texlink\protect.
+            \linkdef\Ifnum\linkdef\Ifcase\linkdef\Or\linkdef\Else\linkdef\Fi\linkdef\Unless\linkdef\The
+            If the \ttlink{compat} key is at least \texttt{0.4}, \Yquant{} will make the commands \tex!\Ifnum!, \tex!\Ifcase!, \tex!\Or!, \tex!\Else!, \tex!\Fi!, \tex!\Unless! and \tex!\The! available for use within gates; they correspond in a certain way to auto\hyp\texlink\protect ed versions of the corresponding \TeX{} primitives.
+            Most likely, you will never need them inside values if not in the exact combination with \texlink\idx.
          \end{example}
 
          \clearpage
@@ -2201,7 +2222,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
       \begingroup%
          \yquantset{operator/separation=2mm}
          For a better orientation, we use the same section headings as the \pkg{qcircuit} manual.
-         The manual uses unnamed registers a lot; often, we will use the \tex!yquant*! environment to make things more concise.
+         The manual uses unnamed registers a lot; often, we will use the \texlink{yquant*} environment to make things more concise.
          As the \pkg{qcircuit} manual uses a bit larger separation between the operators than \Yquant's default, we globally say\\*\tex!\yquantset{operator/separation=2mm}!.
 
          \subsubsection{I. Introduction}
@@ -2292,16 +2313,16 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                Since the label is not part of the valid arguments and also cannot be found in the \texttt{/yquant} path, it is automatically passed to \ttlink{/yquant/operator style}.
 
                To enclose a part of the circuit by a rectangle, we use a subcircuit.
-               We define the incoming \ttlink{qubit}s in the outer circuit, they will have the default attribute \texttt{[inout]}; the syndrome registers, which are created only in the subcircuit enter as \ttlink{nobit}s and consequently have the \texttt{[out]} attribute.
+               We define the incoming \ttlink{qubit}s in the outer circuit, they will have the default attribute \ttlink{[inout]}; the syndrome registers, which are created only in the subcircuit enter as \ttlink{nobit}s and consequently have the \ttlink{[out]} attribute.
                It is important to note that both the \texttt{dashed} style as well as the \texttt{label} (here with quoted syntax) are specified only inside \ttlink{/yquant/this subcircuit box style}.
                This ensures that they are not also attached to every single gate in the subcircuit.
 
-               Then we see how to apply an operation to multiple registers in parallel while using the \tex!\idx! macro to still give them a different text.
-               Since \tex!\idx! gives a numerical index (zero\hyp based), we exploit the ASCII code (actually, this document is compiled in Unicode mode...) to turn this into a letter.
+               Then we see how to apply an operation to multiple registers in parallel while using the \texlink{\idx} macro to still give them a different text.
+               Since \texlink{\idx} gives a numerical index (zero\hyp based), we exploit the ASCII code (actually, this document is compiled in Unicode mode...) to turn this into a letter.
 
-               Note that it could have become necessary to pass the \texttt{overlay} attribute to the recovery gate, as it is a multi\hyp register gate with a \texttt{label}, meaning that \Yquant{} cannot reliably distribute its total vertical extent over its constituent registers.
+               Note that it could have become necessary to pass the \ttlink{overlay} attribute to the recovery gate, as it is a multi\hyp register gate with a \texttt{label}, meaning that \Yquant{} cannot reliably distribute its total vertical extent over its constituent registers.
                However, as the $\symcal R$ together with the label in total were not higher than the three\hyp qubit gate would have been anyway, this was not necessary here.
-               In generally, don't use \texttt{overlay} unless necessary; maybe a future version will even be able to handle the more difficult cases better.
+               In generally, don't use \ttlink{overlay} unless necessary; maybe a future version will even be able to handle the more difficult cases better.
 
                Finally, we will give a similar circuit by using the \TikZ{} interface instead of subcircuits, this time also showing how we can change the shape of the measurement gate to one as in the \pkg{qcircuit} manual:
 
@@ -2330,7 +2351,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
 \end{tikzpicture}
                \end{codeexample*}
                We name several elements that visually form the enclosing rectangle; then, we use the \TikZ{} library \texttt{fit} to put a node around them all.
-               Any gate can be given a custom shape; here, we use a \texttt{yquant-rectangle}, which is the analogue to \TikZ's \texttt{rectangle} and thus supports the standard \texttt{rounded corners} style.
+               \linkdef{yquant-rectangle}Any gate can be given a custom shape; here, we use a \texttt{yquant-rectangle}, which is the analogue to \TikZ's \texttt{rectangle} and thus supports the standard \texttt{rounded corners} style.
             \end{example}
 
          \subsubsection{IV. Simple Quantum Circuits}
@@ -2420,11 +2441,11 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  There is no direct support for this construction, but as with the initialization of a vector registers, \Yquant{} allows to access the macro \tex!\idx! within an operator \texttt{value}.
+                  There is no direct support for this construction, but as with the initialization of a vector registers, \Yquant{} allows to access the macro \texlink{\idx} within an operator \ttlink{value}.
                   This macro follows the same rules as the name suffix, i.e., it assigns indices (zero\hyp based) to the target registers in top\hyp to\hyp bottom order, regardless of which order was specified in the target list.
                   Since we instead want a one\hyp based subscript, we need to add one.
-                  Note that if you want to output \tex!\idx! directly or within an unexpandable expression, you don't need to take any action.
-                  However, here, \tex!\the! is expandable; and since \Yquant{} needs to process all its output twice (first in order to determine the vertical spacing, second to actually typeset), you must manually take care that the command is \emph{not} expanded prematurely by saying \tex!\protect\the! instead, for which \Yquant{}, with a \texttt{compat} setting of at least \texttt{0.4}, provides the shorthand \tex!\The!.
+                  Note that if you want to output \texlink{\idx} directly or within an unexpandable expression, you don't need to take any action.
+                  However, here, \tex!\the! is expandable; and since \Yquant{} needs to process all its output twice (first in order to determine the vertical spacing, second to actually typeset), you must manually take care that the command is \emph{not} expanded prematurely by saying \texlink[\protect]{\protect\the} instead, for which \Yquant{}, with a \ttlink{compat} setting of at least \texttt{0.4}, provides the shorthand \texlink\The.
                   Had we used the plain \TeX{} \tex!\the! instead, the subscript would have been ``$1$'' for both operators.
                \end{example}
 
@@ -2526,7 +2547,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   \end{codeexample}
                   The ``tab'' and ``measure'' type are not supported yet.
                   Extracting a meter symbol on its own will not be supported.
-                  If you are interested in the code, have a look at \texttt{yquant-shapes.tex} and search for the \texttt{yquant-measure} shape.
+                  If you are interested in the code, have a look at \texttt{yquant-shapes.tex} and search for the \ttlink{yquant-measure} shape.
                \end{example}
 
                \begin{example}<Updated in 0.4, 0.1.2>
@@ -2541,7 +2562,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  Rectangles with rounded corners are not a specific style, but since the \texttt{yquant-rectangle} shape internally uses \tex!\pgfpathrectangle!, the ordinary \TikZ{} option can be used (also, an inset specification can control how much the corner is rounded).
+                  Rectangles with rounded corners are not a specific style, but since the \ttlink{yquant-rectangle} shape internally uses \tex!\pgfpathrectangle!, the ordinary \TikZ{} option can be used (also, an inset specification can control how much the corner is rounded).
                \end{example}
 
                \clearpage
@@ -2809,12 +2830,12 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   \end{codeexample*}
                   This example demonstrates how to instruct the \ttlink{measure} gate to use a different output type than the standard \ttlink{cbit}.
 
-                  In general, any macros that are used within a \TikZ{} path or a \Yquant{} operation must not be fragile, or must be preceded with \tex!\protect!.
+                  In general, any macros that are used within a \TikZ{} path or a \Yquant{} operation must not be fragile, or must be preceded with \texlink\protect.
                   In this example, \tex!\\! is a robust command (at least in newer kernels), so protection is not required.
                   Since it may occur quite frequently that \Yquant{} is used within a \tex!center! environment or in \tex!\centering! mode (in which \tex!\\! is still fragile), \Yquant{} takes care of this (it actually robustifies \tex!\@centercr!, which is the meaning of \tex!\\! in these surroundings---and which is now incorporated into the \LaTeX{} kernel as of June~2021).
 
                   In order to change the style of an individual wire, we use \ttlink{addstyle}.
-                  To make the final line shorter, we change the operator separation by issuing \tex!\yquantset! at the end.
+                  To make the final line shorter, we change the operator separation by issuing \texlink{\yquantset} at the end.
                \end{example}
 
                \begin{example}<New in 0.4>
@@ -2845,7 +2866,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  Again, you see an example of how some commands need to be \tex!\protect!ed when used in \Yquant{} options, and that you can indeed exploit all features of the \texttt{quotes} library.
+                  Again, you see an example of how some commands need to be \texlink\protect ed when used in \Yquant{} options, and that you can indeed exploit all features of the \texttt{quotes} library.
                \end{example}
 
                \begin{example}
@@ -2880,7 +2901,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample*}
-               This example demonstrates the use of the \texttt{after} argument that instructs the register creation to begin the register only after the current position of another register that already exists.
+               This example demonstrates the use of the \ttlink[{[after]}]{after} argument that instructs the register creation to begin the register only after the current position of another register that already exists.
                Note that this argument will always make the wire begin \emph{at the right end} of the last gate of the referenced register; however, if---as is the case here---this gate is shorter than \ttlink{/yquant/operator/minimum width}, this might not coincide with the visual right end.
             \end{example}
 
@@ -2994,8 +3015,8 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                It is important to do this within the subcircuit and not as an attribute; else, we would also remove the outer lines going into the subcircuit.
 
                Initial or final \ttlink{inspect} gates without a brace do not really need the separation between brace tip and text (\texttt{inner xsep}), so we also remove it.
-               The output gates should have their braces and separations at the other side, which corresponds to changing their shape from \texttt{yquant-output} to \texttt{yquant-init} and mirroring the decoration (as in \ttlink{/yquant/every label}).
-               To get the desired right\hyp alignment, we hand\hyp tailor an \tex!\hskip! that enlarges the upper output label---automatic alignments would not work here: putting the two \ttlink{inspect}s together with a case distinction on \tex!\idx! would center them; using \ttlink{output}s would left\hyp align them.
+               The output gates should have their braces and separations at the other side, which corresponds to changing their shape from \ttlink{yquant-output} to \ttlink{yquant-init} and mirroring the decoration (as in \ttlink{/yquant/every label}).
+               To get the desired right\hyp alignment, we hand\hyp tailor an \tex!\hskip! that enlarges the upper output label---automatic alignments would not work here: putting the two \ttlink{inspect}s together with a case distinction on \texlink{\idx} would center them; using \ttlink{output}s would left\hyp align them.
 
                Finally, we have to deal with the caption of the gate, which should be absolutely centered with respect to the subcircuit and not have any influence on the spacing---so we just insert it retrospectively as an ordinary \TikZ{} node.
 
@@ -3116,7 +3137,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
 \end{tikzpicture}
                \end{codeexample*}
                Usually, the \texttt{shorten} keys do not have any effect on \Yquant{} operations, since the latter are all made up of nodes.
-               However, the \texttt{yquant-line} shape explicitly takes care of correctly handling them.
+               \linkdef{yquant-line}However, the \texttt{yquant-line} shape explicitly takes care of correctly handling them.
                It is the only one that does so.
                Since barriers usually end quite closely to the wires---and the default \texttt{dashed} style may make this worse---the \texttt{shorten}ing may often prove useful.
                Note that if the barriers are enlarged by means of negative \texttt{shorten}ings, this will not affect the bounding box and you must take care of appropriately shifting labels.
@@ -3134,8 +3155,8 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                \end{minted}
                since due to the aforementioned lack of support for a style that sets the options in \TikZ, we must manually use a (grouped) \tex!\yquantset! instruction for this.
                Note that whenever you change a \TikZ{} style in a \Yquant{} environment, use the \tex!\yquantset! macro, \emph{not} \tex!\tikzset! or \tex!\pgfkeys!.
-               Not only will the latter two not automatically restart the parser (so that you would have to issue \tex!\yquant! after their use), but \Yquant{} has to process all its content twice in order to properly determine the register height.
-               Only \tex!\yquantset! will be properly captured and re\hyp issued at the correct position when the content is actually typeset.
+               Not only will the latter two not automatically restart the parser (so that you would have to issue \texlink{\yquant} after their use), but \Yquant{} has to process all its content twice in order to properly determine the register height.
+               Only \texlink{\yquantset} will be properly captured and re\hyp issued at the correct position when the content is actually typeset.
                Had we written \tex!\tikzset{label distance=0pt} \yquant!, no effect at all would have been visible, since this command would only have taken effect in the first (invisible) round when \Yquant{} determines heights.
             \end{example}
 
@@ -3165,7 +3186,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                   The vertical distance between registers is calculated by \Yquant{} automatically based on the height and depth that \Yquant{} find for this particular register---i.e., how much space is required above and below the wire line for all the gates.
                   In order to enlarge these values, reset \ttlink{/yquant/register/minimum height} or \ttlink{/yquant/register/minimum depth} to a different value.
                   It is not possible to artificially \emph{reduce} the calculated heights and depths, as this would result in overlapping gates.
-                  However, sometimes it might be required to exclude a certain gate from the calculation; then, use the \texttt{overlay} attribute.
+                  However, sometimes it might be required to exclude a certain gate from the calculation; then, use the \ttlink{overlay} attribute.
                \end{example}
 
                \begin{example}
@@ -3287,7 +3308,7 @@ $=$
                   \end{codeexample*}
                   Here, we do not have a circuit equation (i.e., logical statements involving multiple rather independent circuits), but a circuit progression.
                   Since only in one circuit we have a description of the registers, we declare them without an initial text and put their initialization into \ttlink{init} gates.
-                  The mapping in between is done by using the optional argument of the \tex!\equals! macro.
+                  The mapping in between is done by using the optional argument of the \texlink[groups/equals]{\equals} macro.
                   In order to obtain the braces at the ends, we use empty \ttlink{output} and \ttlink{init} gates.
                \end{example}
 
@@ -3434,7 +3455,7 @@ $=$
                   Additionally, \Yquant{} shapes must implement clipping paths.
                   Those objects, which are a \Yquant{} addition to \TikZ{} allow \Yquant{} to properly clip wires and vertical lines to the shape of the gate.
                   \Yquant{} draws its elements sequentially; hence, a wire that comes into an operator will be hidden by anything the operator draws on top of it; but outgoing wires will in turn draw on the operator (modulo clipping).
-                  To avoid the issues, we construct an invisible box operator and name it; \emph{outside} of the \tex!yquant! environment, we \texttt{fit} the special \TikZ{} shape on top of it.
+                  To avoid the issues, we construct an invisible box operator and name it; \emph{outside} of the \texlink{yquant} environment, we \texttt{fit} the special \TikZ{} shape on top of it.
                \end{example}
 
             \paragraph{C. Boxing/Highlighting Parts of a Circuit}\leavevmode
@@ -3636,7 +3657,7 @@ $=$
                   All we want to do is to issue the command to put a \ttlink{cnot} gate on the appropriate registers and \TeX{} should keep track of the correct coloring and register state.
                   For this, we first define a macro \tex!\cnot! that expects the index of the target and the index of the control register.
                   Within this macro, we check whether the register of the control is currently highlighted (\tex!\ifinlist{#2}\high!).
-                  If this is not the case, we draw the \ttlink{cnot} gate without any additional styles (note that since we interrupted the \Yquant{} parser due to the lots of intervening macros, we first have to restart it saying \tex!\yquant!).
+                  If this is not the case, we draw the \ttlink{cnot} gate without any additional styles (note that since we interrupted the \Yquant{} parser due to the lots of intervening macros, we first have to restart it saying \texlink\yquant).
                   However, if it is the case that the control register is currently highlighted, we draw the \ttlink{cnot} gate with the attribute \texttt{[style=red]}---we do not only want to draw the gate itself in red (for which \texttt{[red]} would be sufficient), but also its control line and the control blob, so we use the \ttlink{/yquant/style} shorthand.
                   Note that in the \pkg{qpic} manual, some of the control lines are thicker than others.
                   This could be implemented by adding the argument \tex!every control line/.append style={very thick}!; however, as it is unclear what the thick line should indicate, we did not add this to the example.
@@ -3652,16 +3673,16 @@ $=$
                   Since they will always follow in this order, we also define a \tex!\cnotBlock! abbreviation that executes these configurations together with their intermediate \ttlink{barrier}.
                   We do not include the final barrier, since it is not present in the last block.
 
-                  Now, we start the \tex!yquant! environment.
+                  Now, we start the \texlink{yquant} environment.
                   We give some options for a nicer spacing and initialize the registers.
-                  In the \pkg{qpic} example, the registers are $1$\hyp indexed, so we use \tex!\The\numexpr\idx+1! to give back the value of the current register index (\tex!\idx!) plus one; we also conditionally color the register name in red if the index coincides with the parameter.
-                  Note that here we use \Yquant's shorthand for \tex!\protect\the!, \tex!\protect\ifnum!, and \tex!\protect\fi!, which are \tex!\The!, \tex!\Ifnum!, and \tex!\Fi!, to get the correct expansion behavior.
+                  In the \pkg{qpic} example, the registers are $1$\hyp indexed, so we use \tex!\The\numexpr\idx+1! to give back the value of the current register index (\texlink\idx) plus one; we also conditionally color the register name in red if the index coincides with the parameter.
+                  Note that here we use \Yquant's shorthand for \tex!\protect\the!, \tex!\protect\ifnum!, and \tex!\protect\fi!, which are \texlink\The, \texlink\Ifnum, and \texlink\Fi, to get the correct expansion behavior.
 
                   Then, we add the initial style for the \tex!a[#1]! wire.
                   Inserting the gates together with the correct coloring is now extremely simple: we just need to call our \tex!\cnotBlock! command and intersperse it with \ttlink{barrier}s.
                   At the end, we output all the gates in reverse order, which works similarly to the initialization of the gates, and also conditionally color the reversed register.
                   This coloring could in principle be done similarly to the coloring of the initial label, saying something like \tex!\Ifnum\numexpr8-\idx=#1 \color{red}\Fi!.
-                  Here, we chose the ``more honest'' approach to color all the registers that are still present in the coloring list---note the need to \tex!\protect! the \pkg{etoolbox} macro \tex!\xifinlist!.
+                  Here, we chose the ``more honest'' approach to color all the registers that are still present in the coloring list---note the need to \texlink{\protect} the \pkg{etoolbox} macro \tex!\xifinlist!.
                   In this way, we could, e.g., terminate the circuit earlier and still get the correct output coloring at this particular point.
 
                   Note that if there were more that just five blocks, we could also have made use of \TikZ's \tex!\foreach! loop to output all the \tex!\cnotBlock! commands.
@@ -3779,11 +3800,11 @@ $=$
                   In order to align the left explanations to the right and the right explanations to the left, we just redefine the \texttt{anchor}s of the gates.
                   However, since \Yquant{} expects the gates to connect at the \texttt{center} anchor and hence equally distributes the required space for the wire to its left and right, this would lead to a very large gap between the explanations and the circuit itself.
                   Here, we don't need \Yquant's wire extent calculations at all---the explanation wires are invisible and at the border of the circuit.
-                  Therefore, we just disable the calculations using the \texttt{overlay} attribute.
+                  Therefore, we just disable the calculations using the \ttlink{overlay} attribute.
                   After all the explanations are done, we \ttlink{align} all registers (if the minimum extent was chosen to be exactly larger or equal to the actual vertical extent of every gate, this would not be necessary; but with two decimals, this is probably not precisely the case).
 
                   Note that the code example above would work exactly in this way in traditional \LaTeX{} documents; however, this document is set with \pkg{unicode-math}.
-                  This leads to a problem when using \tex!\bmod!, which has to be \tex!\protect!ed---or, as we did here, just say \tex!\robustify\bmod! somewhere before its usage and after loading all the packages.
+                  This leads to a problem when using \tex!\bmod!, which has to be \texlink\protect ed---or, as we did here, just say \tex!\robustify\bmod! somewhere before its usage and after loading all the packages.
                \end{example}
             \endgroup
 
@@ -3844,7 +3865,7 @@ $=$
                   We then use \TikZ's \texttt{let} functionality in order to extract the required coordinates and draw the nodes.
                   Note that the macros \tex!\p!, \tex!\x!, and \tex!\y! come into existence only when the \tex!\draw! command is executed; hence, just writing the \tex!\draw! call would lead to an error: \Yquant{} would first try to add (using \tex!\protected@edef!) the content of the macro to its output routine for the second pass, then call it in the first pass.
                   We don't need the execution in the first pass---though it would not do harm---but we cannot allow for the expansion at this stage.
-                  Hence, we wrap the whole command in \tex!\yquantsecondpass! (which automatically restarts the parser afterwards, so we don't have to do this).
+                  Hence, we wrap the whole command in \texlink{\yquantsecondpass} (which automatically restarts the parser afterwards, so we don't have to do this).
                \end{example}
 
          \subsubsection{3.1 Wires}
@@ -3895,7 +3916,7 @@ $=$
                   As a consequence, whenever the whole vector register is addressed in operations, the operation is also drawn on the invisible register.
                   For multi\hyp register gates, this may be desired (they just span the whole region), for single\hyp register gates, this is most certainly undesired.
                   Note that \Yquant{} does not allow to declare an \ttlink{output} gate for invisible registers---usually, this does not make sense.
-                  However, this is not enforced as a hard constraint, but rather due to the fact that the style \ttlink{/yquant/every nobit output} does not exist.
+                  However, this is not enforced as a hard constraint, but rather due to the fact that the style \texttt{/yquant/every nobit output} does not exist.
                   To prevent an error message, we just define this as an empty style.
                   Also note that, to get a proper vertical spacing, we decided to use the \ttlink{/yquant/register/separation} key---which works well, as there are no other registers.
                   If there were others, it would be better to increase the height and depth of the invisible register.
@@ -3964,7 +3985,7 @@ $=$
                   Note that here the $A$ is drawn without the curly braces.
                   There are two simple ways to achieve this: by setting \texttt{draw} to \texttt{none}, the curly brace is suppressed, but still the~$A$ would be drawn at the same position as if the brace were there.
                   We additionally set \texttt{decorate} to \texttt{false} to fully remove any reminiscence of the brace, so that the text is closest to the wires.
-                  (Note that just removing the decoration without also removing the drawing would lead to a vertical line that connects all the affected wires---this is how the \texttt{yquant-init} shape looks like in an undecorated fashion.)
+                  (Note that just removing the decoration without also removing the drawing would lead to a vertical line that connects all the affected wires---this is how the \texlink{yquant-init} shape looks like in an undecorated fashion.)
                \end{example}
 
          \subsubsection{3.2 Gates}
@@ -4025,7 +4046,7 @@ $=$
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  Note that the macro \tex!\idx! is available in any gate, and it gives the index of the current register within the target list.
+                  Note that the macro \texlink{\idx} is available in any gate, and it gives the index of the current register within the target list.
                \end{example}
 
                \begin{example}
@@ -4038,7 +4059,7 @@ $=$
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
-                  Note that the macro \tex!\idx! is available in any gate, and it gives the index of the current register within the target list.
+                  Note that the macro \texlink{\idx} is available in any gate, and it gives the index of the current register within the target list.
                \end{example}
 
                \begin{example}
@@ -4435,7 +4456,7 @@ $=$
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample}
-               Here, we create registers with the \texttt{after} attribute at some later point in the circuit.
+               Here, we create registers with the \ttlink[{[after]}]{after} attribute at some later point in the circuit.
                Note that logically speaking, the $h$~box should have had the targets \yquant!(a, c)!; however, as \Yquant{} does not know that the middle register was already discarded, it would have drawn two boxes joined by a wiggly line to indicate the discontiguous multi\hyp qubit register.
             \end{example}
 
@@ -4603,7 +4624,7 @@ $=$
                We will also expand this example and give a very simple (and a bit shortsighted) implementation of a macro that reverses the order of gates.
                Note that this macro basically just splits its content at semicolons and when it is done inputs all the parts in reverse order.
                Hence, it will fail if semicolons appear, e.g., in attributes without enclosing them in braces.
-               It also does not correspond exactly to the \texttt{R} instruction from \pkg{qpic}, as it does not \emph{reverse} wire styles (basically \ttlink{addstyle} would become a hypothetical \ttlink{subtractstyle} macro), but just inserts them in reverse order.
+               It also does not correspond exactly to the \texttt{R} instruction from \pkg{qpic}, as it does not \emph{reverse} wire styles (basically \ttlink{addstyle} would become a hypothetical \texttt{subtractstyle} macro), but just inserts them in reverse order.
                Hence, the following example will give a different circuit with respect to the wire style!
 
                \begin{codeexample*}
@@ -4827,7 +4848,7 @@ $=$
             \begin{example}
                The following example in the \pkg{qpic} manual requires some additional thoughts.
                It defines a custom gate with a variable number of target registers.
-               The \tex!\yquantdefinegate! interface does not officially allow for this, although some low\hyp level hacking can of course be done (a \emph{sorted} \pkg{etoolbox} list is provided in the macro \tex!\yquant@circuit@subcircuit@param!, which holds the internal indices of all currently involved target registers).
+               The \texlink{\yquantdefinegate} interface does not officially allow for this, although some low\hyp level hacking can of course be done (a \emph{sorted} \pkg{etoolbox} list is provided in the macro \tex!\yquant@circuit@subcircuit@param!, which holds the internal indices of all currently involved target registers).
 
                It is of course always possible to write some macros that output the required gate commands.
                Looking at the particular example, it is actually not really necessary to define a gate that has a variable number of targets.
@@ -4892,7 +4913,7 @@ $=$
                The background path deserves more attention.
                We draw the two circles and the vertical and horizontal lines; but note that we disable the \pkg{pgf}'s size protocol for all but the right circle.
                Hence, when this shape is used, \TeX{} and \Yquant{} will actually think that it only occupies space for the right circle; the left one will protrude in the margin.
-               (Actually, we could wrap this in a test such as \tex!\ifdefined\yquant@prefix! to only discard protocoling within a \tex!yquant! environment, so that the shape is properly usable outside.)
+               (Actually, we could wrap this in a test such as \tex!\ifdefined\yquant@prefix! to only discard protocoling within a \texlink{yquant} environment, so that the shape is properly usable outside.)
 
                Next, we must take care of re\hyp inserting this ``lost'' margin whenever the gate is used; and we also define a style that appropriately uses the shape:
                \begin{codeexample*}
@@ -4990,11 +5011,12 @@ $=$
          Various circuits in a group share a common set of registers, are appropriately aligned horizontally if on the same line and can also be aligned vertically among multiple lines.
          The main intended use is for circuit equations.
 
+         \linkdef{yquantgroup}
          This extension provides the environment \tex!yquantgroup!.
          You may use this environment within a \tex!tikzpicture!; in this case, all page\hyp break related features are not available.
          You may alternatively use the environment outside of a \tex!tikzpicture!; in this case, it will start and end the pictures appropriately.
 
-         As with \tex!yquant!, the environment accepts optional options that are passed to \tex!\yquantset!; a starred form is available that allows for the lazy creation of registers---but note that \emph{shared} registers must always be created explicitly; only if some circuits in the group have additional registers, the lazy creation applies.
+         As with \texlink{yquant}, the environment accepts optional options that are passed to \texlink\yquantset; a starred form is available that allows for the lazy creation of registers---but note that \emph{shared} registers must always be created explicitly; only if some circuits in the group have additional registers, the lazy creation applies.
 
          \subsubsection{General usage}
             \begin{minted}{tex}
@@ -5018,7 +5040,8 @@ $=$
 
          \subsubsection{Special macros}
             \paragraph*{\tex!\registers!}
-               The \tex!\registers! macro can and must only be used once in a \tex!yquantgroup! environment.
+               \linkdef{groups/registers}
+               The \tex!\registers! macro can and must only be used once in a \texlink{yquantgroup} environment.
                It contains the declaration of all the registers that are shared among the various circuits within a group.
                Basically, if you follow the convention in a usual \Yquant{} circuit to first declare all the registers, then use the gates, then you would put the declaration part in the \tex!\registers! macro.
                However, note that it is in principle also possible to mix register declarations with other gates and \TikZ{} commands.
@@ -5026,25 +5049,27 @@ $=$
                In case you do not use the \ttlink{import} gate in any of the circuits within the group and you do not declare own registers, the behavior is very straightforward: basically, the content of \tex!\registers! is copied verbatim at the beginning of each circuit\footnote{%
                   This is not strictly true.
                   Vector registers will always be created one\hyp by\hyp one, as \Yquant{} cannot know (without undertaking some effort) whether they are complete or interspersed with others.
-                  This implies that for \texttt{compat} versions prior to~0.8, indexing will look very strange.
+                  This implies that for \ttlink{compat} versions prior to~0.8, indexing will look very strange.
                }.
                Otherwise, the general rule is: importing a register will ensure that all non\hyp declaration commands that preceded this register declaration are executed; and importing the last register will additionally execute all succeeding commands within \tex!\registers!.
 
             \paragraph*{\tex!\circuit[<style>]{<content>}!}
-               The \tex!\circuit! macro can be thought of as starting a \tex!yquant! (or \tex!yquant*!) environment and using its mandatory argument \tex!<content>! as the content of the circuit; the optional \tex!<style>! is used to apply additional styling options to the circuit.
+               \linkdef{groups/circuit}
+               The \tex!\circuit! macro can be thought of as starting a \tex!yquant! (or \texlink{yquant*}) environment and using its mandatory argument \tex!<content>! as the content of the circuit; the optional \tex!<style>! is used to apply additional styling options to the circuit.
 
                This is not entirely accurate: In reality, the content is put into a \ttlink{subcircuit} and \tex!<style>! is passed as arguments to the subcircuit.
 
                The default style \ttlink{/yquant/operators/every group circuit} is applied to the circuit.
-               This style is configured such that the illusion of working in a top\hyp level \tex!yquant! environment is very convincing: The circuit is frameless by default and uses the transparent name mangling scheme.
+               This style is configured such that the illusion of working in a top\hyp level \texlink{yquant} environment is very convincing: The circuit is frameless by default and uses the transparent name mangling scheme.
 
-               All the registers that were previously defined via \tex!\registers! are automatically available within the circuit, as if their declaration had been copied.
+               All the registers that were previously defined via \texlink[groups/registers]{\registers} are automatically available within the circuit, as if their declaration had been copied.
                In fact, \Yquant{} will make a register available the first time it is referenced in some gate; if at the end of a circuit some of the shared registers were not used, they will be imported before exiting the circuit.
                Consequently, if you define own registers just for a single circuit, these will always be at the very top.
                This can be influenced by means of the \ttlink{import} gate, which is only available in group \tex!\circuit!s.
                This gate allows to import a declared register at an arbitrary position.
 
             \paragraph*{\tex!\equals*[<content>]!}\label{sec:foreign:groups:equals}
+               \linkdef{groups/equals}
                The \tex!\equals! macro inserts a blank text---internally, a \ttlink{box}\hyp like gate with the style \ttlink{/yquant/operators/every group equals}---that contains \tex!<content>!.
                If omitted, \tex!<content>! is given by \tex!$=$!.
 
@@ -5053,18 +5078,20 @@ $=$
                Note that you may well have multiple alignment marks in a single line, which \Yquant{} internally numbers \texttt{1}, \texttt{2}, \dots.
 
             \paragraph*{\tex!\\[<separation>]!}
-               The \tex!\\! macro inserts a line break (never a page break), so that the next \tex!\circuit! or \tex!\equals! will be put below all circuits that were output before, and it will again start at the same left position as the first circuit.
+               \linkdef{groups/linebreak}
+               The \tex!\\! macro inserts a line break (never a page break), so that the next \texlink[groups/circuit]{\circuit} or \texlink[groups/equals]{\equals} will be put below all circuits that were output before, and it will again start at the same left position as the first circuit.
                The default vertical distance is given by \ttlink{/yquant/group/line separation}, but it may be overwritten by the optional \tex!<separation>! argument, which must be a \TeX{} dimension.
 
                Note that if you \emph{set} new alignment marks in a new line, this will delete the alignment marks that were previously set.
 
-               If the option \ttlink{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after each linebreak.
+               If the option \ttlink{/yquant/group/aligned} is passed to the \texlink{yquantgroup} environment, the command \texlink[groups/shiftright]{\shiftright} is implied after each linebreak.
 
             \paragraph*{\tex!\shiftright*[<where>]!}
-               The \tex!\shiftright! command will put the ``cursor,'' i.e., the horizontal position at which the next \tex!\circuit! or \tex!\equals! will start, at the position specified by \tex!<where>!.
+               \linkdef{groups/shiftright}
+               The \tex!\shiftright! command will put the ``cursor,'' i.e., the horizontal position at which the next \texlink[groups/circuit]{\circuit} or \texlink[groups/equals]{\equals} will start, at the position specified by \tex!<where>!.
                By default, \tex!<where>! is \tex!1!.
-               If the optional star is present, \Yquant{} will additionally put an alignment mark at this position (see the documentation for \hyperref[sec:foreign:groups:equals]{\tex!\equals!}).
-               If the option \ttlink{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after each linebreak or starred page break.
+               If the optional star is present, \Yquant{} will additionally put an alignment mark at this position (see the documentation for \texlink[groups/equals]{\equals}).
+               If the option \ttlink{/yquant/group/aligned} is passed to the \texlink{yquantgroup} environment, the command \tex!\shiftright! is implied after each linebreak or starred page break.
 
                The option \tex!<where>! can take various forms:
                \begin{itemize}
@@ -5081,13 +5108,14 @@ $=$
                \end{warning}
 
             \paragraph*{\tex!\pagebreak*!, \tex!\newpage*!, \tex!\clearpage*!, \tex!\cleardoublepage*!}
-               The page breaking commands are available only if the \tex!yquantgroup! was not enclosed in a \tex!tikzpicture!.
+               \linkdef{groups/pagebreak}\linkdef{groups/newpage}\linkdef{groups/clearpage}\linkdef{groups/cleardoublepage}
+               The page breaking commands are available only if the \texlink{yquantgroup} was not enclosed in a \tex!tikzpicture!.
                They will end the current picture environment, issue the original page breaking command, and start a new picture.
-               Hence, if you want to pass options globally to the picture, you should use the \ttlink{/yquant/preamble} option for the \tex!yquantgroup!; the content of this key will be passed as options for every implicitly started \tex!tikzpicture!.
+               Hence, if you want to pass options globally to the picture, you should use the \ttlink{/yquant/preamble} option for the \texlink{yquantgroup}; the content of this key will be passed as options for every implicitly started \tex!tikzpicture!.
 
                Usually, remembering the horizontal alignment marks on a new page does not make much sense.
                For this reason, the commands will delete all alignment; use their starred versions to retain them.
-               If the option \ttlink{/yquant/group/aligned} is passed to the \tex!yquantgroup! environment, the command \tex!\shiftright! is implied after the starred version of the page break.
+               If the option \ttlink{/yquant/group/aligned} is passed to the \texlink{yquantgroup} environment, the command \texlink[groups/shiftright]{\shiftright} is implied after the starred version of the page break.
 
                Typically, you will not want to refer to named gates in a circuit on a different page; remember that if you need this feature, you must pass the \texttt{remember picture} key in the \ttlink{/yquant/preamble} option, as this is a reference to another \tex!tikzpicture!.
                Also don't forget to use the (\TikZ) \texttt{overlay} key on the corresponding path that references the node in order not to mess up with the bounding box (see the \TikZ{} documentation for those two keys).
@@ -5096,45 +5124,45 @@ $=$
             Loading the \pkg{groups} language extension will define several new configuration keys.
 
             \begin{option}{group/every group}!!
-               Style that is installed for every \tex!yquantgroup! and \tex!yquantgroup*! environment, as if it had been given as an option.
+               Style that is installed for every \texlink{yquantgroup} and \texlink[yquantgroup]{yquantgroup*} environment, as if it had been given as an option.
                The style's default path is \texttt{/tikz}.
             \end{option}
 
             \begin{option}{group/line separation}!5mm!
-               This is the default vertical line separation that is inserted whenever a new line is issued in a \tex!yquantgroup!.
+               This is the default vertical line separation that is inserted whenever a new line is issued in a \texlink{yquantgroup}.
             \end{option}
 
             \begin{option}{group/aligned}!false!
-               This boolean flag defines whether \tex!\shiftright! is automatically issued after \tex!\\! and the starred page breaking commands.
+               This boolean flag defines whether \texlink[groups/shiftright]{\shiftright} is automatically issued after \texlink[groups/linebreak]{\\} and the starred page breaking commands.
             \end{option}
 
             \begin{option}{preamble}!!
-               This style may only be passed to the \tex!yquantgroup! alignment directly as an option; it is not available via \tex!\yquantset! and the like.
-               It is only relevant if the \tex!yquantgroup! is not contained in a \tex!tikzpicture!.
+               This style may only be passed to the \texlink{yquantgroup} alignment directly as an option; it is not available via \texlink{\yquantset} and the like.
+               It is only relevant if the \texlink{yquantgroup} is not contained in a \tex!tikzpicture!.
                The content of this style will be given as an optional argument to the \tex!tikzpicture!; this is the recommended way to specify \TikZ{} options, as they are automatically preserved among page breaks.
             \end{option}
 
             \begin{option}{operators/every group circuit}!/yquant/operators/every subcircuit, /yquant/operators/subcircuit/frameless, /yquant/operators/subcircuit/name mangling=transparent!
-               This style is installed for the \ttlink{subcircuit} that implicitly wraps each \tex!\circuit!.
-               Note that some magic is carried out to ensure that the name mangling setting only applies to the \emph{direct} content of the \tex!\circuit!; any \ttlink{subcircuit}s within the \tex!\circuit! will use the default name mangling scheme.
+               This style is installed for the \ttlink{subcircuit} that implicitly wraps each \texlink[groups/circuit]{\circuit}.
+               Note that some magic is carried out to ensure that the name mangling setting only applies to the \emph{direct} content of the \texlink[groups/circuit]{\circuit}; any \ttlink{subcircuit}s within the \texlink[groups/circuit]{\circuit} will use the default name mangling scheme.
             \end{option}
 
             \begin{option}[Changed in 0.7]{operators/every group equals}!shape=yquant-rectangle, align=center, anchor/.expanded=\ifyquanthorz{center}{north west}, inner xsep=1mm, x radius=2mm, y radius=2.47mm!
-               This style is installed for every \tex!\equals!, which is internally realized similarly to a \ttlink{box} gate.
+               This style is installed for every \texlink[groups/equals]{\equals}, which is internally realized similarly to a \ttlink{box} gate.
             \end{option}
 
          \subsubsection{Gates and operations}
-            No gates or operations may be used directly within the \tex!yquantgroup! environment, but all the usual \Yquant{} gates and operations are available within \tex!\registers! and \tex!\circuit!.
-            Additionally, within \tex!\circuit!, the \ttlink{import} gate is available.
+            No gates or operations may be used directly within the \texlink{yquantgroup} environment, but all the usual \Yquant{} gates and operations are available within \texlink[groups/registers]{\registers} and \texlink[groups/circuit]{\circuit}.
+            Additionally, within \texlink[groups/circuit]{\circuit}, the \ttlink{import} gate is available.
 
             \paragraph*{\yquant!import!}\linkdef{import}\leavevmode\\
                Syntax: \yquant!import <target>;! \\
                This is a pseudo\hyp gate that makes all the outer registers given in \tex!<target>! available in the current circuit.
-               Consequently, the register names that are specified in \tex!<target>!, also ranges, do not refer to the registers in the \emph{current} \tex!\circuit!, but instead to those defined via \tex!\registers!.
+               Consequently, the register names that are specified in \tex!<target>!, also ranges, do not refer to the registers in the \emph{current} \texlink[groups/circuit]{\circuit}, but instead to those defined via \texlink[groups/registers]{\registers}.
                Therefore, it is for example possible to import all outer registers at once using \yquant!import -;!.
                Vector registers can also be imported partially.
 
-               If additional content (\TeX{} commands such as \TikZ{} paths, non\hyp creation gates) is used within \tex!\registers!, everything that comes \emph{before} the declaration of a register will be copied into the \tex!\circuit! when the register is imported; for a vector, this refers to the index zero.
+               If additional content (\TeX{} commands such as \TikZ{} paths, non\hyp creation gates) is used within \texlink[groups/registers]{\registers}, everything that comes \emph{before} the declaration of a register will be copied into the \texlink[groups/circuit]{\circuit} when the register is imported; for a vector, this refers to the index zero.
                Additionally, any additional content that comes \emph{after} the declaration of the last register will be copied directly after the last register was imported.
 
                \begin{warning}[Out-of-order importing]
@@ -5151,7 +5179,7 @@ $=$
             Note that the layout \emph{between} the circuits will always be the same, irrespective of the actual circuit orientation: Circuit will be set from left to right, and line breaks will always lead to a vertical shift and a reset of the horizontal position.
 
             That said, the circuits may \emph{internally} be set in vertical mode.
-            Every invocation of \tex!\circuit! will then always restart a new \tex!yquant! environment.
+            Every invocation of \texlink[groups/circuit]{\circuit} will then always restart a new \texlink{yquant} environment.
             While the content will still be put in a lonely \ttlink{subcircuit}---to keep consistency in the styling options---no inter\hyp circuit wire alignment will be carried out.
 
             There is an additional complication regarding the vertical alignment of circuit and equality signs within one ``line.''
@@ -5159,11 +5187,12 @@ $=$
             We might desire to vertically center the equality sign between its two enclosing circuits.
             However, what if the line contains more than a two circuits and they all have different heights?
             Then, the equality signs would be at different positions.
-            For this reason, all \tex!\circuit!s and \tex!\equals! will be aligned at their top.
+            For this reason, all \texlink[groups/circuit]{\circuit}s and \texlink[groups/equals]{\equals} will be aligned at their top.
 
       \subsection{qasm}\label{sec:foreign:qasm}
          By saying \tex!\useyquantlanguage{qasm}! in the preamble after loading \Yquant{} itself, the parser for \langlink{qasm} (not OpenQASM) is loaded.
-         It provides the environment \tex!qasm! as well as the macro \tex!\qasmimport!, which works similarly to \tex!\yquantimport! (but does not accept additional options).
+         \linkdef{qasm}\linkdef\qasmimport
+         It provides the environment \tex!qasm! as well as the macro \tex!\qasmimport!, which works similarly to \texlink{\yquantimport} (but does not accept additional options).
 
          \subsubsection{Language specification}
             The \pkg{qasm} language is not formally defined, but an overview is provided at \href{https://web.archive.org/web/20050410022847/https://www.media.mit.edu/quanta/qasm2circ/#spec}{the archived website of \texttt{qasm2circ}}.
@@ -5171,18 +5200,21 @@ $=$
             \begin{itemize}
                \item In \pkg{qasm}, lines could begin in an arbitrary manner; the first whitespace followed by the first valid command were then the instruction.
                   Contrary to this, \Yquant's parser always expects a line to start with a valid gate (preceded by arbitrary whitespaces), a comment, or to be empty.
-               \item In \pkg{qasm}, user\hyp defined gates will be drawn in a box unless they contain the text \texttt{\textbackslash dmeter}, and they will be recognized as measurement gates if they contain \texttt{\textbackslash meter} or \texttt{\textbackslash dmeter}.
+               \item \linkdef{qasm/dmeter}\linkdef{qasm/meter}\linkdef{qasm/dmeterwide}
+                  In \pkg{qasm}, user\hyp defined gates will be drawn in a box unless they contain the text \texttt{\textbackslash dmeter}, and they will be recognized as measurement gates if they contain \texttt{\textbackslash meter} or \texttt{\textbackslash dmeter}.
                   Contrary to this, \Yquant's parser expect the gates to \emph{start} with one of the \emph{macros} \tex!\meter!, \tex!\dmeter!, or \tex!\dmeterwide!.
                   Using these macros \emph{within} the content of a gate does not make sense from the point of view that in \Yquant, gates are nodes with shapes, so either the full gate has a particular shape or it does not, but not only parts of it.
-               \item The \texttt{space} gate is supposed to produce a horizontal whitespace without a gate.
+               \item \linkdef{qasm/space}\linkdef{qasm/nop}
+                  The \texttt{space} gate is supposed to produce a horizontal whitespace without a gate.
                   In \Yquant's implementation, you have to discard the wire if you want to reproduce this behavior; \texttt{space} and \texttt{nop} are equivalent.
             \end{itemize}
 
+            \linkdef{qasm/m}\linkdef{qasm/txt}
             The default \pkg{qasm} style defines several macros that can be used in gates.
             \Yquant{} makes \tex!\m! (matrix; requires \pkg{amsmath}) and \tex!\txt! (switch to text mode) available within the \pkg{qasm} environment.
 
             Do not expect \Yquant's output to match the one of \pkg{qasm} exactly.
-            \Yquant{} is not grid based, so that commands such as \texttt{nop} don't even make sense.
+            \Yquant{} is not grid based, so that commands such as \ttlink[qasm/nop]{nop} don't even make sense.
             They are implemented for compatibility reasons and will produce a fixed horizontal space of the operator minimum width plus one separation, which might or might not be accurate.
 
             Note that whatever you write between \tex!\begin{qasm}! and \tex!\end{qasm}! is essentially treated as verbatim; only where the specification says so (in the definition of a new gate and in the optional third command to the register definition), it is interpreted as \TeX{} markup.
@@ -5250,21 +5282,22 @@ $=$
       \begin{enumerate}
          \item Using a \TeX{} macro within \Yquant{} code will stop the \Yquant{} parser.
             Hence, all gates following this macro will be ignored.
-            Did you remember to issue \tex!\yquant! in order to restart the parser after your macro? \\
+            Did you remember to issue \texlink{\yquant} in order to restart the parser after your macro? \\
             \emph{Symptom:} No errors, but gates are missing
          \item Is the macro robust?
             Modern packages could automatically take care of this by a \tex!\protected! definition, but older ones may not.
-            Try to prefix the macro by \tex!\protect!. \\
+            Try to prefix the macro by \texlink\protect. \\
             \emph{Symptom:} Unexpected error messages
          \item Does the macro depend on other macros defined \emph{within} the circuit?
             The double pass may lead to problems.
-            If possible, define your macros outside of the \tex!yquant! environment.
+            If possible, define your macros outside of the \texlink{yquant} environment.
             If this is not possible, make sure the definitions are expandable, then at measurement stage, \Yquant{} will do the expansion, so that you get the correct results. \\
             \emph{Symptom:} Only the latest assignment will show up whenever the macro is used; the vertical spacing (for subcircuits, possibly also the horizontal spacing) may even be screwed.
          \item Does the macro create output, using its own font?
             If the output depends on the current position, this position will be completely wrong.
             This is due to the fact that the macro is executed at the first pass only, where \Yquant{} does not know about any positions at all.
-            \compat{New in 0.6}The macro \tex!\yquantsecondpass! will defer its content so that it is executed only at the second pass, where positions are known.
+            \compat{New in 0.6}\linkdef\yquantsecondpass\linkdef\yquantesecondpass
+            The macro \tex!\yquantsecondpass! will defer its content so that it is executed only at the second pass, where positions are known.
             It will also automatically restart the parser.
             Note that \tex!\yquantsecondpass! will not expand its content.
             If you need expansion, you may use \tex!\yquantesecondpass!, which uses \tex!\protected@edef!. \\
@@ -5272,7 +5305,8 @@ $=$
          \item Does the macro need to be executed at both passes?
             There may be reasons for this, in particular if you use commands from \pkg{pgf}'s basic or system layer.
             However, all custom macros will only be executed once, at the first pass.
-            \compat{New in 0.6}Wrap the macros in \tex!\yquantescape! in order to execute them both times.
+            \compat{New in 0.6}\linkdef\yquantescape\linkdef\yquanteescape
+            Wrap the macros in \tex!\yquantescape! in order to execute them both times.
             The parser will automatically be restarted afterwards.
             Note that \tex!\yquantescape! will not expand its content.
             You may use \tex!\yquanteescape!, which will first expand its content using \tex!\protected@edef!.
@@ -5286,11 +5320,12 @@ $=$
          You can use all \tex!\path!-like comands as well as scopes and \Yquant{} will automatically take care of restarting the parser appropriately.
          If it does not, this is very likely a bug, please file a report.
 
+         \linkdef\yquantset
          You should typically not use \tex!\tikzset!, as all changes made by this macro will only be executed in the first pass.
-         Instead, use \tex!\yquantset! and change the path appropriately: this macro will first store its argument (using \tex!\protected@edef!) for the second pass and then set the appropriate options also in the first pass.
+         Instead, use \texlink{\yquantset} and change the path appropriately: this macro will first store its argument (using \tex!\protected@edef!) for the second pass and then set the appropriate options also in the first pass.
 
          Note that low\hyp level \pkg{pgf} functions are not altered by \Yquant; this would be highly inefficient.
-         \compat{New in 0.6}If you need to use them, wrap them in \tex!\yquantescape! or \tex!\yquanteescape!.
+         \compat{New in 0.6}If you need to use them, wrap them in \texlink{\yquantescape} or \texlink\yquanteescape.
 
       \subsection[\texorpdfstring{\pkg{beamer}}{beamer}]{\compat{New in 0.6}\pkg{beamer}}
          \Yquant{} integrates with \pkg{beamer} overlays.
@@ -5303,7 +5338,7 @@ $=$
 
          You may also use \tex!\note! inside \Yquant{} circuits.
 
-         Note that \Yquant{} does not overwrite the definitions of the \pkg{beamer} macros, which implies that you can also use them \emph{within} gates (e.g., for the \texttt{value} of a \ttlink{box}).
+         Note that \Yquant{} does not overwrite the definitions of the \pkg{beamer} macros, which implies that you can also use them \emph{within} gates (e.g., for the \ttlink{value} of a \ttlink{box}).
          However, this means that the \Yquant{} parser must be running to detect these macros and take appropriate action.
          Hence, if you interrupted the code via some special macros, make sure to restart the parser even if your next macro is, e.g., \tex!\only!.
 
@@ -5390,18 +5425,18 @@ $=$
          Introduce capability to perform vertical alignment with multi\hyp register gates. \\
          Dramatic changes under the hood regarding horizontal positioning, which is now only determined in the drawing stage; this paves the way for delayed gates, which are planned for 0.4.
          Also changes in the gate declaration interface. \\
-         Introduce compatibility layer, so that layout\hyp breaking changes will not become effective unless explicitly requested. \\
+         Introduce \textlink[compat]{compatibility layer}, so that layout\hyp breaking changes will not become effective unless explicitly requested. \\
          Separate register height into a height and depth key. \\
-         Introduce \texttt{overlay} key to disable height caluclation selectively. \\
+         Introduce \ttlink{overlay} key to disable height caluclation selectively. \\
          Change register style declaration, so that this is now always equivalent to creating an unnamed register followed by an \ttlink{init} gate with the given text.
-         Note: This may be a \textbf{breaking change} that cannot be compatibility\hyp protected---if you used \TeX{} conditionals involving \tex!\idx! for creation labels of registers, you will now need to either \tex!\protect! them all or just capitalize their first letter (which corresponds to auto\hyp\tex!\protect!ed versions for \texttt{compat} at least \texttt{0.4}). \\
+         Note: This may be a \textbf{breaking change} that cannot be compatibility\hyp protected---if you used \TeX{} conditionals involving \texlink{\idx} for creation labels of registers, you will now need to either \texlink{\protect} them all or just capitalize their first letter (which corresponds to auto\hyp\texlink\protect ed versions for \ttlink{compat} at least \texttt{0.4}). \\
          Now use nodes for \ttlink{init} and \ttlink{output} gates. \\
          Change behavior of \ttlink{hspace} and \ttlink{align}: Now also extend if the wire is discarded afterwards. \\
-         Introduce the commands \tex!\Ifnum!, \tex!\Ifcase!, \tex!\Or!, \tex!\Else!, \tex!\Fi!, \tex!\Unless! and \tex!\The! available for use within gates that behave like auto\hyp\tex!\protect!ed versions of their plain \TeX{} equivalents.
+         Introduce the commands \texlink\Ifnum, \texlink\Ifcase, \texlink\Or, \texlink\Else, \texlink\Fi, \texlink\Unless, and \texlink{\The} available for use within gates that behave like auto\hyp\texlink\protect ed versions of their plain \TeX{} equivalents.
 
       \subsection*{2021-03-27: Version 0.4}
          New gate: \ttlink{inspect}. Various bug fixes. \\
-         Introduce the \texttt{direct control} feature: \ttlink{measure} gates can now substitute positive controls of future gates.
+         Introduce the \ttlink[{[direct control]}]{direct control} feature: \ttlink{measure} gates can now substitute positive controls of future gates.
 
       \subsection*{2021-07-03: Version 0.4.1}
          Fix \href{https://github.com/projekter/yquant/issues/9}{\#9}: Output bracket misaligned. \\
@@ -5409,10 +5444,10 @@ $=$
 
       \subsection*{2021-08-17: Version 0.5}
          Improvement: Active outer canvas transformations (\TikZ{} shifts, scalings, rotations) should be supported more nicely (no guarantees!). \\
-         Improvement: Custom gates (\tex!\yquantdefinegate!) can now contain \TikZ{} \tex!\path!\hyp like commands without the \tex!\noexpand! prefix. \\
-         Improvement: Automatically discard wires \emph{inside} a subcircuit (even if they had the \texttt{out} or \texttt{inout} attribute) if they are discarded directly after the subcircuit \emph{and} they have output gates within the subcircuit (else, the wire would be re\hyp drawn from the output to the border of the subcircuit). \\
+         Improvement: Custom gates (\texlink\yquantdefinegate) can now contain \TikZ{} \tex!\path!\hyp like commands without the \tex!\noexpand! prefix. \\
+         Improvement: Automatically discard wires \emph{inside} a subcircuit (even if they had the \ttlink{[out]} or \ttlink{[inout]} attribute) if they are discarded directly after the subcircuit \emph{and} they have output gates within the subcircuit (else, the wire would be re\hyp drawn from the output to the border of the subcircuit). \\
          Bugfix: Referencing named gates in nested subcircuits now works without producing an error (worked before, but gave errors). \\
-         Bugfix: Properly handle the \texttt{direct control} feature if it was specified, but not used until the end of the (sub)circuit. \\
+         Bugfix: Properly handle the \ttlink[{[direct control]}]{direct control} feature if it was specified, but not used until the end of the (sub)circuit. \\
          Introduce name mangling options for subcircuits. \\
          Implement \href{https://github.com/projekter/yquant/issues/11}{\#11}: Circuit equations. As of this version, the \langlink{groups} language is available that allows to easily implement circuit equations.
 
@@ -5422,14 +5457,14 @@ $=$
       \subsection*{2021-12-28: Version 0.6}
          Bugfix: Support to set the \ttlink{/yquant/operators/subcircuit/seamless} property outside of \Yquant{} environments. \\
          New: Support for \pkg{beamer}. \\
-         New macros: \tex!\yquantsecondpass!, \tex!\yquantesecondpass!, \tex!\yquantescape!, and \tex!\yquanteescape! for more fine\hyp grained control of when to execute macros. \\
-         Bugfix: the auto\hyp\tex!\protect!ed versions \tex!\Ifnum! etc. now also work in \ttlink{output} gates. \\
+         New macros: \texlink\yquantsecondpass, \texlink\yquantesecondpass, \texlink\yquantescape, and \texlink{\yquanteescape} for more fine\hyp grained control of when to execute macros. \\
+         Bugfix: the auto\hyp\texlink\protect ed versions \texlink{\Ifnum} etc. now also work in \ttlink{output} gates. \\
          New gate: \ttlink{text}. \\
          Introduce the \ttlink{/yquant/operators/every rectangular box} style as a common ancestor of gates such as \ttlink{box}, \ttlink{h}, ... instead of using the \ttlink{/yquant/operators/every box} style for this.
          As a consequence, boxes can now be styled globally without affecting the other gates.
-         This new behavior is compatibility\hyp protected. \\
+         This new behavior is \textlink[compat]{compatibility\hyp protected}. \\
          Bugfix: \ttlink{output}s can now be named. \\
-         Bugfix: Border angles of \texttt{yquant-ellipse} now work properly. \\
+         Bugfix: Border angles of \texttt{yquant-circle} now work properly. \\
          New configuration: \ttlink{/yquant/register/default lazy name}. \\
          Documentation: Replace the wishlist by a section on integration with other packages. \\
          Documentation: Include the examples of \pkg{qpic} in this manual.
@@ -5438,7 +5473,7 @@ $=$
          New: Support for vertical layout. \\
          Various bugfixes. \\
          Internal change of the loading order of the package files. \\
-         Fix \href{https://github.com/projekter/yquant/issues/18}{\#18}: Subcircuit boxes don't render in \texttt{groups} environment.
+         Fix \href{https://github.com/projekter/yquant/issues/18}{\#18}: Subcircuit boxes don't render in \texlink{yquantgroup} environment.
          Now, styles can properly modify the \ttlink{/yquant/operators/this subcircuit box} style without affecting the content of the subcircuit, only the box. \\
          New: Support for a simplified drawing pipeline without clipping paths.
 
@@ -5453,25 +5488,25 @@ $=$
          Fix \href{https://github.com/projekter/yquant/issues/24}{\#24}: Clipping in subcircuits can under very special circumstances fail. Change all clipping paths to a most conservative huge rectangle---before, we tried to be economical.
          Also use a more meticulous way of subcircuit position alignment (which will probably consume more resources during compilation, but multiple subcircuits may cancel each other in height and depth calculation if we don't do it). \\
          Address \href{https://github.com/projekter/yquant/issues/25}{\#25}: We now provide the styles \ttlink{/tikz/only at} and \ttlink{/tikz/not at} that allow to easily use styles on an multi\hyp register operator that just affect some parts of their register representation. \\
-         Now the size of controls is taken into account when calculating the size of an operation---so extremely large controls will appropriate enlarge the height/depth or horizontal increment.
+         Now the size of controls is taken into account when calculating the size of an operation---so extremely large controls will appropriately enlarge the height/depth or horizontal increment.
          This is more useful when putting labels to controls.
 
       \subsection*{2023-03-05: Version 0.7.4}
-         Fix \href{https://github.com/projekter/yquant/issues/26}{\#26}: Reset all the special groups\hyp related commands that are only valid \emph{directly} in a \tex!yquantgroups! environment when parsing the arguments of \tex!\registers!, \tex!\circuit!, or \tex!\equals!.
-         Most notably, this affects \tex!\\!, which can now be used properly within a grouped circuit.
+         Fix \href{https://github.com/projekter/yquant/issues/26}{\#26}: Reset all the special groups\hyp related commands that are only valid \emph{directly} in a \texlink{yquantgroup} environment when parsing the arguments of \texlink[groups/registers]{\registers}, \texlink[groups/circuit]{\circuit}, or \texlink[groups/equals]{\equals}.
+         Most notably, this affects \texlink[groups/linebreak]{\\}, which can now be used properly within a grouped circuit.
 
       \subsection*{2023-11-26: Version 0.7.5}
          Fix \href{https://github.com/projekter/yquant/issues/29}{\#29}: Scaling the whole picture would lead to compilation failures and wrong output with subcircuits.
 
       \subsection*{2025-06-15: Version 0.8}
-         Fix an issue with linebreak in a \tex!yquantgroup! environment. \\
+         Bugfix: Linebreaks in a \texlink{yquantgroup} environment no longer corrupt future commands. \\
          New (\href{https://github.com/projekter/yquant/issues/32}{\#32}): add a possibility to define attributes---and hence, pass parameters---to custom gates. \\
-         Changed: \tex!\yquantdefinebox! and \tex!\yquantdefinegate! now do no longer expand their content at the time of definition.
-         The expanding behavior can be obtained with the new macros \tex!\yquantedefinebox! and \tex!\yquantedefinegate!.
-         This is compatibility\hyp protected. \\
-         Changed: \tex!\idx! and \tex!\regidx! will now evaluate only at the time of drawing, giving a correct index when used with discontiguous registers, and in particular, with the \langlink{groups} language.
-         As a consequence, \tex!\regidx! is now always contains an implicit \tex!\vphantom[! to have the same vertical extent during preparation as in drawing.
+         Changed: \texlink{\yquantdefinebox} and \texlink{\yquantdefinegate} now do no longer expand their content at the time of definition.
+         The expanding behavior can be obtained with the new macros \texlink{\yquantedefinebox} and \texlink{\yquantedefinegate}.
+         This is \textlink[compat]{compatibility\hyp protected}. \\
+         Changed: \texlink{\idx} and \texlink{\regidx} will now evaluate only at the time of drawing, giving a correct index when used with discontiguous registers, and in particular, with the \langlink{groups} language.
+         As a consequence, \texlink{\regidx} is now always contains an implicit \tex!\vphantom[! to have the same vertical extent during preparation as in drawing.
          This can lead to larger spacings between very small registers and is therefore compatibility\hyp protected.
-         To use the newer version with smaller spacing, give the label at creation explicitly (or using \tex!\reg!).
+         To use the newer version with smaller spacing, give the label at creation explicitly (or using \texlink{\reg}). \\
 %END_FOLD
 \end{document}
