@@ -5045,7 +5045,7 @@ $=$
       \compat{New in 0.3}\Yquant{} not only understands its own language, but also others.
       \compat{New in 0.5}Although we refer to ``foreign languages,'' additional extension packages of the \Yquant{} language itself are also covered in this section and can be loaded by the same syntax.
 
-      \subsection[groups]{\compat{Updated in 0.7\\New in 0.5}groups}\label{sec:foreign:groups}
+      \subsection[groups]{\compat{Updated in 0.8, 0.7\\New in 0.5}groups}\label{sec:foreign:groups}
          By saying \tex!\useyquantlanguage{groups}! in the preamble after loading \Yquant{} itself, additional support for groups of \Yquant{} circuits is loaded.
          Various circuits in a group share a common set of registers, are appropriately aligned horizontally if on the same line and can also be aligned vertically among multiple lines.
          The main intended use is for circuit equations.
@@ -5057,7 +5057,7 @@ $=$
 
          As with \texlink{yquant}, the environment accepts optional options that are passed to \texlink\yquantset; a starred form is available that allows for the lazy creation of registers---but note that \emph{shared} registers must always be created explicitly; only if some circuits in the group have additional registers, the lazy creation applies.
 
-         \subsubsection{General usage}
+         \subsubsection{General usage}\vskip-2mm
             \begin{minted}{tex}
 % preamble:
 % \usepackage[compat=<version>]{yquant}
@@ -5070,7 +5070,7 @@ $=$
       }
       % any of \circuit, \equals, \\, \shiftright
       % if the tikzpicture environment was omitted: also allows
-      % \pagebreak, \newpage, \clearpage, \cleardoublepage
+      % \pagebreak, \newpage, \clearpage, \cleardoublepage, \intertext, \shortintertext
       % in most cases, TikZ commands are also allowed
    \end{yquantgroup}
    % tikz commands go here
@@ -5158,6 +5158,15 @@ $=$
 
                Typically, you will not want to refer to named gates in a circuit on a different page; remember that if you need this feature, you must pass the \texttt{remember picture} key in the \ttlink{/yquant/preamble} option, as this is a reference to another \tex!tikzpicture!.
                Also don't forget to use the (\TikZ) \texttt{overlay} key on the corresponding path that references the node in order not to mess up with the bounding box (see the \TikZ{} documentation for those two keys).
+
+            \paragraph*{\tex!\intertext!, \tex!\shortintertext!}
+               \compat{New in 0.8}\linkdef{groups/intertext}\linkdef{groups/shortintertext}
+               The text intermission commands are available only if the \texlink{yquantgroup} was not enclosed in a \tex!tikzpicture!.
+               They will end the current picture environment, output the text (or really just anything) that was given as required argument as a new paragraph, and start a new picture with the same alignment.
+               Note that the commands do not detect whether a page break happens, they will \emph{always} preserve the alignment.
+
+               While the commands resemble those from \pkg{amsmath} and \pkg{mathtools}, they take two optional arguments, which must be valid \TeX{} skips and which define the vertical space inserted before and after the text.
+               By default, \tex!\intertext! is the same as \tex!\intertext[\belowdisplayskip][\abovedisplayskip]!, while\\\tex!\shortintertext! is the same as\\\tex!\shortintertext[\belowdisplayshortskip][\abovedisplayshortskip]!.
 
          \subsubsection{Configuration}
             Loading the \pkg{groups} language extension will define several new configuration keys.
