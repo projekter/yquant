@@ -635,12 +635,12 @@
    }%
    \protected\long\def\yquantescape##1{%
       ##1%
-      \protected@csxappto{\yquant@prefix draw}{##1}%
+      \csgappto{\yquant@prefix draw}{##1}%
       \yquant@env@scan%
    }%
    \protected\long\def\yquanteescape##1{%
       ##1%
-      \csgappto{\yquant@prefix draw}{##1}%
+      \protected@csxappto{\yquant@prefix draw}{##1}%
       \yquant@env@scan%
    }%
 }
