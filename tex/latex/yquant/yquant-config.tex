@@ -520,7 +520,7 @@
    \pgfqkeys{/yquant}{%
       internal/setregidx/.code 2 args=%
          {\def\yquant@draw@@idx@content{#1}%
-          \ifnum\csname\yquant@prefix registerhigh@#2\endcsname>1 %
+          \ifnum\csname\yquant@prefix registerhigh@#2\endcsname>0 %
              \def\yquant@lang@maybe@idx{[\idx]}%
           \else%
              \let\yquant@lang@maybe@idx=\empty%
