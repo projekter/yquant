@@ -813,11 +813,13 @@
       \unless\ifdefined\yquant@lang@attr@value%
          \let\yquant@lang@attr@value=\empty%
       \fi%
+      \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
       \ifyquant@circuit@operator@hasControls%
          \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@minus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
+         \let\yquant@prepare@callback@draw=\yquant@circuit@settype@afternobit%
+      \else%
+         \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
       \fi%
-      \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
-      \let\yquant@prepare@callback@draw=\yquant@circuit@settype@afternobit%
       \let\yquant@prepare@multi=\yquant@prepare@multiinit%
       \ifnum\count8=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
          \def\yquant@config@operator@minimum@width{0pt}%
