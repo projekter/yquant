@@ -612,6 +612,17 @@
    \cslet{\yquant@prefix xpos@#1}\newx%
 }
 
+\protected\long\def\yquant@prepare@subcircuit@group@execute@settype#1\yquant@register@set@type#2\yquant@sep{%
+   \ifstrempty{#2}\relax{%
+      \yquant@prepare@subcircuit@group@execute@settype@i#2\yquant@sep%
+   }%
+}
+
+\protected\long\def\yquant@prepare@subcircuit@group@execute@settype@i#1#2#3\yquant@sep{%
+   \yquant@register@set@type{#1}{#2}%
+   \yquant@prepare@subcircuit@group@execute@settype#3\yquant@sep%
+}
+
 \protected\long\def\yquant@prepare@subcircuit@group#1#2#3#4#5#6#7\yquant@draw@endgroup{%
    \begingroup%
       \yquant@prepare@subcircuit@getmaxx{#6}%
@@ -665,6 +676,7 @@
          \fi%
       \fi%
    \next%
+   \yquant@prepare@subcircuit@group@execute@settype#7\yquant@register@set@type\yquant@sep% execute all inner set types
    \@gobblethree% three arguments for the endgroup
 }
 

@@ -352,15 +352,14 @@
 % BEGIN_FOLD Helpers for operator callbacks
 % turn a wire into a different type
 \def\yquant@circuit@settype#1{%
-   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+   \unless\if\yquant@circuit@settype@to\yquant@register@get@type{#1} %
       \yquant@circuit@flushwire{#1}%
       \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
    \fi%
 }
 
 \def\yquant@circuit@settype@beforenobit#1{%
-   % same, but possibly extend control line according to the style before the change
-   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+   \unless\if\yquant@circuit@settype@to\yquant@register@get@type{#1} %
       \ifyquant@OR%
          \ifnum\yquant@circuit@operator@minctrl=#1 \fi%
          \ifnum\yquant@circuit@operator@maxctrl=#1 \fi{%
@@ -373,7 +372,7 @@
 
 \def\yquant@circuit@settype@afternobit#1{%
    % same, but possibly extend control line according to the style before the change
-   \unless\if\yquant@register@get@type{#1}\yquant@circuit@settype@to %
+   \unless\if\yquant@circuit@settype@to\yquant@register@get@type{#1} %
       \yquant@circuit@flushwire{#1}%
       \yquant@register@set@type{#1}{\yquant@circuit@settype@to}%
       \ifyquant@OR%
