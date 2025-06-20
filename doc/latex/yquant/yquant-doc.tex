@@ -5475,7 +5475,7 @@ $=$
          Also changes in the gate declaration interface. \\
          Introduce \textlink[compat]{compatibility layer}, so that layout\hyp breaking changes will not become effective unless explicitly requested. \\
          Separate register height into a height and depth key. \\
-         Introduce \ttlink{overlay} key to disable height caluclation selectively. \\
+         Introduce \ttlink{overlay} key to disable height calculation selectively. \\
          Change register style declaration, so that this is now always equivalent to creating an unnamed register followed by an \ttlink{init} gate with the given text.
          Note: This may be a \textbf{breaking change} that cannot be compatibility\hyp protected---if you used \TeX{} conditionals involving \texlink{\idx} for creation labels of registers, you will now need to either \texlink{\protect} them all or just capitalize their first letter (which corresponds to auto\hyp\texlink\protect ed versions for \ttlink{compat} at least \texttt{0.4}). \\
          Now use nodes for \ttlink{init} and \ttlink{output} gates. \\
@@ -5556,5 +5556,14 @@ $=$
          As a consequence, \texlink{\regidx} is now always contains an implicit \tex!\vphantom[! to have the same vertical extent during preparation as in drawing.
          This can lead to larger spacings between very small registers and is therefore compatibility\hyp protected.
          To use the newer version with smaller spacing, give the label at creation explicitly (or using \texlink{\reg}). \\
+         Bugfix: Rarely, calculation of the beginning of a register line did not succeed (leading to a missing line) due to fixed\hyp point inaccuracies; introduce a tolerance to fix this. \\
+         Bugfix: The documentation PDF was broken in the Git repository, as it was apparently not recognized as binary. \\
+         New: Introduce ``corner'' gates by allowing \ttlink{init} and \ttlink{discard} to be conditioned on other registers; no longer require a \ttlink{value} attribute for \ttlink{init}. \\
+         Bugfix: The definition of \texlink{\yquantescape} vs. \texlink{\yquanteescape} was just the opposite of what was documented. \\
+         Bugfix: Changing global \TikZ{} variables such as the line width might have leaked into other registers and gates. \\
+         New: add the \texlink[groups/intertext]{\intertext} and \texlink[groups/shortintertext]{\shortintertext} commands in a \texlink{yquantgroup} environment. \\
+         Bugfix: Always recognize changes in register types in subcircuits (and thus \langlink{groups}). \\
+         Documentation: The documentation now contains much more links between individual commands.
+         Maybe in the future, this can even be expanded to code examples?
 %END_FOLD
 \end{document}
