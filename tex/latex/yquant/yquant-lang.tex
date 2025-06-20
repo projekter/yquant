@@ -817,6 +817,7 @@
       \ifyquant@circuit@operator@hasControls%
          \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@minus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
          \let\yquant@prepare@callback@draw=\yquant@circuit@settype@afternobit%
+         \count8=0 % never apply the shift if we have controls
       \else%
          \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
       \fi%
