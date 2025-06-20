@@ -18,7 +18,7 @@
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
 \usepackage[compat=newest]{yquant}
 \usepackage{braket,hyphenat,microtype,hologo,minted2,import,ragged2e,booktabs}
-\usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz}
+\usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz2}
 \useyquantlanguage{qasm,groups}
 \usepackage{amsmath,adjustbox,cleveref}
 \usepackage[framemethod=tikz]{mdframed}
@@ -288,7 +288,7 @@
                      It also reduces burdens of the \pkg{xy} syntax.
                      However, the disadvantages of the grid\hyp based syntax still remain.
 
-                     Maintenance status: last update in 2020; the underlying \TikZ{} is actively maintained again by now.
+                     Maintenance status: last update in 2023; the underlying \TikZ{} is actively maintained again by now.
                   \item \pkg{qpic} follows the approach of \pkg{qasm}: It makes use of an external Python program that reads the quantum circuits in an own language and converts them into \TikZ{} commands.
                      The language \pkg{qpic} follows is much more powerful than \pkg{qasm}'s.
                      The disadvantage that modifications in the output code will not remain after running the Python script again is mitigated by the possibility to define own \TeX{} macros.
@@ -296,7 +296,7 @@
                      However, the language \pkg{qpic} uses cannot be understood without a detailed study of the manual, it appears to have been designed with the aim to minimize the length of command names.
                      A disadvantage of external programs is that the amount of space gates need is not accessible by the script; hence, manual intervention may be required.
 
-                     Maintenance status: last update in 2020; the underlying \TikZ{} is actively maintained, and the script is compatible with Python~3.
+                     Maintenance status: last update in 2023; the underlying \TikZ{} is actively maintained, and the script is compatible with Python~3.
                \end{itemize}
          \end{itemize}
 
