@@ -839,7 +839,7 @@
    \yquant@circuit@extendwire{#2}{center}%
    \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
-      {\yquant@draw@@currentcontroltype}\yquant@draw@@x%
+      {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x%
    % check for empty name parameter
    \ifstrempty{#3}\relax{%
       \pgfnodealias{\tikz@pp@name{#3}}{yquantbox}%
