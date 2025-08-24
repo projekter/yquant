@@ -291,7 +291,7 @@
 
 % BEGIN_FOLD Define own gates
 % if the argument contains #2, replace it by #1 and add value as a required attribute
-\protected\def\yquantdefinegate@parsearg#1#2{%
+\protected\long\def\yquantdefinegate@parsearg#1#2{%
    \def\yquantdefinegate@parsearg@check##1{#2}%
    \edef\yquantdefinegate@parsearg@replaced{%
       \unexpanded\expandafter{\yquantdefinegate@parsearg@check{#1}}%
