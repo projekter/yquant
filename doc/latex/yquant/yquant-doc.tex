@@ -26,7 +26,7 @@
 
 \makeatletter
 
-% currently, cleveref is broken and the patch has not landed in MikTeX yet: https://tex.stackexchange.com/a/737207/32357
+% if labels are not built correctly, a bugfix to AMS is already in the kernel, but the corresponding fix to cleveref not yet. Then apply (https://tex.stackexchange.com/a/737207/32357)
 \AtBeginDocument
  {
    \def\ltx@label#1{\cref@label{#1}}%add braces
@@ -841,11 +841,11 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                   This can make registers with no or only very small gates larger than before; therefore, this setting is compatibility\hyp protected.
                \item \linkdef\len\tex!\len! contains the length of the current register vector.
                   Note that \emph{current} means \emph{at the stage of creation}.
-                  As this was always documented in this way (while the behavior of the other macros did not match their documentation), the behavior is the same in all versions.
+                  As this was always documented in this way (while the behavior of the other macros did not match their documentation), the behavior is the same with all compatibility settings.
             \end{itemize}
          \end{option}
 
-         \begin{option}[New in 0.6]{register/default lazy name}!!
+         \begin{option}[Changed in 0.8\\New in 0.6]{register/default lazy name}!!
             The printed name that is used by default if a new register is created implicitly (i.e., without using any of \ttlink{qubit}, \ttlink{cbit}, \ttlink{qubits}, or \ttlink{nobit}, but inside a \texlink{yquant*} environment by just using the register).
             The same macros as with \ttlink{/yquant/register/default name} are available.
             Note that this default setting is not used when the register is created via an \ttlink{init} gate---its value always overwrites the default.
@@ -5567,6 +5567,7 @@ $=$
          Maybe in the future, this can even be expanded to code examples?
 
       \subsection*{WIP: Version 0.8.1}
-         Bugfix: Subcircuits, where a wire with multi\hyp digit internal index had the \textlink{[in]} attribute broke the layout.
+         Bugfix: Subcircuits, where a wire with multi\hyp digit internal index had the \textlink{[in]} attribute broke the layout. \\
+         Bugfix: The \texlink{\idx} and \texlink{\regidx} changes in version~0.8 are now applied to the lazy register creation (\ttlink{/yquant/register/default lazy name}) as well.
 %END_FOLD
 \end{document}

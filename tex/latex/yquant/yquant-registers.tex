@@ -145,6 +145,7 @@
    }%
 }
 
+% sync with \yquant@lang@create@do
 \protected\def\yquant@register@get@id@lazycreate@do#1[#2]#3[;{%
    \begingroup%
       % parse length
@@ -167,10 +168,15 @@
          \def\idx{0}%
       \fi%
       % define text macros
-      \ifnum\len=1 %
-         \let\regidx=\reg%
-      \else%
+      \ifnum\len>1 %
          \def\regidx{\reg[\idx]}%
+      \else%
+         \ifnum\yquant@compat<4 %
+            \let\regidx=\reg%
+         \else%
+            \def\regidx{\reg\vphantom[\yquant@lang@maybe@idx}%
+         \fi%
+         % see comment in \yquant@lang@create@do for the vphantom
       \fi%
       \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
       \begingroup%
@@ -204,7 +210,7 @@
          \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
          \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
          % there are no multi inits in this context
-         \preto\yquant@attrs@remaining{internal/move label,}%
+         \epreto\yquant@attrs@remaining{internal/move label, internal/setregidx={\idx}{\reg},}%
          \def\yquant@config@operator@minimum@width{0pt}%
          \unless\ifx\yquant@lang@attr@value\empty%
             % make sure to immediately remove the "clear" marker again if we have a text
