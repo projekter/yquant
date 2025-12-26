@@ -458,10 +458,6 @@
 \pgfqkeys{/yquant}{%
    internal/move label/.code=%
       {\yquant@config@operator@position@rightaligntrue},
-   internal/no advance/.code=%
-      {\unless\ifyquantmeasuring% We don't draw subcircuits during measuring time, but we need their advancement
-          \yquant@config@operator@position@advancefalse%
-       \fi},
    internal/multi main/.is if=%
       yquant@config@internal@multi@main,%
    internal/setup done/.code=%
