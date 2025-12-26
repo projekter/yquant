@@ -5555,7 +5555,9 @@ $=$
          Bugfix: The \texlink{\idx} and \texlink{\regidx} changes in version~0.8 are now applied to the lazy register creation (\ttlink{/yquant/register/default lazy name}) as well. \\
          Bugfix: Allow \tex!\par! in gate definitions once more.
 
-      \subsection*{2025-10-05: Version 0.8.2}
+      \subsection*{2025-12-26: Version 0.8.2}
          Bugfix: Remove some legacy code that modified \TikZ{} decorations, which has not been used since version~0.1.2 and might cause some issues with other packages (problems with \pkg{pgfplots} and axis discontinuities were encountered).
+         Fix \href{https://github.com/projekter/yquant/issues/35}{\#35}: Make sure to always advance all involved registers in a subcircuit, including controls. \\
+         Bugfix: Controlled subcircuits will no longer potentially trigger an internal error.
 %END_FOLD
 \end{document}
