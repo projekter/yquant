@@ -442,28 +442,30 @@
    }%
 }
 
-\def\ifyquant@OR#1\fi#2\fi{%
+\def\ifyquant#1\fi{%
    #1%
       \expandafter\@firstoftwo%
    \else%
-      #2%
-         \expandafter\expandafter\expandafter\@firstoftwo%
-      \else%
-         \expandafter\expandafter\expandafter\@secondoftwo%
-      \fi%
+      \expandafter\@secondoftwo%
    \fi%
 }
 
+\def\ifyquant@OR#1\fi#2\fi{%
+   \ifyquant#1\fi%
+      \@firstoftwo%
+      {\ifyquant#2\fi%
+         \@firstoftwo%
+         \@secondoftwo%
+      }%
+}
+
 \def\ifyquant@AND#1\fi#2\fi{%
-   #1%
-      #2%
-         \expandafter\expandafter\expandafter\@firstoftwo%
-      \else%
-         \expandafter\expandafter\expandafter\@secondoftwo%
-      \fi%
-   \else%
-      \expandafter\@secondoftwo%
-   \fi%
+   \ifyquant#1\fi%
+      {\ifyquant#2\fi%
+         \@firstoftwo%
+         \@secondoftwo%
+      }%
+      \@secondoftwo%
 }
 
 % There are a couple of pgf states that are always set globally and only protected by a scope. We don't want this, so we provide our own grouping - essentially, a scope without the scope in the output. This is because we deem changes to the variables within the group as unlikely, but possible, so it is more economical (in the output) to reset them explicitly only if a change occurred.

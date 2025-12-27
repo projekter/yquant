@@ -1,7 +1,7 @@
 \newcount\yquant@draw@@currentcontroltype%
 
 \protected\def\yquant@draw@init#1#2{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
+   \ifyquant@register@isaliased{#1}{%
       % for connected subcircuit wires, check if this actually changes the type [happens for formerly discarded output wires] and flush the wire if necessary
       \edef\yquant@draw@init@type{\yquant@register@get@type{#1}}%
       \unless\if\yquant@draw@init@type#2\relax%
@@ -18,7 +18,7 @@
          \fi%
          \yquant@register@set@type{#1}{#2}%
       \fi%
-   \else%
+   }{%
       % for new wires, reset the type, and if this a subcircuit, put the appropriate x position in place. It might have changed from its initial value during preparation stage
       \yquant@register@set@type{#1}{#2}%
       \ifdefined\yquant@draw@subcircuit@wirestart%
@@ -27,7 +27,7 @@
             {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}{}%
          }%
       \fi%
-   \fi%
+   }%
 }
 
 \def\yquant@draw@subcircuit@leftpos{0pt}% outermost circuit: 0pt
@@ -84,10 +84,10 @@
 }
 
 \protected\def\yquant@draw@group@rightadvance#1{%
-   \ifcsname\yquant@prefix registermap@#1\endcsname%
+   \ifyquant@register@isaliased{#1}{%
       % for connected subcircuit wires, make sure to flush the wire until the beginning.
       \yquant@circuit@flushwire{#1}%
-   \fi%
+   }\relax%
 }
 
 \protected\def\yquant@draw@endgroup#1#2#3{%

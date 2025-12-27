@@ -104,6 +104,11 @@
 }
 
 \def\yquant@register@alias@extract yquant@env#1@{#1}%
+
+% expand to #2 if #1 has an alias and to #3 else
+\def\ifyquant@register@isaliased#1{%
+   \ifyquant\ifcsname\yquant@prefix registermap@#1\endcsname\fi%
+}
 % END_FOLD
 
 % BEGIN_FOLD Converter: convert a register name to its id

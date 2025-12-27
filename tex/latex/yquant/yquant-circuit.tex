@@ -66,7 +66,7 @@
    \let\yquant@circuit@endwires@finalize=\relax%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
       % we only extend the wire if it does not come from the outer circuit - this one would be responsible for the extension.
-      \ifcsname\yquant@prefix registermap@\yquant@circuit@endwires@i\endcsname%
+      \ifyquant@register@isaliased\yquant@circuit@endwires@i{%
          \xifinlistcs\yquant@circuit@endwires@i{\yquant@prefix inonly}{%
             % however, the wire is to be discarded after this circuit
             \ifyquanthorz{%
@@ -83,9 +83,9 @@
                   {\yquant@circuit@endwires@i}\noexpand\yquant@register@type@none%
             }%
          }\relax%
-      \else%
+      }{%
          \yquant@draw@wire\yquant@circuit@endwires@i1%
-      \fi%
+      }%
    }%
 }
 

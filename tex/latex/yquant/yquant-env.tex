@@ -190,12 +190,12 @@
    \let\firstinout=\relax%
    \let\lastinout=\relax%
    \yquant@for \i := 1 to \max {%
-      \ifcsname\yquant@prefix registermap@\i\endcsname%
+      \ifyquant@register@isaliased\i{%
          \ifx\firstinout\relax%
             \let\firstinout=\i%
          \fi%
          \let\lastinout=\i%
-      \fi%
+      }\relax%
    }%
    % END_FOLD
    % BEGIN_FOLD Take care with internal registers before the first inout
@@ -268,7 +268,7 @@
    % BEGIN_FOLD Set up chain of other macros
    % We set up a chain of position evaluation macros. We start with the first [external] register in the outermost circuit; it is supposed to call the evaluation macro of its successor. Next, we iterate through all subcircuits (recursively). Whenever we find a register that is mapped to an outer one, we take appropriate measures.
    \yquant@for \i := \i to \max {%
-      \ifcsname\yquant@prefix registermap@\i\endcsname%
+      \ifyquant@register@isaliased\i{%
          % \outery = env@endy macro of parent wire
          \edef\outerlevel{\yquant@register@get@parent{\i}}%
          \edef\outery{%
@@ -278,7 +278,7 @@
          \ifdim\dimen0<\outery\space%
             \dimen0=\outery\space%
          \fi%
-      \fi%
+      }\relax%
       \csedef{\yquant@prefix env@endy@\i}{\the\dimen0}%
       \unless\ifx\i\max%
          \advance \dimen0 by \dimexpr%
@@ -299,7 +299,7 @@
          \noexpand\fi%
          % now \dimen0 holds the current y position of register \i
          % BEGIN_FOLD map
-         \ifcsname\yquant@prefix registermap@\i\endcsname%
+         \ifyquant@register@isaliased\i{%
             % if this is an in/out register, put it at the same position as the outer one
             \noexpand\ifdim\dimen0<\expandafter\noexpand\outery\space%
                \dimen0=\expandafter\noexpand\outery\space%
@@ -374,7 +374,7 @@
                      }%
                   \expandafter\noexpand\csname fi\endcsname%
             \fi%
-         \fi%
+         }\relax%
          % END_FOLD
          \unless\ifx\i\max%
             \advance\dimen0 by \dimexpr%
@@ -480,19 +480,19 @@
    \def\yquant@prefix{yquant@env#1@}%
    \ifyquantdebug%
       \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-         \ifcsname\yquant@prefix registermap@\i\endcsname%
+         \ifyquant@register@isaliased\i{%
             \message{^^J \yquant@orientation@y(#1, \i): external}%
-         \else%
+         }{%
             \message{^^J \yquant@orientation@y(#1, \i): \csname\yquant@prefix env@endy@\i\endcsname}%
             % do not use \yquant@orientation@minus: this will lead to an explicit + in vertical mode, and the value of the register y position is directly used for TikZ coordinates. However, those are parsed using \pgfmathsetlength, which will skip pgf's parser if the value starts with an explicit +. We don't want this.
             \yquant@register@set@y\i{\ifyquanthorz{-}{}\csname\yquant@prefix env@endy@\i\endcsname}%
-         \fi%
+         }%
       }%
    \else%
       \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-         \unless\ifcsname\yquant@prefix registermap@\i\endcsname%
+         \ifyquant@register@isaliased\i\relax{%
             \yquant@register@set@y\i{\ifyquanthorz{-}{}\csname\yquant@prefix env@endy@\i\endcsname}%
-         \fi%
+         }%
       }%
    \fi%
    \forlistcsloop\yquant@env@end@setypositions{\yquant@prefix subcircuits}%
