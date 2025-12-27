@@ -115,7 +115,7 @@
 \yquant@langhelper@declare@command@create{nobit}\yquant@lang@@nobit
 \yquant@langhelper@setup@attrs{nobit}{}{ancilla,out}
 \def\yquant@lang@@nobit#1{%
-   \let\yquant@lang@create@type=\yquant@register@type@none%
+   \let\yquant@lang@create@type=\yquant@register@types@nobit%
    \def\yquant@lang@create@style{initial}% there is no separate style, just duplicate
    \ifdefined\yquant@lang@attr@value%
       \PackageError{yquant.sty}{Placeholder initialization must not have value}%
@@ -129,7 +129,7 @@
 \yquant@langhelper@declare@command@create{qubit}\yquant@lang@@qubit
 \yquant@langhelper@setup@attrs{qubit}{}{after,value,ancilla,in,out,inout}
 \def\yquant@lang@@qubit#1{%
-   \let\yquant@lang@create@type=\yquant@register@type@q%
+   \let\yquant@lang@create@type=\yquant@register@types@qubit%
    \def\yquant@lang@create@style{qubit}%
    \unless\ifdefined\yquant@lang@attr@value%
       \let\yquant@lang@attr@value=\yquant@config@register@default@name%
@@ -140,7 +140,7 @@
 \yquant@langhelper@declare@command@create{cbit}\yquant@lang@@cbit
 \yquant@langhelper@setup@attrs{cbit}{}{after,value,ancilla,in,out,inout}
 \def\yquant@lang@@cbit#1{%
-   \let\yquant@lang@create@type=\yquant@register@type@c%
+   \let\yquant@lang@create@type=\yquant@register@types@cbit%
    \def\yquant@lang@create@style{cbit}%
    \unless\ifdefined\yquant@lang@attr@value%
       \let\yquant@lang@attr@value=\yquant@config@register@default@name%
@@ -151,7 +151,7 @@
 \yquant@langhelper@declare@command@create{qubits}\yquant@lang@@qubits
 \yquant@langhelper@setup@attrs{qubits}{}{after,value,ancilla,in,out,inout}
 \def\yquant@lang@@qubits#1{%
-   \let\yquant@lang@create@type=\yquant@register@type@qs%
+   \let\yquant@lang@create@type=\yquant@register@types@qubits%
    \def\yquant@lang@create@style{qubits}%
    \unless\ifdefined\yquant@lang@attr@value%
       \let\yquant@lang@attr@value=\yquant@config@register@default@name%
@@ -213,7 +213,7 @@
          \ifdefined\yquant@lang@attr@input%
             \PackageError{yquant.sty}{An input register cannot be created with `after` attribute}{}%
          \fi%
-         \let\yquant@lang@create@type=\yquant@register@type@none%
+         \let\yquant@lang@create@type=\yquant@register@types@nobit%
       \fi%
       \yquant@for \idx := \idx to \numexpr \len -1\relax {%
          \yquant@prepare@create\reg\idx\yquant@lang@create@type%
@@ -684,7 +684,7 @@
       \ifdefined\yquant@lang@attr@type%
          \yquant@register@type@fromstring\yquant@lang@attr@type\yquant@circuit@settype@to%
       \else%
-         \let\yquant@circuit@settype@to=\yquant@register@type@c%
+         \let\yquant@circuit@settype@to=\yquant@register@types@cbit%
       \fi%
       \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
       \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
@@ -712,7 +712,7 @@
       \ifdefined\yquant@lang@attr@type%
          \yquant@register@type@fromstring\yquant@lang@attr@type\yquant@circuit@settype@to%
       \else%
-         \let\yquant@circuit@settype@to=\yquant@register@type@c%
+         \let\yquant@circuit@settype@to=\yquant@register@types@cbit%
       \fi%
       \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
       \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
@@ -771,7 +771,7 @@
    {discard}%
    {}%
    {%
-      \let\yquant@circuit@settype@to=\yquant@register@type@none%
+      \let\yquant@circuit@settype@to=\yquant@register@types@nobit%
       \ifyquant@circuit@operator@hasControls%
          \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@plus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
          \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
@@ -802,11 +802,11 @@
          \yquant@register@type@fromstring\yquant@lang@attr@type\yquant@circuit@settype@to%
       \else%
          % We don't know which type is desired. Scan all target registers and use the first wire that is available as a type.
-         \let\yquant@circuit@settype@to=\yquant@register@type@none%
+         \let\yquant@circuit@settype@to=\yquant@register@types@nobit%
          \forlistloop\yquant@lang@@init@loop\yquant@circuit@operator@targets%
-         \ifx\yquant@circuit@settype@to\yquant@register@type@none%
+         \ifx\yquant@circuit@settype@to\yquant@register@types@nobit%
             % now we don't have a clue; assume it's a qubit
-            \let\yquant@circuit@settype@to=\yquant@register@type@q%
+            \let\yquant@circuit@settype@to=\yquant@register@types@qubit%
          \fi%
          \edef\yquant@lang@attr@type{%
             \yquant@register@type@tostring\yquant@circuit@settype@to%
@@ -852,7 +852,7 @@
    }{%
       \edef\yquant@circuit@settype@to{\yquant@register@get@type{#1}}%
    }%
-   \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
+   \unless\ifx\yquant@circuit@settype@to\yquant@register@types@nobit%
       \expandafter\listbreak%
    \fi%
 }
@@ -860,7 +860,7 @@
 \protected\def\yquant@lang@@init@multi@@extract#1#2#3{%
    \yquant@for \yquant@i := #1 to #2 {%
       \edef\yquant@circuit@settype@to{\yquant@register@get@type\yquant@i}%
-      \unless\ifx\yquant@circuit@settype@to\yquant@register@type@none%
+      \unless\ifx\yquant@circuit@settype@to\yquant@register@types@nobit%
          \expandafter\yquant@for@break%
       \fi%
    }%

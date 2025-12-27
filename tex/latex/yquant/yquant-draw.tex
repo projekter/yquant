@@ -6,7 +6,7 @@
       \edef\yquant@draw@init@type{\yquant@register@get@type{#1}}%
       \unless\if\yquant@draw@init@type#2\relax%
          \yquant@circuit@flushwire{#1}%
-         \ifx\yquant@draw@init@type\yquant@register@type@none%
+         \ifx\yquant@draw@init@type\yquant@register@types@nobit%
             % in case the wire was discarded before, forget about the lastx position, it should always start with the others
             \yquant@register@get@lastwire{#1}\wirelast%
             \yquant@register@set@lastwire{#1}{%
@@ -955,7 +955,7 @@
 \protected\def\yquant@draw@wire#1#2{%
    \yquant@begingroup%
       \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
-      \unless\ifnum\wiretype=\yquant@register@type@none%
+      \unless\ifnum\wiretype=\yquant@register@types@nobit%
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
          \ifx0#2%
             \edef\wirexpos{\expandafter\@secondoffour\wirelast}%
@@ -1014,7 +1014,7 @@
 }
 
 % quantum wire
-\protected\csdef{yquant@draw@wire@\yquant@register@type@q}#1{%
+\protected\csdef{yquant@draw@wire@\yquant@register@types@qubit}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
          \yquant@coords(\wirexprevpos,\wireypos) -- \yquant@coords(\wirexpos,\wireypos);%
@@ -1023,7 +1023,7 @@
 }
 
 % classical wire
-\protected\csdef{yquant@draw@wire@\yquant@register@type@c}#1{%
+\protected\csdef{yquant@draw@wire@\yquant@register@types@cbit}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
          \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --
@@ -1035,7 +1035,7 @@
 }
 
 % quantum-bundle
-\protected\csdef{yquant@draw@wire@\yquant@register@type@qs}#1{%
+\protected\csdef{yquant@draw@wire@\yquant@register@types@qubits}#1{%
    \edef\cmd{%
       \noexpand\path [/yquant/this wire]%
          \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --

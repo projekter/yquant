@@ -435,13 +435,13 @@
 
 % BEGIN_FOLD Language definitions
 \protected\def\qasm@lang@qubit#1 #2\qasm@end{%
-   \let\yquant@lang@create@type=\yquant@register@type@q%
+   \let\yquant@lang@create@type=\yquant@register@types@qubit%
    \def\yquant@lang@create@style{qubit}%
    \qasm@lang@create#1,,,,\qasm@end%
 }
 
 \protected\def\qasm@lang@cbit#1 #2\qasm@end{%
-   \let\yquant@lang@create@type=\yquant@register@type@c%
+   \let\yquant@lang@create@type=\yquant@register@types@cbit%
    \def\yquant@lang@create@style{cbit}%
    \qasm@lang@create#1,,,,\qasm@end%
 }
@@ -469,7 +469,7 @@
       % make num subscript if name = alpha+numbers
       \edef\yquant@lang@attr@value{\qasmname{#1}}%
    }%
-   \ifx\yquant@lang@create@type\yquant@register@type@c%
+   \ifx\yquant@lang@create@type\yquant@register@types@cbit%
       \ifstrempty{#2}{% cbit has initial value?
          \edef\yquant@lang@attr@value{%
             $\unexpanded\expandafter{\yquant@lang@attr@value}$%

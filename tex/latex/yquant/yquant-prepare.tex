@@ -34,7 +34,7 @@
          \fi%
          \begingroup%
             \let\yquant@prefix=\yquant@parent%
-            \unless\if\yquant@register@type@none\yquant@register@get@type\outermap%
+            \unless\if\yquant@register@types@nobit\yquant@register@get@type\outermap%
                \PackageError{yquant.sty}%
                             {Subcircuit expects discarded wire, got `\yquant@register@type@tostring{\yquant@register@get@type\outermap}'}%
                             {Outer wire must be discarded before being acceptable for output-only register `#1[#2]`.}%
@@ -746,7 +746,7 @@
 
 \protected\def\yquant@prepare@subcircuit@endwires@loop#1{%
    \eappto\yquant@circuit@endwires@finalize{%
-      \yquant@register@set@type{#1}\noexpand\yquant@register@type@none%
+      \yquant@register@set@type{#1}\noexpand\yquant@register@types@nobit%
    }%
 }
 % END_FOLD

@@ -217,7 +217,7 @@
 }
 
 \protected\def\yquantgroup@registers@create@parse#1[#2;{%
-   \let\yquant@lang@create@type=\yquant@register@type@none%
+   \let\yquant@lang@create@type=\yquant@register@types@nobit%
    \ifstrempty{#2}{%
       \edef\yquantgroup@registers@splittext{%
          \protected\long\def\noexpand\yquantgroup@registers@splittext####1%
@@ -294,7 +294,7 @@
          \global\csletcs{\yquant@prefix registers}{\yquantgroup@prefix registers}%
          \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
             \csxdef{\yquant@prefix register@\i}{%
-               {\yquant@register@type@none}% type
+               {\yquant@register@types@nobit}% type
                {0pt}% x pos
                {{\yquant@config@register@minimum@height}%
                 {\yquant@config@register@minimum@depth}%
@@ -305,7 +305,7 @@
             }%
             \yquant@cleanup@csadd{\yquant@prefix register@\i}%
             \csxappto{\yquant@prefix draw}{%
-               \yquant@draw@init{\i}{\yquant@register@type@none}%
+               \yquant@draw@init{\i}{\yquant@register@types@nobit}%
             }%
          }%
    }%

@@ -1,17 +1,15 @@
-\def\yquant@register@type@none{0}
-\def\yquant@register@type@q{1}
-\def\yquant@register@type@c{2}
-\def\yquant@register@type@qs{3}
+\def\yquant@register@types@nobit{0}
+\def\yquant@register@types@qubit{1}
+\def\yquant@register@types@cbit{2}
+\def\yquant@register@types@qubits{3}
 
+\csdef{yquant@register@type@tostring@0}{nobit}
+\csdef{yquant@register@type@tostring@1}{qubit}
+\csdef{yquant@register@type@tostring@2}{cbit}
+\csdef{yquant@register@type@tostring@3}{qubits}
 \def\yquant@register@type@tostring#1{%
-   \ifcase#1 %
-      nobit%
-   \or%
-      qubit%
-   \or%
-      cbit%
-   \or%
-      qubits%
+   \ifcsname yquant@register@type@tostring@#1\endcsname%
+      \csname yquant@register@type@tostring@#1\endcsname%
    \else%
       \PackageError{yquant.sty}{Internal inconsistency detected}%
                    {Unknown wire type: `#1'.}%
@@ -19,20 +17,14 @@
 }
 
 \protected\def\yquant@register@type@fromstring#1#2{%
-   \expandafter\ifstrequal\expandafter{#1}{qubit}%
-      {\let#2=\yquant@register@type@q}%
-      {%
-         \expandafter\ifstrequal\expandafter{#1}{cbit}%
-         {\let#2=\yquant@register@type@c}%
-         {%
-            \expandafter\ifstrequal\expandafter{#1}{qubits}%
-            {\let#2=\yquant@register@type@qs}%
-            {%
-               \PackageError{yquant.sty}{Invalid bit type: `#1'}%
-                  {Use one of `qubit', `cbit', or `qubits'.}%
-            }%
-         }%
-      }%
+   \ifyquant@AND%
+      \ifcsname yquant@register@types@#1\endcsname\fi%
+      \ifnum\csname yquant@register@types@#1\endcsname>0 \fi{%
+      \letcs#2{yquant@register@types@#1}%
+   }{%
+      \PackageError{yquant.sty}{Invalid bit type: `#1'}%
+         {Use one of `qubit', `cbit', or `qubits'.}%
+   }%
 }
 
 % Internally, we store the register information in a single macro. Indeed, this is almost always faster than using multiple macros (at least in the way implemented here), apart from changing a single type of information, which is almost as fast.
@@ -186,7 +178,7 @@
       \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
       \begingroup%
          \yquant@for \idx := \idx to \numexpr \len -1\relax {%
-            \yquant@prepare@create\reg\idx\yquant@register@type@q%
+            \yquant@prepare@create\reg\idx\yquant@register@types@qubit%
          }%
       \endgroup%
       \ifx\yquant@config@register@default@lazyname\empty%

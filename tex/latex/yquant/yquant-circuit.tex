@@ -13,14 +13,14 @@
          \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
          \ifdefined\yquant@config@corner@at%
             \ifinlist{#1}\yquant@config@corner@at{%
-               \ifnum\yquant@register@type@c>\yquant@draw@@currentcontroltype%
+               \ifnum\yquant@register@types@cbit>\yquant@draw@@currentcontroltype%
                   \dimdef\wirexpos{\wirexpos\yquant@config@corner@xamount}%
                \else%
                   \dimdef\wirexpos{\wirexpos+5\dimexpr\yquant@config@corner@xamount\relax}%
                \fi%
             }\relax%
          \fi%
-         \ifnum\wiretype=\yquant@register@type@none%
+         \ifnum\wiretype=\yquant@register@types@nobit%
             % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
             \yquant@register@set@lastwire{#1}{%
                {\wirexprevpos}{\wirexpos}{}%
@@ -80,7 +80,7 @@
             }%
             \eappto\yquant@circuit@endwires@finalize{%
                \yquant@register@set@type%
-                  {\yquant@circuit@endwires@i}\noexpand\yquant@register@type@none%
+                  {\yquant@circuit@endwires@i}\noexpand\yquant@register@types@nobit%
             }%
          }\relax%
       }{%
@@ -187,10 +187,10 @@
 }
 
 \protected\def\yquant@circuit@extendcontrolline@corner#1{%
-   \ifyquant@OR
+   \ifyquant@OR%
       \ifnum\yquant@config@corner@min=#1 \fi%
       \ifnum\yquant@config@corner@max=#1 \fi{%
-      \ifnum\yquant@register@type@q<\yquant@register@get@type{#1} %
+      \ifnum\yquant@register@types@qubit<\yquant@register@get@type{#1} %
          % the topmost/bottom-most register is a non-qubit target
          \begingroup%
             \edef\wiretype{\yquant@register@get@type{#1}}%
