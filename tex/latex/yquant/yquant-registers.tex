@@ -72,7 +72,7 @@
    \fi%
    % we still store height, depth, and multi-space parts. To keep the same macros, we create a full register structure, but "abuse" the type component to contain the direct parent
    \csxdef{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}{%
-      {{\expandafter\yquant@register@alias@extract\yquant@parent}{#4}}% direct parent (circuit id, register id)
+      {{\yquant@env@prefix@id\yquant@parent}{#4}}% direct parent {circuit id}{register id}
       {}% unused
       {{\yquant@config@register@minimum@height}%
        {\yquant@config@register@minimum@depth}%
@@ -94,8 +94,6 @@
       \yquant@register@set@typelastgate@aux%
       {{#1}{\yquant@register@flag@clean}}%
 }
-
-\def\yquant@register@alias@extract yquant@env#1@{#1}%
 
 % expand to #2 if #1 has an alias and to #3 else
 \def\ifyquant@register@isaliased#1{%
