@@ -192,6 +192,7 @@
    \let\yquant@parent=\yquant@prefix%
    \global\advance\yquant@env by 1 %
    \edef\yquant@prefix{yquant@env\the\yquant@env @}%
+   \listeadd\yquant@env@hierarchy{\the\yquant@env}%
    \ifnum\yquant@env=1 %
       \yquantmeasuringtrue%
       \yquant@env@substitute%

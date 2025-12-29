@@ -53,11 +53,13 @@
 \def\yquant@env@prefix@csid#1{\yquant@env@prefix@id{\csname#1\endcsname}}
 
 % sync with yquantlanguage-groups
+\let\yquant@env@hierarchy=\empty%
 \long\protected\def\yquant@env@begin@generic#1[#2]{%
    \begingroup%
       \let\yquant@parent=\yquant@prefix%
       \global\advance\yquant@env by 1 %
       \edef\yquant@prefix{yquant@env\the\yquant@env @}%
+      \listeadd\yquant@env@hierarchy{\the\yquant@env}%
       \ifnum\yquant@env=1 %
          \yquantmeasuringtrue%
          \yquant@env@substitute%
