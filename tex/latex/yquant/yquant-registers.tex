@@ -953,6 +953,16 @@
    \fi%
 }
 
+\def\yquant@register@peek@x#1#2{%
+   \ifcsname yquant@env#1@registermap@#2\endcsname%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@x@aux\csname\csname yquant@env#1@registermap@#2\endcsname\endcsname%
+   \else%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@x@aux\csname yquant@env#1@register@#2\endcsname%
+   \fi%
+}
+
 \def\yquant@register@get@x@aux#1#2#3#4#5#6{#2}
 
 \def\yquant@register@get@height#1{%
@@ -994,6 +1004,13 @@
       {get-y macros may not be called unless the yquant environment ends.}%
 }
 
+\protected\def\yquant@register@peek@y{%
+   \PackageError%
+      {yquant.sty}%
+      {Execution of a peek-y macro in an illegal context}%
+      {peek-y macros may not be called unless the yquant environment ends.}%
+}
+
 % This plays a similar role: It must never be expanded before the tikz command is invoked (because it does not exist).
 \let\nodepart=\yquant@protectedempty
 
@@ -1007,6 +1024,16 @@
    \fi%
 }
 
+\def\yquant@register@peek@y@unprotected#1#2{%
+   \ifcsname yquant@env#1@registermap@#2\endcsname%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@y@aux\csname\csname yquant@env#1@registermap@#2\endcsname\endcsname%
+   \else%
+      \expandafter\expandafter\expandafter%
+      \yquant@register@get@y@aux\csname yquant@env#1@register@#2\endcsname%
+   \fi%
+}
+
 \def\yquant@register@get@y@aux#1#2#3#4#5#6{#3}
 
 % y distance between two registers.
@@ -1017,6 +1044,7 @@
 
 \protected\def\yquant@register@get@y@@expandable{%
    \let\yquant@register@get@y=\yquant@register@get@y@unprotected%
+   \let\yquant@register@peek@y=\yquant@register@peek@y@unprotected%
 }
 
 \def\yquant@register@get@lastwire#1{%
@@ -1119,6 +1147,22 @@
    \begingroup%
       \dimen0=\yquant@orientation@minus16383.99999pt %
       \forlistloop\yquant@register@get@maxxlist@i{#2}%
+      \expandafter%
+   \endgroup%
+   \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
+}
+
+\protected\def\yquant@register@peek@maxxlist@i#1#2{%
+   \dimen2=\expandafter\yquant@register@peek@x{#1}{#2}\space%
+   \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
+      \dimen0=\dimen2 %
+   \fi%
+}
+
+\protected\def\yquant@register@peek@maxxlist#1#2{%
+   \begingroup%
+      \dimen0=\yquant@orientation@minus16383.99999pt %
+      \forlistloop{\yquant@register@colonsplit\yquant@register@peek@maxxlist@i}{#2}%
       \expandafter%
    \endgroup%
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
