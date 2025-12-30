@@ -39,52 +39,84 @@
 
 \protected\def\yquant@protectedempty{}
 
-% Loop #1 from min(#2, #3) to max(#2, #3), executing #4
-\protected\def\yquant@for #1:=#2to#3#{%
-   \yquant@for@aux#1{#2}{#3}%
+% Loop #1 from #2 to #3 (#2 <= #3), executing #4, with no loop if they are not in order.
+% Starred version: Loop #1 from min(#2, #3) to max(#2, #3), executing #4
+\protected\def\yquant@for{%
+   \@ifstar{\yquant@for@\yquant@for@minmax}{\yquant@for@\yquant@for@inorder}%
 }
 
-% Loop #1 from max(#2, #3) down to min(#2, #3), executing #4
-\protected\def\yquant@fordown #1:=#2downto#3#{%
-   \yquant@fordown@aux#1{#2}{#3}%
+\def\yquant@for@#1#2:=#3to#4#{#1#2{#3}{#4}}
+
+% Loop #1 from #2 down to #3 (#2 >= #3), executing #4, with no loop if they are not in reverse order.
+% Starred version: Loop #1 from max(#2, #3) down to min(#2, #3), executing #4
+\protected\def\yquant@fordown{%
+   \@ifstar{\yquant@fordown@\yquant@fordown@minmax}{\yquant@fordown@\yquant@fordown@inorder}%
 }
 
-\long\def\yquant@for@aux#1#2#3#4{%
-   \ifnum#2<#3\relax%
+\def\yquant@fordown@#1#2:=#3downto#4#{#1#2{#3}{#4}}
+
+\def\yquant@for@inorder#1#2#3{%
+   \ifyquant\ifnum#2>#3 \fi\@gobble{%
+      \numdef#1{#2}%
+      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#3+1\relax}%
+   }%
+}
+
+\def\yquant@for@minmax#1#2#3{%
+   \ifyquant\ifnum#2<#3 \fi{%
       \numdef#1{#2}%
       % to allow for things like \yquant@for \i := \i to ..., expand the boundaries
-      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#3+1\relax}{#4}%
-   \else%
+      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#3+1\relax}%
+   }{%
       \numdef#1{#3}%
-      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#2+1\relax}{#4}%
-   \fi%
+      \expandafter\yquant@for@loop\expandafter#1\expandafter{\the\numexpr#2+1\relax}%
+   }%
 }
 
-\long\def\yquant@fordown@aux#1#2#3#4{%
-   \ifnum#2>#3\relax%
+\def\yquant@fordown@inorder#1#2#3{%
+   \ifyquant\ifnum#3>#2 \fi\@gobble{%
+      \numdef#1{#2}%
+      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#3-1\relax}%
+   }%
+}
+
+\def\yquant@fordown@minmax#1#2#3{%
+   \ifyquant\ifnum#2>#3 \fi{%
       \numdef#1{#2}%
       % to allow for things like \yquant@for \i := \i to ..., expand the boundaries
-      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#3-1\relax}{#4}%
-   \else%
+      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#3-1\relax}%
+   }{%
       \numdef#1{#3}%
-      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#2-1\relax}{#4}%
-   \fi%
+      \expandafter\yquant@fordown@loop\expandafter#1\expandafter{\the\numexpr#2-1\relax}%
+   }%
+}
+
+% We don't use \loop...\repeat from the kernel, as this cannot be nested (without grouping). Our definition is almost the same, but we don't take a static \iterate macro which is always overwritten, but take a macro name. The loops calculate this name based on the loop variable.
+\long\def\yquant@for@@loop#1#2\yquant@for@@repeat{%
+   \def#1{%
+      #2%
+      \relax%
+      \expandafter#1%
+      \fi%
+   }%
+   #1%
+   \undef#1%
 }
 
 \long\def\yquant@for@loop#1#2#3{%
-   \loop%
-      \ifnum#1<#2\relax%
+   \expandafter\yquant@for@@loop\csname yquant@forloop@iterate@\string#1\endcsname%
+      \ifnum#1<#2 %
          #3%
          \numdef#1{#1+1}%
-   \repeat%
+   \yquant@for@@repeat%
 }
 
 \long\def\yquant@fordown@loop#1#2#3{%
-   \loop%
-      \ifnum#1>#2\relax%
+   \expandafter\yquant@for@@loop\csname yquant@forloop@iterate@\string#1\endcsname%
+      \ifnum#1>#2 %
          #3%
          \numdef#1{#1-1}%
-   \repeat%
+   \yquant@for@@repeat%
 }
 
 \def\yquant@for@break{%

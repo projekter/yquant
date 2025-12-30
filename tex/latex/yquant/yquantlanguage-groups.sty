@@ -242,14 +242,12 @@
             \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
                ####1\yquant@langhelper@cmd@original####2#1[+1];%
             }%
-            \ifnum\yquantgroup@registers@create@parse@extract#2>1 %
-               \noexpand\yquant@for \noexpand\i := 2 to \yquantgroup@registers@create@parse@extract#2 {%
-                  \csgdef{\yquantgroup@prefix import@\noexpand\the\numexpr\csname\yquant@prefix registers\endcsname+\noexpand\i\relax}{%
-                     [\yquantgroup@registers@remember@attrs]%
-                     \yquant@langhelper@cmd@original####2#1[+1];%
-                  }%
+            \noexpand\yquant@for \noexpand\i := 2 to \yquantgroup@registers@create@parse@extract#2 {%
+               \csgdef{\yquantgroup@prefix import@\noexpand\the\numexpr\csname\yquant@prefix registers\endcsname+\noexpand\i\relax}{%
+                  [\yquantgroup@registers@remember@attrs]%
+                  \yquant@langhelper@cmd@original####2#1[+1];%
                }%
-            \fi%
+            }%
             \gdef\noexpand\yquantgroup@registers@text{####3}%
          }%
       }%
