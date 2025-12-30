@@ -899,16 +899,17 @@
 }
 
 % Set #1 to the maximum x (vertical: minimum y) value found in the list #2
+\protected\def\yquant@register@get@maxxlist@i#1{%
+   \dimen2=\yquant@register@get@x{#1}\space%
+   \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
+      \dimen0=\dimen2 %
+   \fi%
+}
+
 \protected\def\yquant@register@get@maxxlist#1#2{%
    \begingroup%
       \dimen0=\yquant@orientation@minus16383.99999pt %
-      \def\do##1{%
-         \dimen2=\yquant@register@get@x{##1}\relax%
-         \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
-            \dimen0=\dimen2 %
-         \fi%
-      }%
-      \dolistloop{#2}%
+      \forlistloop\yquant@register@get@maxxlist@i{#2}%
       \expandafter%
    \endgroup%
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
