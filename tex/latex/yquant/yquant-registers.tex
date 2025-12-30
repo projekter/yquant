@@ -94,11 +94,220 @@
       \yquant@register@set@typelastgate@aux%
       {{#1}{\yquant@register@flag@clean}}%
 }
+% END_FOLD
 
 % expand to #2 if #1 has an alias and to #3 else
 \def\ifyquant@register@isaliased#1{%
    \ifyquant\ifcsname\yquant@prefix registermap@#1\endcsname\fi%
 }
+
+% BEGIN_FOLD Ordering registers
+% expand to #6 if register with circuit #1 and id #2 is numerically ordered according to operator #3 with respect to register with circuit #4 and id #5; and to #7 else.
+% This respects subcircuit ordering. Note that some registers might not have any defined ordering, in which case #8 is expanded.
+\protected\def\ifnumyquant@registers#1#2#3#4#5{%
+   % There are various situations:
+   \ifyquant\ifnum#1=#4 \fi{%
+      % 1. #1 = #4, i.e., they are both within the same circuit. Just compare the numbers.
+      \ifnumyquant@registers@ifnum{#2}#3{#5}
+   }{%
+      \begingroup%
+         % resolve all aliases
+         \ifcsname yquant@env#1@registermap@#2\endcsname%
+            \ifnumyquant@registers@extractcs\circuitA\idA{yquant@env#1@registermap@#2}%
+         \else%
+            \edef\circuitA{#1}%
+            \edef\idA{#2}%
+         \fi%
+         \ifcsname yquant@env#4@registermap@#5\endcsname%
+            \ifnumyquant@registers@extractcs\circuitB\idB{yquant@env#4@registermap@#5}%
+         \else%
+            \edef\circuitB{#4}%
+            \edef\idB{#5}%
+         \fi%
+         \ifyquant\ifx\circuitA\circuitB\fi{%
+            % 2. both wires alias into the same circuit; just compare the original numbers.
+            \ifnum\idA#3\idB\space%
+               \endgroup%
+               \expandafter\@firstoftwo%
+            \else%
+               \endgroup%
+               \expandafter\@secondoftwo%
+            \fi%
+         }{%
+            % 3. both wires don't alias or not in the same circuit
+            % check which circuit has fewer wires and call it A, the other B
+            \ifnum\csname yquant@env\circuitA @registers\endcsname>\csname yquant@env\circuitB @registers\endcsname\space%
+               % reverse
+               \let\theifnum=\ifnumyquant@registers@ifnum@reverse%
+               \let\iterCircuitA=\circuitB%
+               \let\iterIdA=\idB%
+               \let\iterCircuitB=\circuitA%
+               \let\iterIdB=\idA%
+            \else%
+               \let\theifnum=\ifnumyquant@registers@ifnum%
+               \let\iterCircuitA=\circuitA%
+               \let\iterIdA=\idA%
+               \let\iterCircuitB=\circuitB%
+               \let\iterIdB=\idB%
+            \fi%
+            % iterate through all wires in circuit A apart from the already useless-proven wire A, building up a dictionary of all wires, noting in which circuit they point and if above or below.
+            \undef\idA%
+            \undef\idB%
+            \let\next=\@firstofone%
+            \ifyquant@registers@buildAllBefore\iterCircuitA\iterIdA%
+            \next{%
+               \ifyquant@registers@checkAllAfter\iterCircuitB\iterIdB%
+            }%
+            \next{%
+               \ifyquant@registers@buildAllAfter\iterCircuitA\iterIdA%
+            }%
+            \next{%
+               \ifyquant@registers@checkAllBefore\iterCircuitB\iterIdB%
+            }%
+            \ifyquant\ifx\next\@firstofone\fi{%
+               \endgroup%
+               \@thirdofthree%
+            }{%
+               \expandafter\expandafter\expandafter\endgroup%
+               \theifnum\idA#3\idB%
+            }%
+         }%
+   }%
+}
+
+\protected\def\ifyquant@registers@buildAllBefore#1#2{%
+   % create macros for each and every wire that can rightfully be said to be above or equal to circuit #1, id #2
+   \ifyquant\ifcsname ifnumyquant@register@circuitA@before@#1@#2\endcsname\fi\relax{%
+      \let\collection=\empty%
+      \yquant@fordown \i := #2 downto 1 {%
+         \ifyquant@AND\ifnum#1=\iterCircuitB\space\fi%
+                      \unless\ifnum\i<\iterIdB\space\fi{%
+            % we explicitly found the required wire B before A, so A > B
+            \def\idA{2}\def\idB{1}\let\next=\@gobble%
+            \yquant@for@break%
+         }{%
+            \ifcsname yquant@env#1@registermap@\i\endcsname%
+               \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\i}%
+               \eappto\collection{%
+                  \ifyquant@registers@buildAllBefore{\circuit}{\id}%
+               }%
+            \else%
+               % this is not an alias - which means it might be an ancilla. So now we have to check all the registers _after_ \i until we find the first one that is an alias. Then, we have to resolve this alias and add everything that is strictly above it.
+               \yquant@for \j := \numexpr\i+1\relax to \csname yquant@env#1@registers\endcsname {%
+                  \ifyquant\ifcsname yquant@env#1@registermap@\j\endcsname\fi{%
+                     \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\j}%
+                     \ifnum\id>1 %
+                        \eappto\collection{%
+                           \ifyquant@registers@buildAllBefore{\circuit}{\the\numexpr\id-1\relax}%
+                        }%
+                     \fi%
+                     \yquant@for@break%
+                  }\relax%
+               }%
+               \cslet{ifnumyquant@register@circuitA@before@#1@\i}\relax%
+            \fi%
+         }%
+      }%
+      \next\collection%
+   }%
+}
+
+\protected\def\ifyquant@registers@buildAllAfter#1#2{%
+   % create macros for each and every wire that can rightfully be said to be below circuit #1, id #2
+   \ifyquant\ifcsname ifnumyquant@register@circuitA@after@#1@#2\endcsname\fi\relax{%
+      \let\collection=\empty%
+      \yquant@for \i := #2 to \csname yquant@env#1@registers\endcsname {%
+         \ifyquant@AND\ifnum#1=\iterCircuitB\space\fi%
+                      \unless\ifnum\i>\iterIdB\space\fi{%
+            % we explicitly found the required wire B after A, so A < B
+            \def\idA{1}\def\idB{2}\let\next=\@gobble%
+            \yquant@for@break%
+         }{%
+            \ifcsname yquant@env#1@registermap@\i\endcsname%
+               \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\i}%
+               \eappto\collection{%
+                  \ifyquant@registers@buildAllAfter{\circuit}{\id}%
+               }%
+            \else%
+               % this is not an alias - which means it might be an ancilla. So now we have to check all the registers _before_ \i until we find the first one that is an alias. Then, we have to resolve this alias and add everything that is strictly below it.
+               \yquant@fordown \j := \numexpr\i-1\relax downto 1 {%
+                  \ifyquant\ifcsname yquant@env#1@registermap@\j\endcsname\fi{%
+                     \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\j}%
+                     \ifnum\id<\csname yquant@env#1@registers\endcsname\space%
+                        \eappto\collection{%
+                           \ifyquant@registers@buildAllBefore{\circuit}{\the\numexpr\id+1\relax}%
+                        }%
+                     \fi%
+                     \yquant@for@break%
+                  }\relax%
+               }%
+               \cslet{ifnumyquant@register@circuitA@after@#1@\i}\relax%
+            \fi%
+         }%
+      }%
+      \next\collection%
+   }%
+}
+
+\protected\def\ifyquant@registers@checkAllBefore#1#2{%
+   % check that we cannot find any after macro for any wire that can rightfully be said to be above circuit #1, id #2
+   \let\collection=\empty%
+   \yquant@fordown \i := \numexpr#2-1\relax downto 1 {%
+      \ifyquant\ifcsname yquant@env#1@registermap@\i\endcsname\fi{%
+         \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\i}%
+         \ifyquant\ifcsname ifnumyquant@registers@circuitA@after@\circuit @\id\endcsname\fi{%
+            % we found something that is after A but before B, hence A < B
+            \def\idA{1}\def\idB{2}\let\next=\@gobble%
+            \yquant@for@break%
+         }{%
+            \eappto\collection{%
+               \noexpand\next{\ifyquant@registers@checkAllBefore{\circuit}{\id}}%
+            }
+         }%
+      }{%
+         \ifyquant\ifcsname ifnumyquant@registers@circuitA@after@#1@\i\endcsname\fi{%
+            \def\idA{1}\def\idB{2}\let\next=\@gobble%
+            \yquant@for@break%
+         }\relax%
+      }%
+   }%
+   \next\collection%
+}
+
+\protected\def\ifyquant@registers@checkAllAfter#1#2{%
+   % check that we cannot find any before macro for any wire that can rightfully be said to be below circuit #1, id #2
+   \let\collection=\empty%
+   \yquant@for \i := \numexpr#2+1\relax to \csname yquant@env#1@registers\endcsname {%
+      \ifyquant\ifcsname yquant@env#1@registermap@\i\endcsname\fi{%
+         \ifnumyquant@registers@extractcs\circuit\id{yquant@env#1@registermap@\i}%
+         \ifyquant\ifcsname ifnumyquant@registers@circuitA@before@\circuit @\id\endcsname\fi{%
+            % we found something that is before A but after B, hence B < A
+            \def\idA{2}\def\idB{1}\let\next=\@gobble%
+            \yquant@for@break%
+         }{%
+            \eappto\collection{%
+               \noexpand\next{\ifyquant@registers@checkAllAfter{\circuit}{\id}}%
+            }
+         }%
+      }{%
+         \ifyquant\ifcsname ifnumyquant@registers@circuitA@before@#1@\i\endcsname\fi{%
+            \def\idA{2}\def\idB{1}\let\next=\@gobble%
+            \yquant@for@break%
+         }\relax%
+      }%
+   }%
+   \next\collection%
+}
+
+\def\ifnumyquant@registers@extractcs#1#2#3{%
+   \expandafter\expandafter\expandafter\ifnumyquant@registers@extract@\csname#3\endcsname\yquant@sep#1#2%
+}
+\protected\def\ifnumyquant@registers@extract@ yquant@env#1@register@#2\yquant@sep#3#4{%
+   \def#3{#1}%
+   \def#4{#2}%
+}
+\def\ifnumyquant@registers@ifnum#1#2#3{\ifnum#1#2#3 \expandafter\@firstofthree\else\expandafter\@secondofthree\fi}
+\def\ifnumyquant@registers@ifnum@reverse#1#2#3{\ifnum#3#2#1 \expandafter\@firstofthree\else\expandafter\@secondofthree\fi}
 % END_FOLD
 
 % BEGIN_FOLD Converter: convert a register name to its id
