@@ -101,6 +101,48 @@
    \ifyquant\ifcsname\yquant@prefix registermap@#1\endcsname\fi%
 }
 
+% BEGIN_FOLD Handling fully-qualified register names
+% we sometimes have to store etoolbox lists that contain both circuit ids as well as registers; we do this in the form <circuit>:<register>, as the more convenient grouping is not possible. However, during iteration we then need to have them split again; so we can then simply do a \forlistloop{\yquant@register@colonsplit{<whatever we want to do, #1 is circuit, #2 is register>}}\list.
+\long\def\yquant@register@colonsplit#1#2{%
+   \yquant@register@colonsplit@#2\yquant@sep{#1}%
+}
+
+\long\def\yquant@register@colonsplitcs#1#2{%
+   \expandafter\expandafter\expandafter\yquant@register@colonsplit@\csname#2\endcsname\yquant@sep{#1}%
+}
+
+\long\def\yquant@register@colonsplit@#1:#2\yquant@sep#3{%
+   #3{#1}{#2}%
+}
+
+\def\yquant@register@colonprefix#1{\yquant@register@colonprefix@#1\yquant@sep}
+\def\yquant@register@colonprefix@#1:#2\yquant@sep{#1}
+\def\yquant@register@colonsuffix#1{\yquant@register@colonsuffix@#1\yquant@sep}
+\def\yquant@register@colonsuffix@#1:#2\yquant@sep{#2}
+
+\def\yquant@register@resolvetocolon#1{%
+   \ifcsname\yquant@prefix registermap@#1\endcsname%
+      \expandafter\expandafter\expandafter\yquant@register@resolve@alias%
+         \csname\yquant@prefix registermap@#1\endcsname%
+         \yquant@sep%
+   \else%
+      \yquant@env@prefix@id\yquant@prefix:#1%
+   \fi%
+}
+
+\def\yquant@register@fullresolvetocolon#1#2{%
+   \ifcsname yquant@env#1@registermap@#2\endcsname%
+      \expandafter\expandafter\expandafter\yquant@register@resolve@alias%
+         \csname yquant@env#1@registermap@#2\endcsname%
+         \yquant@sep%
+   \else%
+      #1:#2%
+   \fi%
+}
+
+\def\yquant@register@resolve@alias yquant@env#1@register@#2\yquant@sep{#1:#2}%
+% END_FOLD
+
 % BEGIN_FOLD Ordering registers
 % expand to #6 if register with circuit #1 and id #2 is numerically ordered according to operator #3 with respect to register with circuit #4 and id #5; and to #7 else.
 % This respects subcircuit ordering. Note that some registers might not have any defined ordering, in which case #8 is expanded.
