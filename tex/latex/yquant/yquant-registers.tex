@@ -960,6 +960,57 @@
 %   \yquant@register@get@allowmultifalse% not needed, as \yquant@circuit@operator automatically resets it
    \let\yquant@register@multi@splitparts=\yquant@register@multi@reset@original@splitparts%
 }
+
+% converts a single name to an index (no lazy creation)
+% #1: where to store the index
+% #2: register name
+% #3: 0 or 2 if a vector register without brackets refers to the first index
+%     1 or 3 if it refers to the last
+%     If #3 is 2 or 3, then the macro will, after execution, be \@firstoftwo if a vector register
+%     was specified and \@secondoftwo if an explicit index was given. Else, the macro will vanish.
+% If the register does not exist, #1 is made undefined
+\protected\def\yquant@register@singleget#1#2{%
+   \yquant@register@singleget@i\yquant@prefix#2[\yquant@sep{#1}%
+}
+
+% does the same for another circuit (id in #2)
+\protected\def\yquant@register@singlepeek#1#2#3{%
+   \yquant@register@singleget@i{yquant@env#2@}#3[\yquant@sep{#1}
+}
+
+\def\yquant@register@singleget@i#1#2[#3\yquant@sep{%
+   \ifstrempty{#3}{%
+      \yquant@register@singleget@vector{#1}{#2}%
+   }{%
+      \yquant@register@singleget@indexed{#1}#2[#3\yquant@sep%
+   }%
+}
+
+\protected\def\yquant@register@singleget@vector#1#2#3#4{%
+   \ifcsname#1registername@\trim@spaces{#2}[0]\endcsname%
+      \ifyquant@OR\ifnum0=#4 \fi\ifnum2=#4 \fi{%
+         \letcs#3{#1registername@\trim@spaces{#2}[0]}%
+      }{%
+         \letcs#3{#1registername@\trim@spaces{#2}[\csname#1registerhigh@\trim@spaces{#2}\endcsname]}%
+      }%
+   \else%
+      \undef#3%
+   \fi%
+   \ifnum1<#4 %
+      \expandafter\@firstoftwo%
+   \fi%
+}
+
+\protected\def\yquant@register@singleget@indexed#1#2[#3][\yquant@sep#4#5{%
+   \ifcsname#1registername@\trim@spaces{#2}[\trim@spaces{#3}]\endcsname%
+      \letcs#4{#1registername@\trim@spaces{#2}[\trim@spaces{#3}]}%
+   \else%
+      \undef#4%
+   \fi%
+   \ifnum1<#5 %
+      \expandafter\@secondoftwo%
+   \fi%
+}
 % END_FOLD
 
 % BEGIN_FOLD Getters: extract the requested information from the register with given id
