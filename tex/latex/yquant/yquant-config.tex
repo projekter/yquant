@@ -527,6 +527,7 @@
    enclose layer/.initial=background,%
    enclose label layer/.initial=main,%
    enclose/shape/polygon/points/.initial,%
+   enclose/overlay command/.store in=\yquant@config@enclose@beamercommand,%
    /tikz/.cd,
    enclose/brace above/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace0{#1}},%
    enclose/brace below/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace1{#1}},%
@@ -827,6 +828,7 @@
 \def\yquant@config@operator@minimum@width@default{5mm}
 \def\yquant@config@enclose@spacing{2}
 \def\yquant@config@enclose@shape{0}
+\def\yquant@config@enclose@beamercommand{\uncover}
 \newif\ifyquant@config@internal@multi@main
 \yquant@config@internal@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn

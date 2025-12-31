@@ -463,9 +463,15 @@
 \newcount\yquant@circuit@enclose@count
 \let\yquant@circuit@enclose@active=\empty
 
-\protected\def\yquant@circuit@startenclose{%
-   \@ifnextchar[\yquant@circuit@startenclose@i{\yquant@circuit@startenclose@i[]}%
-}
+\ifdefined\beamer@masterdecode
+   \newcommand<>\yquant@circuit@startenclose[2][]{%
+      \yquant@config@enclose@beamercommand#3{\yquant@circuit@startenclose@i[{#1}]{#2}}%
+   }
+\else
+   \protected\def\yquant@circuit@startenclose{%
+      \@ifnextchar[\yquant@circuit@startenclose@i{\yquant@circuit@startenclose@i[]}%
+   }
+\fi
 
 \pgfkeys{%
    /yquant/enclose filter handler/.code={%
@@ -503,6 +509,8 @@
       \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}\empty%
       \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}\yquant@config@enclose@spacing%
       \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @shape}\yquant@config@enclose@shape%
+      % this is undefined anyway if beamer is not loaded, so no harm:
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @beamercommand}\yquant@circuit@enclose@currentbeamercommand%
       \csxappto{\yquant@prefix draw}{%
          \yquant@draw@startenclose{\yquant@circuit@enclose@id}%
       }
@@ -559,28 +567,76 @@
    \yquant@env@scan%
 }
 
-\def\yquant@circuit@enclose{%
-   \@ifnextchar[\yquant@circuit@enclose@i{\yquant@circuit@enclose@i[]}%
-}
+\ifdefined\beamer@masterdecode
+   \newcommand<>\yquant@circuit@enclose[2][]{%
+      \expandafter\yquant@circuit@enclose@ii\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}{#3}[{#1}]{#2}%
+   }%
 
-\def\yquant@circuit@enclose@i{%
-   \expandafter\yquant@circuit@enclose@ii\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}%
-}
+   \long\def\yquant@circuit@enclose@ii#1#2[#3]#4{%
+      \begingroup%
+         \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@config@enclose@beamercommand}{%
+            \yquant@config@enclose@beamercommand#2{\yquant@circuit@startenclose@i[{#3}]\relax}%
+            \yquant@env@scan#4%
+            \yquant@config@enclose@beamercommand#2{\yquant@circuit@stopenclose@i{#1}}%
+         }{%
+            \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
+            \yquant@circuit@startenclose@i[{#3}]\relax%
+            #4%
+            \yquant@circuit@stopenclose@i{#1}%
+         }%
+      \endgroup%
+      \yquant@env@scan%
+   }
 
-\long\def\yquant@circuit@enclose@ii#1[#2]#3{%
-   \yquant@circuit@startenclose[{#2}]\relax%
-   #3%
-   \yquant@circuit@stopenclose@i{#1}%
-}
+   \newcommand<>\yquant@circuit@encloseall[2][]{%
+      \expandafter\yquant@circuit@encloseall@i\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}{#3}[{#1}]{#2}%
+   }
 
-\def\yquant@circuit@encloseall{%
-   \@ifnextchar[{\expandafter\yquant@circuit@encloseall@i\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}}%
-                {\expandafter\yquant@circuit@encloseall@i\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}[]}%
-}
+   \long\def\yquant@circuit@encloseall@i#1#2[#3]#4{%
+      \begingroup%
+         \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@config@enclose@beamercommand}{%
+            \yquant@config@enclose@beamercommand#2{\yquant@circuit@encloseall@start{#1}{#3}}%
+            \yquant@env@scan#4%
+            \yquant@config@enclose@beamercommand#2{\yquant@circuit@stopenclose@i{#1}}%
+         }{%
+            \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
+            \yquant@circuit@encloseall@start{#1}{#3}%
+            #4%
+            \yquant@circuit@stopenclose@i{#1}%
+         }%
+      \endgroup%
+      \yquant@env@scan%
+   }
+\else
+   \def\yquant@circuit@enclose{%
+      \@ifnextchar[\yquant@circuit@enclose@i{\yquant@circuit@enclose@i[]}%
+   }
+
+   \def\yquant@circuit@enclose@i{%
+      \expandafter\yquant@circuit@enclose@ii\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}%
+   }
+
+   \long\def\yquant@circuit@enclose@ii#1[#2]#3{%
+      \yquant@circuit@startenclose@i[{#2}]\relax%
+      #3%
+      \yquant@circuit@stopenclose@i{#1}%
+   }
+
+   \def\yquant@circuit@encloseall{%
+      \@ifnextchar[{\expandafter\yquant@circuit@encloseall@i\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}}%
+                   {\expandafter\yquant@circuit@encloseall@i\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}[]}%
+   }
+
+   \long\def\yquant@circuit@encloseall@i#1[#2]#3{%
+      \yquant@circuit@encloseall@start{#1}{#2}%
+      #3%
+      \yquant@circuit@stopenclose@i{#1}%
+   }
+\fi
 
 \def\yquant@circuit@enclose@allinvolved{all}%
 
-\long\def\yquant@circuit@encloseall@i#1[#2]#3{%
+\def\yquant@circuit@encloseall@start#1#2{%
    \global\yquant@circuit@enclose@count=#1 %
    % we don't add it to the active list as we don't have to keep track of anything here
    \csxdef{yquant@circuit@enclose@#1@prefixid}{\yquant@env@prefix@id\yquant@prefix}%
@@ -589,11 +645,11 @@
    \global\cslet{yquant@circuit@enclose@#1@involved}\yquant@circuit@enclose@allinvolved%
    \csgdef{yquant@circuit@enclose@#1@spacing}{0}%
    \csgdef{yquant@circuit@enclose@#1@shape}{0}%
+   % this is undefined anyway if beamer is not loaded, so no harm:
+      \global\cslet{yquant@circuit@enclose@#1@beamercommand}\yquant@circuit@enclose@currentbeamercommand%
    \csxappto{\yquant@prefix draw}{%
       \yquant@draw@startenclose{#1}%
    }
-   \yquant@env@scan#3%
-   \yquant@circuit@stopenclose@i{#1}%
    \yquant@env@scan%
 }
 

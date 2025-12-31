@@ -1354,12 +1354,17 @@
 \protected\long\def\yquant@draw@enclose@handlelayers#1#2#3#4{%
    \def\yquant@config@enclose@braces{0}%
    \yquant@begingroup%
+      \ifcsname yquant@circuit@enclose@#1@beamercommand\endcsname%
+         \letcs\yquant@draw@enclose@beamercommand{yquant@circuit@enclose@#1@beamercommand}%
+      \else%
+         \let\yquant@draw@enclose@beamercommand\@firstofone%
+      \fi%
       \ifstrequal{#2}{#3}{%
          \ifstrequal{#2}{main}{%
-            #4%
+            \yquant@draw@enclose@beamercommand{#4}%
          }{%
             \pgfonlayer{#2}%
-               #4%
+               \yquant@draw@enclose@beamercommand{#4}%
             \endpgfonlayer%
          }%
       }{%
@@ -1367,25 +1372,26 @@
             \tikzset{append after command/.code=\relax, prefix after command/.code=\relax}%
             \let\yquant@config@enclose@brace=\@gobbletwo%
             \ifstrequal{#2}{main}{%
-               #4%
+               \yquant@draw@enclose@beamercommand{#4}%
             }{%
                \pgfonlayer{#2}%
-                  #4%
+                  \yquant@draw@enclose@beamercommand{#4}%
                \endpgfonlayer%
             }%
          \yquant@endgroup%
          \edef\drawrest{%
             \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/every enclose,
-                                         \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
+                                       \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
          }%
          \ifstrequal{#3}{main}{%
-            \drawrest%
+            \yquant@draw@enclose@beamercommand{\drawrest}%
          }{%
             \pgfonlayer{#3}%
-               \drawrest%
+               \yquant@draw@enclose@beamercommand{\drawrest}%
             \endpgfonlayer%
          }%
       }%
    \yquant@endgroup%
    \csgundef{yquant@circuit@enclose@#1@style}%
+   \csgundef{yquant@circuit@enclose@#1@beamercommand}%
 }
