@@ -49,6 +49,10 @@
    }%
    \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#2}{#3}%
+      \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB%
+      \expandafter\expandafter\expandafter T%
+      \expandafter\expandafter\expandafter{\csname\yquant@prefix registers\endcsname}%
+      {0pt}% just to make it known
    \yquant@cleanup@csadd{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registername@#2[#3]}%
    \ifnum0=#3\relax%
@@ -83,6 +87,10 @@
    }%
    \global\csletcs{\yquant@prefix registername@#2[#3]}{\yquant@prefix registers}%
    \csxdef{\yquant@prefix registerhigh@#2}{#3}%
+   \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB%
+      \expandafter\expandafter\expandafter T%
+      \expandafter\expandafter\expandafter{\csname\yquant@prefix registers\endcsname}%
+      {0pt}% just to make it known
    \yquant@cleanup@csadd{\yquant@prefix register@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registermap@\csname\yquant@prefix registers\endcsname}%
    \yquant@cleanup@csadd{\yquant@prefix registername@#2[#3]}%
@@ -1324,6 +1332,7 @@
             \yquant@register@set@height@aux{#2}%
       \fi%
    \fi%
+   \yquant@circuit@enclose@update@extentTB T{#1}{#2}%
 }
 
 \protected\def\yquant@register@set@height@remote#1#2#3{%
@@ -1351,6 +1360,7 @@
             \yquant@register@set@depth@aux{#2}%
       \fi%
    \fi%
+   \yquant@circuit@enclose@update@extentTB B{#1}{#2}%
 }
 
 \protected\def\yquant@register@set@depth@remote#1#2#3{%

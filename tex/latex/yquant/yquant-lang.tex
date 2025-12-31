@@ -39,7 +39,9 @@
    name mangling/.code={%
       \pgfkeysalso{/yquant/operators/subcircuit/name mangling={#1}}%
       \appto\yquant@attrs@remaining{,/yquant/operators/subcircuit/name mangling={#1}}%
-   }%
+   },%
+   enclose/set from/.store in=\yquant@lang@attr@enclose@setfrom,%
+   enclose/set to/.store in=\yquant@lang@attr@enclose@setto
 }
 \yquant@langhelper@declare@attr@global{%
    name/.store in=\yquant@lang@attr@name,%
@@ -113,7 +115,7 @@
 
 % BEGIN_FOLD Declaration of registers
 \yquant@langhelper@declare@command@create{nobit}\yquant@lang@@nobit
-\yquant@langhelper@setup@attrs{nobit}{}{ancilla,out}
+\yquant@langhelper@setup@attrs{nobit}{}{ancilla,out,enclose/set from,enclose/set to}
 \def\yquant@lang@@nobit#1{%
    \let\yquant@lang@create@type=\yquant@register@types@nobit%
    \def\yquant@lang@create@style{initial}% there is no separate style, just duplicate
@@ -127,7 +129,7 @@
 }
 
 \yquant@langhelper@declare@command@create{qubit}\yquant@lang@@qubit
-\yquant@langhelper@setup@attrs{qubit}{}{after,value,ancilla,in,out,inout}
+\yquant@langhelper@setup@attrs{qubit}{}{after,value,ancilla,in,out,inout,enclose/set from,enclose/set to}
 \def\yquant@lang@@qubit#1{%
    \let\yquant@lang@create@type=\yquant@register@types@qubit%
    \def\yquant@lang@create@style{qubit}%
@@ -138,7 +140,7 @@
 }
 
 \yquant@langhelper@declare@command@create{cbit}\yquant@lang@@cbit
-\yquant@langhelper@setup@attrs{cbit}{}{after,value,ancilla,in,out,inout}
+\yquant@langhelper@setup@attrs{cbit}{}{after,value,ancilla,in,out,inout,enclose/set from,enclose/set to}
 \def\yquant@lang@@cbit#1{%
    \let\yquant@lang@create@type=\yquant@register@types@cbit%
    \def\yquant@lang@create@style{cbit}%
@@ -149,7 +151,7 @@
 }
 
 \yquant@langhelper@declare@command@create{qubits}\yquant@lang@@qubits
-\yquant@langhelper@setup@attrs{qubits}{}{after,value,ancilla,in,out,inout}
+\yquant@langhelper@setup@attrs{qubits}{}{after,value,ancilla,in,out,inout,enclose/set from,enclose/set to}
 \def\yquant@lang@@qubits#1{%
    \let\yquant@lang@create@type=\yquant@register@types@qubits%
    \def\yquant@lang@create@style{qubits}%
@@ -238,6 +240,12 @@
    \let\yquant@circuit@operator@numnctrl=\yquant@circuit@operator@numpctrl%
    \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
    \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
+   \ifdefined\yquant@lang@attr@enclose@setfrom%
+      \yquant@circuit@enclose@set{from}\yquant@circuit@operator@mintarget\yquant@lang@attr@enclose@setfrom%
+   \fi%
+   \ifdefined\yquant@lang@attr@enclose@setto%
+      \yquant@circuit@enclose@set{to}\yquant@circuit@operator@maxtarget\yquant@lang@attr@enclose@setto%
+   \fi%
    % if we have the after attribute, we fake an align gate
    \ifdefined\yquant@lang@attr@after%
       \edef\jointindices{\yquant@circuit@operator@targets\yquant@lang@attr@after}%

@@ -28,6 +28,7 @@
          }%
       \fi%
    }%
+   \forlistloop{\yquant@draw@enclose@declare{#1}}\yquant@circuit@enclose@active% make it known
 }
 
 \def\yquant@draw@subcircuit@leftpos{0pt}% outermost circuit: 0pt
@@ -77,6 +78,7 @@
          \fi%
          \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr#1\relax}%
       \fi%
+      \forlistloop{\yquant@draw@enclose@measure{#6}}\yquant@circuit@enclose@active%
 }
 
 \protected\def\yquant@draw@group@advance#1{%
@@ -1061,4 +1063,312 @@
 \protected\def\yquant@draw@move@loop#1{%
    \yquant@register@set@x{#1}\newx%
    \yquant@circuit@extendwire{#1}*%
+}
+
+% enclose
+\def\yquant@draw@startenclose@initpolygon#1#2{%
+   \csxdef{yquant@draw@enclose@#1@left@#2}{\maxdimen}%
+   \csxdef{yquant@draw@enclose@#1@right@#2}{-\maxdimen}%
+}
+
+\protected\def\yquant@draw@startenclose#1{%
+   \listgadd\yquant@circuit@enclose@active{#1}%
+   \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
+      % rectangle: we have to keep track of the extremal left and right positions globally
+      \csxdef{yquant@draw@enclose@#1@left}{\maxdimen}%
+      \csxdef{yquant@draw@enclose@#1@right}{-\maxdimen}%
+   \or%
+      % polygon: we have to keep track of the extremal left and right positions per register
+      \forlistcsloop{\yquant@draw@startenclose@initpolygon{#1}}{yquant@circuit@enclose@#1@involved}%
+   \else%
+      \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type.}
+   \fi%
+}
+
+\protected\def\yquant@draw@enclose@measure@anyrelevant#1#2{%
+   \ifyquant\ifcsname yquant@circuit@enclose@#1@extentT@\yquant@register@resolvetocolon{#2}\endcsname\fi{%
+      \let\next=\@firstofone%
+      \listbreak%
+   }\relax%
+}
+
+\protected\def\yquant@draw@enclose@measure@register#1#2{%
+   \edef\resolution{\yquant@register@resolvetocolon{#2}}%
+   \ifcsname yquant@circuit@enclose@#1@extentT@\resolution\endcsname%
+      \ifcsname yquant@draw@enclose@#1@left@\resolution\endcsname%
+         \ifdim\csname yquant@draw@enclose@#1@left@\resolution\endcsname>\leftpos\space%
+            \global\cslet{yquant@draw@enclose@#1@left@\resolution}\leftpos%
+         \fi%
+         \ifdim\csname yquant@draw@enclose@#1@right@\resolution\endcsname<\rightpos\space%
+            \global\cslet{yquant@draw@enclose@#1@right@\resolution}\rightpos%
+         \fi%
+      \else%
+         \global\cslet{yquant@draw@enclose@#1@left@\resolution}\leftpos%
+         \global\cslet{yquant@draw@enclose@#1@right@\resolution}\rightpos%
+      \fi%
+   \fi%
+}
+
+\protected\def\yquant@draw@enclose@measure#1#2{%
+   \begingroup%
+      \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
+         % is any of the registers in the target list relevant for our enclose?
+         \let\next=\@gobble%
+         \forlistloop{\yquant@draw@enclose@measure@anyrelevant{#2}}{#1}%
+         \next{%
+            \edef\width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
+            \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x-\width\relax%
+               \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x-\width}%
+            \fi%
+            \ifdim\csname yquant@draw@enclose@#2@right\endcsname<\dimexpr\yquant@draw@@x+\width\relax%
+               \csdimgdef{yquant@draw@enclose@#2@right}{\yquant@draw@@x+\width}%
+            \fi%
+         }%
+      \or%
+         \edef\width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
+         \dimdef\leftpos{\yquant@draw@@x-\width}%
+         \dimdef\rightpos{\yquant@draw@@x+\width}%
+         \forlistloop{\yquant@draw@enclose@measure@register{#2}}{#1}%
+      \else%
+         \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (2).}%
+      \fi%
+   \endgroup%
+}
+
+\protected\def\yquant@draw@enclose@declare#1#2{%
+   % this is basically the same as measure, just for a single wire initialization, which has no width
+   \begingroup%
+      \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
+         % is any of the registers in the target list relevant for our enclose?
+         \ifyquant\ifcsname yquant@circuit@enclose@#2@extentT@\yquant@register@resolvetocolon{#1}\endcsname\fi{%
+            \edef\yquant@draw@@x{\yquant@register@get@x{#1}}%
+            \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x\relax%
+               \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x}%
+            \fi%
+            \ifdim\csname yquant@draw@enclose@#2@right\endcsname<\dimexpr\yquant@draw@@x\relax%
+               \csdimgdef{yquant@draw@enclose@#2@right}{\yquant@draw@@x}%
+            \fi%
+         }\relax%
+      \or%
+         \edef\leftpos{\yquant@register@get@x{#1}}%
+         \let\rightpos=\leftpos%
+         \yquant@draw@enclose@measure@register{#2}{#1}%
+      \else%
+         \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (2b).}%
+      \fi%
+   \endgroup%
+}
+
+\def\yquant@draw@enclose@sort#1#2{%
+   \ifyquant\ifdim\yquant@orientation@minus\yquant@register@colonsplit\yquant@register@peek@y{#2}>%
+                  \yquant@orientation@minus\yquant@register@colonsplit\yquant@register@peek@y{#1}\space\fi%
+}
+
+\protected\def\yquant@draw@enclose@calctop#1#2{%
+   \dimdef\enclosetop{%
+      \yquant@register@colonsplitcs\yquant@register@peek@y{yquant@sort@item#2}%
+      \yquant@orientation@plus%
+      \csname yquant@circuit@enclose@#1@extentT@\csname yquant@sort@item#2\endcsname\endcsname%
+      \yquant@orientation@plus%
+      \dimen6%
+   }%
+}
+
+\protected\def\yquant@draw@enclose@calcbottom#1#2{%
+   \dimdef\enclosebottom{%
+      \yquant@register@colonsplitcs\yquant@register@peek@y{yquant@sort@item#2}%
+      \yquant@orientation@minus%
+      \csname yquant@circuit@enclose@#1@extentB@\csname yquant@sort@item#2\endcsname\endcsname%
+      \yquant@orientation@minus%
+      \dimen6%
+   }%
+}
+
+\protected\def\yquant@draw@enclose@calcleft#1#2{%
+   \dimdef\encloseleft{%
+      \csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname%
+      -\dimen4%
+   }%
+}
+
+\protected\def\yquant@draw@enclose@calcright#1#2{%
+   \dimdef\encloseright{%
+      \csname yquant@draw@enclose@#1@right@\csname yquant@sort@item#2\endcsname\endcsname%
+      +\dimen4%
+   }%
+}
+
+\protected\def\yquant@draw@stopenclose#1{%
+   % finally, we have to draw something.
+   \begingroup%
+      % First, we'll have to sort the involved registers according to their y position.
+      \yquant@sort@clear%
+      \expandafter\yquant@sort@addlist\csname yquant@circuit@enclose@#1@involved\endcsname%
+      \yquant@sort\yquant@draw@enclose@sort%
+      \begingroup%
+         % figure out the separation
+         % If the quotes library is loaded, activate it. (else, this is by default \relax)
+         \tikz@enable@node@quotes%
+         \tikzset{/yquant/every enclose}%
+         \expandafter\tikzset\expandafter{\unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}%
+         \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/pgf/inner xsep}}%
+         \pgfmathsetlength\pgf@y{\pgfkeysvalueof{/pgf/inner ysep}}%
+         \edef\setsep{%
+            \endgroup%
+            \noexpand\dimen\ifyquanthorz46=\the\pgf@x\space%
+            \noexpand\dimen\ifyquanthorz64=\the\pgf@y\space%
+         }%
+         \setsep%
+      % Now prepare all the points in our rectangle/polygon (we always use the polygon shape for consistency)
+      \numdef\i{\yquant@sort@count-1}%
+      \yquant@draw@enclose@calcbottom{#1}\i%
+      \dimen0=\enclosebottom\space% store the bottom-most position
+      \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
+         % If we just need a rectangle, the remaining extracting steps are simple, just look at the extremal parts.
+         \dimdef\encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\dimen4}%
+         \dimen2=\encloseleft\space%
+         \dimdef\encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\dimen4}%
+         \yquant@draw@enclose@calctop{#1}0%
+         \edef\points{%
+            \yquant@coords(\encloseleft,\enclosebottom)%
+            \yquant@coords(\encloseright,\enclosebottom)%
+            \yquant@coords(\encloseright,\enclosetop)%
+            \yquant@coords(\encloseleft,\enclosetop)%
+         }%
+         \forlistcsloop{\yquant@draw@enclose@cleanup@rectangle{#1}}{yquant@circuit@enclose@#1@involved}%
+         \csgundef{yquant@draw@enclose@#1@left}%
+         \csgundef{yquant@draw@enclose@#1@right}%
+      \or%
+         % If we need a polygon, we have to collect all the necessary parts. Let's start with the bottom line:
+         \yquant@draw@enclose@calcleft{#1}\i%
+         \yquant@draw@enclose@calcright{#1}\i%
+         \edef\points{%
+            \yquant@coords(\encloseleft,\enclosebottom)%
+            \yquant@coords(\encloseright,\enclosebottom)%
+         }%
+         % Then we go up at the right
+         \yquant@fordown \i := \numexpr\i-1\relax downto 0 {%
+            % first we calculate the next right position
+            \let\encloseoldright=\encloseright%
+            \yquant@draw@enclose@calcright{#1}\i%
+            \unless\ifdim\encloseoldright=\encloseright\space% only if the right position changes, a new path segment follows
+               \yquant@draw@enclose@calctop{#1}{\the\numexpr\i+1\relax}%
+               \yquant@draw@enclose@calcbottom{#1}\i%
+               \dimdef\midpoint{.5\dimexpr\enclosetop\relax+.5\dimexpr\enclosebottom\relax}% to prevent overflow
+               \eappto\points{%
+                  \yquant@coords(\encloseoldright,\midpoint)%
+                  \yquant@coords(\encloseright,\midpoint)%
+               }%
+            \fi%
+         }%
+         % Then there's the topmost register, some part of the right line might still be missing
+         \yquant@draw@enclose@calctop{#1}0%
+         \yquant@draw@enclose@calcleft{#1}0%
+         \eappto\points{%
+            \yquant@coords(\encloseright,\enclosetop)%
+            \yquant@coords(\encloseleft,\enclosetop)%
+         }%
+         \dimen2=\encloseleft\space% figure out the leftmost position
+         % Let's go down at the left
+         \yquant@for \i := 1 to \numexpr\yquant@sort@count-1\relax {%
+            \let\encloseoldleft=\encloseleft%
+            \yquant@draw@enclose@calcleft{#1}\i%
+            \unless\ifdim\encloseoldleft=\encloseleft\space%
+               \yquant@draw@enclose@calcbottom{#1}{\the\numexpr\i-1\relax}%
+               \yquant@draw@enclose@calctop{#1}\i%
+               \dimdef\midpoint{.5\dimexpr\enclosetop\relax+.5\dimexpr\enclosebottom\relax}%
+               \eappto\points{%
+                  \yquant@coords(\encloseoldleft,\midpoint)%
+                  \yquant@coords(\encloseleft,\midpoint)%
+               }%
+               \ifdim\encloseleft<\dimen2 %
+                  \dimen2=\encloseleft\space%
+               \fi%
+            \fi%
+         }%
+         \forlistcsloop{\yquant@draw@enclose@cleanup@polygon{#1}}{yquant@circuit@enclose@#1@involved}%
+      \else%
+         \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (3).}%
+      \fi%
+      \xappto\yquant@draw@enclose@drawcommands{%
+         \yquant@draw@enclose@handlelayers{#1}{\pgfkeysvalueof{/yquant/enclose layer}}{\pgfkeysvalueof{/yquant/enclose label layer}}{%
+            \noexpand\node[{shape=yquant-enclose-polygon, /yquant/enclose/shape/polygon/points={\points},
+                            /yquant/every enclose,
+                            \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname},
+                            anchor=south \ifyquanthorz{west}{east}, transform shape,
+                            /yquant/internal/name unaliased=yquantbox}] at %
+               \yquant@coords(\the\dimen2, \the\dimen0) {};
+         }%
+      }%
+   \endgroup%
+   \listgremove\yquant@circuit@enclose@active{#1}%
+   \csgundef{yquant@circuit@enclose@#1@shape}%
+   \csgundef{yquant@circuit@enclose@#1@involved}%
+}
+
+\protected\def\yquant@draw@enclose@cleanup@rectangle#1#2{%
+   \csgundef{yquant@circuit@enclose@#1@extentT@#2}%
+   \csgundef{yquant@circuit@enclose@#1@extentB@#2}%
+}
+
+\protected\def\yquant@draw@enclose@cleanup@polygon#1#2{%
+   \csgundef{yquant@circuit@enclose@#1@extentT@#2}%
+   \csgundef{yquant@circuit@enclose@#1@extentB@#2}%
+   \csgundef{yquant@circuit@enclose@#1@left@#2}%
+   \csgundef{yquant@circuit@enclose@#1@right@#2}%
+}
+
+\protected\def\yquant@draw@enclose@align#1{%
+   % this is an align that surpasses subcircuits - #1 is a list containing prefixes and ids
+   \begingroup%
+      \yquant@register@peek@maxxlist\newx{#1}%
+      \dimen0=\newx%
+      \let\pgfshapeclippathhorzresult=\empty%
+      \forlistloop{\yquant@register@colonsplit\yquant@draw@enclose@align@loop}{#1}%
+   \endgroup%
+}
+
+\protected\def\yquant@draw@enclose@align@loop#1#2{%
+   \begingroup%
+      \edef\yquant@prefix{yquant@env#1@}%
+      \yquant@register@set@x{#2}\newx%
+      \expandafter\yquant@circuit@extendwire\expandafter{#2}*%
+   \endgroup%
+}
+
+\protected\long\def\yquant@draw@enclose@handlelayers#1#2#3#4{%
+   \yquant@begingroup%
+      \ifstrequal{#2}{#3}{%
+         \ifstrequal{#2}{main}{%
+            #4%
+         }{%
+            \pgfonlayer{#2}%
+               #4%
+            \endpgfonlayer%
+         }%
+      }{%
+         \yquant@begingroup%
+            \tikzset{append after command/.code=\relax, prefix after command/.code=\relax}%
+            \ifstrequal{#2}{main}{%
+               #4%
+            }{%
+               \pgfonlayer{#2}%
+                  #4%
+               \endpgfonlayer%
+            }%
+         \yquant@endgroup%
+         \edef\drawrest{%
+            \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/every enclose,
+                                         \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
+         }
+         \ifstrequal{#3}{main}{%
+            \drawrest%
+         }{%
+            \pgfonlayer{#3}%
+               \drawrest%
+            \endpgfonlayer%
+         }%
+      }%
+   \yquant@endgroup%
+   \csgundef{yquant@circuit@enclose@#1@style}%
 }

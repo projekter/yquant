@@ -63,6 +63,7 @@
          \yquantmeasuringtrue%
          \yquant@env@substitute%
          \global\cslet{\yquant@prefix parameters}\empty%
+         \global\let\yquant@draw@enclose@drawcommands\empty%
       \else%
          \let\yquant@lang@reset@attrs@inputoutput=\yquant@lang@reset@attrs@inputoutput@subcircuit%
          \global\cslet{\yquant@prefix parameters}\yquant@circuit@subcircuit@param%
@@ -117,6 +118,7 @@
             }%
             % also calculate the true y positions
             \unless\ifdefined\yquant@parent%
+               \yquant@circuit@enclose@storeextents2%
                \yquant@env@end@calcypositions%
             \fi%
          \else%
@@ -140,6 +142,10 @@
             \csshow{\yquant@prefix draw}%
          \fi%
       \else%
+         \unless\ifx\yquant@circuit@enclose@active\empty%
+            \PackageError{yquant.sty}{Unbalanced encloses}%
+                         {Every \string\startenclose\space has to be paired with a \string\stopenclose. There are still unclosed enclosing regions.}%
+         \fi%
          % Now we actually carry out the tikz commands which were previously stored in the draw command. But before this, we get rid of all \yquant@env@scan calls and also restore the scope command, since this would add itself once again. And get@y needs to expand.
          \let\path=\tikz@command@path%
          \let\tikz@lib@scope@check=\yquant@env@substikz@scopecheck%
@@ -153,7 +159,13 @@
          \fi%
          \yquantmeasuringfalse%
          \csname\yquant@prefix draw\endcsname%
+         \ifyquantdebug%
+            \show\yquant@draw@enclose@drawcommands%
+         \fi%
+         \yquant@draw@enclose@drawcommands%
          \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
+         \gundef\yquant@draw@enclose@drawcommands%
+         \global\yquant@circuit@enclose@count=0 %
          \global\yquant@env=0 %
       \fi%
    \endgroup%
@@ -182,6 +194,8 @@
       \yquant@env@end@calcypositions@redo%
       % The macros now set up performed all the proper and unambiguous justification. After that, we will also need to take care of the multi gates. We expect that for most of all multi gates, we already have enough space. But sometimes, this may not be the case, so we need to increase overall spacing and re-evaluate all spacing. In order to get a proper balanced layout, we start with the largest enlargement that is required. Every enlargement step will equally distribute the registers in between. Starting with the largest one, this is likely to also solve issues with smaller ones.
       \yquant@env@end@calcypositions@multi%
+      % Before we forget about all the height/depth data, we need to store it for our enclose regions
+      \yquant@circuit@enclose@storeextents0%
       % Turn the preliminary positions into true ones at every level.
       \yquant@env@end@setypositions1%
    \endgroup%
@@ -648,6 +662,13 @@
       \protected@csxappto{\yquant@prefix draw}{##1}%
       \yquant@env@scan%
    }%
+}
+
+\listadd\yquant@env@substitutions\yquant@env@enclose
+\protected\def\yquant@env@enclose{%
+   \let\enclose=\yquant@circuit@enclose%
+   \let\startenclose=\yquant@circuit@startenclose%
+   \let\stopenclose=\yquant@circuit@stopenclose%
 }
 
 % Scan until the next non-space token is found and execute it as a csname

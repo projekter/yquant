@@ -452,6 +452,80 @@
    % every z is implicitly defined during gate declaration
    operators/every zz/.style=%
       {shape=yquant-circle, radius=.5mm, fill},%
+% END_FOLD
+% BEGIN_FOLD Enclose styles
+   enclose/options/.is family,%
+   enclose/name/.code=%
+      {\unless\ifdefined\yquant@circuit@enclose@allowname%
+          \PackageError{yquant.sty}{Repeated enclose names}%
+                       {A name for an enclosing region may only be specified once.}%
+       \fi%
+       \ifcsname yquant@circuit@enclose@names@#1\endcsname%
+          \PackageError{yquant.sty}{Duplicate enclose names}%
+                       {The name `#1' is already defined for an enclosing region.}%
+       \fi%
+       \csxdef{yquant@circuit@enclose@names@#1}{\the\yquant@circuit@enclose@count}%
+       \undef\yquant@circuit@enclose@allowname%
+      },
+   enclose/name/.belongs to family=/yquant/enclose/options,%
+   enclose/from/.code=%
+      {\expandafter\yquant@register@singleget%
+          \csname yquant@config@enclose@\yquant@circuit@enclose@id @from\endcsname%
+          {#1}0%
+       \ifcsname yquant@config@enclose@\yquant@circuit@enclose@id @from\endcsname
+          \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @from}{%
+             \expandafter\yquant@register@resolvetocolon%
+               \csname yquant@config@enclose@\yquant@circuit@enclose@id @from\endcsname%
+             \yquant@list@delim%
+          }%
+       \else%
+          % maybe the register does not exist, but it is created within the macro... So we have to store the id
+          \global\cslet{yquant@config@enclose@\yquant@circuit@enclose@id @from}\empty%
+          \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @fromresolve}{#1}%
+       \fi%
+      },
+   enclose/from/.belongs to family=/yquant/enclose/options,
+   enclose/to/.code=%
+      {\expandafter\yquant@register@singleget%
+          \csname yquant@config@enclose@\yquant@circuit@enclose@id @to\endcsname%
+          {#1}3{%
+          % even if the "to" register already exists, if it was a vector register with no explicitly specified index and thus could be enlarged during the macro, we always have to store the id
+          \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @toresolve}{#1}%
+       }{%
+          % the index was specified explicitly, so we know it for sure, if it exists
+          \unless\ifcsname yquant@config@enclose@\yquant@circuit@enclose@id @to\endcsname%
+             \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @toresolve}{#1}%
+          \fi%
+       }%
+       \ifcsname yquant@config@enclose@\yquant@circuit@enclose@id @to\endcsname%
+          \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @to}{%
+             \expandafter\yquant@register@resolvetocolon
+                \csname yquant@config@enclose@\yquant@circuit@enclose@id @to\endcsname%
+             \yquant@list@delim%
+          }%
+       \else%
+          \global\cslet{yquant@config@enclose@\yquant@circuit@enclose@id @to}\empty%
+       \fi%
+      },
+   enclose/to/.belongs to family=/yquant/enclose/options,%
+   enclose/spacing/.is choice,%
+   enclose/spacing/.belongs to family=/yquant/enclose/options,%
+   enclose/spacing/register/.code={\def\yquant@config@enclose@spacing{0}},%
+   enclose/spacing/register/.belongs to family=/yquant/enclose/options,%
+   enclose/spacing/gate/.code={\def\yquant@config@enclose@spacing{1}},%
+   enclose/spacing/gate/.belongs to family=/yquant/enclose/options,%
+   enclose/spacing/gate or local register/.code={\def\yquant@config@enclose@spacing{2}}%,
+   enclose/spacing/gate or local register/.belongs to family=/yquant/enclose/options,%
+   enclose/shape/.is choice,%
+   enclose/shape/.belongs to family=/yquant/enclose/options,%
+   enclose/shape/rectangle/.code={\def\yquant@config@enclose@shape{0}},%
+   enclose/shape/rectangle/.belongs to family=/yquant/enclose/options,%
+   enclose/shape/polygon/.code={\def\yquant@config@enclose@shape{1}},%
+   enclose/shape/polygon/.belongs to family=/yquant/enclose/options,%
+   every enclose/.style={draw, dashed, inner spacesep=.5*\yquant@config@register@sep, inner timesep=.5*\yquant@config@operator@sep, name=myname},%
+   enclose layer/.initial=background,%
+   enclose label layer/.initial=main,%
+   enclose/shape/polygon/points/.initial,%
 }
 % END_FOLD
 % BEGIN_FOLD Internal styles (undocument, do not use!)
@@ -479,6 +553,19 @@
             \def\noexpand\yquant@config@corner@xamount{#1\the\dimexpr.5\pgflinewidth\relax}%
          }%
          \tmp%
+   },%
+   internal/name unaliased/.code={%
+      \let\yquant@config@internal@oldppname=\tikz@pp@name%
+      \let\tikz@pp@name=\@firstofone%
+      \ifx\tikz@fig@name\pgfutil@empty%
+         \pgfkeysalso{/tikz/name={#1}}%
+      \else%
+         \pgfkeysalso{/tikz/alias={#1}}%
+      \fi%
+      \let\tikz@pp@name=\yquant@config@internal@oldppname%
+   },%
+   internal/dename/.code={
+      \pgfkeysalso{/tikz/name/.code=, /tikz/alias/.code=}%
    }
 }
 \ifnum\yquant@compat<2 %
@@ -608,7 +695,9 @@
 \def\yquant@config@operator@sep{1mm}
 \def\yquant@config@operator@minimum@width{\yquant@config@operator@minimum@width@default}
 \def\yquant@config@operator@minimum@width@default{5mm}
-\newif\ifyquant@config@internal@multi@main%
+\def\yquant@config@enclose@spacing{2}
+\def\yquant@config@enclose@shape{0}
+\newif\ifyquant@config@internal@multi@main
 \yquant@config@internal@multi@maintrue
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue

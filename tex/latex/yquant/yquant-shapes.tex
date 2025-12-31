@@ -1159,3 +1159,123 @@
    }%
    % END_FOLD
 }
+
+\protected\def\yquant@pgflistloop@end{\yquant@pgflistloop@end}
+\def\yquant@pgflistloop#1#2{%
+   % loop through a coordinate list #2, executing #1
+   \yquant@pgflistloop@i{#1}#2(\yquant@pgflistloop@end,)%
+}
+
+\def\yquant@pgflistloop@i#1(#2,#3){%
+   \ifyquant\ifx\yquant@pgflistloop@end#2 \fi\relax{%
+      #1{#2}{#3}%
+      \yquant@pgflistloop@i{#1}%
+   }%
+}
+
+\def\yquant@pgflistloop@skipfirst#1#2{%
+   % loop through a coordinate list #2, executing #1, skipping the first element
+   \yquant@pgflistloop@skipfirst@i{#1}#2(\yquant@pgflistloop@end,)%
+}
+
+\def\yquant@pgflistloop@skipfirst@i#1(#2,#3){%
+   \ifyquant\ifx\yquant@pgflistloop@end#2 \fi\relax{%
+      \yquant@pgflistloop@i{#1}%
+   }%
+}
+
+\def\yquant@pgflistloop@first#1#2{%
+   % expand #1 to the first item in the list, assuming the list is non-empty
+   \yquant@pgflistloop@first@i{#1}#2\yquant@pgflistloop@end%
+}
+
+\def\yquant@pgflistloop@first@i#1(#2,#3)#4\yquant@pgflistloop@end{%
+   #1{#2}{#3}%
+}
+
+\def\yquant@shape@enclosepolygon@line#1#2{%
+   \pgfpathlineto{\pgfqpoint{#1}{#2}}%
+}
+
+\def\yquant@shape@enclosepolygon@findextrema#1#2{%
+   \ifdim#1<\pgf@x %
+      \pgf@x=#1 %
+   \fi%
+   \ifdim#1>\pgf@xa %
+      \pgf@xa=#1 %
+   \fi%
+   \ifdim#2<\pgf@y %
+      \pgf@y=#2 %
+   \fi%
+   \ifdim#2>\pgf@ya %
+      \pgf@ya=#2 %
+   \fi%
+}
+
+\pgfdeclareshape{yquant-enclose-polygon}{%
+   % This is not an ordinary yquant shape, it does not define clip paths.
+   % This is a polygon of arbitrary points, where the anchors will be at the enclosing rectangle.
+   % The last point will be connected to the first.
+   % BEGIN_FOLD Saved anchors
+   \savedmacro\points{%
+      \edef\points{\pgfkeysvalueof{/yquant/enclose/shape/polygon/points}}%
+   }
+   \savedmacro\extrema{%
+      \edef\points{\pgfkeysvalueof{/yquant/enclose/shape/polygon/points}}%
+      \pgf@x=\maxdimen%
+      \pgf@xa=-\maxdimen%
+      \pgf@y=\maxdimen%
+      \pgf@ya=-\maxdimen%
+      \expandafter\yquant@pgflistloop\expandafter\yquant@shape@enclosepolygon@findextrema\expandafter{\points}%
+      \edef\extrema{{\the\pgf@x}{\the\pgf@y}{\the\pgf@xa}{\the\pgf@ya}}%
+   }%
+   % END_FOLD
+   % BEGIN_FOLD Operator anchors
+   \anchor{center}%
+          {\pgf@x=\dimexpr.5\dimexpr\expandafter\@firstoffour\extrema\relax+.5\dimexpr\expandafter\@thirdoffour\extrema\relax\relax%
+           \pgf@y=\dimexpr.5\dimexpr\expandafter\@secondoffour\extrema\relax+.5\dimexpr\expandafter\@fourthoffour\extrema\relax\relax}%
+   \global\csletcs{pgf@anchor@yquant-enclose-polygon@text}{pgf@anchor@yquant-enclose-polygon@center}%
+   \anchor{north}%
+          {\pgf@x=\dimexpr.5\dimexpr\expandafter\@firstoffour\extrema\relax+.5\dimexpr\expandafter\@thirdoffour\extrema\relax\relax%
+           \pgf@y=\expandafter\@fourthoffour\extrema\space}%
+   \anchor{north east}%
+          {\pgf@x=\expandafter\@thirdoffour\extrema\space%
+           \pgf@y=\expandafter\@fourthoffour\extrema\space}%
+   \anchor{east}%
+          {\pgf@x=\expandafter\@thirdoffour\extrema\space%
+           \pgf@y=\dimexpr.5\dimexpr\expandafter\@secondoffour\extrema\relax+.5\dimexpr\expandafter\@fourthoffour\extrema\relax\relax}%
+   \anchor{south east}
+          {\pgf@x=\expandafter\@thirdoffour\extrema\space%
+           \pgf@y=\expandafter\@secondoffour\extrema\space}%
+   \anchor{south}%
+          {\pgf@x=\dimexpr.5\dimexpr\expandafter\@firstoffour\extrema\relax+.5\dimexpr\expandafter\@thirdoffour\extrema\relax\relax%
+           \pgf@y=\expandafter\@secondoffour\extrema\space}%
+   \anchor{south west}%
+          {\pgf@x=\expandafter\@firstoffour\extrema\space%
+           \pgf@y=\expandafter\@secondoffour\extrema\space}%
+   \anchor{west}%
+          {\pgf@x=\expandafter\@firstoffour\extrema\space%
+           \pgf@y=\dimexpr.5\dimexpr\expandafter\@secondoffour\extrema\relax+.5\dimexpr\expandafter\@fourthoffour\extrema\relax\relax}%
+   \anchor{north west}
+          {\pgf@x=\expandafter\@firstoffour\extrema\space%
+           \pgf@y=\expandafter\@fourthoffour\extrema\space}%
+   \anchorborder{%
+      \@tempdima=\pgf@x%
+      \@tempdimb=\pgf@y%
+      \pgfpointborderrectangle{\pgfqpoint{\@tempdima}{\@tempdimb}}%
+                              {\pgfqpoint{.5\dimexpr\expandafter\@thirdoffour\extrema-\expandafter\@firstoffour\extrema}%
+                                         {.5\dimexpr\expandafter\@fourthoffour\extrema-\expandafter\@secondoffour\extrema}}%
+      \advance\pgf@x by \dimexpr.5\dimexpr\expandafter\@firstoffour\extrema\relax+.5\dimexpr\expandafter\@thirdoffour\extrema\relax\relax%
+      \advance\pgf@y by \dimexpr.5\dimexpr\expandafter\@secondoffour\extrema\relax+.5\dimexpr\expandafter\@fourthoffour\extrema\relax\relax%
+   }%
+   % END_FOLD
+   % BEGIN_FOLD Path
+   \backgroundpath{%
+      \pgfpathmoveto{%
+         \expandafter\yquant@pgflistloop@first\expandafter\pgfqpoint\expandafter{\points}%
+      }%
+      \expandafter\yquant@pgflistloop@skipfirst\expandafter\yquant@shape@enclosepolygon@line\expandafter{\points}%
+      \pgfpathclose%
+   }%
+   % END_FOLD
+}

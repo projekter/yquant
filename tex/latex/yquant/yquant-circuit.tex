@@ -458,3 +458,300 @@
             }%
 }
 % END_FOLD
+
+% BEGIN_FOLD \enclose
+\newcount\yquant@circuit@enclose@count
+\let\yquant@circuit@enclose@active=\empty
+
+\protected\def\yquant@circuit@startenclose{%
+   \@ifnextchar[\yquant@circuit@startenclose@i{\yquant@circuit@startenclose@i[]}%
+}
+
+\pgfkeys{%
+   /yquant/enclose filter handler/.code={%
+      \eappto#1{%
+         ,\unexpanded\expandafter{\pgfkeyscurrentkeyRAW}%
+         \unless\ifx\pgfkeyscurrentvalue\pgfkeysnovalue@text%
+            ={\unexpanded\expandafter{\pgfkeyscurrentvalue}}%
+         \fi%
+      }%
+   }
+}
+
+\def\yquant@circuit@startenclose@i[#1]#2{%
+   \begingroup%
+      \global\advance\yquant@circuit@enclose@count by 1 % we keep increasing - this has to be globally unique until the outermost yquant environment is closed
+      \edef\yquant@circuit@enclose@id{\the\yquant@circuit@enclose@count}%
+      \listxadd\yquant@circuit@enclose@active\yquant@circuit@enclose@id%
+      \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @prefixid}{\yquant@env@prefix@id\yquant@prefix}%
+      \let\yquant@circuit@enclose@style=\empty%
+      \pgfkeys{%
+         /pgf/key filters/active families and known/.install key filter,%
+         /yquant/enclose filter handler/.install key filter handler=\yquant@circuit@enclose@style,
+         /yquant/enclose/options/.activate family%
+      }%
+      \ifx\relax#2%
+         \let\yquant@circuit@enclose@allowname=\relax%
+      \else%
+         \ifstrempty{#2}{%
+            \PackageError{yquant.sty}{Empty enclose name}{Names for enclosing regions must be non-empty.}%
+         }\relax%
+         \csxdef{yquant@circuit@enclose@names@#2}{\yquant@circuit@enclose@id}%
+      \fi%
+      \pgfqkeysfiltered{/yquant/enclose}{#1}%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @style}\yquant@circuit@enclose@style%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}\empty%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}\yquant@config@enclose@spacing%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @shape}\yquant@config@enclose@shape%
+      \csxappto{\yquant@prefix draw}{%
+         \yquant@draw@startenclose{\yquant@circuit@enclose@id}%
+      }
+   \endgroup%
+   \yquant@env@scan%
+}
+
+\def\yquant@circuit@stopenclose#1{%
+   \unless\ifcsname yquant@circuit@enclose@names@#1\endcsname%
+      \PackageError{yquant.sty}{Unknown enclose name}{The enclose name `#1' was not found.}%
+   \fi%
+   \expandafter\expandafter\expandafter\yquant@circuit@stopenclose@i%
+      \expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@names@#1\endcsname}%
+   \csgundef{yquant@circuit@enclose@names@#1}%
+}
+
+\protected\def\yquant@circuit@stopenclose@i#1{%
+   \begingroup%
+      \ifcsname yquant@config@enclose@#1@fromresolve\endcsname%
+         \PackageError{yquant.sty}{Invalid `from' register}{`from' register was not defined at any point during the \string\enclose.}%
+      \fi%
+      \ifcsname yquant@config@enclose@#1@toresolve\endcsname%
+         \ifcsname yquant@config@enclose@#1@toresolved\endcsname% to with a vector register will always be kept because of possible later extensions
+            \csgundef{yquant@config@enclose@#1@toresolved}%
+            \csgundef{yquant@config@enclose@#1@toresolve}%
+         \else%
+            \PackageError{yquant.sty}{Invalid `to' register}{`to' register was not defined at any point during the \string\enclose.}%
+         \fi%
+      \fi%
+      \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\empty%
+         \PackageError{yquant.sty}{Empty \string\enclose}{The given range did not contain any operations within the \string\enclose.}%
+      \fi%
+      \csxappto{\yquant@prefix draw}{%
+         \yquant@draw@stopenclose{#1}%
+      }%
+      \csgundef{yquant@circuit@enclose@#1@prefixid}%
+      \listgremove\yquant@circuit@enclose@active{#1}%
+      \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
+         % we have to align all the involved registers. However, subcircuits that are already finished should be excluded. Basically, this means that we don't align subcircuits that are not the current active circuit or any of its parents.
+         \let\yquant@circuit@enclose@align@list=\empty%
+         \forlistcsloop\yquant@circuit@enclose@align{yquant@circuit@enclose@#1@involved}%
+         \csxappto{\yquant@prefix draw}{%
+            \yquant@draw@enclose@align{\yquant@circuit@enclose@align@list}%
+         }%
+      \fi%
+      \ifyquantdebug%
+         \csshow{yquant@circuit@enclose@#1@involved}%
+      \fi%
+   \endgroup%
+   \yquant@env@scan%
+}
+
+\def\yquant@circuit@enclose{%
+   \@ifnextchar[\yquant@circuit@enclose@i{\yquant@circuit@enclose@i[]}%
+}
+
+\def\yquant@circuit@enclose@i{%
+   \expandafter\yquant@circuit@enclose@ii\expandafter{\the\numexpr\yquant@circuit@enclose@count+1\relax}%
+}
+
+\long\def\yquant@circuit@enclose@ii#1[#2]#3{%
+   \yquant@circuit@startenclose[{#2}]\relax%
+   #3%
+   \yquant@circuit@stopenclose@i{#1}%
+}
+
+\protected\def\yquant@circuit@enclose@align#1{%
+   \xifinlist{\yquant@register@colonprefix{#1}}\yquant@env@hierarchy{%
+      \listadd\yquant@circuit@enclose@align@list{#1}%
+   }\relax%
+}
+
+\protected\def\yquant@circuit@enclose@set@i#1#2#3{%
+   \ifcsname yquant@circuit@enclose@names@#3\endcsname%
+      \listcsxadd{yquant@config@enclose@\csname yquant@circuit@enclose@names@#3\endcsname @#1}%
+                 {\yquant@register@resolvetocolon{#2}}%
+   \else%
+      \PackageError{yquant.sty}{Unknown enclose name: `#3'.}{Cannot set `#1' property; start an \string\enclose\space before and name it appropriately.}%
+   \fi%
+}
+
+\def\yquant@circuit@enclose@set#1#2{%
+   % #1: from/to
+   % #2: operator id
+   % #3: comma-separated list of enclose names
+   \forcsvlist{\yquant@circuit@enclose@set@i{#1}{#2}}%
+}
+
+\protected\def\yquant@circuit@enclose@update@extentTB@ii#1#2#3#4#5{%
+   % #1: current circuit id
+   % #2: currently updated register
+   % #3: order relation
+   % #4: other prefix
+   % #5: other id
+   \ifnumyquant@registers{#1}{#2}#3{#4}{#5}\relax{%
+      % we are anti-ordered (since the relations can only be < or > and we need <= or >=, we invert)
+      \let\next=\@firstofone%
+      \listbreak%
+   }\relax%
+}
+
+\protected\def\yquant@circuit@enclose@update@extentTB@i#1#2#3#4{%
+   % #1: T/B from height or depth updates
+   % #2: register id
+   % #3: new height/depth value
+   % #4: enclose id
+   \begingroup%
+      \ifcsname yquant@config@enclose@#4@from\endcsname%
+         % we are upper-bounded by a custom-specified register. Do we already know which?
+         \ifcsname yquant@config@enclose@#4@fromresolve\endcsname%
+            % not yet, so let's check whether we now know the register
+            \expandafter\yquant@register@singlepeek%
+               \expandafter\newid%
+               \csname yquant@circuit@enclose@#4@prefixid\expandafter\expandafter\expandafter\endcsname%
+               \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#4@fromresolve\endcsname}0%
+            \ifdefined\newid%
+               \listcsxadd{yquant@config@enclose@#4@from}{%
+                  \expandafter\yquant@register@fullresolvetocolon%
+                     \csname yquant@circuit@enclose@#4@prefixid\endcsname%
+                     \newid%
+               }%
+               \csgundef{yquant@config@enclose@#4@fromresolve}%
+            % else the register does not exist yet, i.e., the first one will be below all the currently existing ones.
+            \fi%
+         \fi%
+         % now we have our list of from targets. Iterate and check whether we are below at least a single one
+         \let\next=\@gobble%
+         \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
+            \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
+               \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB@ii%
+               \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
+               {#2}
+               <%
+            }%
+         }{yquant@config@enclose@#4@from}%
+      \else%
+         \let\next=\@firstofone%
+      \fi%
+      \next{%
+         \ifcsname yquant@config@enclose@#4@to\endcsname%
+            % to is a bit more special, for even if we knew the register at creation, it might be enlarged within the region and we have to react if only a vector name without index was specified. In this case, we can never add the resolved index to the list.
+            \let\next=\@gobble%
+            \ifcsname yquant@config@enclose@#4@toresolve\endcsname%
+               \expandafter\yquant@register@singlepeek%
+                  \expandafter\newid%
+                  \csname yquant@circuit@enclose@#4@prefixid\expandafter\expandafter\expandafter\endcsname%
+                  \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#4@toresolve\endcsname}3{%
+                  % it was a vector register
+                  \ifdefined\newid%
+                     \edef\do{%
+                        \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@update@extentTB@ii>{#2}}%
+                           \expandafter\yquant@register@fullresolvetocolon%
+                              \csname yquant@circuit@enclose@#4@prefixid\endcsname%
+                              \newid%
+                     }%
+                     \expandafter\do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
+                     \global\cslet{yquant@config@enclose@#4@toresolved}\relax%
+                  \else%
+                     % the register was not found yet, i.e., the last one will be below all currently existing ones.
+                     \let\next=\@firstofone%
+                  \fi%
+               }{%
+                  \ifdefined\newid%
+                     % it was a well-defined index, we can add it to our list
+                     \listcsxadd{yquant@config@enclose@#4@to}{%
+                        \expandafter\yquant@register@fullresolvetocolon%
+                           \csname yquant@circuit@enclose@#4@prefixid\endcsname%
+                           \newid%
+                     }%
+                     \csgundef{yquant@config@enclose@#4@toresolve}%
+                  \else%
+                     \let\next=\@firstofone%
+                  \fi%
+               }%
+            \fi%
+            \ifx\next\@gobble%
+               \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
+                  \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
+                     \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB@ii%
+                     \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
+                     {#2}
+                     >%
+                  }%
+               }{yquant@config@enclose@#4@to}%
+            \fi%
+         \else%
+            \let\next=\@firstofone%
+         \fi%
+      }%
+      \next{%
+         % now we know that the currently relevant register is indeed contained in the from-to range.
+         \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
+         \ifnum\csname yquant@circuit@enclose@#4@spacing\endcsname=0 %
+            \xifinlistcs\curcolon{yquant@circuit@enclose@#4@involved}\relax{%
+               \listcsxadd{yquant@circuit@enclose@#4@involved}\curcolon%
+            }%
+         \else%
+            \ifcsname yquant@circuit@enclose@#4@extentT@\curcolon\endcsname%
+               \ifdim\csname yquant@circuit@enclose@#4@extent#1@\curcolon\endcsname<#3 %
+                  \csxdef{yquant@circuit@enclose@#4@extent#1@\curcolon}{#3}%
+               \fi%
+            \else%
+               \csxdef{yquant@circuit@enclose@#4@extent#1@\curcolon}{#3}%
+               \csxdef{yquant@circuit@enclose@#4@extent\ifx T#1B\else T\fi @\curcolon}{0pt}%
+               \listcsxadd{yquant@circuit@enclose@#4@involved}{\curcolon}%
+            \fi%
+         \fi%
+      }%
+   \endgroup%
+}
+
+\protected\def\yquant@circuit@enclose@update@extentTB#1#2#3{%
+   \forlistloop{\yquant@circuit@enclose@update@extentTB@i{#1}{#2}{#3}}\yquant@circuit@enclose@active%
+}
+
+\protected\def\yquant@circuit@enclose@storeextents#1{%
+   % This is invoked at the end of a circuit before the y positions are calculated. Once, it is called when the local registers extents are known, once when the global extents (including all possible subcircuit ancillas) were calculated. We have to convert them into individual positions.
+   \yquant@for \yquant@circuit@enclose@id := 1 to \yquant@circuit@enclose@count {%
+      \ifnum\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing\endcsname=#1 %
+         \expandafter\forlistcsloop%
+            \expandafter{\expandafter\yquant@register@colonsplit\csname yquant@circuit@enclose@storeextents@#1\endcsname}%
+            {yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}%
+      \fi%
+      \ifnum#1=0 %
+         \csgundef{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}%
+      \fi%
+   }%
+   % we'll momentarily leave a scope anyway, no need to cleanup the \yquant@circuit@enclose@id macro
+}
+
+\expandafter\protected\expandafter\def\csname yquant@circuit@enclose@storeextents@0\endcsname#1#2{%
+   % 0 = register, so define the extents
+   \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2}{%
+      \yquant@register@peek@height{#1}{#2}%
+   }%
+   \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2}{%
+      \yquant@register@peek@depth{#1}{#2}%
+   }%
+}
+
+\expandafter\protected\expandafter\def\csname yquant@circuit@enclose@storeextents@2\endcsname#1#2{%
+   % 2 = gate or local register, so update if larger
+   \edef\tmp{\yquant@register@peek@height{#1}{#2}}%
+   \ifdim\tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2\endcsname\space%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2}\tmp%
+   \fi%
+   \edef\tmp{\yquant@register@peek@depth{#1}{#2}}%
+   \ifdim\tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2\endcsname\space%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2}\tmp%
+   \fi%
+}
+% END_FOLD

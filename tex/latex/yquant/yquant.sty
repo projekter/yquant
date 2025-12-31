@@ -15,13 +15,13 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquant}[2025/12/26 v0.8.2 Yet another quantum circuit library for LaTeX]
+\ProvidesPackage{yquant}[2025/12/31 v0.9 Yet another quantum circuit library for LaTeX]
 
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
 \RequirePackage{trimspaces}[2009/09/17]
 \RequirePackage{xkeyval}[2005/05/07]
-\usetikzlibrary{arrows.meta,decorations.pathreplacing,decorations.pathmorphing}
+\usetikzlibrary{arrows.meta,decorations.pathreplacing,decorations.pathmorphing,backgrounds}
 
 \define@choicekey+{yquant.sty}{compat}[\val\yquant@compat]{newest,0.3,0.4,0.6,0.8}{
    \ifnum\yquant@compat=0 %
