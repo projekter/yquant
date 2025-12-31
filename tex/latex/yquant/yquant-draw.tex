@@ -1209,6 +1209,7 @@
       \begingroup%
          % figure out the separation
          % If the quotes library is loaded, activate it. (else, this is by default \relax)
+         \let\yquant@config@enclose@brace=\@gobbletwo%
          \tikz@enable@node@quotes%
          \tikzset{/yquant/every enclose}%
          \expandafter\tikzset\expandafter{\unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}%
@@ -1351,6 +1352,7 @@
 }
 
 \protected\long\def\yquant@draw@enclose@handlelayers#1#2#3#4{%
+   \def\yquant@config@enclose@braces{0}%
    \yquant@begingroup%
       \ifstrequal{#2}{#3}{%
          \ifstrequal{#2}{main}{%
@@ -1363,6 +1365,7 @@
       }{%
          \yquant@begingroup%
             \tikzset{append after command/.code=\relax, prefix after command/.code=\relax}%
+            \let\yquant@config@enclose@brace=\@gobbletwo%
             \ifstrequal{#2}{main}{%
                #4%
             }{%
@@ -1374,7 +1377,7 @@
          \edef\drawrest{%
             \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/every enclose,
                                          \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
-         }
+         }%
          \ifstrequal{#3}{main}{%
             \drawrest%
          }{%

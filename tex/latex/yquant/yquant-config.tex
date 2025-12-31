@@ -523,9 +523,136 @@
    enclose/shape/polygon/.code={\def\yquant@config@enclose@shape{1}},%
    enclose/shape/polygon/.belongs to family=/yquant/enclose/options,%
    every enclose/.style={draw, dashed, inner spacesep=.5*\yquant@config@register@sep, inner timesep=.5*\yquant@config@operator@sep, name=myname},%
+   every braced enclose/.style={draw=none},
    enclose layer/.initial=background,%
    enclose label layer/.initial=main,%
    enclose/shape/polygon/points/.initial,%
+   /tikz/.cd,
+   enclose/brace above/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace0{#1}},%
+   enclose/brace below/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace1{#1}},%
+   enclose/brace left/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace0{#1}},%
+   enclose/brace right/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace1{#1}},%
+   enclose/every brace label/.style={label distance=2pt},%
+   enclose/every brace label above or left/.style={},%
+   enclose/every brace label below or right/.style={},%
+   enclose/every brace label above/.style={},%
+   enclose/every brace label below/.style={},%
+   enclose/every brace label left/.style={},%
+   enclose/every brace label right/.style={},%
+   enclose/brace label style/.style={/tikz/enclose/every brace label/.append style={#1}},%
+   enclose/brace label above or left style/.style={/tikz/enclose/every brace label above or left/.append style={#1}},%
+   enclose/brace label below or right style/.style={/tikz/enclose/every brace label below or right/.append style={#1}},%
+   enclose/brace label above style/.style={/tikz/enclose/every brace label above/.append style={#1}},%
+   enclose/brace label below style/.style={/tikz/enclose/every brace label below/.append style={#1}},%
+   enclose/brace label left style/.style={/tikz/enclose/every brace label left/.append style={#1}},%
+   enclose/brace label right style/.style={/tikz/enclose/every brace label right/.append style={#1}},%
+   enclose/brace style/.style={/pgf/decoration/enclose/every brace/.append style={#1}},%
+   enclose/brace style above or left/.style={/pgf/decoration/enclose/every brace above or left/.append style={#1}},%
+   enclose/brace style below or right/.style={/pgf/decoration/enclose/every brace below or right/.append style={#1}},%
+   enclose/brace style above/.style={/pgf/decoration/enclose/every brace above/.append style={#1}},%
+   enclose/brace style below/.style={/pgf/decoration/enclose/every brace below/.append style={#1}},%
+   enclose/brace style left/.style={/pgf/decoration/enclose/every brace left/.append style={#1}},%
+   enclose/brace style right/.style={/pgf/decoration/enclose/every brace right/.append style={#1}},%
+   /pgf/decoration/.cd,
+   enclose/every brace/.style={brace},%
+   enclose/every brace above or left/.style={},%
+   enclose/every brace below or right/.style={},%
+   enclose/every brace above/.style={},%
+   enclose/every brace below/.style={mirror},%
+   enclose/every brace left/.style={mirror},%
+   enclose/every brace right/.style={},%
+}
+\def\yquant@config@enclose@brace#1#2{%
+   % we copy the label parsing from TikZ
+   \edef\yquant@config@enclose@brace@label@default@pos{\ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi}%
+   \begingroup%
+      \ifnum\the\catcode`\:=\active\relax%
+         \def\tikz@next{%
+            \endgroup%
+            \yquant@config@enclose@brace@parse@active{#1}{#2}%
+         }%
+      \else%
+         \def\tikz@next{%
+            \endgroup%
+            \@ifnextchar[%
+               {\yquant@config@enclose@brace@parse@nonactive{#1}}%
+               {\yquant@config@enclose@brace@parse@nonactive{#1}[]}#2:\pgf@nil%
+         }
+      \fi%
+      \tikz@next%
+}
+\begingroup%
+   \catcode`\:=\active\relax
+   \gdef\yquant@config@enclose@brace@parse@active#1#2{%
+      \@ifnextchar[%
+         {\yquant@config@enclose@brace@parse@active@i{#1}}%
+         {\yquant@config@enclose@brace@parse@active@i[]}{#1}#2:\pgf@nil%
+   }
+   \gdef\yquant@config@enclose@brace@parse@active@i#1[#2]#3:#4\pgf@nil{%
+      \ifstrempty{#4}{%
+         % no position, use default
+         \yquant@config@enclose@brace@parse@active@ii{#1}[{#2}]\yquant@config@enclose@brace@label@default@pos:#3:\pgf@nil%
+      }{%
+         \ifstrempty{#3}{%
+            \yquant@config@enclose@brace@parse@active@ii{#1}[{#2}]\yquant@config@enclose@brace@label@default@pos:#4\pgf@nil%
+         }{%
+            \yquant@config@enclose@brace@parse@active@ii{#1}[{#2}]#3:#4\pgf@nil%
+         }%
+      }%
+   }
+   \gdef\yquant@config@enclose@brace@parse@active@ii#1[#2]#3:#4:\pgf@nil{%
+      \yquant@config@enclose@brace@do{#1}[{#2}]{#3}{#4}%
+   }
+\endgroup%
+\def\yquant@config@enclose@brace@parse@nonactive#1[#2]#3:#4\pgf@nil{%
+   \ifstrempty{#4}{%
+      % no position, use default
+      \yquant@config@enclose@brace@parse@nonactive@i{#1}[{#2}]\yquant@config@enclose@brace@label@default@pos:#3:\pgf@nil%
+   }{%
+      \ifstrempty{#3}{%
+         \yquant@config@enclose@brace@parse@nonactive@i{#1}[{#2}]\yquant@config@enclose@brace@label@default@pos:#4\pgf@nil%
+      }{%
+         \yquant@config@enclose@brace@parse@nonactive@i{#1}[{#2}]#3:#4\pgf@nil%
+      }%
+   }%
+}
+\def\yquant@config@enclose@brace@parse@nonactive@i#1[#2]#3:#4:\pgf@nil{%
+   \yquant@config@enclose@brace@do{#1}[{#2}]{#3}{#4}%
+}
+\def\yquant@config@enclose@brace@do#1[#2]#3#4{%
+   \numdef\yquant@config@enclose@braces{\yquant@config@enclose@braces+1}%
+   \begingroup%
+      \edef\yquant@config@enclose@brace@style{%
+         \endgroup%
+         \noexpand\pgfkeysalso{%
+            /yquant/internal/collect brace styles={#1}{\yquant@config@enclose@braces}, /tikz/append after command={\noexpand\pgfextra{%
+            \noexpand\draw[name prefix=, name suffix=, decoration=/yquant/internal/collected brace decoration \yquant@config@enclose@braces,%
+                           decorate]%
+               \ifnum#1=0 %
+                  (yquantbox.north west) -- %
+                  (yquantbox.\ifyquanthorz{north east}{south west})%
+               \else%
+                  (yquantbox.\ifyquanthorz{south west}{north east}) -- %
+                  (yquantbox.south east)%
+               \fi;%
+         }}}%
+         \noexpand\tikz@@parse@label@nonactive[{/yquant/internal/collected brace label \yquant@config@enclose@braces, #2}]#3:#4:\noexpand\pgf@nil%
+      }%
+      \yquant@config@enclose@brace@style%
+      \csgundef{/pgfk@/yquant/internal/collected brace decoration/.@cmd}%
+      \csgundef{/pgfk@/yquant/internal/collected brace label/.@cmd}%
+}
+\protected\def\yquant@config@enclose@collectbracestyles#1#2{%
+   \csxdef{pgfk@/yquant/internal/collected brace decoration #2/.@cmd}##1\pgfeov{%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
+   }%
+   \csxdef{pgfk@/yquant/internal/collected brace label #2/.@cmd}##1\pgfeov{%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
+   }%
 }
 % END_FOLD
 % BEGIN_FOLD Internal styles (undocument, do not use!)
@@ -566,7 +693,10 @@
    },%
    internal/dename/.code={
       \pgfkeysalso{/tikz/name/.code=, /tikz/alias/.code=}%
-   }
+   },%
+   internal/collect brace styles/.code 2 args={%
+      \yquant@config@enclose@collectbracestyles{#1}{#2}%
+   }%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%

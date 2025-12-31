@@ -120,6 +120,13 @@
             \unless\ifdefined\yquant@parent%
                \yquant@circuit@enclose@storeextents2%
                \yquant@env@end@calcypositions%
+               \csxappto{\yquant@prefix draw}{%
+                  \ifyquantdebug%
+                     \show\noexpand\yquant@draw@enclose@drawcommands%
+                  \fi%
+                  % this has to come before the endscope, so that we still know about our layout
+                  \noexpand\yquant@draw@enclose@drawcommands%
+               }%
             \fi%
          \else%
             \ifdefined\yquant@parent%
@@ -159,10 +166,6 @@
          \fi%
          \yquantmeasuringfalse%
          \csname\yquant@prefix draw\endcsname%
-         \ifyquantdebug%
-            \show\yquant@draw@enclose@drawcommands%
-         \fi%
-         \yquant@draw@enclose@drawcommands%
          \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquant@prefix cleanup\endcsname|%
          \gundef\yquant@draw@enclose@drawcommands%
          \global\yquant@circuit@enclose@count=0 %
