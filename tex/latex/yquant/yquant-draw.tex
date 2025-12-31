@@ -1113,8 +1113,12 @@
    \begingroup%
       \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
          % is any of the registers in the target list relevant for our enclose?
-         \let\next=\@gobble%
-         \forlistloop{\yquant@draw@enclose@measure@anyrelevant{#2}}{#1}%
+         \expandafter\ifx\csname yquant@circuit@enclose@#2@involved\endcsname\yquant@circuit@enclose@allinvolved%
+            \let\next=\@firstofone%
+         \else%
+            \let\next=\@gobble%
+            \forlistloop{\yquant@draw@enclose@measure@anyrelevant{#2}}{#1}%
+         \fi%
          \next{%
             \edef\width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
             \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x-\width\relax%
@@ -1140,7 +1144,8 @@
    \begingroup%
       \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
          % is any of the registers in the target list relevant for our enclose?
-         \ifyquant\ifcsname yquant@circuit@enclose@#2@extentT@\yquant@register@resolvetocolon{#1}\endcsname\fi{%
+         \ifyquant@OR\expandafter\ifx\csname yquant@circuit@enclose@#2@involved\endcsname\yquant@circuit@enclose@allinvolved\fi%
+                     \ifcsname yquant@circuit@enclose@#2@extentT@\yquant@register@resolvetocolon{#1}\endcsname\fi{%
             \edef\yquant@draw@@x{\yquant@register@get@x{#1}}%
             \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x\relax%
                \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x}%
@@ -1201,10 +1206,6 @@
 \protected\def\yquant@draw@stopenclose#1{%
    % finally, we have to draw something.
    \begingroup%
-      % First, we'll have to sort the involved registers according to their y position.
-      \yquant@sort@clear%
-      \expandafter\yquant@sort@addlist\csname yquant@circuit@enclose@#1@involved\endcsname%
-      \yquant@sort\yquant@draw@enclose@sort%
       \begingroup%
          % figure out the separation
          % If the quotes library is loaded, activate it. (else, this is by default \relax)
@@ -1219,8 +1220,19 @@
             \noexpand\dimen\ifyquanthorz64=\the\pgf@y\space%
          }%
          \setsep%
-      % Now prepare all the points in our rectangle/polygon (we always use the polygon shape for consistency)
-      \numdef\i{\yquant@sort@count-1}%
+      \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+         \def\i{1}%
+         \csdef{yquant@sort@item0}{1:1}%
+         \csedef{yquant@sort@item1}{1:\csname yquant@env1@registers\endcsname}%
+         \def\yquant@sort@count{2}%
+      \else%
+         % First, we'll have to sort the involved registers according to their y position.
+         \yquant@sort@clear%
+         \expandafter\yquant@sort@addlist\csname yquant@circuit@enclose@#1@involved\endcsname%
+         \yquant@sort\yquant@draw@enclose@sort%
+         % Now prepare all the points in our rectangle/polygon (we always use the polygon shape for consistency)
+         \numdef\i{\yquant@sort@count-1}%
+      \fi%
       \yquant@draw@enclose@calcbottom{#1}\i%
       \dimen0=\enclosebottom\space% store the bottom-most position
       \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
@@ -1235,7 +1247,9 @@
             \yquant@coords(\encloseright,\enclosetop)%
             \yquant@coords(\encloseleft,\enclosetop)%
          }%
-         \forlistcsloop{\yquant@draw@enclose@cleanup@rectangle{#1}}{yquant@circuit@enclose@#1@involved}%
+         \expandafter\unless\expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+            \forlistcsloop{\yquant@draw@enclose@cleanup@rectangle{#1}}{yquant@circuit@enclose@#1@involved}%
+         \fi%
          \csgundef{yquant@draw@enclose@#1@left}%
          \csgundef{yquant@draw@enclose@#1@right}%
       \or%
