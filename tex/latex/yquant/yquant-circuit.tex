@@ -465,7 +465,9 @@
 
 \ifdefined\beamer@masterdecode
    \newcommand<>\yquant@circuit@startenclose[2][]{%
-      \yquant@config@enclose@beamercommand#3{\yquant@circuit@startenclose@i[{#1}]{#2}}%
+      \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#3}%
+      \yquant@circuit@startenclose@i[{#1}]{#2}%
+      \yquant@env@scan%
    }
 \else
    \protected\def\yquant@circuit@startenclose{%
@@ -488,8 +490,6 @@
    \begingroup%
       \global\advance\yquant@circuit@enclose@count by 1 % we keep increasing - this has to be globally unique until the outermost yquant environment is closed
       \edef\yquant@circuit@enclose@id{\the\yquant@circuit@enclose@count}%
-      \listxadd\yquant@circuit@enclose@active\yquant@circuit@enclose@id%
-      \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @prefixid}{\yquant@env@prefix@id\yquant@prefix}%
       \let\yquant@circuit@enclose@style=\empty%
       \pgfkeys{%
          /pgf/key filters/active families and known/.install key filter,%
@@ -505,16 +505,26 @@
          \csxdef{yquant@circuit@enclose@names@#2}{\yquant@circuit@enclose@id}%
       \fi%
       \pgfqkeysfiltered{/yquant/enclose}{#1}%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @style}\yquant@circuit@enclose@style%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}\empty%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}\yquant@config@enclose@spacing%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @shape}\yquant@config@enclose@shape%
-      % this is undefined anyway if beamer is not loaded, so no harm:
+      % if there is a beamer command active and it is \only, we only execute the code subject to this command; without beamer or any different command, we simply store the command and do as always
       \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @beamercommand}\yquant@circuit@enclose@currentbeamercommand%
-      \csxappto{\yquant@prefix draw}{%
-         \yquant@draw@startenclose{\yquant@circuit@enclose@id}%
-      }
+      \ifyquant\ifdefined\yquant@circuit@enclose@currentbeamercommand\fi{%
+         \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@circuit@enclose@currentbeamercommand}{%
+            \yquant@circuit@enclose@currentbeamercommand%
+         }\@firstofone%
+      }\@firstofone%
+      {%
+         \listxadd\yquant@circuit@enclose@active\yquant@circuit@enclose@id%
+         \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @prefixid}{\yquant@env@prefix@id\yquant@prefix}%
+         \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @style}\yquant@circuit@enclose@style%
+         \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}\empty%
+         \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}\yquant@config@enclose@spacing%
+         \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @shape}\yquant@config@enclose@shape%
+         \csxappto{\yquant@prefix draw}{%
+            \yquant@draw@startenclose{\yquant@circuit@enclose@id}%
+         }%
+      }%
    \endgroup%
+   \undef\yquant@circuit@enclose@currentbeamercommand%
    \yquant@env@scan%
 }
 
@@ -528,42 +538,51 @@
 }
 
 \protected\def\yquant@circuit@stopenclose@i#1{%
-   \begingroup%
-      \ifcsname yquant@config@enclose@#1@fromresolve\endcsname%
-         \PackageError{yquant.sty}{Invalid `from' register}{`from' register was not defined at any point during the \string\enclose.}%
-      \fi%
-      \ifcsname yquant@config@enclose@#1@toresolve\endcsname%
-         \ifcsname yquant@config@enclose@#1@toresolved\endcsname% to with a vector register will always be kept because of possible later extensions
-            \csgundef{yquant@config@enclose@#1@toresolved}%
-            \csgundef{yquant@config@enclose@#1@toresolve}%
-         \else%
-            \PackageError{yquant.sty}{Invalid `to' register}{`to' register was not defined at any point during the \string\enclose.}%
+   \ifyquant\ifcsname yquant@circuit@enclose@#1@beamercommand\endcsname\fi{%
+      \expandafter\expandafter\expandafter\ifyquant@firsttoken%
+         \expandafter\expandafter\expandafter\only%
+         \expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@beamercommand\endcsname}{%
+         \csname yquant@circuit@enclose@#1@beamercommand\endcsname%
+      }\@firstofone%
+   }\@firstofone%
+   {%
+      \begingroup%
+         \ifcsname yquant@config@enclose@#1@fromresolve\endcsname%
+            \PackageError{yquant.sty}{Invalid `from' register}{`from' register was not defined at any point during the \string\enclose.}%
          \fi%
-      \fi%
-      \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\empty%
-         \PackageError{yquant.sty}{Empty \string\enclose}{The given range did not contain any operations within the \string\enclose.}%
-      \fi%
-      \csxappto{\yquant@prefix draw}{%
-         \yquant@draw@stopenclose{#1}%
-      }%
-      \csgundef{yquant@circuit@enclose@#1@prefixid}%
-      \listgremove\yquant@circuit@enclose@active{#1}%
-      \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
-         % we have to align all the involved registers. However, subcircuits that are already finished should be excluded. Basically, this means that we don't align subcircuits that are not the current active circuit or any of its parents.
-         \let\yquant@circuit@enclose@align@list=\empty%
-         \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
-            \expandafter\yquant@circuit@align\expandafter{\romannumeral-`0\yquant@list@range{1}{\csname\yquant@prefix registers\endcsname\space}}%
-         \else%
-            \forlistcsloop\yquant@circuit@enclose@align{yquant@circuit@enclose@#1@involved}%
-            \csxappto{\yquant@prefix draw}{%
-               \yquant@draw@enclose@align{\yquant@circuit@enclose@align@list}%
-            }%
+         \ifcsname yquant@config@enclose@#1@toresolve\endcsname%
+            \ifcsname yquant@config@enclose@#1@toresolved\endcsname% to with a vector register will always be kept because of possible later extensions
+               \csgundef{yquant@config@enclose@#1@toresolved}%
+               \csgundef{yquant@config@enclose@#1@toresolve}%
+            \else%
+               \PackageError{yquant.sty}{Invalid `to' register}{`to' register was not defined at any point during the \string\enclose.}%
+            \fi%
          \fi%
-      \fi%
-      \ifyquantdebug%
-         \csshow{yquant@circuit@enclose@#1@involved}%
-      \fi%
-   \endgroup%
+         \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\empty%
+            \PackageError{yquant.sty}{Empty \string\enclose}{The given range did not contain any operations within the \string\enclose.}%
+         \fi%
+         \csxappto{\yquant@prefix draw}{%
+            \yquant@draw@stopenclose{#1}%
+         }%
+         \csgundef{yquant@circuit@enclose@#1@prefixid}%
+         \listgremove\yquant@circuit@enclose@active{#1}%
+         \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
+            % we have to align all the involved registers. However, subcircuits that are already finished should be excluded. Basically, this means that we don't align subcircuits that are not the current active circuit or any of its parents.
+            \let\yquant@circuit@enclose@align@list=\empty%
+            \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+               \expandafter\yquant@circuit@align\expandafter{\romannumeral-`0\yquant@list@range{1}{\csname\yquant@prefix registers\endcsname\space}}%
+            \else%
+               \forlistcsloop\yquant@circuit@enclose@align{yquant@circuit@enclose@#1@involved}%
+               \csxappto{\yquant@prefix draw}{%
+                  \yquant@draw@enclose@align{\yquant@circuit@enclose@align@list}%
+               }%
+            \fi%
+         \fi%
+         \ifyquantdebug%
+            \csshow{yquant@circuit@enclose@#1@involved}%
+         \fi%
+      \endgroup%
+   }%
    \yquant@env@scan%
 }
 
@@ -573,19 +592,10 @@
    }%
 
    \long\def\yquant@circuit@enclose@ii#1#2[#3]#4{%
-      \begingroup%
-         \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@config@enclose@beamercommand}{%
-            \yquant@config@enclose@beamercommand#2{\yquant@circuit@startenclose@i[{#3}]\relax}%
-            \yquant@env@scan#4%
-            \yquant@config@enclose@beamercommand#2{\yquant@circuit@stopenclose@i{#1}}%
-         }{%
-            \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
-            \yquant@circuit@startenclose@i[{#3}]\relax%
-            #4%
-            \yquant@circuit@stopenclose@i{#1}%
-         }%
-      \endgroup%
-      \yquant@env@scan%
+      \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
+      \yquant@circuit@startenclose@i[{#3}]\relax%
+      #4%
+      \yquant@circuit@stopenclose@i{#1}%
    }
 
    \newcommand<>\yquant@circuit@encloseall[2][]{%
@@ -593,19 +603,10 @@
    }
 
    \long\def\yquant@circuit@encloseall@i#1#2[#3]#4{%
-      \begingroup%
-         \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@config@enclose@beamercommand}{%
-            \yquant@config@enclose@beamercommand#2{\yquant@circuit@encloseall@start{#1}{#3}}%
-            \yquant@env@scan#4%
-            \yquant@config@enclose@beamercommand#2{\yquant@circuit@stopenclose@i{#1}}%
-         }{%
-            \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
-            \yquant@circuit@encloseall@start{#1}{#3}%
-            #4%
-            \yquant@circuit@stopenclose@i{#1}%
-         }%
-      \endgroup%
-      \yquant@env@scan%
+      \edef\yquant@circuit@enclose@currentbeamercommand{\unexpanded\expandafter{\yquant@config@enclose@beamercommand}#2}%
+      \yquant@circuit@encloseall@start{#1}{#3}%
+      #4%
+      \yquant@circuit@stopenclose@i{#1}%
    }
 \else
    \def\yquant@circuit@enclose{%
@@ -638,18 +639,24 @@
 
 \def\yquant@circuit@encloseall@start#1#2{%
    \global\yquant@circuit@enclose@count=#1 %
-   % we don't add it to the active list as we don't have to keep track of anything here
-   \csxdef{yquant@circuit@enclose@#1@prefixid}{\yquant@env@prefix@id\yquant@prefix}%
-   \csgdef{yquant@circuit@enclose@#1@style}{#2}%
-   % We set the involved list to this special flag - note that this is only recognized in concert with the exact following defines!
-   \global\cslet{yquant@circuit@enclose@#1@involved}\yquant@circuit@enclose@allinvolved%
-   \csgdef{yquant@circuit@enclose@#1@spacing}{0}%
-   \csgdef{yquant@circuit@enclose@#1@shape}{0}%
-   % this is undefined anyway if beamer is not loaded, so no harm:
-      \global\cslet{yquant@circuit@enclose@#1@beamercommand}\yquant@circuit@enclose@currentbeamercommand%
-   \csxappto{\yquant@prefix draw}{%
-      \yquant@draw@startenclose{#1}%
-   }
+   \global\cslet{yquant@circuit@enclose@#1@beamercommand}\yquant@circuit@enclose@currentbeamercommand%
+   \ifyquant\ifdefined\yquant@circuit@enclose@currentbeamercommand\fi{%
+      \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@circuit@enclose@currentbeamercommand}{%
+         \yquant@circuit@enclose@currentbeamercommand%
+      }\@firstofone%
+   }\@firstofone%
+   {%
+      % we don't add it to the active list as we don't have to keep track of anything here
+      \csxdef{yquant@circuit@enclose@#1@prefixid}{\yquant@env@prefix@id\yquant@prefix}%
+      \csgdef{yquant@circuit@enclose@#1@style}{#2}%
+      % We set the involved list to this special flag - note that this is only recognized in concert with the exact following defines!
+      \global\cslet{yquant@circuit@enclose@#1@involved}\yquant@circuit@enclose@allinvolved%
+      \csgdef{yquant@circuit@enclose@#1@spacing}{0}%
+      \csgdef{yquant@circuit@enclose@#1@shape}{0}%
+      \csxappto{\yquant@prefix draw}{%
+         \yquant@draw@startenclose{#1}%
+      }%
+   }%
    \yquant@env@scan%
 }
 
@@ -806,22 +813,25 @@
 \protected\def\yquant@circuit@enclose@storeextents#1{%
    % This is invoked at the end of a circuit before the y positions are calculated. Once, it is called when the local registers extents are known, once when the global extents (including all possible subcircuit ancillas) were calculated. We have to convert them into individual positions.
    \yquant@for \yquant@circuit@enclose@id := 1 to \yquant@circuit@enclose@count {%
-      \expandafter\ifx\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @involved\endcsname\yquant@circuit@enclose@allinvolved%
-         \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@1:1}{%
-            \yquant@register@peek@height{1}{1}%
-         }%
-         \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@1:\csname yquant@env1@registers\endcsname}{%
-            \yquant@register@peek@depth{1}{\csname yquant@env1@registers\endcsname}%
-         }%
-      \else%
-         \ifnum\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing\endcsname=#1 %
-            \expandafter\forlistcsloop%
-               \expandafter{\expandafter\yquant@register@colonsplit\csname yquant@circuit@enclose@storeextents@#1\endcsname}%
-               {yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}%
+      % due to a beamer \only overlay, it may be that almost nothing of the overlay macros is defined
+      \ifcsname yquant@circuit@enclose@\yquant@circuit@enclose@id @involved\endcsname%
+         \expandafter\ifx\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @involved\endcsname\yquant@circuit@enclose@allinvolved%
+            \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@1:1}{%
+               \yquant@register@peek@height{1}{1}%
+            }%
+            \csxdef{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@1:\csname yquant@env1@registers\endcsname}{%
+               \yquant@register@peek@depth{1}{\csname yquant@env1@registers\endcsname}%
+            }%
+         \else%
+            \ifnum\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing\endcsname=#1 %
+               \expandafter\forlistcsloop%
+                  \expandafter{\expandafter\yquant@register@colonsplit\csname yquant@circuit@enclose@storeextents@#1\endcsname}%
+                  {yquant@circuit@enclose@\yquant@circuit@enclose@id @involved}%
+            \fi%
          \fi%
-      \fi%
-      \ifnum#1=0 %
-         \csgundef{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}%
+         \ifnum#1=0 %
+            \csgundef{yquant@circuit@enclose@\yquant@circuit@enclose@id @spacing}%
+         \fi%
       \fi%
    }%
    % we'll momentarily leave a scope anyway, no need to cleanup the \yquant@circuit@enclose@id macro
