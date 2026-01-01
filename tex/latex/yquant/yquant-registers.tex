@@ -1397,6 +1397,10 @@
          \fi%
       \endgroup%
    \fi%
+   \yquant@for \yquant@register@update@multispace@i := #1 to #2 {%
+      % we don't know the size, but we have to register it
+      \yquant@circuit@enclose@update@extentTB T{\yquant@register@update@multispace@i}{0pt}%
+   }
 }
 
 \long\def\yquant@register@set@multispace@aux#1#2#3#4#5#6#7{%
