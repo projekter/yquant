@@ -523,7 +523,9 @@
    enclose/shape/polygon/.code={\def\yquant@config@enclose@shape{1}},%
    enclose/shape/polygon/.belongs to family=/yquant/enclose/options,%
    every enclose/.style={draw, dashed, inner spacesep=.5*\yquant@config@register@sep, inner timesep=.5*\yquant@config@operator@sep, name=myname},%
+   enclose style/.style={/yquant/every enclose/.append style={#1}},%
    every braced enclose/.style={draw=none},
+   braced enclose style/.style={/yquant/every braced enclose/.append style={#1}},%
    enclose layer/.initial=background,%
    enclose label layer/.initial=main,%
    enclose/shape/polygon/points/.initial,%
