@@ -1123,7 +1123,7 @@
       % polygon: we have to keep track of the extremal left and right positions per register
       \forlistcsloop{\yquant@draw@startenclose@initpolygon{#1}}{yquant@circuit@enclose@#1@involved}%
    \else%
-      \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type.}
+      \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type.}%
    \fi%
 }
 
@@ -1231,7 +1231,7 @@
          % If the quotes library is loaded, activate it. (else, this is by default \relax)
          \let\yquant@config@enclose@brace=\@gobbletwo%
          \tikz@enable@node@quotes%
-         \tikzset{/yquant/every enclose}%
+         \tikzset{/yquant/enclose/every enclose}%
          \expandafter\tikzset\expandafter{\unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}%
          \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/pgf/inner xsep}}%
          \pgfmathsetlength\pgf@y{\pgfkeysvalueof{/pgf/inner ysep}}%
@@ -1329,9 +1329,9 @@
          \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (3).}%
       \fi%
       \xappto\yquant@draw@enclose@drawcommands{%
-         \yquant@draw@enclose@handlelayers{#1}{\pgfkeysvalueof{/yquant/enclose layer}}{\pgfkeysvalueof{/yquant/enclose label layer}}{%
+         \yquant@draw@enclose@handlelayers{#1}{\pgfkeysvalueof{/yquant/enclose/layer}}{\pgfkeysvalueof{/yquant/enclose/label layer}}{%
             \noexpand\node[{shape=yquant-enclose-polygon, /yquant/enclose/shape/polygon/points={\points},
-                            /yquant/every enclose,
+                            /yquant/enclose/every enclose,
                             \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname},
                             anchor=south \ifyquanthorz{west}{east}, transform shape,
                             /yquant/internal/name unaliased=yquantbox}] at %
@@ -1404,7 +1404,7 @@
             }%
          \yquant@endgroup%
          \edef\drawrest{%
-            \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/every enclose,
+            \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/enclose/every enclose,
                                        \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
          }%
          \ifstrequal{#3}{main}{%

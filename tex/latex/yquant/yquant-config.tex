@@ -454,8 +454,9 @@
       {shape=yquant-circle, radius=.5mm, fill},%
 % END_FOLD
 % BEGIN_FOLD Enclose styles
-   enclose/options/.is family,%
-   enclose/name/.code=%
+   enclose/.cd,%
+   options/.is family,%
+   name/.code=%
       {\unless\ifdefined\yquant@circuit@enclose@allowname%
           \PackageError{yquant.sty}{Repeated enclose names}%
                        {A name for an enclosing region may only be specified once.}%
@@ -467,8 +468,8 @@
        \csxdef{yquant@circuit@enclose@names@#1}{\the\yquant@circuit@enclose@count}%
        \undef\yquant@circuit@enclose@allowname%
       },
-   enclose/name/.belongs to family=/yquant/enclose/options,%
-   enclose/from/.code=%
+   name/.belongs to family=/yquant/enclose/options,%
+   from/.code=%
       {\expandafter\yquant@register@singleget%
           \csname yquant@config@enclose@\yquant@circuit@enclose@id @from\endcsname%
           {#1}0%
@@ -484,8 +485,8 @@
           \csxdef{yquant@config@enclose@\yquant@circuit@enclose@id @fromresolve}{#1}%
        \fi%
       },
-   enclose/from/.belongs to family=/yquant/enclose/options,
-   enclose/to/.code=%
+   from/.belongs to family=/yquant/enclose/options,
+   to/.code=%
       {\expandafter\yquant@register@singleget%
           \csname yquant@config@enclose@\yquant@circuit@enclose@id @to\endcsname%
           {#1}3{%
@@ -507,63 +508,68 @@
           \global\cslet{yquant@config@enclose@\yquant@circuit@enclose@id @to}\empty%
        \fi%
       },
-   enclose/to/.belongs to family=/yquant/enclose/options,%
-   enclose/spacing/.is choice,%
-   enclose/spacing/.belongs to family=/yquant/enclose/options,%
-   enclose/spacing/register/.code={\def\yquant@config@enclose@spacing{0}},%
-   enclose/spacing/register/.belongs to family=/yquant/enclose/options,%
-   enclose/spacing/gate/.code={\def\yquant@config@enclose@spacing{1}},%
-   enclose/spacing/gate/.belongs to family=/yquant/enclose/options,%
-   enclose/spacing/gate or local register/.code={\def\yquant@config@enclose@spacing{2}}%,
-   enclose/spacing/gate or local register/.belongs to family=/yquant/enclose/options,%
-   enclose/shape/.is choice,%
-   enclose/shape/.belongs to family=/yquant/enclose/options,%
-   enclose/shape/rectangle/.code={\def\yquant@config@enclose@shape{0}},%
-   enclose/shape/rectangle/.belongs to family=/yquant/enclose/options,%
-   enclose/shape/polygon/.code={\def\yquant@config@enclose@shape{1}},%
-   enclose/shape/polygon/.belongs to family=/yquant/enclose/options,%
+   to/.belongs to family=/yquant/enclose/options,%
+   spacing/.is choice,%
+   spacing/.belongs to family=/yquant/enclose/options,%
+   spacing/register/.code={\def\yquant@config@enclose@spacing{0}},%
+   spacing/register/.belongs to family=/yquant/enclose/options,%
+   spacing/gate/.code={\def\yquant@config@enclose@spacing{1}},%
+   spacing/gate/.belongs to family=/yquant/enclose/options,%
+   spacing/gate or local register/.code={\def\yquant@config@enclose@spacing{2}}%,
+   spacing/gate or local register/.belongs to family=/yquant/enclose/options,%
+   shape/.is choice,%
+   shape/.belongs to family=/yquant/enclose/options,%
+   shape/rectangle/.code={\def\yquant@config@enclose@shape{0}},%
+   shape/rectangle/.belongs to family=/yquant/enclose/options,%
+   shape/polygon/.code={\def\yquant@config@enclose@shape{1}},%
+   shape/polygon/.belongs to family=/yquant/enclose/options,%
    every enclose/.style={draw, dashed, inner spacesep=.5*\yquant@config@register@sep, inner timesep=.5*\yquant@config@operator@sep, name=myname},%
-   enclose style/.style={/yquant/every enclose/.append style={#1}},%
+   style/.style={/yquant/enclose/every enclose/.append style={#1}},%
    every braced enclose/.style={draw=none},
-   braced enclose style/.style={/yquant/every braced enclose/.append style={#1}},%
-   enclose layer/.initial=background,%
-   enclose label layer/.initial=main,%
-   enclose/shape/polygon/points/.initial,%
-   enclose/overlay command/.store in=\yquant@config@enclose@beamercommand,%
-   /tikz/.cd,
-   enclose/brace above/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace0{#1}},%
-   enclose/brace below/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace1{#1}},%
-   enclose/brace left/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace0{#1}},%
-   enclose/brace right/.code={\pgfkeysalso{/yquant/every braced enclose}\yquant@config@enclose@brace1{#1}},%
-   enclose/every brace label/.style={label distance=2pt},%
-   enclose/every brace label above or left/.style={},%
-   enclose/every brace label below or right/.style={},%
-   enclose/every brace label above/.style={},%
-   enclose/every brace label below/.style={},%
-   enclose/every brace label left/.style={},%
-   enclose/every brace label right/.style={},%
-   enclose/brace label style/.style={/tikz/enclose/every brace label/.append style={#1}},%
-   enclose/brace label above or left style/.style={/tikz/enclose/every brace label above or left/.append style={#1}},%
-   enclose/brace label below or right style/.style={/tikz/enclose/every brace label below or right/.append style={#1}},%
-   enclose/brace label above style/.style={/tikz/enclose/every brace label above/.append style={#1}},%
-   enclose/brace label below style/.style={/tikz/enclose/every brace label below/.append style={#1}},%
-   enclose/brace label left style/.style={/tikz/enclose/every brace label left/.append style={#1}},%
-   enclose/brace label right style/.style={/tikz/enclose/every brace label right/.append style={#1}},%
-   enclose/brace style/.style={/pgf/decoration/enclose/every brace/.append style={#1}},%
-   enclose/brace style above or left/.style={/pgf/decoration/enclose/every brace above or left/.append style={#1}},%
-   enclose/brace style below or right/.style={/pgf/decoration/enclose/every brace below or right/.append style={#1}},%
-   enclose/brace style above/.style={/pgf/decoration/enclose/every brace above/.append style={#1}},%
-   enclose/brace style below/.style={/pgf/decoration/enclose/every brace below/.append style={#1}},%
-   enclose/brace style left/.style={/pgf/decoration/enclose/every brace left/.append style={#1}},%
-   enclose/brace style right/.style={/pgf/decoration/enclose/every brace right/.append style={#1}},%
-   /pgf/decoration/.cd,
-   enclose/every brace/.style={brace},%
-   enclose/every brace above or left/.style={},%
-   enclose/every brace below or right/.style={},%
-   enclose/every brace above/.style={},%
-   enclose/every brace below/.style={mirror},%
-   enclose/every brace left/.style={mirror},%
-   enclose/every brace right/.style={},%
+   braced enclose style/.style={/yquant/enclose/every braced enclose/.append style={#1}},%
+   layer/.initial=background,%
+   label layer/.initial=main,%
+   shape/polygon/points/.initial,%
+   overlay command/.store in=\yquant@config@enclose@beamercommand,%
+   brace above/.code={\tikzset{/yquant/enclose/every braced enclose}\yquant@config@enclose@brace0{#1}},%
+   brace below/.code={\tikzset{/yquant/enclose/every braced enclose}\yquant@config@enclose@brace1{#1}},%
+   brace left/.forward to=/yquant/enclose/brace above,%
+   brace right/.forward to=/yquant/enclose/brace below,%
+   every brace label/.style={label distance=2pt},%
+   every brace label above or left/.style={},%
+   every brace label below or right/.style={},%
+   every brace label above/.style={align=center},%
+   every brace label below/.style={align=center},%
+   every brace label left/.style={align=right},%
+   every brace label right/.style={align=left},%
+   every brace/.style={/pgf/decoration/brace, decorate},%
+   every brace above or left/.style={},%
+   every brace below or right/.style={},%
+   every brace above/.style={},%
+   every brace below/.style={/pgf/decoration/mirror},%
+   every brace left/.style={/pgf/decoration/mirror},%
+   every brace right/.style={},%
+   brace label style/.style={/yquant/enclose/every brace label/.append style={#1}},%
+   brace label above or left style/.style={/yquant/enclose/every brace label above or left/.append style={#1}},%
+   brace label below or right style/.style={/yquant/enclose/every brace label below or right/.append style={#1}},%
+   brace label above style/.style={/yquant/enclose/every brace label above/.append style={#1}},%
+   brace label below style/.style={/yquant/enclose/every brace label below/.append style={#1}},%
+   brace label left style/.style={/yquant/enclose/every brace label left/.append style={#1}},%
+   brace label right style/.style={/yquant/enclose/every brace label right/.append style={#1}},%
+   brace style/.style={/yquant/enclose/every brace/.append style={#1}},%
+   brace style above or left/.style={/yquant/enclose/every brace above or left/.append style={#1}},%
+   brace style below or right/.style={/yquant/enclose/every brace below or right/.append style={#1}},%
+   brace style above/.style={/yquant/enclose/every brace above/.append style={#1}},%
+   brace style below/.style={/yquant/enclose/every brace below/.append style={#1}},%
+   brace style left/.style={/yquant/enclose/every brace left/.append style={#1}},%
+   brace style right/.style={/yquant/enclose/every brace right/.append style={#1}},%
+   bracing style/.style={/yquant/enclose/brace style={#1},/yquant/enclose/brace label style={#1}},%
+   bracing style above or left/.style={/yquant/enclose/brace above or left style={#1},/yquant/enclose/brace label above or left style={#1}},%
+   bracing style below or right/.style={/yquant/enclose/brace below or right style={#1},/yquant/enclose/brace label below or right style={#1}},%
+   bracing style above/.style={/yquant/enclose/brace above style={#1},/yquant/enclose/brace label above style={#1}},%
+   bracing style below/.style={/yquant/enclose/brace below style={#1},/yquant/enclose/brace label below style={#1}},%
+   bracing style left/.style={/yquant/enclose/brace left style={#1},/yquant/enclose/brace label left style={#1}},%
+   bracing style right/.style={/yquant/enclose/brace right style={#1},/yquant/enclose/brace label right style={#1}},%
 }
 \def\yquant@config@enclose@brace#1#2{%
    % we copy the label parsing from TikZ
@@ -629,8 +635,7 @@
          \endgroup%
          \noexpand\pgfkeysalso{%
             /yquant/internal/collect brace styles={#1}{\yquant@config@enclose@braces}, /tikz/append after command={\noexpand\pgfextra{%
-            \noexpand\draw[name prefix=, name suffix=, decoration=/yquant/internal/collected brace decoration \yquant@config@enclose@braces,%
-                           decorate]%
+            \noexpand\draw[/yquant/internal/collected brace decoration \yquant@config@enclose@braces, /tikz/name prefix=, /tikz/name suffix=]%
                \ifnum#1=0 %
                   (yquantbox.north west) -- %
                   (yquantbox.\ifyquanthorz{north east}{south west})%
@@ -647,14 +652,14 @@
 }
 \protected\def\yquant@config@enclose@collectbracestyles#1#2{%
    \csxdef{pgfk@/yquant/internal/collected brace decoration #2/.@cmd}##1\pgfeov{%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace/.@cmd\endcsname##1\pgfeov}%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/pgf/decoration/enclose/every brace \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
    }%
    \csxdef{pgfk@/yquant/internal/collected brace label #2/.@cmd}##1\pgfeov{%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label/.@cmd\endcsname##1\pgfeov}%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
-      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/tikz/enclose/every brace label \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace label/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace label \ifnum#1=0 above or left\else below or right\fi/.@cmd\endcsname##1\pgfeov}%
+      \unexpanded\expandafter\expandafter\expandafter{\csname pgfk@/yquant/enclose/every brace label \ifnum#1=0 \ifyquanthorz{above}{left}\else\ifyquanthorz{below}{right}\fi/.@cmd\endcsname##1\pgfeov}%
    }%
 }
 % END_FOLD

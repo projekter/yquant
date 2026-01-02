@@ -483,11 +483,25 @@
 
 \pgfkeys{%
    /yquant/enclose filter handler/.code={%
-      \eappto#1{%
-         ,\unexpanded\expandafter{\pgfkeyscurrentkeyRAW}%
-         \unless\ifx\pgfkeyscurrentvalue\pgfkeysnovalue@text%
-            ={\unexpanded\expandafter{\pgfkeyscurrentvalue}}%
-         \fi%
+      \ifyquant\ifnum\pgfkeyscasenumber=0 \fi{%
+         \@firstoftwo%
+      }{%
+         \expandafter\ifyquant@beginswith\expandafter{\pgfkeyscurrentkey}{/yquant/enclose}\@secondoftwo\@firstoftwo
+      }%
+      {%
+         \eappto#1{%
+            ,\unexpanded\expandafter{\pgfkeyscurrentkeyRAW}%
+            \unless\ifx\pgfkeyscurrentvalue\pgfkeysnovalue@text%
+               ={\unexpanded\expandafter{\pgfkeyscurrentvalue}}%
+            \fi%
+         }%
+      }{%
+         \eappto#1{%
+            ,\unexpanded\expandafter{\pgfkeyscurrentkey}%
+            \unless\ifx\pgfkeyscurrentvalue\pgfkeysnovalue@text%
+               ={\unexpanded\expandafter{\pgfkeyscurrentvalue}}%
+            \fi%
+         }%
       }%
    }
 }
@@ -658,7 +672,17 @@
       % we have to add it to the active list just to figure out whether we are allowed to shift init gates
       \listcsxadd{yquant@circuit@enclose@active}{#1}%
       \csxdef{yquant@circuit@enclose@#1@prefixid}{\yquant@env@prefix@id\yquant@prefix}%
-      \csgdef{yquant@circuit@enclose@#1@style}{#2}%
+      \begingroup%
+         \let\yquant@circuit@enclose@style=\empty%
+         % we still want to rewrite everything in /yquant/enclose to /tikz
+         \pgfkeys{%
+            /pgf/key filters/false/.install key filter,%
+            /yquant/enclose filter handler/.install key filter handler=\yquant@circuit@enclose@style,
+         }%
+         \tikz@enable@node@quotes%
+         \pgfqkeysfiltered{/yquant/enclose}{#2}%
+         \global\cslet{yquant@circuit@enclose@#1@style}\yquant@circuit@enclose@style%
+      \endgroup%
       % We set the involved list to this special flag - note that this is only recognized in concert with the exact following defines!
       \global\cslet{yquant@circuit@enclose@#1@involved}\yquant@circuit@enclose@allinvolved%
       \csgdef{yquant@circuit@enclose@#1@spacing}{0}%
