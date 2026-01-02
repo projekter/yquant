@@ -787,6 +787,8 @@
             \edef\yquant@prefix{yquant@env\yquant@circuit@subcircuit@id @}%
             \let\yquant@draw@init=\yquant@prepare@subcircuit@init%
             \let\yquant@draw@group=\yquant@prepare@subcircuit@group%
+            \let\yquant@draw@startenclose=\@gobble%
+            \let\yquant@draw@stopenclose=\@gobble%
             % We may have draw actions within the subcircuit which reference nodes that have been created within the same subcircuit - but they are not known at the stage of preparation! So we here hack into the node querying macros of pgf and just let every unknown node be equal to the origin. If the node is truely unknown, we will find out about this in the draw stage.
             \let\pgfpointanchor=\yquant@prepare@subcircuit@pgfpointanchor%
             \let\pgfpointshapeborder=\yquant@prepare@subcircuit@pgfpointshapeborder%

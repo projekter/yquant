@@ -649,12 +649,28 @@
                \fi%
             \fi%
             \edef\cmd{%
+               \endgroup%
                \dimen0=\the\dimen0 %
                \dimen2=\the\dimen2 %
             }%
-            \expandafter%
-         \endgroup%
          \cmd%
+      \fi%
+      % now, due to cross-subcircuit alignments of enclosing rectangles, it might be that our computed width is far larger than the one we would expect
+      \dimen4=\yquant@orientation@minus\maxdimen %
+      \forlistloop\yquant@draw@subcircuit@remeasure{#5}%
+      \advance \dimen4 by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
+      \gundef\yquant@circuit@endwires@operatorsep%
+      \dimen6=\@firstofthree#4 %
+      \dimdef\delta{%
+         \dimen4%
+         -\yquant@draw@@x%
+         \yquant@orientation@minus.5\dimen6%
+      }%
+      \ifdim\dimexpr\delta\yquant@orientation@minus100sp\relax\ifyquanthorz><0pt %
+         % we simply increase our size - but this cannot help for the centering if there are multiple subcircuits or a conditional line
+         \dimdef\yquant@draw@@x{\yquant@draw@@x+.5\dimexpr\delta\relax}%
+         \dimdef\yquant@draw@@width{\yquant@draw@@width\yquant@orientation@plus\delta}%
+         \advance \dimen6 by \yquant@orientation@plus\delta\space%
       \fi%
       \edef\cmd{%
          \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimen0)%
@@ -663,8 +679,8 @@
                  /yquant/operators/this subcircuit box,%
                  /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
-            {\ifyquanthorz{\vbox to \the\dimen2 {\hbox to \@firstofthree#4 {}}}%
-                          {\hbox to \the\dimen2 {\vbox to \@firstofthree#4 {}}}};%
+            {\ifyquanthorz{\vbox to \the\dimen2 {\hbox to \the\dimen6 {}}}%
+                          {\hbox to \the\dimen2 {\vbox to \the\dimen6 {}}}};%
       }%
       \ifyquant@config@draw@quality%
          \cmd%
@@ -685,10 +701,10 @@
       \ifdim\pgf@interrupt@saveminy<\yquant@pgf@picminy%
          \global\yquant@pgf@picminy=\pgf@interrupt@saveminy%
       \fi%
+      % Now that the subcircuit is finished, we need advance all the wires
+      \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
+      \forlistloop\yquant@draw@group@advance{#5}%
    \yquant@endgroup%
-   % Now that the subcircuit is finished, we need advance all the wires
-   \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
-   \forlistloop\yquant@draw@group@advance{#5}%
    % name mangling
    \ifcase\yquant@config@operator@subcircuit@mangling\relax%
       % prefix or discard
@@ -734,6 +750,12 @@
       \csgundef\yquant@draw@subcircuit@nodelist%
    \else%
       \PackageError{yquant.sty}{Assertion failure}{Unknown value for name mangling (2).}%
+   \fi%
+}
+
+\protected\def\yquant@draw@subcircuit@remeasure#1{%
+   \ifdim\dimen4\ifyquanthorz<>\yquant@register@get@x{#1} %
+      \dimen4=\yquant@register@get@x{#1} %
    \fi%
 }
 
