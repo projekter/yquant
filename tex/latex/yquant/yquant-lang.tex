@@ -197,7 +197,7 @@
    \else%
       \def\idx{0}%
    \fi%
-   \ifnum\len>1
+   \ifnum\len>1 %
       \def\regidx{\reg[\idx]}%
    \else%
       \ifnum\yquant@compat<4 %
@@ -209,6 +209,7 @@
    \fi%
    \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
    % create the registers
+   \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
    \begingroup%
       % if we have the after attribute, we start with a discarded wire
       \ifdefined\yquant@lang@attr@after%
@@ -275,8 +276,16 @@
    }%
    {%
       % there are no multi inits in this context
-      \epreto\yquant@attrs@remaining{internal/move label, internal/setregidx={\idx}{\reg},}%
+      \let\yquant@lang@@init@encloserelevant=\empty%
+      \forlistloop\yquant@lang@@init@checkenclose\yquant@circuit@enclose@active%
+      \ifx\yquant@lang@@init@encloserelevant\empty%
+         \preto\yquant@attrs@remaining{internal/move label,}%
+      \else
+         % This is a troubling situation: we know we are within a rectangular enclose, but we don't know yet which registers will all be within. Assuming that none of the involved registers already had some content before the enclosing region started, we are allowed to shift the label to the left. However, if there's just a single one, we have to align all of them, which means starting unshifted. As we cannot know this at preparation stage, we have to be aware of the issue and figure it out at drawing stage.
+         \epreto\yquant@attrs@remaining{internal/maybe move label={\yquant@config@operator@minimum@width}{\yquant@lang@@init@encloserelevant}}%
+      \fi%
       \def\yquant@config@operator@minimum@width{0pt}%
+      \epreto\yquant@attrs@remaining{internal/setregidx={\idx}{\reg},}%
       \unless\ifx\yquant@lang@attr@value\empty%
          % make sure to immediately remove the "clear" marker again if we have a text
          \yquant@for \i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
@@ -833,13 +842,21 @@
       \fi%
       \let\yquant@prepare@multi=\yquant@prepare@multiinit%
       \ifnum\count8=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
+         \let\yquant@lang@@init@encloserelevant=\empty%
+         \forlistloop\yquant@lang@@init@checkenclose\yquant@circuit@enclose@active%
+         \ifx\yquant@lang@@init@encloserelevant\empty%
+            \preto\yquant@attrs@remaining{internal/move label,}%
+         \else
+            % This is a troubling situation: we know we are within a rectangular enclose, but we don't know yet which registers will all be within. Assuming that none of the involved registers already had some content before the enclosing region started, we are allowed to shift the label to the left. However, if there's just a single one, we have to align all of them, which means starting unshifted. As we cannot know this at preparation stage, we have to be aware of the issue and figure it out at drawing stage.
+            \epreto\yquant@attrs@remaining{internal/maybe move label={\yquant@config@operator@minimum@width}{\yquant@lang@@init@encloserelevant}}%
+         \fi%
          \def\yquant@config@operator@minimum@width{0pt}%
-         \preto\yquant@attrs@remaining{internal/move label,}%
+         \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
          \edef\cmd{%
             \yquant@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                {/yquant/every label, /yquant/every initial label,%
-                /yquant/every \yquant@lang@attr@type\space label}%
+               /yquant/every \yquant@lang@attr@type\space label}%
          }%
       \else%
          \edef\cmd{%
@@ -872,6 +889,21 @@
          \expandafter\yquant@for@break%
       \fi%
    }%
+}
+
+\protected\def\yquant@lang@@init@checkenclose#1{%
+   \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+      \listadd\yquant@lang@@init@encloserelevant{#1}%
+   \else%
+      \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
+         \yquant@for \i := \yquant@circuit@operator@minctrl to \yquant@circuit@operator@maxctrl {
+            \xifinlistcs{\yquant@env@prefix@id\yquant@prefix:\i}{yquant@circuit@enclose@#1@involved}{%
+               \listadd\yquant@lang@@init@encloserelevant{#1}%
+               \listbreak%
+            }\relax
+         }%
+      \fi%
+   \fi%
 }
 
 \yquant@langhelper@declare@command@uncontrolled%

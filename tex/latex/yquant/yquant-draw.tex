@@ -28,7 +28,6 @@
          }%
       \fi%
    }%
-   \forlistloop{\yquant@draw@enclose@declare{#1}}\yquant@circuit@enclose@active% make it known
 }
 
 \def\yquant@draw@subcircuit@leftpos{0pt}% outermost circuit: 0pt
@@ -1077,6 +1076,16 @@
       % rectangle: we have to keep track of the extremal left and right positions globally
       \csxdef{yquant@draw@enclose@#1@left}{\maxdimen}%
       \csxdef{yquant@draw@enclose@#1@right}{-\maxdimen}%
+      % we have to align all the involved registers. However, subcircuits that are not yet there should be ignored.
+      \let\yquant@circuit@enclose@align@list=\empty%
+      \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+         \forlistcsloop\yquant@circuit@enclose@alignall{yquant@circuit@enclose@#1@hierarchy}%
+         \csgundef{yquant@circuit@enclose@#1@hierarchy}%
+      \else%
+         \forlistcsloop\yquant@circuit@enclose@align{yquant@circuit@enclose@#1@involved}%
+      \fi%
+      \expandafter\yquant@draw@enclose@align\expandafter{\yquant@circuit@enclose@align@list}%
+      \undef\yquant@circuit@enclose@align@list%
    \or%
       % polygon: we have to keep track of the extremal left and right positions per register
       \forlistcsloop{\yquant@draw@startenclose@initpolygon{#1}}{yquant@circuit@enclose@#1@involved}%
@@ -1139,31 +1148,6 @@
    \endgroup%
 }
 
-\protected\def\yquant@draw@enclose@declare#1#2{%
-   % this is basically the same as measure, just for a single wire initialization, which has no width
-   \begingroup%
-      \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
-         % is any of the registers in the target list relevant for our enclose?
-         \ifyquant@OR\expandafter\ifx\csname yquant@circuit@enclose@#2@involved\endcsname\yquant@circuit@enclose@allinvolved\fi%
-                     \ifcsname yquant@circuit@enclose@#2@extentT@\yquant@register@resolvetocolon{#1}\endcsname\fi{%
-            \edef\yquant@draw@@x{\yquant@register@get@x{#1}}%
-            \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x\relax%
-               \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x}%
-            \fi%
-            \ifdim\csname yquant@draw@enclose@#2@right\endcsname<\dimexpr\yquant@draw@@x\relax%
-               \csdimgdef{yquant@draw@enclose@#2@right}{\yquant@draw@@x}%
-            \fi%
-         }\relax%
-      \or%
-         \edef\leftpos{\yquant@register@get@x{#1}}%
-         \let\rightpos=\leftpos%
-         \yquant@draw@enclose@measure@register{#2}{#1}%
-      \else%
-         \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (2b).}%
-      \fi%
-   \endgroup%
-}
-
 \def\yquant@draw@enclose@sort#1#2{%
    \ifyquant\ifdim\yquant@orientation@minus\yquant@register@colonsplit\yquant@register@peek@y{#2}>%
                   \yquant@orientation@minus\yquant@register@colonsplit\yquant@register@peek@y{#1}\space\fi%
@@ -1190,6 +1174,9 @@
 }
 
 \protected\def\yquant@draw@enclose@calcleft#1#2{%
+   \ifdim\csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname=\maxdimen%
+      \PackageError{yquant.sty}{Partially empty enclose}{Polygon \string\enclose\space contained a register with no gates in the region.}%
+   \fi%
    \dimdef\encloseleft{%
       \csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname%
       -\dimen4%
@@ -1238,6 +1225,9 @@
       \dimen0=\enclosebottom\space% store the bottom-most position
       \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
          % If we just need a rectangle, the remaining extracting steps are simple, just look at the extremal parts.
+         \ifdim\csname yquant@draw@enclose@#1@left\endcsname=\maxdimen%
+            \PackageError{yquant.sty}{Empty enclose}{No gates contained in \string\enclose\space region.}%
+         \fi%
          \dimdef\encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\dimen4}%
          \dimen2=\encloseleft\space%
          \dimdef\encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\dimen4}%
@@ -1317,6 +1307,7 @@
       }%
    \endgroup%
    \listgremove\yquant@circuit@enclose@active{#1}%
+   \csgundef{yquant@circuit@enclose@#1@allowmovelabel}%
    \csgundef{yquant@circuit@enclose@#1@shape}%
    \csgundef{yquant@circuit@enclose@#1@involved}%
 }
@@ -1347,7 +1338,7 @@
    \begingroup%
       \edef\yquant@prefix{yquant@env#1@}%
       \yquant@register@set@x{#2}\newx%
-      \expandafter\yquant@circuit@extendwire\expandafter{#2}*%
+      \yquant@circuit@extendwire{#2}*%
    \endgroup%
 }
 

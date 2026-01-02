@@ -659,9 +659,26 @@
 }
 % END_FOLD
 % BEGIN_FOLD Internal styles (undocument, do not use!)
+\def\yquant@config@enclose@checkmovealllabels#1{%
+   \csname yquant@circuit@enclose@#1@allowmovelabel\endcsname\relax{%
+      \yquant@config@operator@position@rightalignfalse%
+      \listbreak%
+   }%
+}
 \pgfqkeys{/yquant}{%
    internal/move label/.code=%
       {\yquant@config@operator@position@rightaligntrue},
+   internal/maybe move label/.code 2 args={%
+      \yquant@config@operator@position@rightaligntrue%
+      \forlistloop\yquant@config@enclose@checkmovealllabels{#2}%
+      \csshow{ifyquant@config@operator@position@rightalign}%
+      \unless\ifyquant@config@operator@position@rightalign%
+         \ifdim\yquant@draw@@width<#1 %
+            \def\yquant@draw@@width{#1}%
+         \fi%
+         \pgfkeys{/yquant/every initial label/.style={}}%
+      \fi%
+   },%
    internal/multi main/.is if=%
       yquant@config@internal@multi@main,%
    internal/setup done/.code=%

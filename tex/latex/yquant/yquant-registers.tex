@@ -433,6 +433,7 @@
          % see comment in \yquant@lang@create@do for the vphantom
       \fi%
       \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
+      \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
       \begingroup%
          \yquant@for \idx := \idx to \numexpr \len -1\relax {%
             \yquant@prepare@create\reg\idx\yquant@register@types@qubit%
@@ -453,6 +454,7 @@
                \yquant@circuit@operator@mintarget%
                \yquant@circuit@operator@maxtarget%
          }%
+         \yquant@circuit@operator@hasControlsfalse%
          \let\yquant@circuit@operator@pctrls=\empty%
          \def\yquant@circuit@operator@minpctrl{2147483647}%
          \def\yquant@circuit@operator@maxpctrl{0}%
@@ -464,14 +466,23 @@
          \let\yquant@circuit@operator@minctrl=\yquant@circuit@operator@mintarget%
          \let\yquant@circuit@operator@maxctrl=\yquant@circuit@operator@maxtarget%
          % there are no multi inits in this context
-         \epreto\yquant@attrs@remaining{internal/move label, internal/setregidx={\idx}{\reg},}%
+         \let\yquant@lang@@init@encloserelevant=\empty%
+         \forlistloop\yquant@lang@@init@checkenclose\yquant@circuit@enclose@active%
+         \ifx\yquant@lang@@init@encloserelevant\empty%
+            \preto\yquant@attrs@remaining{internal/move label,}%
+         \else
+            % see comment in \yquant@lang@create@do for the dilemma
+            \epreto\yquant@attrs@remaining{internal/maybe move label={\yquant@config@operator@minimum@width}{\yquant@lang@@init@encloserelevant}}%
+         \fi%
          \def\yquant@config@operator@minimum@width{0pt}%
+         \epreto\yquant@attrs@remaining{internal/setregidx={\idx}{\reg},}%
          \unless\ifx\yquant@lang@attr@value\empty%
             % make sure to immediately remove the "clear" marker again if we have a text
             \yquant@for \i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
                \yquant@register@execclear@lastgate{\i}{init}%
             }%
          \fi%
+         \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
          \expandafter\yquant@prepare%
             \expandafter{\yquant@lang@attr@value}%
             {/yquant/every label, /yquant/every initial label,%
