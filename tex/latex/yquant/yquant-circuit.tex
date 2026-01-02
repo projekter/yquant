@@ -58,15 +58,18 @@
             \yquant@circuit@endwires@x\yquant@orientation@plus\yquant@config@operator@sep%
          }%
       \fi%
+      \ifdefined\yquant@parent%
+         \gdef\yquant@circuit@endwires@operatorsep{0pt}%
+      \fi%
    }{%
       \dimdef\yquant@circuit@endwires@x{%
          \yquant@circuit@endwires@x\yquant@orientation@plus\yquant@config@operator@sep%
       }%
+      \ifdefined\yquant@parent%
+         \global\let\yquant@circuit@endwires@operatorsep=\yquant@config@operator@sep%
+      \fi%
    }%
    \let\yquant@circuit@endwires@finalize=\relax%
-   \ifdefined\yquant@parent%
-      \global\let\yquant@circuit@endwires@operatorsep=\yquant@config@operator@sep%
-   \fi%
    \yquant@for \yquant@circuit@endwires@i := 1 to \csname\yquant@prefix registers\endcsname {%
       % we only extend the wire if it does not come from the outer circuit - this one would be responsible for the extension.
       \ifyquant@register@isaliased\yquant@circuit@endwires@i{%
