@@ -716,7 +716,9 @@
    },%
    internal/collect brace styles/.code 2 args={%
       \yquant@config@enclose@collectbracestyles{#1}{#2}%
-   }%
+   },%
+   internal/no enclose/.is if=%
+      yquant@config@internal@noenclose,%
 }
 \ifnum\yquant@compat<2 %
    \pgfqkeys{/yquant}{%
@@ -850,6 +852,7 @@
 \def\yquant@config@enclose@beamercommand{\uncover}
 \newif\ifyquant@config@internal@multi@main
 \yquant@config@internal@multi@maintrue
+\newif\ifyquant@config@internal@noenclose
 \newif\ifyquant@config@operator@multi@warn
 \yquant@config@operator@multi@warntrue
 \newif\ifyquant@config@operator@position@rightalign

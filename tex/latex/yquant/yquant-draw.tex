@@ -77,7 +77,10 @@
          \fi%
          \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr#1\relax}%
       \fi%
-      \forlistloop{\yquant@draw@enclose@measure{#6}}\yquant@circuit@enclose@active%
+      \unless\ifyquant@config@internal@noenclose%
+         \forlistloop{\yquant@draw@enclose@measure{#6}}\yquant@circuit@enclose@active%
+      \fi%
+      \yquant@config@internal@noenclosefalse%
 }
 
 \protected\def\yquant@draw@group@advance#1{%
