@@ -806,7 +806,7 @@
             \let\stopscope=\endscope%
             \global\yquant@pgf@picmaxx=0pt %
             \global\yquant@pgf@picminx=0pt %
-            \global\setbox\yquant@prepare@subcircuit@box=\vbox to 1sp{%
+            \global\setbox\yquant@prepare@subcircuit@box=\ifyquanthorz\vbox\hbox to 1sp{%
                \csname\yquant@prefix draw\endcsname%
             }%
             \ifdim\yquant@pgf@picmaxy=-16000pt %
@@ -847,13 +847,16 @@
                  name prefix=, name suffix=, name=, space radius=0pt]%
             {\box\yquant@prepare@subcircuit@box};%
          % the extra height is taken care for by manually inserting it to the height of the first and last register in the subcircuit
-         \yquant@register@inject@extents{\yquant@pgf@picmaxy}{-\yquant@pgf@picminy}%
+         \ifyquanthorz{%
+            \yquant@register@inject@extents{\pgf@picmaxy}{-\pgf@picminy}%
+         }{%
+            \yquant@register@inject@extents{-\pgf@picminx}{\pgf@picmaxx}%
+         }%
          \edef\cmd{%
+            \noexpand\endpgfinterruptboundingbox
             \dimen0=\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
             \yquant@prepare@subcircuit@add%
          }%
-         \expandafter%
-      \endpgfinterruptboundingbox%
       \cmd%
       \ifdim\dimen0>\dimen2 %
          \dimen2=\dimen0 %
