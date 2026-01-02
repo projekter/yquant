@@ -467,6 +467,8 @@
       \edef\pgf@interrupt@saveminy{\the\yquant@pgf@picminy}%
       \yquant@pgf@picmaxy=-16000pt %
       \yquant@pgf@picminy=16000pt %
+      \yquant@pgf@picmaxx=-16000pt %
+      \yquant@pgf@picminx=16000pt %
       \pgf@size@hookedfalse%
       \let\pgf@path@size@hook=\pgfutil@empty%
       % now we must take care of extending all the wires appropriately until the beginning of the box. #4 contains width of this box, #5 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
@@ -617,8 +619,6 @@
                \dimen0=\dimexpr.5\dimexpr\@tempdima+\yquant@pgf@y\relax\relax%
             \else%
                % We must figure out the size manually. pgf@picminy/pgf@picmaxy are not trustworthy, as they describe the height over the outer unrotated rectangle that completely covers the rotated one.
-               % TODO: Well, that's as it should be, but it doesn't appear to be correct. Upon rotation, they turn out to be much smaller than they should be. Why?
-               \PackageWarning{yquant.sty}{Arbitrary-degree rotations are badly broken with subcircuits. Make sure not to draw the circuit's outline.}%
                % Let a be the true width of the rotated rectangle and b its height. We are looking for b.
                % If alpha is the rotation angle, the outer rectangle has height Y
                %    Y = a sin alpha + b cos alpha
@@ -632,10 +632,18 @@
                \@tempdimb=\dimexpr\pgf@picmaxy-\pgf@picminy\relax% \@tempdimb is Y
                \@tempdimc=\dimexpr\pgf@pt@aa\dimexpr\pgf@pt@aa pt\relax-%
                                   \pgf@pt@ab\dimexpr\pgf@pt@ab pt\relax\relax% denominator
-               \dimen2=\dimexpr\dimexpr\pgf@pt@aa\@tempdimb-\pgf@pt@ab\@tempdima\relax*65536/%
-                                       \@tempdimc\relax%
-               % We now have the height, we still need the middle point. We can start from an outer y position, which is also a true extremal y position, and simply add half the height.
-               \dimen0=\dimexpr\pgf@picminy+.5\dimen2\relax
+               \dimen\ifyquanthorz24=\dimexpr\dimexpr\pgf@pt@aa\@tempdimb-\pgf@pt@ab\@tempdima\relax*65536/%
+                                             \@tempdimc\relax%
+               \dimen\ifyquanthorz42=\dimexpr\dimexpr\pgf@pt@aa\@tempdima-\pgf@pt@ab\@tempdimb\relax*65536/%
+                                             \@tempdimc\relax%
+               % The y position of the middle point is simply .5\pgf@picminy+.5\pgf@picmaxy in the unrotated system. Hence, we have to calculate the full point (x, y) and rotate it backwards:
+               \ifyquanthorz{%
+                  % y cos alpha - x sin alpha
+                  \dimen0=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax-\pgf@pt@ab\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax\relax%
+               }{%
+               % x cos alpha + y sin alpha
+                  \dimen0=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax+\pgf@pt@ab\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax\relax%
+               }%
                \ifdim\dimen2<0pt % reflections
                   \dimen2=-\dimen2 %
                \fi%
