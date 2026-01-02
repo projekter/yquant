@@ -504,6 +504,7 @@
          }\relax%
          \csxdef{yquant@circuit@enclose@names@#2}{\yquant@circuit@enclose@id}%
       \fi%
+      \tikz@enable@node@quotes%
       \pgfqkeysfiltered{/yquant/enclose}{#1}%
       % if there is a beamer command active and it is \only, we only execute the code subject to this command; without beamer or any different command, we simply store the command and do as always
       \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @beamercommand}\yquant@circuit@enclose@currentbeamercommand%
