@@ -17,8 +17,8 @@
 \usepackage[english]{babel}
 \usepackage[colorlinks, linkcolor=darkblue, bookmarksdepth=paragraph]{hyperref}
 \usepackage[compat=newest]{yquant}
-\usepackage{braket,hyphenat,microtype,hologo,minted2,import,ragged2e,booktabs}
-\usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz2}
+\usepackage{braket,hyphenat,microtype,hologo,minted2,import,ragged2e,booktabs,bookmark}
+\usetikzlibrary{quotes,fit,shapes.symbols,backgrounds,quantikz2,patterns}
 \useyquantlanguage{qasm,groups}
 \usepackage{amsmath,adjustbox,cleveref}
 \usepackage[framemethod=tikz]{mdframed}
@@ -38,7 +38,8 @@
     \endgroup}%
  } %
 
-\long\def\compat#1{\texorpdfstring{\leavevmode\makenote{#1}\penalty10000 }{}}
+%\long\def\compat#1{\texorpdfstring{\leavevmode\makenote{#1}\penalty10000 }{}}
+\let\compat=\@gobble
 
 % BEGIN_FOLD Minted configuration
 \definecolor{boxGrayBody}{gray}{.94}
@@ -65,7 +66,7 @@
    \def\patched@minted@inline@iii#1{%
       \unpatched@minted@inline@iii{#1}%
       \par%
-      \endgroup\vskip-\parskip%
+      \endgroup\egroup\nopagebreak\vskip-\parskip\nopagebreak%
       \noindent\ignorespaces%
    }
    \def\patch@mintinline{%
@@ -77,23 +78,21 @@
    \def\patched@RobustMintInlineProcess@ii#1{%
       \unpatched@RobustMintInlineProcess@ii{#1}%
       \par%
-      \endgroup\vskip-\parskip%
+      \endgroup\egroup\nopagebreak\vskip-\parskip\nopagebreak%
       \noindent\ignorespaces%
    }
    \def\patch@mintinline{%
       \let\RobustMintInlineProcess@ii=\patched@RobustMintInlineProcess@ii%
    }
 \fi
-\newenvironment{option*}[3][]{\vskip5mm%
-   \noindent\begin{minipage}[t]{\linewidth}%
-      \begingroup%
-         \patch@mintinline%
-         \raggedleft%
-         \hspace*{-1cm}%
-         \phantomsection\label{yquant:/#2/#3}%
-         \texttt{\ifstrempty{#1}\relax{\compat{#1}}\textcolor{gray}{/#2/}\textcolor{mintgreen}{#3}}\hfill default: %
-         \tex}{%
-   \end{minipage}}
+\newenvironment{option*}[3][]{\ifhmode\par\fi\addvspace{5mm}%
+   \vbox\bgroup\begingroup%
+      \patch@mintinline%
+      \raggedleft%
+      \hspace*{-1cm}%
+      \phantomsection\label{yquant:/#2/#3}%
+      \texttt{\ifstrempty{#1}\relax{\compat{#1}}\textcolor{gray}{/#2/}\textcolor{mintgreen}{#3}}\hfill default: %
+      \tex}{\par\addvspace{5mm}}
 \newenvironment{option}[1][]{\csname option*\endcsname[{#1}]{yquant}}{\csname endoption*\endcsname}
 
 \newsavebox\codeexamplebox
@@ -270,7 +269,7 @@
       This document outlines the scope and usage of the \Yquant{} package.
       It contains both a reference and a huge number of examples.
       \Yquant{} is a package that makes typesetting quantum circuits easy; the package is available on CTAN.
-      This beta version~0.8.2 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
+      This beta version~0.9 \emph{should} be stable and interfaces are not very likely to change in an incompatible way in the future.
       \compat{New in 0.4}Sometimes, backwards\hyp incompatible changes are required or advisable, in which case a compatibility setting will allow to revert back to the old behavior (rather, to maximize compatibility, this is an opt\hyp in setting: unless you choose the new behavior, you will get the old one).
       Please do report all issues and desirable additions on \href{https://github.com/projekter/yquant/issues}{GitHub}.
 
@@ -589,6 +588,568 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          Preceded by a tilde (``\yquant!~!''), the list of negative controls then follows; this mimics the syntax of many programming languages that denote logical negation by a tilde.
          If there are no negative controls, the list may be empty or, together with the tilde, omitted.
 
+      \subsection[Highlighting parts of a circuit]{\compat{New in 0.9}Highlighting parts of a circuit}\label{sec:enclose}
+         Sometimes, there are certain parts of a circuit that deserve special attention.
+         This is often accomplished by framing them in a box or putting some kind of background on them, then adding some text at the boundary of this region.
+         While this can be accomplished in \Yquant{} using various options, starting from version~0.9, the enclose functionality aims to do this most conveniently.
+         Note that this is not part of the \Yquant{} language specification itself, but uses \TeX{} macros instead, for a very simple reason: Sometimes, you might want to highlight only a certain part of a gate, while other parts should stick out of it.
+         This means that you cannot isolate the part that is to be highlighted as you would do it with subcircuits; instead, something with a purely visual meaning, but no intrinsic part of the circuit, is required.
+
+         There are several ways to access the enclose functionality.
+         \subsubsection[\texorpdfstring{\tex{\encloseall}}{\textbackslash encloseall}]{\tex!\encloseall[<options>]{<content>}!}\linkdef\encloseall
+            This should be the choice whenever you want to highlight the gates \texttt{<content>}, while the region should span from the very first to the very last register in the circuit.
+            It is basically a restricted version of the \texlink{\enclose} macro, but at the same time, it is much faster to process, as \TeX{} doesn't have to figure out which registers are involved.
+
+            The \texttt{<options>} allow you to specify any \TikZ{} option which is attached to the enclosing rectangle.
+            None of the advanced options mentioned for \texlink{\enclose} are allowed here---the configuration for \tex!\encloseall! always corresponds to \ttlink[/yquant/enclose/spacing/register]{spacing=register}, \ttlink[/yquant/enclose/shape/rectangle]{shape=rectangle}, so see the details for the configuration options on how this manifests.
+            However, the bracing options may very well be used (and indeed, they are probably best used with \tex!\encloseall!).
+
+         \subsubsection[\texorpdfstring{\tex{\enclose}}{\textbackslash enclose}]{\tex!\enclose[<options>]{<content>}!}\linkdef\enclose
+            This should be used whenever you need more flexibility and the enclosing region is not from the first to the last register in the whole circuit.
+
+            By default, the region will span from the first to the last register that is mentioned within \texttt{<content>}.
+            However, you can overwrite this by using the option keys \linkdef{/yquant/enclose/from}\texttt{from=<register>} and \linkdef{/yquant/enclose/to}\texttt{to=<register>}.
+            If you specify a vector register, this will correspond to the first index for \texttt{from} and to the last for \texttt{to}.
+            Note that it is allowed to specify a register which does not exist yet---however, it has to be created at some point during the execution of \texttt{<content>}.
+            Further note that the register has to be one in the same \emph{circuit} in which \tex!\enclose! is placed---it cannot be in a subcircuit.
+            However, you can achieve this functionality in a different way using named enclosures.
+
+            \begin{option*}{yquant/enclose}{name}!!
+               You may use the \texttt{name=<name>} option to give the enclosing region a name (this is not a \TikZ{} node name, it is only valid in the context of enclosing options).
+               Then, when creating the register in a subcircuit, you may specify the attribute \linkdef{enclose/set from}\texttt{enclose/set from=<name>} or \linkdef{enclose/set to}\texttt{enclose/set to=<name>} to make clear that the region \texttt{<name>} should start at this register.
+            \end{option*}
+
+            It is possible to let an \tex!\enclose! start from multiple different registers---just think of various subcircuits with ancillas that cannot be put in a particular ordering with respect to each other.
+            Specify the attribute for all of the registers that should be included and \Yquant{} will make sure that the region covers all of them.
+
+            \clearpage
+            \begin{example}[Using \tex!\enclose! with explicit range specifications]
+               \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit q[4];
+      x -;
+      \enclose[name=region, to={q[2]}, shade] {
+         h q[2];
+         subcircuit {
+            [ancilla, enclose/set from=region] qubit anc;
+            qubit io[2];
+            [ancilla, enclose/set to=region] qubit anc[+2];
+            [ancilla] qubit anc[+1];
+            zz (-);
+         } (q[2, 3]);
+         cnot q[0] | q[3];
+      }
+      x -;
+   \end{yquant}
+\end{tikzpicture}
+               \end{codeexample*}
+               The example shows nicely how, semantically, \texttt{set from} is no different than specifying \texttt{from}: as soon as one ``from'' (or ``to'') specification is present, the start or end of the range is no longer calculated automatically based on the registers addressed in the region (for then, \texttt{q[0]} from the \ttlink{cnot} would have to be in the region), but defined as the least possible value that still encloses everything that was explicitly requested.
+            \end{example}
+
+            \begin{option*}{yquant/enclose}{shape}!rectangle!
+               Defines how the region that encloses certain gates looks like.
+
+               \begin{itemize}
+                  \item \linkdef{/yquant/enclose/shape/rectangle}\texttt{rectangle} \\
+                     The enclosing region will by default be a rectangle from the top-/leftmost to the bottom/-rightmost gate.
+                     Note that this will implicitly put an \ttlink{align} gate on all the registers that are involved before and after the enclosing---else, it would be possible to have a gate that is not part of the region, but still ends up visually in it.
+                     Just the act of creating a register (without a text) will never by itself be part of an enclosing region.
+                     If the register creation with value or the first initialization is within an enclose block, the block will also cover the label.
+                     Note that the alignment due to the rectangular shape may prevent an initialization from extending to the left of the circuit if some other registers already contain gates.
+
+                  \item \linkdef{/yquant/enclose/shape/polygon}\texttt{polygon} (default) \\
+                     \Yquant{} will draw a polygon that tries to tightly cover all the gates within the region.
+                     No alignment is performed.
+                     \begin{example}[Using \tex!\enclose! with polygon shape]
+                        \begin{codeexample}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit q[5];
+      x -;
+      x q[0, 1, 4];
+      x q[0];
+      \enclose[shape=polygon, fill=yellow]{
+         h q[2, 3];
+         h q[1-];
+         h q[0-2];
+         h q[1];
+      }
+      x q[3, 4];
+      x q[0, 2-4];
+   \end{yquant}
+\end{tikzpicture}
+                        \end{codeexample}
+                        Consider the output of the same circuit, using the rectangular shape:
+                        \begin{center}
+                           \begin{tikzpicture}
+                              \begin{yquant}
+                                 qubit q[5];
+                                 x -;
+                                 x q[0, 1, 4];
+                                 x q[0];
+                                 \enclose[fill=yellow]{
+                                    h q[2, 3];
+                                    h q[1-];
+                                    h q[0-2];
+                                    h q[1];
+                                 }
+                                 x q[3, 4];
+                                 x q[0, 2-4];
+                              \end{yquant}
+                           \end{tikzpicture}
+                        \end{center}
+                     \end{example}
+               \end{itemize}
+            \end{option*}
+
+            A final question is how large the enclosing region will be in space\hyp like direction (i.e., between the registers).
+
+            \begin{option*}{yquant/enclose}{spacing}!gate or local register!
+               Defines how the extents of the enclosed registers are calculated.
+               Possible values:
+               \begin{itemize}
+                  \item \linkdef{/yquant/enclose/spacing/gate}\texttt{gate} \\
+                     The enclosing region will be as large as all the gates within this region.
+                     Note that you \emph{could} run into trouble with multi\hyp register gates using this option.
+                     \begin{example}[Using \tex!\enclose! with \texttt{gate} spacing]
+                        \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}[enclose/spacing=gate, enclose/style={draw=none}]
+      qubit q;
+      \enclose[fill=red!20!white] { slash q; }
+      \enclose[fill=yellow]{ x q; }
+      \enclose[fill=blue!20!white]{ not q; }
+   \end{yquant}
+\end{tikzpicture}
+                        \end{codeexample*}
+                     \end{example}
+                  \item \linkdef{/yquant/enclose/spacing/register}\texttt{register} \\
+                     The enclosing region will be as large as the \emph{final} register height/depth, which consists of \emph{all} gates that were ever present on the corresponding registers.
+                     \begin{example}[Using \tex!\enclose! with \texttt{register} spacing]
+                        \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}[enclose/spacing=register, enclose/style={draw=none}]
+      qubit q;
+      \enclose[fill=red!20!white] { slash q; }
+      \enclose[fill=yellow]{ x q; }
+      \enclose[fill=blue!20!white]{ not q; }
+   \end{yquant}
+\end{tikzpicture}
+                        \end{codeexample*}
+                     \end{example}
+                     \vskip-3mm
+                     However, this is problematic due to the way subcircuits are handled by \Yquant.
+                     If you have a subcircuit which has ancillas, during the calculation of the final positioning, \Yquant{} will accumulate their extents and add it to the closest connected register, so you might suddently end up with a very large enclosing region which you did not expect.
+                     \begin{example}[Unexpected behavior of \texttt{register} spacing with subcircuits]
+                        \begin{codeexample}
+\begin{tikzpicture}
+   \begin{yquant}[enclose/style={draw=none, fill=yellow}]
+      qubit before;
+      qubit q;
+      qubit after;
+      x before, after;
+      subcircuit {
+         [ancilla] qubit a;
+         qubit q;
+         swap (-);
+         [ancilla] qubit b;
+         swap (a, b);
+      } q;
+      \enclose[spacing=register]{ x q; }
+   \end{yquant}
+\end{tikzpicture}
+                        \end{codeexample}
+                     \end{example}
+                  \item \linkdef{/yquant/enclose/spacing/gate or local register}\texttt{spacing=gate or local register} (default) \\
+                     Takes into account the minimum of the global register extent \emph{before} subcircuit ancillas are added, but at least the extent of all gates within the region\footnote{%
+                     Note that here, the ``at least'' part is almost superfluous---however, it makes sure that the \ttlink{overlay} attribute, which can exclude a gate from taking part in the register extent calculation, is disregarded for enclosings.
+                  }.
+                  This is not a perfect solution either, a good compromise: Adding the ancillas is the very first step in the calculation of positions; and the very last step is the distribution of multi\hyp register gates, so we could still run into trouble with multi\hyp register gates; but likely, both points of view help each other.
+                  \begin{example}[Using \tex!\enclose! with default \texttt{gate or local register} spacing]
+                     \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit before;
+      qubit q;
+      qubit after;
+      x before, after;
+      subcircuit {
+         [ancilla] qubit a;
+         qubit q;
+         swap (-);
+         [ancilla] qubit b;
+         swap (a, b);
+      } q;
+      \enclose[draw=none, fill=yellow]{
+         box {gate} (q, after);
+         [overlay] box {\vrule height 18mm} q;
+      }
+   \end{yquant}
+\end{tikzpicture}
+                     \end{codeexample*}
+                  \end{example}
+               \end{itemize}
+
+               Let's also quickly show the output of this example both with the \texttt{gate} (left) and \texttt{register} (right) spacing:
+               \begin{center}
+               \begin{tikzpicture}
+                  \begin{yquant}
+                     qubit before;
+                     qubit q;
+                     qubit after;
+                     x before, after;
+                     subcircuit {
+                        [ancilla] qubit a;
+                        qubit q;
+                        swap (-);
+                        [ancilla] qubit b;
+                        swap (a, b);
+                     } q;
+                     \enclose[draw=none, fill=yellow, spacing=gate]{
+                        box {gate} (q, after);
+                        [overlay] box {\vrule height 18mm} q;
+                     }
+                  \end{yquant}
+               \end{tikzpicture}\qquad\begin{tikzpicture}
+                  \begin{yquant}
+                     qubit before;
+                     qubit q;
+                     qubit after;
+                     x before, after;
+                     subcircuit {
+                        [ancilla] qubit a;
+                        qubit q;
+                        swap (-);
+                        [ancilla] qubit b;
+                        swap (a, b);
+                     } q;
+                     \enclose[draw=none, fill=yellow, spacing=register]{
+                        box {gate} (q, after);
+                        [overlay] box {\vrule height 18mm} q;
+                     }
+                  \end{yquant}
+               \end{tikzpicture}
+               \end{center}
+            \end{option*}
+
+         \subsubsection[\texorpdfstring{\tex{\startenclose} and \tex{\stopenclose}}{\textbackslash startenclose and \textbackslash stopenclose}]{\tex!\startenclose[<options>]{<name>}! and \tex!\stopenclose{<name>}!}\linkdef\startenclose\linkdef\stopenclose
+            While the \texlink{\enclose} macro is already very flexible, it requires the whole content of the enclosing region to be passed as a single \TeX{} group.
+            This makes it impossible to interleave regions; but still, \Yquant{} can do it for you.
+            You must now use the \tex!\startenclose! macro instead, which requires a mandatory name---given explicitly instead of via the options, but it is indeed the same thing and can therefore be used with \ttlink{enclose/set from} and \ttlink{enclose/set to}.
+            The content of the enclose is then simply everything that follows until a corresponding \tex!\stopenclose! with the same name is found.
+            This can be arbitrarily mixed with the group\hyp delimited \texlink{\enclose} macro.
+            \begin{example}[Interleaving enclosing regions]
+               \begin{codeexample}
+% \usetikzlibrary{patterns}
+\begin{tikzpicture}
+   \begin{yquant}[enclose/style={draw=none}, enclose/shape=polygon]
+      qubit q[4];
+      h q[0, 2, 3];
+      \startenclose[pattern=north east lines, pattern color=green!60!white]{region1}
+         z q[1];
+         z q[-2];
+         z q[1];
+      \startenclose[red, pattern=north west lines, pattern color=red]{region2}
+         y q[2];
+      \stopenclose{region1}
+      x q[3];
+      x q[3];
+      \stopenclose{region2}
+      h q[0];
+   \end{yquant}
+\end{tikzpicture}
+               \end{codeexample}
+            \end{example}
+
+            \begin{warning}[Named enclosings and custom gates]
+               The naming scheme of enclosings does not respect any name mangling, therefore names are available globally and must be unique within one \ttlink{yquant} environment.
+               So make sure \emph{never} to use named enclosings within \hyperref[sec:customgate]{custom gate definitions}, as their names might conflict with the ones of the circuits that use them.
+               Unnamed enclosings using \texlink{\enclose} or \texlink{\encloseall} are fine, though.
+            \end{warning}
+
+            \begin{warning}[Transcending subcircuits]
+               Yes, it is indeed possible to start one enclose in a subcircuit and end it after this subcircuit or vice versa.
+               Note that this is much easier for the \ttlink[/yquant/enclose/shape/polygon]{polygon} shape than for rectangles!
+               The rectangular enclosure has to add alignments before and after to make sure that nothing enters its region that is not supposed to be there.
+               Since enclosings can transcend subcircuits, this alignment is nothing that could be reproduced just by using the \ttlink{align} gate---it requires something more sophisticated.
+               The problem is that at the beginning of an enclosing, it is not even known which registers and from which subcircuits will take part.
+               In fact, this is only known when the enclosing is finished, but by then, the devious user might already have exited a subcircuit in which they said \tex!\startenclose!.
+               Now we are in deep trouble, because calculating the \emph{width} of the subcircuit, which is necessary for the box of the subcircuit and proper vertical alignment for example of the control line or multiple subcircuits used in the same expression (luckily, having more than one [multiregister] target is impossible here, as this would lead to a name clash), was already completed---of course without the unknown alignment.
+               So what we do to get a halfway proper display in the end is that during the drawing stage, where we can rather easily perform the alignment, \Yquant{} will compare whether the precalculated width coincides with the actual one, and if not, the width is adjusted post mortem.
+               Yes, indeed, for this is just an attempt not do produce too much garbage.
+               The size of the box itself will be rendered correctly, but for everything that came \emph{before} or a potential control line, the size is as it was calculated without alignment.
+               It would be easily possible for \Yquant{} to place the control line correctly, but gates that came before cannot be re\hyp adjusted, hence the control line could potentially overlap with them -- better not to do this.
+               Let's illustrate this most monstrous failure with a tiny circuit:
+               \begin{codeexample*}
+\begin{tikzpicture}
+   \begin{yquant}
+      qubit {} a;
+      qubit {} b;
+      box {loooooong gate} b;
+      subcircuit {
+         qubit {} a;
+         x a;
+      \startenclose[fill=blue!20]{enc}
+         y a;
+      } a | b;
+      z b;
+      \stopenclose{enc}
+      h a;
+      box {$S$} b;
+   \end{yquant}
+\end{tikzpicture}
+               \end{codeexample*}
+               Note how here, the control line is placed where you would expect it if the \ttlink{y} gate directly followed the \ttlink{x} gate without any alignment.
+               In fact, how does the alignment even work?
+               First, the size of the subcircuit (without alignment) is computed.
+               Naturally, the \ttlink{z} gate would come after the full length of the subcircuit, since the control on the lower register blocks the complete space.
+               This is now know as the position of the \ttlink{z} gate, where we then have to align the \ttlink{y} gate at.
+               The pre\hyp calculated box size for the subcircuit would be too small, so it is enlarged, and after both gates, we align once more, so that there is indeed also more space than normal before the $S$~gate.
+            \end{warning}
+
+         \subsubsection{Enclosing drawing pipeline}
+            Drawing the enclosings works in multiple stages: During preparation, \Yquant{} analyzes which gates in the circuit belong to the enclosing region; it also keeps track of the individual register extents (space\hyp like, i.e., from register to register), if the shape requires this.
+            During the drawing stage, \Yquant{} knows in which visual order the registers are placed in the circuit and can therefore sort them properly in order to figure out which is the topmost and which is the bottom\hyp most register.
+            Furthermore, the gate extents (time\hyp like, i.e., from gate to gate) are accumulated, including all separations that are gleaned from the style in \ttlink{/yquant/enclose/every enclose} as well as the one passed explicitly to \texlink{\encloseall}, \texlink{\enclose}, or \texlink{\startenclose}.
+
+            \begin{option*}{yquant/enclose}{every enclose}!draw, dashed, inner spacesep=.5*\pgfkeysvalueof{/yquant/register/separation}, inner timesep=.5*\pgfkeysvalueof{/yquant/operator/separation}!
+               This style is applied to the enclosed region, where by default, the separations increase the region just by the half distance to their next neighboring element.
+            \end{option*}
+
+            \begin{option*}{yquant/enclose}{style}!/yquant/enclose/every enclose/.append style={#1}!
+               This is a shorthand that can be used to modify the appearance of the enclosed region.
+            \end{option*}
+
+            After all the calculations are done, the necessary drawing commands for the enclosing region are \emph{stored}, but not yet executed.
+            Their execution is deferred until the very end of all the drawings---this would ensure that without further measures, they would be drawn \emph{on top} of everything (having them somewhere in between would just result in a weird mix).
+            This is of course not desired; therefore, the enclosing region will be drawn on a background layer, but any \texttt{label} commands will be drawn on the main layer instead, which should put them to the very front.
+            However, this behavior is also configurable.
+
+            \begin{option*}{yquant/enclose}{layer}!background!
+               Defines the layer onto which the enclosing regions are drawn, excluding late options such as labels.
+
+               Note that \Yquant{} automatically loads the \TikZ{} library \texttt{backgrounds}, which makes the \texttt{background} layer available; however, any active layer can be chosen.
+               It is also possible to use \texttt{main}---note that as it is not possible to explicitly draw on the \texttt{main} layer, \Yquant{} will then simply not invoke any change of layers.
+               Hence, if you put the whole \Yquant{} environment on a layer \texttt{X} different from \texttt{main}, saying \texttt{main} here will draw on \texttt{X}, \emph{not} on \texttt{main}.
+            \end{option*}
+
+            \begin{option*}{yquant/enclose}{label layer}!main!
+               Defines the layer onto which all labels of enclosing regions (more precisely, everything that uses the \TikZ{} feature \texttt{append after command} or \texttt{prefix after command}) are drawn.
+
+               The same remarks as for \ttlink{/yquant/enclose/layer} hold.
+            \end{option*}
+
+         \subsubsection{Embracing regions}
+            Sometimes, you want to highlight a part of a circuit in a very unobtrusive way, simply by putting curly braces at some region to the top or bottom (resp. left/right in vertical layout) of the whole circuit.
+            The \tex!\encloseall! feature already sets everything up nicely so that with a bit of \TikZ{} magic on the node that is drawn, we can easily modify the visible shape into such a curly brace.
+            \Yquant{} defines styles that do exactly this.
+
+            \begin{option*}{yquant/enclose}{brace above}!!
+               Style that can be passed to an \tex!\encloseall! region which will put a curly brace above (in vertical layout: to the left of) the whole circuit.
+               The style expects a label as its argument, which will subsequently be drawn above (in vertical layout: to the left of) the brace.
+               Note that everything that applies to ordinary \TikZ{} labels also holds here: you may use a square bracket as the first character of the label in order to specify some styles, and you may use the colon to separate an optional label position from the label text.
+
+               \Yquant{} will also apply the following styles to the decoration of the path:
+               \begin{itemize}
+                  \item \ttlink{/yquant/enclose/every brace}
+                  \item \ttlink{/yquant/enclose/every brace above or left}
+                  \item \ttlink{/yquant/enclose/every brace above} in horizontal layout
+                  \item \ttlink{/yquant/enclose/every brace left} in vertical layout
+               \end{itemize}
+
+               \Yquant{} will apply the corresponding \texttt{every brace label} styles to the label.
+
+               Note that only the styles that have been defined \emph{before} \texttt{brace above} is invoked are applied to the brace/label!
+               This allows to apply both a brace above and below and use different styles for them.
+            \end{option*}
+
+            \begin{option*}{yquant/enclose}{brace left}!!
+               This is a synonym for \ttlink{/yquant/enclose/brace above}, as this naming makes more sense for vertical circuits.
+            \end{option*}
+
+            \begin{option*}{yquant/enclose}{brace below}!!
+               Style that can be passed to an \tex!\encloseall! region which will put a curly brace below (in vertical layout: to the right of) the whole circuit.
+               The style expects a label as its argument, which will subsequently be drawn below (in vertical layout: to the right of) the brace.
+               Note that everything that applies to ordinary \TikZ{} labels also holds here: you may use a square bracket as the first character of the label in order to specify some styles, and you may use the colon to separate an optional label position from the label text.
+
+               \Yquant{} will also apply the following styles to the decoration of the path:
+               \begin{itemize}
+                  \item \ttlink{/yquant/enclose/every brace}
+                  \item \ttlink{/yquant/enclose/every brace below or right}
+                  \item \ttlink{/yquant/enclose/every brace below} in horizontal layout
+                  \item \ttlink{/yquant/enclose/every brace right} in vertical layout
+               \end{itemize}
+
+               \Yquant{} will apply the corresponding \texttt{every brace label} styles to the label.
+
+               Note that only the styles that have been defined \emph{before} \texttt{brace below} is invoked are applied to the brace/label!
+               This allows to apply both a brace below and above and use different styles for them.
+            \end{option*}
+
+            \begin{option*}{yquant/enclose}{brace right}!!
+               This is a synonym for \ttlink{/yquant/enclose/brace below}, as this naming makes more sense for vertical circuits.
+            \end{option*}
+
+            \clearpage
+            \paragraph{Brace styles}\leavevmode
+               \begin{option*}{yquant/enclose}{every brace}!draw, /pgf/decoration/brace, decorate!
+                  This style is applied to the path drawn for every brace put to an enclosing region using any of \ttlink{/yquant/enclose/brace above}, \ttlink{/yquant/enclose/brace left}, \ttlink{/yquant/enclose/brace below}, or \ttlink{/yquant/enclose/brace right}.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace style}!/yquant/enclose/every brace/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path for enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace above or left}!!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace above or left style}!/yquant/enclose/every brace above or left/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path above or to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace below or right}!!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace below or right style}!/yquant/enclose/every brace below or right/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path below or to the right of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace above}!/pgf/decoration/raise=1pt!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles---it will only be active in horizontal layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace above style}!/yquant/enclose/every brace above/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path above enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace left}!/pgf/decoration/raise=2pt, /pgf/decoration/mirror!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles---it will only be active in vertical layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace left style}!/yquant/enclose/every brace left/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace below}!/pgf/decoration/raise=1pt, /pgf/decoration/mirror!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles---it will only be active in horizontal layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace below style}!/yquant/enclose/every brace below/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path below enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace right}!/pgf/decoration/raise=2pt!
+                  This style is applied to the path drawn for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles---it will only be active in vertical layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace right style}!/yquant/enclose/every brace right/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the brace path to the right of enclosing regions.
+               \end{option*}
+
+            \paragraph{Brace label styles}\leavevmode
+               \begin{option*}{yquant/enclose}{every brace label}!label distance=4pt!
+                  This style is applied to the label for every brace put to an enclosing region using any of \ttlink{/yquant/enclose/brace above}, \ttlink{/yquant/enclose/brace left}, \ttlink{/yquant/enclose/brace below}, or \ttlink{/yquant/enclose/brace right}.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label style}!/yquant/enclose/every brace label/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces in enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label above or left}!!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label above or left style}!/yquant/enclose/every brace label above or left/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces above or to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label below or right}!!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label below or right style}!/yquant/enclose/every brace label below or right/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces below or to the right of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label above}!align=center!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles---it will only be active in horizontal layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label above style}!/yquant/enclose/every brace label above/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces above enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label left}!align=right!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace above} or \ttlink{/yquant/enclose/brace left} styles---it will only be active in vertical layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label left style}!/yquant/enclose/every brace label left/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label below}!align=center!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles---it will only be active in horizontal layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label below style}!/yquant/enclose/every brace label below/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces below enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{every brace label right}!align=left!
+                  This style is applied to the label for every brace put to an enclosing region using \ttlink{/yquant/enclose/brace below} or \ttlink{/yquant/enclose/brace right} styles---it will only be active in vertical layout.
+                  Note that the option has to be specified \emph{before} the brace style is invoked.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{brace label right style}!/yquant/enclose/every brace label right/.append style={#1}!
+                  This is a shorthand that can be used to modify the appearance of the labels of braces to the right of enclosing regions.
+               \end{option*}
+
+            \clearpage
+            \paragraph{Combined shorthands}\leavevmode
+               \begin{option*}{yquant/enclose}{bracing style}!/yquant/enclose/brace style={#1},/yquant/enclose/brace label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels in enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style above or left}!/yquant/enclose/brace above or left style={#1},/yquant/enclose/brace above or left label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels above or to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style below or right}!/yquant/enclose/brace below or right style={#1},/yquant/enclose/brace below or right label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels below or to the right of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style above}!/yquant/enclose/brace above style={#1},/yquant/enclose/brace above label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels above enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style left}!/yquant/enclose/brace left style={#1},/yquant/enclose/brace left label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels to the left of enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style below}!/yquant/enclose/brace below style={#1},/yquant/enclose/brace below label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels below enclosing regions.
+               \end{option*}
+
+               \begin{option*}{yquant/enclose}{bracing style right}!/yquant/enclose/brace right style={#1},/yquant/enclose/brace right label style={#1}!
+                  This is a shorthand that can be used to modify the appearance of both the brace path as well as its labels to the right of enclosing regions.
+               \end{option*}
+
       \subsection[Importing circuit from files]{\compat{New in 0.2}Importing circuits from files}\label{sec:import}\linkdef\yquantimport
          \Yquant{} provides a simple way to import circuits that are stored in external files.
          The macro \tex!\yquantimport! can be used in three different contexts:
@@ -618,7 +1179,8 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
          Note that you may in particular import the content of a \ttlink{subcircuit}.
 
-      \subsection{Defining own gates}
+      \clearpage
+      \subsection{Defining own gates}\label{sec:customgate}
          \begin{warning}[Scope]
             All gate declarations are always global.
          \end{warning}
@@ -1718,6 +2280,12 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
 
                Inside the value, \texlink{\reg} expands to \texttt{<name>}, \texlink{\len} expands to \texttt{<len>}, \texlink{\idx} expands to the current index within the vector register (for new registers, $0 \leq \text{\tex!\idx!} < \text{\texttt{<len>}}$), and \texlink{\regidx} expands to \texlink{\reg} if \texttt{<len>} is one, or to \tex!\reg[\idx]! else.
                For details about these macros and changes in version~0.8, see their documentation.
+            \item \yquant![enclose/set from=<enclose name>]! \\
+               Tells \Yquant{} that the named enclosing \texttt{<name>} should at least start from this register (if multiple registers are created, from the first one), if not at a preceding one. \\
+               See the documentation for \ttlink{/yquant/enclose/from}.
+            \item \yquant![enclose/set to=<enclose name>]! \\
+               Tells \Yquant{} that the named enclosing \texttt{<name>} should at least end at this register (if multiple registers are created to the last one), if not at a succeeding one. \\
+               See the documentation for \ttlink{/yquant/enclose/to}.
          \end{itemize}
 
       \subsection{\texorpdfstring{\yquant{qubits}}{qubits}}\linkdef{qubits}
@@ -2316,7 +2884,7 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                Here, we see how to use a measurement as a direct output for the next controlled operation.
             \end{example}
 
-            \begin{example}<Updated in 0.4>
+            \begin{example}<Updated in 0.9, 0.4>
                \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
@@ -2352,6 +2920,8 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                Since the label is not part of the valid arguments and also cannot be found in the \texttt{/yquant} path, it is automatically passed to \ttlink{/yquant/operator style}.
 
                To enclose a part of the circuit by a rectangle, we use a subcircuit.
+               This appears to be logically preferrable to using the \texlink{\enclose} macro, as the syndrome measurement is a self-contained operation which introduces its own registers; in principle, it could be turned into a custom gate and reused.
+
                We define the incoming \ttlink{qubit}s in the outer circuit, they will have the default attribute \ttlink{[inout]}; the syndrome registers, which are created only in the subcircuit enter as \ttlink{nobit}s and consequently have the \ttlink{[out]} attribute.
                It is important to note that both the \texttt{dashed} style as well as the \texttt{label} (here with quoted syntax) are specified only inside \ttlink{/yquant/this subcircuit box style}.
                This ensures that they are not also attached to every single gate in the subcircuit.
@@ -2363,30 +2933,29 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                However, as the $\symcal R$ together with the label in total were not higher than the three\hyp qubit gate would have been anyway, this was not necessary here.
                In generally, don't use \ttlink{overlay} unless necessary; maybe a future version will even be able to handle the more difficult cases better.
 
-               Finally, we will give a similar circuit by using the \TikZ{} interface instead of subcircuits, this time also showing how we can change the shape of the measurement gate to one as in the \pkg{qcircuit} manual:
+               Finally, we will give a similar circuit by using the \texlink{\enclose} interface instead of subcircuits, this time also showing how we can change the shape of the measurement gate to one as in the \pkg{qcircuit} manual:
 
                \begin{codeexample*}
-% \usetikzlibrary{fit, quotes}
+% \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant}
       qubit {} msg[3];
-      [name=inits]
-      qubit {$\ket0$} syndrome[3];
+      \encloseall["Syndrome Measurement"]{
+         qubit {$\ket0$} syndrome[3];
 
-      [name=scnot0]
-      cnot syndrome[0] | msg[0];
-      cnot syndrome[0] | msg[1];
-      cnot syndrome[1] | msg[1];
-      cnot syndrome[1] | msg[2];
-      cnot syndrome[2] | msg[0];
-      cnot syndrome[2] | msg[2];
-      [name=smeas, shape=yquant-rectangle, rounded corners=.45em]
-      dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
+         cnot syndrome[0] | msg[0];
+         cnot syndrome[0] | msg[1];
+         cnot syndrome[1] | msg[1];
+         cnot syndrome[1] | msg[2];
+         cnot syndrome[2] | msg[0];
+         cnot syndrome[2] | msg[2];
+         [shape=yquant-rectangle, rounded corners=.45em]
+         dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
+      }
       ["Recovery"]
       box {$\symcal R$} (msg) | syndrome;
       discard syndrome;
    \end{yquant}
-   \node[draw, dashed, fit=(inits-2) (scnot0-p0) (smeas-2), "Syndrome Measurement"] {};
 \end{tikzpicture}
                \end{codeexample*}
                We name several elements that visually form the enclosing rectangle; then, we use the \TikZ{} library \texttt{fit} to put a node around them all.
@@ -2772,29 +3341,27 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                \end{example}
 
             \paragraph{C. Grouping}\leavevmode
-               \begin{example}<Updated in 0.4, 0.1.1>
+               \begin{example}<Updated in 0.9, 0.4, 0.1.1>
                   \begin{codeexample*}
-% \usetikzlibrary{fit}
 \begin{tikzpicture}
    \begin{yquant*}[register/separation=3mm]
       cnot a[2] | a[0];
       cnot a[2] | a[1];
-      [name=left]
-      h a[0, 1];
-      z a[2];
-      cnot a[1] | a[0];
-      [name=righttop]
-      h a[0];
-      [name=rightbot]
-      h a[1] | a[2];
+      \enclose[to={a[1]}]{
+         h a[0, 1];
+         z a[2];
+         cnot a[1] | a[0];
+         h a[0];
+         h a[1] | a[2];
+      }
 
       hspace {2mm} -;
    \end{yquant*}
-   \node[draw, dashed, fit=(left-0) (left-1) (righttop) (rightbot-0)] {};
 \end{tikzpicture}
                   \end{codeexample*}
                   Note that \tex!\begin{yquant*}! must not be followed by a line break (unless masked by \tex!%!) if options follow.
-                  Also note that here, we cannot make use of a subcircuit due to the very last control, which would then control an inner gate of said subcircuit---but they are not exposed.
+                  Here, we use the \texlink{\enclose} macro to specify a part of the circuit that should be highlighted.
+                  The time\hyp like extent is given by the earliest and latest gates in the circuit; however, note that the last register is \emph{included} in the enclosed section, but explicitly \emph{excluded} using the \ttlink[/yquant/enclose/to]{to} key, so that now both the \ttlink z\hyp gate as well as the control of the \ttlink[h]{Hadamard} are not part of the enclosed region.
                   \iffalse\end{yquant*}\fi% code folding
                \end{example}
       \endgroup
@@ -3465,7 +4032,7 @@ $=$
                   \ttlink{/yquant/style} is suitable to style both, e.g., \tex|[style={fill=red!20}]|.
                \end{example}
 
-               \begin{example}<Updated in 0.6, 0.4>
+               \begin{example}<Updated in 0.9, 0.6, 0.4>
                   \begin{codeexample*}
 % \usetikzlibrary{shapes.symbols, fit}
 \begin{tikzpicture}
@@ -3495,29 +4062,29 @@ $=$
                   Those objects, which are a \Yquant{} addition to \TikZ{} allow \Yquant{} to properly clip wires and vertical lines to the shape of the gate.
                   \Yquant{} draws its elements sequentially; hence, a wire that comes into an operator will be hidden by anything the operator draws on top of it; but outgoing wires will in turn draw on the operator (modulo clipping).
                   To avoid the issues, we construct an invisible box operator and name it; \emph{outside} of the \texlink{yquant} environment, we \texttt{fit} the special \TikZ{} shape on top of it.
+                  Alternatively, we could also use the \texlink{\enclose} macro to cover the \ttlink{text}; however, this would then be drawn \emph{under} the wires (which we could fix by setting \ttlink{/yquant/enclose/layer} to \texttt{main}).
                \end{example}
 
             \paragraph{C. Boxing/Highlighting Parts of a Circuit}\leavevmode
-               \begin{example}<Updated in 0.2>
+               \begin{example}<Updated in 0.9, 0.2>
                   \begin{codeexample*}
-% \usetikzlibrary{quotes, fit}
+% \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
       cnot b | a;
-      [name=left]
-      h -;
+      \enclose["reversed c-\textsc{not}", solid, inner ysep=3pt] {
+         h -;
+         cnot b | a;
+         h -;
+      }
       cnot b | a;
-      [name=right]
-      h -;
-      cnot b|a;
       h b;
    \end{yquant*}
-   \node[fit=(left-0) (left-1) (right-0) (right-1),
-         draw, inner sep=6pt, "reversed c-\textsc{not}"] {};
 \end{tikzpicture}
                   \end{codeexample*}
-                  As usual, subcircuits provide a similar experience, but respect the separation:
+                  Here, we could use subcircuits instead of \texlink{\enclose}, which would double the separation:
+
                   \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
@@ -3540,27 +4107,25 @@ $=$
                   Here, we used the key \ttlink{/yquant/this subcircuit box style} to influence only the style of the subcircuit box itself instead of providing global options that apply to every object in the subcircuit (you wouldn't want the label be assigned to every single gate).
                \end{example}
 
-               \begin{example}<Updated in 0.4>
+               \begin{example}<Updated in 0.9, 0.4>
                   \begin{codeexample*}
 % \usetikzlibrary{quotes}
 \begin{tikzpicture}
    \begin{yquant*}
       h a;
-      [this subcircuit box style={draw, dashed, rounded corners, fill=blue!20, inner ysep=10pt, "\textsc{swap}" below}, register/default name=]
-      subcircuit {
-         qubit a;
-         qubit b;
+      \encloseall[rounded corners, fill=blue!20, "\textsc{swap}" below] {
          cnot b | a;
          cnot a | b;
          cnot b | a;
-      } (a-b);
+      }
       h b;
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample*}
-                  Since version~0.2, fully enclosing a bunch of operations (with no controls extending to some inner component) is possible by means of \ttlink{subcircuit}s.
-                  Before, this had to be done using named operations and layers.
-                  Note that here we used the style \ttlink{/yquant/this subcircuit box style} to assign a styling that only applies to the box containing the subcircuit, but not to the inner gates---which would have happened had we just given the arguments to the subcircuit directly.
+                  Since version~0.9, the \texlink{\encloseall} macro is available to comfortably wrap things in boxes.
+                  The default style already draws a dashed box, so here we simply add some complements.
+                  Note that by using \texlink{\encloseall}! instead of \texlink{\enclose}, we make sure that the vertical extent of the box not only encloses all the gates that are in between, but in fact covers the whole height and depth of the involved registers (which here are larger due to the size of the \ttlink[h]{Hadamard} gates).
+                  Further note that the \emph{creation} of registers (without putting an initialization label) is not part of the region: in principle, the register \texttt{b} is lazily created within the \texlink{\encloseall}, but without a label, this is probably not intended to be taken into account, hence \Yquant{} decides to ignore this fact.
                \end{example}
 
                \Yquant{} does not support the fancy nearest\hyp neighbor swap gate that \pkg{quantikz} has.
@@ -3790,43 +4355,44 @@ $=$
                   leftmargin=-.04\linewidth,
                   rightmargin=-.02\linewidth
                }%
-               \begin{example}<Updated in 0.7>
+               \begin{example}<Updated in 0.9, 0.7>
                   \begin{codeexample*}
+\long\def\explain#1#2#3{%
+   \encloseall[brace left={#1}, brace right={$\displaystyle#2$}] { #3 }
+}
 \begin{tikzpicture}
-   \def\explain#1#2{%
-      \yquant
-      [anchor=east, overlay=right] text {#1} explainLeft;
-      [anchor=west, overlay=left] text {$\displaystyle#2$} explainRight;
-      align -;
-   }
    \begin{yquant}[vertical,
                   every control/.append style={radius=1.5mm},
                   operators/every slash/.append style={x radius=3mm, y radius=1.5mm},
                   operators/every box/.append style={y radius=4mm},
                   operators/every measure/.append style={y radius=4mm},
-                  operator/minimum extent=1.32cm]
-      nobit explainLeft;
+                  operator/minimum extent=1.32cm,
+                  enclose/every brace/.style={}]
       qubit {$\ket{0\dotsm0}$} x; slash x;
       qubit {$\ket{0\dotsm0}$} y; slash y;
-      nobit explainRight;
-      align -;
 
-      box {$H^{\otimes n}$} x;
       \explain{Quantum Hadamard Transform}
-              {\sum_{x = 0}^{2^n -1} \ket x \ket 0}
+              {\sum_{x = 0}^{2^n -1} \ket x \ket 0}{
+         box {$H^{\otimes n}$} x;
+      }
 
-      box {$a^x \bmod N$} y | x;
       \explain{Exponentiation}
-              {\sum_{x = 0}^{2^n -1} \ket x \ket{a^x \bmod N}}
+              {\sum_{x = 0}^{2^n -1} \ket x \ket{a^x \bmod N}}{
+         box {$a^x \bmod N$} y | x;
+      }
 
-      measure y; output {$y$} y;
       \explain{Measure $y = a^b$}
-              {\sum_{j = 0}^{\lfloor\frac{2^n -1}{r}\rfloor} \ket{b + j r} [y]}
+              {\sum_{j = 0}^{\lfloor\frac{2^n -1}{r}\rfloor} \ket{b + j r} [y]}{
+         measure y;
+         output {$y$} y;
+      }
 
-      box {QFT} x;
       \explain{Quantum Fourier Transform}
               {\sum_{x = 0}^{2^n -1} \left( \sum_{j = 0}^{\lfloor\frac{2^n -1}{r}\rfloor}
                                             \omega^{x * (b + j r)} \right) \ket x}
+              {
+         box {QFT} x;
+      }
 
       output {$?$} x;
    \end{yquant}
@@ -3834,79 +4400,53 @@ $=$
                   \end{codeexample*}
                   Once again, this is a very interesting example.
                   The circuit itself is very standard (though it is the first one in vertical mode).
-                  In order to output the explanations, we define two invisible wires together with a macro that populates the corresponding \ttlink{text} gates on those wires.
-                  Note that usually, in a vertical layout, all gates would be center\hyp aligned.
-                  In order to align the left explanations to the right and the right explanations to the left, we just redefine the \texttt{anchor}s of the gates.
-                  However, since \Yquant{} expects the gates to connect at the \texttt{center} anchor and hence equally distributes the required space for the wire to its left and right, this would lead to a very large gap between the explanations and the circuit itself.
-                  Here, we don't need \Yquant's wire extent calculations at all---the explanation wires are invisible and at the border of the circuit.
-                  Therefore, we just disable the calculations using the \ttlink{overlay} attribute.
-                  After all the explanations are done, we \ttlink{align} all registers (if the minimum extent was chosen to be exactly larger or equal to the actual vertical extent of every gate, this would not be necessary; but with two decimals, this is probably not precisely the case).
+                  In order to output the explanations, we basically just use the \texlink{\encloseall} macro with the \ttlink{/yquant/enclose/brace left} and \ttlink{/yquant/enclose/brace right} options, and since we need it so often, we define a macro shorthand for this.
+                  However, here, the explanations should be drawn without and kind of brace---so we simply empty the \ttlink{/yquant/enclose/every brace}, effectively removing the brace completely.
 
                   Note that the code example above would work exactly in this way in traditional \LaTeX{} documents; however, this document is set with \pkg{unicode-math}.
                   This leads to a problem when using \tex!\bmod!, which has to be \texlink\protect ed---or, as we did here, just say \tex!\robustify\bmod! somewhere before its usage and after loading all the packages.
                \end{example}
             \endgroup
 
-            \clearpage
             \paragraph{2.4 Example 4: Teleportation}
-               \begin{example}<Updated in 0.7>
+               \begin{example}<Updated in 0.9, 0.7>
                   \begin{codeexample*}
 \begin{tikzpicture}
-   \newcommand\leftExplain[2][]{
-      \yquantsecondpass{
-         \draw[decoration={brace, mirror}, decorate, #1]
-            let \p1=(leftComments), \p2=(explainTop-0.north), \p3=(explainBottom-0.south) in
-            (\x1, \y2) -- (\x1, \y3) node[midway, left=2pt, align=right] {#2};
-      }
-   }
-   \newcommand\rightExplain[2][]{
-      \yquantsecondpass{
-         \draw[decoration=brace, decorate, #1]
-            let \p1=(rightComments), \p2=(explainTop-0.north), \p3=(explainBottom-0.south) in
-            (\x1, \y2) -- (\x1, \y3) node[midway, right=2pt, align=left] {#2};
-      }
-   }
    \begin{yquant}[vertical]
-      [name=leftComments] nobit explainLeft;
       qubit {\color{red}$\ket\phi$} q;
       qubit {$\ket0$} q[+2];
-      [name=rightComments] nobit explainRight;
       setstyle {red} q[0];
 
-      [name=explainTop]
-      h q[1];
-      [name=explainBottom]
-      cnot q[2] | q[1];
-      \rightExplain{Alice and Bob form an\\entangled pair of qubits}
+      \encloseall[brace right=Alice and Bob form an\\entangled pair of qubits] {
+         h q[1];
+         cnot q[2] | q[1];
+      }
       setstyle {red} q[1];
       setstyle {blue} q[2];
       barrier (q);
 
-      [style=red, operator/separation=0pt, name=explainTop] cnot q[1] | q[0];
-      [red] h q[0];
-      [red, name=explainBottom] measure q[0, 1];
-      \leftExplain[red]{Alice entangles\\and measures}
+      \encloseall[bracing style=red, brace left=Alice entangles\\and measures] {
+         [style=red, operator/separation=0pt] cnot q[1] | q[0];
+         [red] h q[0];
+         [red] measure q[0, 1];
+      }
 
-      [style=blue, name=explainTop] x q[2] | q[1];
-      [style=blue, name=explainBottom] z q[2] | q[0];
-      discard q[0, 1];
-      \rightExplain[blue]{Bob applies gates based on\\Alice's measurements}
+      \encloseall[bracing style=blue, brace right=Bob applies gates based on\\Alice's measurements] {
+         [style=blue] x q[2] | q[1];
+         [style=blue] z q[2] | q[0];
+         discard q[0, 1];
+      }
 
       output {\color{blue}$\ket\phi$} q[2];
    \end{yquant}
 \end{tikzpicture}
                   \end{codeexample*}
                   This example shows a different way of providing explanations along the circuit, which this time also works for hints encompassing more than a single gate.
-                  We define the macros \tex!\leftExplain! and \tex!\rightExplain!, which in the circuit will do the job.
-                  They rely on the existent of a couple of named nodes: The node \texttt{leftComments} (or \texttt{rightComments}) is the named node created at the beginning of the circuit when declaring the two invisible wires.
-                  They will serve with their horizontal position.
-                  Additionally, we require the named gates \texttt{explainTop} and \texttt{explainBottom}, which should correspond to the first and last gate that is supposed to be enclosed in the brace.
-                  We then use \TikZ's \texttt{let} functionality in order to extract the required coordinates and draw the nodes.
-                  Note that the macros \tex!\p!, \tex!\x!, and \tex!\y! come into existence only when the \tex!\draw! command is executed; hence, just writing the \tex!\draw! call would lead to an error: \Yquant{} would first try to add (using \tex!\protected@edef!) the content of the macro to its output routine for the second pass, then call it in the first pass.
-                  We don't need the execution in the first pass---though it would not do harm---but we cannot allow for the expansion at this stage.
-                  Hence, we wrap the whole command in \texlink{\yquantsecondpass} (which automatically restarts the parser afterwards, so we don't have to do this).
+                  Since version~0.9, \Yquant{} provides the \texlink{\encloseall} macro, which is used for highlighting a certain part of the circuit.
+                  The \ttlink{/yquant/enclose/brace left} and \ttlink{/yquant/enclose/brace right} styles modify the enclosing action to cover the full register range and put the description at the outside.
                \end{example}
 
+         \clearpage
          \subsubsection{3.1 Wires}
             \paragraph{3.1.1 Wire Declarations}
                \begin{example}
@@ -4027,6 +4567,7 @@ $=$
                   (Note that just removing the decoration without also removing the drawing would lead to a vertical line that connects all the affected wires---this is how the \texlink{yquant-init} shape looks like in an undecorated fashion.)
                \end{example}
 
+         \clearpage
          \subsubsection{3.2 Gates}
             \paragraph{3.2.1 Controlled NOT and controlled \texorpdfstring{$Z$}{Z}}
                \begin{example}
@@ -4074,6 +4615,7 @@ $=$
                   \end{codeexample}
                \end{example}
 
+            \clearpage
             \paragraph{3.2.2 General Gates}
                \begin{example}
                   \begin{codeexample}
@@ -4129,7 +4671,6 @@ $=$
                   By putting the two $f$\hyp boxes into a single gate, we ensured that \Yquant{} will center them with respect to each other.
                \end{example}
 
-            \clearpage
             \paragraph{3.2.3 Other predefined Gates}
                \begin{example}
                   \begin{codeexample}
@@ -4825,41 +5366,41 @@ $=$
 
             \begin{example}
                \begin{codeexample*}
-% \usetikzlibrary{calc}
 \begin{tikzpicture}
    \begin{yquant}[operators/every box/.append style={shape=yquant-circle, radius=1.5ex}]
       qubit a;
-      [name=1] box {$1$} a;
-      [name=2] box {$2$} a;
-      [name=3] box {$3$} a;
+      \startenclose[brace above=above]{first}
+      box {$1$} a;
+      \startenclose[bracing style=blue, brace below=below]{second}
+      box {$2$} a;
+      \stopenclose{first}
+      box {$3$} a;
+      \stopenclose{second}
    \end{yquant}
-   \draw[decoration=brace, decorate]
-      ($(1.north west)+(-.1,.1)$) -- ($(2.north east)+(.1,.1)$)
-      node[midway, above=1pt] {above};
-   \draw[blue, decoration={brace, mirror}, decorate]
-      ($(2.south west)+(-.1,-.1)$) -- ($(3.south east)+(.1,-.1)$)
-      node[midway, below=1pt] {below};
 \end{tikzpicture}
                \end{codeexample*}
+               This shows a complicated use of the \texlink{\enclose}\hyp like macros: here, we have overlapping enclosing regions.
+               Therefore, it is not possible to use the \texlink{\enclose} macro for both descriptions (though for one would be fine).
+               Instead, we create named enclosures, which can be interleaved arbitrarily.
             \end{example}
 
-            \begin{example}
+            \begin{example}<Updated in 0.9>
                \begin{codeexample*}
 \begin{tikzpicture}
-   \begin{yquant*}
-      [this subcircuit box style={draw=none, fill=red!40!white}]
-      subcircuit {
-         qubit {} a; qubit {} b;
+   \begin{yquant}
+      qubit a;
+      qubit b;
+      qubit c;
+      \enclose[draw=none, fill=red!40!white] {
          cnot b | a;
          cnot a | b;
-      } (a, b);
-      [this subcircuit box style={draw, dotted, rounded corners=10pt}]
-      subcircuit {
-         qubit {} a; qubit {} b;
-         cnot b | a;
-         cnot a | b;
-      } (b, c);
-   \end{yquant*}
+      }
+      hspace {2mm} -;
+      \enclose[rounded corners=10pt] {
+         cnot c | b;
+         cnot b | c;
+      }
+   \end{yquant}
 \end{tikzpicture}
                \end{codeexample*}
             \end{example}
@@ -5416,6 +5957,17 @@ $=$
             On the third frame, its line width is dramatically increased.
          \end{example}
 
+         \compat{New in 0.9}You can also use overlay specifications for enclosing regions: this is as simple as saying \texlink[\enclose]{\enclose<...>}, \texlink[\encloseall]{\encloseall<...>}, or \texlink[\startenclose]{\startenclose<...>}.
+         Note that you cannot put an overlay specification to \texlink{\stopenclose}---it will automatically use the one from the corresponding \texlink{\startenclose}.
+         By default, this overlay is enforced using \tex!\uncover!.
+         You may also change this behavior; but be aware of the fact that if you use the \ttlink[/yquant/enclose/shape/rectangle]{rectangle} shape, an \ttlink{align} gate will be enforced after the enclosed region.
+         Hence, using \tex!\only! for the overlay may visually alter the circuit by shifting parts.
+
+         \begin{option}{enclose/overlay command}!\uncover!
+            This \pkg{beamer} overlay command is used whenever \texlink{\enclose}, \texlink{\encloseall} or \texlink{\startenclose} is invoked with an overlay specification.
+            Note that this key cannot be changed using the implicit options given in square brackets after the macros; it has to be changed before the macro invocation to have any effect.
+         \end{option}
+
    \section{Changelog}
       \subsection*{2020-03-15: Version 0.1}
          Initial release
@@ -5555,9 +6107,12 @@ $=$
          Bugfix: The \texlink{\idx} and \texlink{\regidx} changes in version~0.8 are now applied to the lazy register creation (\ttlink{/yquant/register/default lazy name}) as well. \\
          Bugfix: Allow \tex!\par! in gate definitions once more.
 
-      \subsection*{2025-12-26: Version 0.8.2}
+      \subsection*{2026-01-03: Version 0.9}
          Bugfix: Remove some legacy code that modified \TikZ{} decorations, which has not been used since version~0.1.2 and might cause some issues with other packages (problems with \pkg{pgfplots} and axis discontinuities were encountered).
          Fix \href{https://github.com/projekter/yquant/issues/35}{\#35}: Make sure to always advance all involved registers in a subcircuit, including controls. \\
-         Bugfix: Controlled subcircuits will no longer potentially trigger an internal error.
+         Bugfix: Controlled subcircuits will no longer potentially trigger an internal error. \\
+         New: \texlink{\enclose}\hyp like macros for conveniently highlighting parts of a circuit. \\
+         Bugfix: Subcircuits will now work properly even in the presence of global rotation transformations. \\
+         Bugfix: Subcircuits will in vertical mode now properly account for their box space when calculating register positions.
 %END_FOLD
 \end{document}
