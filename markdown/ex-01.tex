@@ -1,6 +1,6 @@
-\documentclass[tikz, convert={convertexe=magick}, png]{standalone}
+\documentclass[tikz, multi=false, convert={png, imagemagick}]{standalone}
 
-\usepackage[compat=0.4]{yquant}
+\usepackage[compat=0.8]{yquant}
 \usepackage{braket}
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
 
@@ -8,13 +8,13 @@
    \begin{tikzpicture}
       \begin{yquant}
          qubit q[3];
-         
+
          h q[1];
          cnot q[2] | q[1];
          cnot q[1] | q[0];
          h q[0];
          measure q[0-1];
-         
+
          z q[2] | q[1];
          x q[2] | q[0];
       \end{yquant}

@@ -1,6 +1,6 @@
-\documentclass[tikz, convert={convertexe=magick}, png]{standalone}
+\documentclass[tikz, multi=false, convert={png, imagemagick}]{standalone}
 
-\usepackage[compat=0.4]{yquant}
+\usepackage[compat=0.8]{yquant}
 \usepackage{braket}
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
 
@@ -9,7 +9,7 @@
       \begin{yquant}
          qubit {$\ket{j_{\idx}} = \ket0$} j[3];
          qubit s[2];
-         
+
          h j;
          box {$U^4$} (s) | j[0];
          box {$U^2$} (s) | j[1];

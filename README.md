@@ -6,6 +6,7 @@ yquant is a pure-LaTeX solution - i.e., it requires no external program - that i
 It builds on and interacts with TiKZ, which brings an enourmous flexibility for customization of individual circuit.
 
 Important features in the latest updates (for a much more complete list, see the documentation):
+- Support for comfortably enclosing or embracing region in a circuit (since 0.9)
 - Support for `\intertext` in groups (since 0.8)
 - Support for [corner-like gates](https://arxiv.org/abs/1709.06648) by allowing for controlled `init` and `discard` gates (since 0.8)
 - Support for custom attributes in custom gates and boxes, making them effectively parameteric (since 0.8)
@@ -27,7 +28,7 @@ Important features in the latest updates (for a much more complete list, see the
 
 A detailed reference with lots of examples is provided in the PDF version of this Readme. We will sketch some basic usage.
 
-The arXiv runs on version 0.7.4 - you may download the latest version from the releases section and include it in your submission.
+The arXiv runs on version 0.7.4 (TeXLive 2023) and 0.7.5 (TeXLive 2025) - you may download the latest version from the releases section and include it in your submission.
 
 Support the development:
 - [![PayPal](https://img.shields.io/badge/donate-via%20PayPal-blue.svg?style=flat)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UTR3MRBYJ825A&source=url)
@@ -120,23 +121,19 @@ Only the interesting part is shown here; `\usepackage[compat=0.6]{yquant}` is re
 \begin{tikzpicture}
   \begin{yquant}
     qubit {} msg[3];
-    nobit syndrome[3];
 
-    [this subcircuit box style={dashed, "Syndrome Measurement"}]
-    subcircuit {
-       qubit {} msg[3];
-       [out]
-       qubit {$\ket0$} syndrome[3];
+    \encloseall["Syndrome Measurement"]{
+        qubit {$\ket0$} syndrome[3];
 
-       cnot syndrome[0] | msg[0];
-       cnot syndrome[0] | msg[1];
-       cnot syndrome[1] | msg[1];
-       cnot syndrome[1] | msg[2];
-       cnot syndrome[2] | msg[0];
-       cnot syndrome[2] | msg[2];
-
-       dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
-    } (msg[-2], syndrome[-2]);
+        cnot syndrome[0] | msg[0];
+        cnot syndrome[0] | msg[1];
+        cnot syndrome[1] | msg[1];
+        cnot syndrome[1] | msg[2];
+        cnot syndrome[2] | msg[0];
+        cnot syndrome[2] | msg[2];
+        [shape=yquant-rectangle, rounded corners=.45em]
+        dmeter {$M_{\symbol{\numexpr`a+\idx}}$} syndrome;
+    }
 
     ["Recovery"]
     box {$\mathcal R$} (msg) | syndrome;

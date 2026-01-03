@@ -1,6 +1,6 @@
-\documentclass[tikz, convert={convertexe=magick}, png]{standalone}
+\documentclass[tikz, multi=false, convert={png, imagemagick}]{standalone}
 
-\usepackage[compat=0.4]{yquant}
+\usepackage[compat=0.8]{yquant}
 \usepackage{braket}
 \yquantset{register/default name=$\ket{\reg_{\idx}}$}
 
@@ -10,7 +10,7 @@
          qubit q[3];
          qubit {$\ket{s_{\idx}} = \ket0$} s[2];
          cbit {$c_{\idx} = 0$} c[2];
-         
+
          h s[0];
          cnot s[1] | s[0];
          cnot s[0] | q[0];
@@ -21,7 +21,7 @@
          cnot c[0] | s[0];
          cnot c[1] | s[1];
          discard s; % to suppress wires extending until re-initialization
-         
+
          init {$\ket0$} s;
          h s[0];
          cnot s[1] | s[0];
@@ -30,7 +30,7 @@
          cnot s[1] | s[0];
          h s[0];
          measure s;
-         
+
          box {Process\\Syndrome} (s, c);
          box {$\mathcal R$} (q) | s, c;
       \end{yquant}
