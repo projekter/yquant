@@ -468,6 +468,8 @@
    \yquant@begingroup%
       \edef\pgf@interrupt@savemaxy{\the\yquant@pgf@picmaxy}%
       \edef\pgf@interrupt@saveminy{\the\yquant@pgf@picminy}%
+      \edef\pgf@interrupt@savemaxx{\the\yquant@pgf@picmaxx}%
+      \edef\pgf@interrupt@saveminx{\the\yquant@pgf@picminx}%
       \yquant@pgf@picmaxy=-16000pt %
       \yquant@pgf@picminy=16000pt %
       \yquant@pgf@picmaxx=-16000pt %
@@ -703,6 +705,12 @@
       \fi%
       \ifdim\pgf@interrupt@saveminy<\yquant@pgf@picminy%
          \global\yquant@pgf@picminy=\pgf@interrupt@saveminy%
+      \fi%
+      \ifdim\pgf@interrupt@savemaxx>\yquant@pgf@picmaxx%
+         \global\yquant@pgf@picmaxx=\pgf@interrupt@savemaxx%
+      \fi%
+      \ifdim\pgf@interrupt@saveminx<\yquant@pgf@picminx%
+         \global\yquant@pgf@picminx=\pgf@interrupt@saveminx%
       \fi%
       % Now that the subcircuit is finished, we need advance all the wires
       \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
