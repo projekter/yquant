@@ -527,8 +527,9 @@
       \tikz@enable@node@quotes%
       \pgfqkeysfiltered{/yquant/enclose}{#1}%
       % if there is a beamer command active and it is \only, we only execute the code subject to this command; without beamer or any different command, we simply store the command and do as always
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @beamercommand}\yquant@circuit@enclose@currentbeamercommand%
       \ifyquant\ifdefined\yquant@circuit@enclose@currentbeamercommand\fi{%
+         \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @beamercommand}\yquant@circuit@enclose@currentbeamercommand%
+         \yquant@cleanup@csadd{yquant@circuit@enclose@#1@beamercommand}%
          \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@circuit@enclose@currentbeamercommand}{%
             \yquant@circuit@enclose@currentbeamercommand%
          }\@firstofone%
@@ -587,6 +588,9 @@
          \csxappto{\yquant@prefix draw}{%
             \yquant@draw@stopenclose{#1}%
          }%
+         \csgundef{yquant@circuit@enclose@#1@visited}% only defined for encloseall
+         \csgundef{yquant@config@enclose@#1@from}%
+         \csgundef{yquant@config@enclose@#1@to}%
          \csgundef{yquant@circuit@enclose@#1@prefixid}%
          \listgremove\yquant@circuit@enclose@active{#1}%
          \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
@@ -662,8 +666,9 @@
 
 \def\yquant@circuit@encloseall@start#1#2{%
    \global\yquant@circuit@enclose@count=#1 %
-   \global\cslet{yquant@circuit@enclose@#1@beamercommand}\yquant@circuit@enclose@currentbeamercommand%
    \ifyquant\ifdefined\yquant@circuit@enclose@currentbeamercommand\fi{%
+      \global\cslet{yquant@circuit@enclose@#1@beamercommand}\yquant@circuit@enclose@currentbeamercommand%
+      \yquant@cleanup@csadd{yquant@circuit@enclose@#1@beamercommand}%
       \expandafter\ifyquant@firsttoken\expandafter\only\expandafter{\yquant@circuit@enclose@currentbeamercommand}{%
          \yquant@circuit@enclose@currentbeamercommand%
       }\@firstofone%
@@ -685,6 +690,7 @@
       \endgroup%
       % We set the involved list to this special flag - note that this is only recognized in concert with the exact following defines!
       \global\cslet{yquant@circuit@enclose@#1@involved}\yquant@circuit@enclose@allinvolved%
+      \global\cslet{yquant@circuit@enclose@#1@visited}\empty% but we still need to keep track of the ones we visited
       \csgdef{yquant@circuit@enclose@#1@spacing}{0}%
       \csgdef{yquant@circuit@enclose@#1@shape}{0}%
       \global\cslet{yquant@circuit@enclose@#1@allowmovelabel}\@firstoftwo%
@@ -749,12 +755,12 @@
          \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
          \yquant@circuit@enclose@allowmovelabel{%
             % will not be executed if moving would be allowed
-            \unless\ifcsname yquant@circuit@enclose@#4@extentT@\curcolon\endcsname%
+            \xifinlistcs\curcolon{yquant@circuit@enclose@#4@visited}\relax{%
                \global\cslet{yquant@circuit@enclose@#4@allowmovelabel}\@secondoftwo%
-            \fi%
+            }%
          }%
          % we have to keep track of which ones we already visited; we can use the extents for this, they will be overwritten later on anyway and are not used before
-         \global\cslet{yquant@circuit@enclose@#4@extentT@\curcolon}\relax%
+         \listcsxadd{yquant@circuit@enclose@#4@visited}\curcolon%
          \@gobble%
       }\@firstofone%
       {%

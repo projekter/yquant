@@ -1271,7 +1271,10 @@
             \yquant@coords(\encloseright,\enclosetop)%
             \yquant@coords(\encloseleft,\enclosetop)%
          }%
-         \expandafter\unless\expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+         \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
+            \csgundef{yquant@circuit@enclose@#1@extentT@1:1}%
+            \csgundef{yquant@circuit@enclose@#1@extentB@1:\csname yquant@env1@registers\endcsname}%
+         \else%
             \forlistcsloop{\yquant@draw@enclose@cleanup@rectangle{#1}}{yquant@circuit@enclose@#1@involved}%
          \fi%
          \csgundef{yquant@draw@enclose@#1@left}%
@@ -1405,7 +1408,7 @@
          \yquant@endgroup%
          \edef\drawrest{%
             \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/enclose/every enclose,
-                                       \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
+                                         \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
          }%
          \ifstrequal{#3}{main}{%
             \yquant@draw@enclose@beamercommand{\drawrest}%
@@ -1417,5 +1420,4 @@
       }%
    \yquant@endgroup%
    \csgundef{yquant@circuit@enclose@#1@style}%
-   \csgundef{yquant@circuit@enclose@#1@beamercommand}%
 }
