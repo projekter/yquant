@@ -732,7 +732,7 @@
 
 \let\yquant@circuit@enclose@allowmovelabel=\@firstofone%
 
-\protected\def\yquant@circuit@enclose@update@extentTB@ii#1#2#3#4#5{%
+\protected\def\yquant@circuit@enclose@relevant@i#1#2#3#4#5{%
    % #1: current circuit id
    % #2: currently updated register
    % #3: order relation
@@ -745,6 +745,96 @@
    }\relax%
 }
 
+\protected\def\ifyquant@circuit@enclose@relevant#1#2{%
+   % expand to #3 if a non-all enclose #1 contains the register #2 (in the current prefix). No else clause. This marks the register as active during the enclose.
+   \begingroup%
+      \ifcsname yquant@config@enclose@#1@from\endcsname%
+         % we are upper-bounded by a custom-specified register. Do we already know which?
+         \ifcsname yquant@config@enclose@#1@fromresolve\endcsname%
+            % not yet, so let's check whether we now know the register
+            \expandafter\yquant@register@singlepeek%
+               \expandafter\newid%
+               \csname yquant@circuit@enclose@#1@prefixid\expandafter\expandafter\expandafter\endcsname%
+               \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#1@fromresolve\endcsname}0%
+            \ifdefined\newid%
+               \listcsxadd{yquant@config@enclose@#1@from}{%
+                  \expandafter\yquant@register@fullresolvetocolon%
+                     \csname yquant@circuit@enclose@#1@prefixid\endcsname%
+                     \newid%
+               }%
+               \csgundef{yquant@config@enclose@#1@fromresolve}%
+            % else the register does not exist yet, i.e., the first one will be below all the currently existing ones.
+            \fi%
+         \fi%
+         % now we have our list of from targets. Iterate and check whether we are below at least a single one
+         \let\next=\@gobble%
+         \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
+            \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
+               \expandafter\expandafter\expandafter\yquant@circuit@enclose@relevant@i%
+               \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
+               {#2}
+               <%
+            }%
+         }{yquant@config@enclose@#1@from}%
+      \else%
+         \let\next=\@firstofone%
+      \fi%
+      \next{%
+         \ifcsname yquant@config@enclose@#1@to\endcsname%
+            % to is a bit more special, for even if we knew the register at creation, it might be enlarged within the region and we have to react if only a vector name without index was specified. In this case, we can never add the resolved index to the list.
+            \let\next=\@gobble%
+            \ifcsname yquant@config@enclose@#1@toresolve\endcsname%
+               \expandafter\yquant@register@singlepeek%
+                  \expandafter\newid%
+                  \csname yquant@circuit@enclose@#1@prefixid\expandafter\expandafter\expandafter\endcsname%
+                  \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#1@toresolve\endcsname}3{%
+                  % it was a vector register
+                  \ifdefined\newid%
+                     \edef\do{%
+                        \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@relevant@i>{#2}}%
+                           \expandafter\yquant@register@fullresolvetocolon%
+                              \csname yquant@circuit@enclose@#1@prefixid\endcsname%
+                              \newid%
+                     }%
+                     \expandafter\do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
+                     \global\cslet{yquant@config@enclose@#1@toresolved}\relax%
+                  \else%
+                     % the register was not found yet, i.e., the last one will be below all currently existing ones.
+                     \let\next=\@firstofone%
+                  \fi%
+               }{%
+                  \ifdefined\newid%
+                     % it was a well-defined index, we can add it to our list
+                     \listcsxadd{yquant@config@enclose@#1@to}{%
+                        \expandafter\yquant@register@fullresolvetocolon%
+                           \csname yquant@circuit@enclose@#1@prefixid\endcsname%
+                           \newid%
+                     }%
+                     \csgundef{yquant@config@enclose@#1@toresolve}%
+                  \else%
+                     \let\next=\@firstofone%
+                  \fi%
+               }%
+            \fi%
+            \ifx\next\@gobble%
+               \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
+                  \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
+                     \expandafter\expandafter\expandafter\yquant@circuit@enclose@relevant@i%
+                     \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
+                     {#2}
+                     >%
+                  }%
+               }{yquant@config@enclose@#1@to}%
+            \fi%
+         \else%
+            \let\next=\@firstofone%
+         \fi%
+      }%
+      \expandafter%
+   \endgroup%
+   \next%
+}
+
 \protected\def\yquant@circuit@enclose@update@extentTB@i#1#2#3#4{%
    % #1: T/B from height or depth updates
    % #2: register id
@@ -753,100 +843,16 @@
    \begingroup%
       \ifyquant\expandafter\ifx\csname yquant@circuit@enclose@#4@involved\endcsname\yquant@circuit@enclose@allinvolved\fi{%
          \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
-         \yquant@circuit@enclose@allowmovelabel{%
-            % will not be executed if moving would be allowed
-            \xifinlistcs\curcolon{yquant@circuit@enclose@#4@visited}\relax{%
+         % if we visit a register for the first time and it is not empty, then we cannot move init labels to the front
+         \xifinlistcs\curcolon{yquant@circuit@enclose@#4@visited}\relax{%
+            \listcsxadd{yquant@circuit@enclose@#4@visited}\curcolon%
+            \yquant@circuit@enclose@allowmovelabel{%
+               % will not be executed if moving would be allowed
                \global\cslet{yquant@circuit@enclose@#4@allowmovelabel}\@secondoftwo%
             }%
          }%
-         % we have to keep track of which ones we already visited; we can use the extents for this, they will be overwritten later on anyway and are not used before
-         \listcsxadd{yquant@circuit@enclose@#4@visited}\curcolon%
-         \@gobble%
-      }\@firstofone%
-      {%
-         \ifcsname yquant@config@enclose@#4@from\endcsname%
-            % we are upper-bounded by a custom-specified register. Do we already know which?
-            \ifcsname yquant@config@enclose@#4@fromresolve\endcsname%
-               % not yet, so let's check whether we now know the register
-               \expandafter\yquant@register@singlepeek%
-                  \expandafter\newid%
-                  \csname yquant@circuit@enclose@#4@prefixid\expandafter\expandafter\expandafter\endcsname%
-                  \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#4@fromresolve\endcsname}0%
-               \ifdefined\newid%
-                  \listcsxadd{yquant@config@enclose@#4@from}{%
-                     \expandafter\yquant@register@fullresolvetocolon%
-                        \csname yquant@circuit@enclose@#4@prefixid\endcsname%
-                        \newid%
-                  }%
-                  \csgundef{yquant@config@enclose@#4@fromresolve}%
-               % else the register does not exist yet, i.e., the first one will be below all the currently existing ones.
-               \fi%
-            \fi%
-            % now we have our list of from targets. Iterate and check whether we are below at least a single one
-            \let\next=\@gobble%
-            \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
-               \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
-                  \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB@ii%
-                  \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
-                  {#2}
-                  <%
-               }%
-            }{yquant@config@enclose@#4@from}%
-         \else%
-            \let\next=\@firstofone%
-         \fi%
-         \next{%
-            \ifcsname yquant@config@enclose@#4@to\endcsname%
-               % to is a bit more special, for even if we knew the register at creation, it might be enlarged within the region and we have to react if only a vector name without index was specified. In this case, we can never add the resolved index to the list.
-               \let\next=\@gobble%
-               \ifcsname yquant@config@enclose@#4@toresolve\endcsname%
-                  \expandafter\yquant@register@singlepeek%
-                     \expandafter\newid%
-                     \csname yquant@circuit@enclose@#4@prefixid\expandafter\expandafter\expandafter\endcsname%
-                     \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#4@toresolve\endcsname}3{%
-                     % it was a vector register
-                     \ifdefined\newid%
-                        \edef\do{%
-                           \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@update@extentTB@ii>{#2}}%
-                              \expandafter\yquant@register@fullresolvetocolon%
-                                 \csname yquant@circuit@enclose@#4@prefixid\endcsname%
-                                 \newid%
-                        }%
-                        \expandafter\do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
-                        \global\cslet{yquant@config@enclose@#4@toresolved}\relax%
-                     \else%
-                        % the register was not found yet, i.e., the last one will be below all currently existing ones.
-                        \let\next=\@firstofone%
-                     \fi%
-                  }{%
-                     \ifdefined\newid%
-                        % it was a well-defined index, we can add it to our list
-                        \listcsxadd{yquant@config@enclose@#4@to}{%
-                           \expandafter\yquant@register@fullresolvetocolon%
-                              \csname yquant@circuit@enclose@#4@prefixid\endcsname%
-                              \newid%
-                        }%
-                        \csgundef{yquant@config@enclose@#4@toresolve}%
-                     \else%
-                        \let\next=\@firstofone%
-                     \fi%
-                  }%
-               \fi%
-               \ifx\next\@gobble%
-                  \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
-                     \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
-                        \expandafter\expandafter\expandafter\yquant@circuit@enclose@update@extentTB@ii%
-                        \expandafter\expandafter\expandafter{\yquant@env@prefix@id\yquant@prefix}%
-                        {#2}
-                        >%
-                     }%
-                  }{yquant@config@enclose@#4@to}%
-               \fi%
-            \else%
-               \let\next=\@firstofone%
-            \fi%
-         }%
-         \next{%
+      }{%
+         \ifyquant@circuit@enclose@relevant{#4}{#2}{%
             % now we know that the currently relevant register is indeed contained in the from-to range.
             \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
             \ifnum\csname yquant@circuit@enclose@#4@spacing\endcsname=0 %

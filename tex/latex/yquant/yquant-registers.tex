@@ -1193,10 +1193,10 @@
 \protected\long\def\yquant@register@execclear@lastgate#1#2{%
    \ifcsname\yquant@prefix registermap@#1\endcsname%
       \expandafter%
-      \yquant@register@execclear@lastgate@aux@i\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname{#2}%
+      \yquant@register@execclear@lastgate@aux@i\csname\csname\yquant@prefix registermap@#1\endcsname\endcsname{#1}{#2}%
    \else%
       \expandafter%
-      \yquant@register@execclear@lastgate@aux@i\csname\yquant@prefix register@#1\endcsname{#2}%
+      \yquant@register@execclear@lastgate@aux@i\csname\yquant@prefix register@#1\endcsname{#1}{#2}%
    \fi%
 }
 
@@ -1204,9 +1204,9 @@
    \expandafter\yquant@register@execclear@lastgate@aux@ii#1#1%
 }
 
-\long\def\yquant@register@execclear@lastgate@aux@ii#1#2#3#4#5#6#7#8{%
+\long\def\yquant@register@execclear@lastgate@aux@ii#1#2#3#4#5#6#7#8#9{%
    \ifstrempty{#6}\relax{%
-      #6{#8}%
+      #6{#8}{#9}%
       \xdef#7{\unexpanded{{#1}{#2}{#3}{#4}{#5}{}}}%
    }%
 }
@@ -1280,10 +1280,36 @@
    \expandafter\def\expandafter#1\expandafter{\the\dimen0}%
 }
 
-\protected\def\yquant@register@flag@clean#1{%
-   \ifstrequal{#1}{init}{%
+\protected\def\yquant@register@flag@clean@enclose#1#2{%
+   % the register was clean when we visited it; so just treat it as already visited in the enclose to not destroy the movelabel
+   \expandafter\ifx\csname yquant@circuit@enclose@#2@involved\endcsname\yquant@circuit@enclose@allinvolved%
+      \edef\curcolon{\yquant@register@resolvetocolon{#1}}%
+      \xifinlistcs\curcolon{yquant@circuit@enclose@#2@visited}\relax{%
+         \listcsxadd{yquant@circuit@enclose@#2@visited}\curcolon%
+      }%
+   \else%
+      \ifyquant@circuit@enclose@relevant{#2}{#1}{%
+         \edef\curcolon{\yquant@register@resolvetocolon{#1}}%
+         \ifnum\csname yquant@circuit@enclose@#2@spacing\endcsname=0 %
+            \xifinlist\curcolon{yquant@circuit@enclose@#2@involved}\relax{%
+               \listcsxadd{yquant@circuit@enclose@#2@involved}\curcolon%
+            }%
+         \else%
+            \unless\ifcsname yquant@circuit@enclose@#2@extentT@\curcolon\endcsname%
+               \csgdef{yquant@circuit@enclose@#2@extentT@\curcolon}{0pt}%
+               \global\csletcs{yquant@circuit@enclose@#2@extentB@\curcolon}{yquant@circuit@enclose@#2@extentT@\curcolon}%
+               \listcsxadd{yquant@circuit@enclose@#2@involved}{\curcolon}%
+            \fi%
+         \fi%
+      }%
+   \fi%
+}
+
+\protected\def\yquant@register@flag@clean#1#2{%
+   \ifstrequal{#2}{init}{%
       \advance\count8 by 1 %
    }\relax%
+   \forlistloop{\yquant@register@flag@clean@enclose{#1}}\yquant@circuit@enclose@active%
 }
 % END_FOLD
 
