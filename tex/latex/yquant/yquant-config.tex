@@ -535,20 +535,20 @@
    brace below/.code={\tikzset{/yquant/enclose/every braced enclose}\yquant@config@enclose@brace1{#1}},%
    brace left/.forward to=/yquant/enclose/brace above,%
    brace right/.forward to=/yquant/enclose/brace below,%
-   every brace label/.style={label distance=2pt},%
+   every brace label/.style={label distance=4pt},%
    every brace label above or left/.style={},%
    every brace label below or right/.style={},%
    every brace label above/.style={align=center},%
    every brace label below/.style={align=center},%
    every brace label left/.style={align=right},%
    every brace label right/.style={align=left},%
-   every brace/.style={/pgf/decoration/brace, decorate},%
+   every brace/.style={draw, /pgf/decoration/brace, decorate},%
    every brace above or left/.style={},%
    every brace below or right/.style={},%
-   every brace above/.style={},%
-   every brace below/.style={/pgf/decoration/mirror},%
-   every brace left/.style={/pgf/decoration/mirror},%
-   every brace right/.style={},%
+   every brace above/.style={/pgf/decoration/raise=1pt},%
+   every brace below/.style={/pgf/decoration/raise=1pt, /pgf/decoration/mirror},%
+   every brace left/.style={/pgf/decoration/raise=2pt, /pgf/decoration/mirror},%
+   every brace right/.style={/pgf/decoration/raise=2pt},%
    brace label style/.style={/yquant/enclose/every brace label/.append style={#1}},%
    brace label above or left style/.style={/yquant/enclose/every brace label above or left/.append style={#1}},%
    brace label below or right style/.style={/yquant/enclose/every brace label below or right/.append style={#1}},%
@@ -635,7 +635,7 @@
          \endgroup%
          \noexpand\pgfkeysalso{%
             /yquant/internal/collect brace styles={#1}{\yquant@config@enclose@braces}, /tikz/append after command={\noexpand\pgfextra{%
-            \noexpand\draw[/yquant/internal/collected brace decoration \yquant@config@enclose@braces, /tikz/name prefix=, /tikz/name suffix=]%
+            \noexpand\path[/yquant/internal/collected brace decoration \yquant@config@enclose@braces, /tikz/name prefix=, /tikz/name suffix=]%
                \ifnum#1=0 %
                   (yquantbox.north west) -- %
                   (yquantbox.\ifyquanthorz{north east}{south west})%
