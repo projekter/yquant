@@ -660,11 +660,11 @@
          }%
          \ifyquanthorz{%
             \ifdim\newx>\pgf@picmaxx%
-               \global\pgf@picmaxx=\newx%
+               \global\pgf@picmaxx=\newx\space%
             \fi%
          }{%
             \ifdim\newx<\pgf@picminy%
-               \global\pgf@picminy=\newx%
+               \global\pgf@picminy=\newx\space%
             \fi%
          }%
          \ifyquant@config@operator@position@advance%
