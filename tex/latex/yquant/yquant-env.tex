@@ -98,8 +98,8 @@
          \ifnum\csname\yquant@prefix registers\endcsname>0 %
             \yquant@begingroup%
                \let\yquant@circuit@operator@pctrls=\empty%
-               \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
-                  \yquant@register@execclear@lastgate{\i}{@end}%
+               \yquant@for \@yquant@i := 1 to \csname\yquant@prefix registers\endcsname {%
+                  \yquant@register@execclear@lastgate{\@yquant@i}{@end}%
                }%
             \yquant@endgroup%
             \csgappto{\yquant@prefix draw}{%
@@ -699,45 +699,45 @@
    \protected\def\yquant@env@check@findmacro{%
       % we only put the beamer macros in here that effectively remove things from the input stream. Everything that is typeset in a special way will end the group
       \ifx\yquant@env@nextchar\only%
-         \let\next=\yquant@env@beamer@only%
+         \let\@yquant@next=\yquant@env@beamer@only%
       \else%
          \ifx\yquant@env@nextchar\alt%
-            \let\next=\yquant@env@beamer@alt%
+            \let\@yquant@next=\yquant@env@beamer@alt%
          \else%
             \ifx\yquant@env@nextchar\temporal%
-               \let\next=\yquant@env@beamer@temporal%
+               \let\@yquant@next=\yquant@env@beamer@temporal%
             \else%
                \ifx\yquant@env@nextchar\note%
-                  \let\next=\yquant@env@beamer@note%
+                  \let\@yquant@next=\yquant@env@beamer@note%
                \else%
                   % in principle: \endgroup for all in here, but need to preserve \yquant@env@nextchar
                   \ifx\yquant@env@nextchar\uncover%
                      \endgroup%
-                     \let\next=\yquant@env@beamer@uncover%
+                     \let\@yquant@next=\yquant@env@beamer@uncover%
                   \else%
                      \ifx\yquant@env@nextchar\visible%
                         \endgroup%
-                        \let\next=\yquant@env@beamer@visible%
+                        \let\@yquant@next=\yquant@env@beamer@visible%
                      \else%
                         \ifx\yquant@env@nextchar\invisible%
                            \endgroup%
-                           \let\next=\yquant@env@beamer@invisible%
+                           \let\@yquant@next=\yquant@env@beamer@invisible%
                         \else%
                            \ifx\yquant@env@nextchar\onslide%
                               \endgroup%
-                              \let\next=\yquant@env@beamer@onslide%
+                              \let\@yquant@next=\yquant@env@beamer@onslide%
                            \else%
                               \ifx\yquant@env@nextchar\pause%
                                  \endgroup%
-                                 \let\next=\yquant@env@beamer@pause%
+                                 \let\@yquant@next=\yquant@env@beamer@pause%
                               \else%
                                  \ifx\yquant@env@nextchar\yquant@env@beamer@checkifactive%
                                     \endgroup%
                                     \let\yquant@env@beamer@checkifactive@true=\relax%
-                                    \let\next=\relax%
+                                    \let\@yquant@next=\relax%
                                  \else%
                                     \endgroup%
-                                    \let\next=\relax%
+                                    \let\@yquant@next=\relax%
                                  \fi%
                               \fi%
                            \fi%
@@ -800,8 +800,8 @@
          \newcommand<>\yquant@env@beamer@onslidenoargs[2]{%
             \let\yquant@env@beamer@onslideappdraw=\empty%
             \appto\yquant@env@beamer@onslideappdraw{\beamer@endpause}%
-            \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname{%
-               \eappto\yquant@env@beamer@onslideappdraw{\yquant@circuit@flushwire{\i}}%
+            \yquant@for \@yquant@i := 1 to \csname\yquant@prefix registers\endcsname{%
+               \eappto\yquant@env@beamer@onslideappdraw{\yquant@circuit@flushwire{\@yquant@i}}%
             }%
             \csxappto{\yquant@prefix draw}%
                      {\unexpanded\expandafter{\yquant@env@beamer@onslideappdraw}}%
@@ -911,29 +911,29 @@
 }{%
    \def\yquant@env@check@findmacro{%
       \endgroup%
-      \let\next=\relax%
+      \let\@yquant@next=\relax%
    }
 }%
 
 \protected\def\yquant@env@check@{%
-   \let\next=\relax%
+   \let\@yquant@next=\relax%
    % Here we assume standard catcodes for A and [, but our language specification also requires this implicitly.
    \ifx\yquant@env@nextchar[%
-      \let\next=\yquant@langhelper@check@attrs%
+      \let\@yquant@next=\yquant@langhelper@check@attrs%
    \else%
       \ifcat\noexpand\yquant@env@nextchar A% letter
-         \let\next=\yquant@langhelper@check@name%
+         \let\@yquant@next=\yquant@langhelper@check@name%
       \else%
          \ifcat\noexpand\yquant@env@nextchar\bgroup%
             \endgroup%
-            \let\next=\yquant@env@opengroup%
+            \let\@yquant@next=\yquant@env@opengroup%
          \else%
             \ifcat\noexpand\yquant@env@nextchar\egroup%
                \endgroup%
-               \let\next=\yquant@env@closegroup%
+               \let\@yquant@next=\yquant@env@closegroup%
             \else%
                \ifx\yquant@env@nextchar\par%
-                  \let\next=\yquant@env@gobblepar%
+                  \let\@yquant@next=\yquant@env@gobblepar%
                \else%
                   \ifcat\noexpand\yquant@env@nextchar\relax%
                      \yquant@env@check@findmacro%
@@ -947,7 +947,7 @@
          \fi%
       \fi%
    \fi%
-   \next%
+   \@yquant@next%
 }
 
 \protected\def\yquant@env@opengroup{%

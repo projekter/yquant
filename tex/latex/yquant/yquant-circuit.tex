@@ -3,27 +3,27 @@
 \protected\def\yquant@circuit@extendwire#1#2{%
    \begingroup%
       \ifx*#2%
-         \edef\wirexpos{\the\dimen0}%
+         \edef\@yquant@wirexpos{\the\dimen0}%
       \else%
          \pgfpointanchor{yquantbox}{#2}%
-         \edef\wirexpos{\the\yquant@pgf@x}%
+         \edef\@yquant@wirexpos{\the\yquant@pgf@x}%
       \fi%
-      \ifdim\yquant@orientation@plus\wirexpos>0pt % may be negative for init gates
-         \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
-         \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
+      \ifdim\yquant@orientation@plus\@yquant@wirexpos>0pt % may be negative for init gates
+         \yquant@register@get@typeywire{#1}\@yquant@wiretype\@yquant@wireypos\@yquant@wirelast%
+         \edef\@yquant@wirexprevpos{\expandafter\@firstoffour\@yquant@wirelast}%
          \ifdefined\yquant@config@corner@at%
             \ifinlist{#1}\yquant@config@corner@at{%
                \ifnum\yquant@register@types@cbit>\yquant@draw@@currentcontroltype%
-                  \dimdef\wirexpos{\wirexpos\yquant@config@corner@xamount}%
+                  \dimdef\@yquant@wirexpos{\@yquant@wirexpos\yquant@config@corner@xamount}%
                \else%
-                  \dimdef\wirexpos{\wirexpos+5\dimexpr\yquant@config@corner@xamount\relax}%
+                  \dimdef\@yquant@wirexpos{\@yquant@wirexpos+5\dimexpr\yquant@config@corner@xamount\relax}%
                \fi%
             }\relax%
          \fi%
-         \ifnum\wiretype=\yquant@register@types@nobit%
+         \ifnum\@yquant@wiretype=\yquant@register@types@nobit%
             % the clippings of the previous operator will for sure not be needed, but the type might be turned into an active one, so we need the last clipping.
             \yquant@register@set@lastwire{#1}{%
-               {\wirexprevpos}{\wirexpos}{}%
+               {\@yquant@wirexprevpos}{\@yquant@wirexpos}{}%
                {\ifyquant@config@draw@quality%
                    \unexpanded\expandafter{\pgfshapeclippathhorzresult}%
                 \fi}%
@@ -31,9 +31,9 @@
          \else%
             % append the previous `last' clipping to the old list and insert the new one
             \yquant@register@set@lastwire{#1}{%
-               {\wirexprevpos}{\wirexpos}%
+               {\@yquant@wirexprevpos}{\@yquant@wirexpos}%
                {\unexpanded\expandafter\expandafter\expandafter{%
-                   \expandafter\@thirdandfourthoffour\wirelast%
+                   \expandafter\@thirdandfourthoffour\@yquant@wirelast%
                 }%
                }%
                {\ifyquant@config@draw@quality%
@@ -76,13 +76,13 @@
          \xifinlistcs\yquant@circuit@endwires@i{\yquant@prefix inonly}{%
             % however, the wire is to be discarded after this circuit
             \ifyquanthorz{%
-               \edef\storedleft{\the\pgf@picminx}%
+               \edef\@yquant@storedleft{\the\pgf@picminx}%
                \yquant@draw@wire\yquant@circuit@endwires@i1%
-               \global\pgf@picminx=\storedleft%
+               \global\pgf@picminx=\@yquant@storedleft%
             }{%
-               \edef\storedtop{\the\pgf@picmaxy}%
+               \edef\@yquant@storedtop{\the\pgf@picmaxy}%
                \yquant@draw@wire\yquant@circuit@endwires@i1%
-               \global\pgf@picmaxy=\storedtop%
+               \global\pgf@picmaxy=\@yquant@storedtop%
             }%
             \eappto\yquant@circuit@endwires@finalize{%
                \yquant@register@set@type%
@@ -99,11 +99,11 @@
 \protected\def\yquant@circuit@flushwire#1{%
    \yquant@draw@wire{#1}0%
    \begingroup%
-      \yquant@register@get@lastwire{#1}\wirelast%
+      \yquant@register@get@lastwire{#1}\@yquant@wirelast%
       \yquant@register@set@lastwire{#1}{%
-         {\expandafter\@secondoffour\wirelast}{\expandafter\@secondoffour\wirelast}{}%
+         {\expandafter\@secondoffour\@yquant@wirelast}{\expandafter\@secondoffour\@yquant@wirelast}{}%
          {\unexpanded\expandafter\expandafter\expandafter{%
-             \expandafter\@fourthoffour\wirelast%
+             \expandafter\@fourthoffour\@yquant@wirelast%
           }}%
       }%
    \endgroup%
@@ -199,18 +199,18 @@
       \ifnum\yquant@register@types@qubit<\yquant@register@get@type{#1} %
          % the topmost/bottom-most register is a non-qubit target
          \begingroup%
-            \edef\wiretype{\yquant@register@get@type{#1}}%
-            \edef\wirestyle{\noexpand\tikzset{%
+            \edef\@yquant@wiretype{\yquant@register@get@type{#1}}%
+            \edef\@yquant@wirestyle{\noexpand\tikzset{%
                /yquant/this wire/.style={%
                   /yquant/every wire,%
-                  /yquant/every \yquant@register@type@tostring\wiretype\space wire,%
+                  /yquant/every \yquant@register@type@tostring\@yquant@wiretype\space wire,%
                      \yquant@register@get@style{#1}%
                }, /yquant/this wire%
             }}%
-            \wirestyle%
+            \@yquant@wirestyle%
             \ifnum\yquant@config@corner@min=#1 %
                % no line draw command was stored yet, only the previous position; modify it
-               \edef\extend{%
+               \edef\@yquant@extend{%
                   \endgroup%
                   \edef\noexpand\yquant@circuit@extendcontrolline@prev{%
                      \expandafter\yquant@circuit@extendcontrolline@corner@hackprev%
@@ -219,7 +219,7 @@
                }%
             \else%
                % the line draw command was already stored; revert to the previous state and re-compute the value
-               \edef\extend{%
+               \edef\@yquant@extend{%
                   \endgroup%
                   \unexpanded{%
                      \let\pgfshapeclippathvertresult=\noexpand\empty%
@@ -229,7 +229,7 @@
                   \yquant@circuit@extendcontrolline{\the\yquant@draw@@currentcontroltype}{\yquant@draw@@x}{\the\dimexpr\yquant@orientation@minus1.5\pgflinewidth\relax}%
                }%
             \fi%
-         \extend%
+         \@yquant@extend%
       \fi%
    }\relax%
 }
@@ -427,16 +427,16 @@
 % #4: parameter(s)
 \protected\def\yquant@circuit@actonwires#1#2#3#4{%
    \begingroup%
-      \let\tmp=\empty%
+      \let\@yquant@tmp=\empty%
       \def\@yquant@do##1{%
          % We do not extend the wire: a register that is discarded somewhere does not make
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
-         \eappto\tmp{#2{##1}#4}%
+         \eappto\@yquant@tmp{#2{##1}#4}%
          #1{##1}#4%
       }%
       \forlistloop\@yquant@do{#3}%
-      \csxappto{\yquant@prefix draw}{\tmp}%
+      \csxappto{\yquant@prefix draw}{\@yquant@tmp}%
    \endgroup%
 }
 
@@ -709,8 +709,8 @@
 }
 
 \protected\def\yquant@circuit@enclose@alignall#1{%
-   \yquant@for \i := 1 to \csname yquant@env#1@registers\endcsname {%
-      \listeadd\yquant@circuit@enclose@align@list{#1:\i}%
+   \yquant@for \@yquant@i := 1 to \csname yquant@env#1@registers\endcsname {%
+      \listeadd\yquant@circuit@enclose@align@list{#1:\@yquant@i}%
    }%
 }
 
@@ -740,7 +740,7 @@
    % #5: other id
    \ifnumyquant@registers{#1}{#2}#3{#4}{#5}\relax{%
       % we are anti-ordered (since the relations can only be < or > and we need <= or >=, we invert)
-      \let\next=\@firstofone%
+      \let\@yquant@next=\@firstofone%
       \listbreak%
    }\relax%
 }
@@ -767,7 +767,7 @@
             \fi%
          \fi%
          % now we have our list of from targets. Iterate and check whether we are below at least a single one
-         \let\next=\@gobble%
+         \let\@yquant@next=\@gobble%
          \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
             \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
                \expandafter\expandafter\expandafter\yquant@circuit@enclose@relevant@i%
@@ -777,12 +777,12 @@
             }%
          }{yquant@config@enclose@#1@from}%
       \else%
-         \let\next=\@firstofone%
+         \let\@yquant@next=\@firstofone%
       \fi%
-      \next{%
+      \@yquant@next{%
          \ifcsname yquant@config@enclose@#1@to\endcsname%
             % to is a bit more special, for even if we knew the register at creation, it might be enlarged within the region and we have to react if only a vector name without index was specified. In this case, we can never add the resolved index to the list.
-            \let\next=\@gobble%
+            \let\@yquant@next=\@gobble%
             \ifcsname yquant@config@enclose@#1@toresolve\endcsname%
                \expandafter\yquant@register@singlepeek%
                   \expandafter\newid%
@@ -790,17 +790,17 @@
                   \expandafter\expandafter\expandafter{\csname yquant@config@enclose@#1@toresolve\endcsname}3{%
                   % it was a vector register
                   \ifdefined\newid%
-                     \edef\do{%
+                     \edef\@yquant@do{%
                         \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@relevant@i>{#2}}%
                            \expandafter\yquant@register@fullresolvetocolon%
                               \csname yquant@circuit@enclose@#1@prefixid\endcsname%
                               \newid%
                      }%
-                     \expandafter\do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
+                     \expandafter\@yquant@do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
                      \global\cslet{yquant@config@enclose@#1@toresolved}\relax%
                   \else%
                      % the register was not found yet, i.e., the last one will be below all currently existing ones.
-                     \let\next=\@firstofone%
+                     \let\@yquant@next=\@firstofone%
                   \fi%
                }{%
                   \ifdefined\newid%
@@ -812,11 +812,11 @@
                      }%
                      \csgundef{yquant@config@enclose@#1@toresolve}%
                   \else%
-                     \let\next=\@firstofone%
+                     \let\@yquant@next=\@firstofone%
                   \fi%
                }%
             \fi%
-            \ifx\next\@gobble%
+            \ifx\@yquant@next\@gobble%
                \expandafter\expandafter\expandafter\forlistcsloop\expandafter\expandafter\expandafter{%
                   \expandafter\expandafter\expandafter\yquant@register@colonsplit\expandafter\expandafter\expandafter{%
                      \expandafter\expandafter\expandafter\yquant@circuit@enclose@relevant@i%
@@ -827,12 +827,12 @@
                }{yquant@config@enclose@#1@to}%
             \fi%
          \else%
-            \let\next=\@firstofone%
+            \let\@yquant@next=\@firstofone%
          \fi%
       }%
       \expandafter%
    \endgroup%
-   \next%
+   \@yquant@next%
 }
 
 \protected\def\yquant@circuit@enclose@update@extentTB@i#1#2#3#4{%
@@ -842,10 +842,10 @@
    % #4: enclose id
    \begingroup%
       \ifyquant\expandafter\ifx\csname yquant@circuit@enclose@#4@involved\endcsname\yquant@circuit@enclose@allinvolved\fi{%
-         \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
+         \edef\@yquant@curcolon{\yquant@register@resolvetocolon{#2}}%
          % if we visit a register for the first time and it is not empty, then we cannot move init labels to the front
-         \xifinlistcs\curcolon{yquant@circuit@enclose@#4@visited}\relax{%
-            \listcsxadd{yquant@circuit@enclose@#4@visited}\curcolon%
+         \xifinlistcs\@yquant@curcolon{yquant@circuit@enclose@#4@visited}\relax{%
+            \listcsxadd{yquant@circuit@enclose@#4@visited}\@yquant@curcolon%
             \yquant@circuit@enclose@allowmovelabel{%
                % will not be executed if moving would be allowed
                \global\cslet{yquant@circuit@enclose@#4@allowmovelabel}\@secondoftwo%
@@ -854,24 +854,24 @@
       }{%
          \ifyquant@circuit@enclose@relevant{#4}{#2}{%
             % now we know that the currently relevant register is indeed contained in the from-to range.
-            \edef\curcolon{\yquant@register@resolvetocolon{#2}}%
+            \edef\@yquant@curcolon{\yquant@register@resolvetocolon{#2}}%
             \ifnum\csname yquant@circuit@enclose@#4@spacing\endcsname=0 %
-               \xifinlistcs\curcolon{yquant@circuit@enclose@#4@involved}\relax{%
-                  \listcsxadd{yquant@circuit@enclose@#4@involved}\curcolon%
+               \xifinlistcs\@yquant@curcolon{yquant@circuit@enclose@#4@involved}\relax{%
+                  \listcsxadd{yquant@circuit@enclose@#4@involved}\@yquant@curcolon%
                   \yquant@circuit@enclose@allowmovelabel{%
                      % this is not executed if we could, just from the perspective of all the involved register, move the label to the front. However, _if_ it is executed, then we know that there were no gates previously in this enclose range (we are not in the list), and this one would not allow for a shift, so we have to disallow it for all.
                      \global\cslet{yquant@circuit@enclose@#4@allowmovelabel}\@secondoftwo%
                   }%
                }%
             \else%
-               \ifcsname yquant@circuit@enclose@#4@extentT@\curcolon\endcsname%
-                  \ifdim\csname yquant@circuit@enclose@#4@extent#1@\curcolon\endcsname<#3 %
-                     \csxdef{yquant@circuit@enclose@#4@extent#1@\curcolon}{#3}%
+               \ifcsname yquant@circuit@enclose@#4@extentT@\@yquant@curcolon\endcsname%
+                  \ifdim\csname yquant@circuit@enclose@#4@extent#1@\@yquant@curcolon\endcsname<#3 %
+                     \csxdef{yquant@circuit@enclose@#4@extent#1@\@yquant@curcolon}{#3}%
                   \fi%
                \else%
-                  \csxdef{yquant@circuit@enclose@#4@extent#1@\curcolon}{#3}%
-                  \csxdef{yquant@circuit@enclose@#4@extent\ifx T#1B\else T\fi @\curcolon}{0pt}%
-                  \listcsxadd{yquant@circuit@enclose@#4@involved}{\curcolon}%
+                  \csxdef{yquant@circuit@enclose@#4@extent#1@\@yquant@curcolon}{#3}%
+                  \csxdef{yquant@circuit@enclose@#4@extent\ifx T#1B\else T\fi @\@yquant@curcolon}{0pt}%
+                  \listcsxadd{yquant@circuit@enclose@#4@involved}{\@yquant@curcolon}%
                   \yquant@circuit@enclose@allowmovelabel{%
                      \global\cslet{yquant@circuit@enclose@#4@allowmovelabel}\@secondoftwo%
                   }%
@@ -925,13 +925,13 @@
 
 \expandafter\protected\expandafter\def\csname yquant@circuit@enclose@storeextents@2\endcsname#1#2{%
    % 2 = gate or local register, so update if larger
-   \edef\tmp{\yquant@register@peek@height{#1}{#2}}%
-   \ifdim\tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2\endcsname\space%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2}\tmp%
+   \edef\@yquant@tmp{\yquant@register@peek@height{#1}{#2}}%
+   \ifdim\@yquant@tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2\endcsname\space%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentT@#1:#2}\@yquant@tmp%
    \fi%
-   \edef\tmp{\yquant@register@peek@depth{#1}{#2}}%
-   \ifdim\tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2\endcsname\space%
-      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2}\tmp%
+   \edef\@yquant@tmp{\yquant@register@peek@depth{#1}{#2}}%
+   \ifdim\@yquant@tmp>\csname yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2\endcsname\space%
+      \global\cslet{yquant@circuit@enclose@\yquant@circuit@enclose@id @extentB@#1:#2}\@yquant@tmp%
    \fi%
 }
 % END_FOLD

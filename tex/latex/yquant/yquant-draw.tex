@@ -8,11 +8,11 @@
          \yquant@circuit@flushwire{#1}%
          \ifx\yquant@draw@init@type\yquant@register@types@nobit%
             % in case the wire was discarded before, forget about the lastx position, it should always start with the others
-            \yquant@register@get@lastwire{#1}\wirelast%
+            \yquant@register@get@lastwire{#1}\@yquant@wirelast%
             \yquant@register@set@lastwire{#1}{%
                {\yquant@draw@subcircuit@wirestart}{\yquant@draw@subcircuit@wirestart}{}%
                {\unexpanded\expandafter\expandafter\expandafter{%
-                   \expandafter\@fourthoffour\wirelast%
+                   \expandafter\@fourthoffour\@yquant@wirelast%
                 }}%
             }%
          \fi%
@@ -72,7 +72,7 @@
             }%
          }%
          \ifyquant@config@operator@position@advance%
-            \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus#1}%
+            \dimdef\@yquant@newx{\yquant@draw@@x\yquant@orientation@plus#1}%
             \forlistloop\yquant@draw@group@advance{#6}%
          \fi%
          \dimdef\yquant@draw@@x{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr#1\relax}%
@@ -84,7 +84,7 @@
 }
 
 \protected\def\yquant@draw@group@advance#1{%
-   \yquant@register@set@x{#1}\newx%
+   \yquant@register@set@x{#1}\@yquant@newx%
 }
 
 \protected\def\yquant@draw@group@rightadvance#1{%
@@ -160,7 +160,7 @@
       \yquant@draw@alias@ctrl{#2}p%
       \yquant@draw@alias@ctrl{#2}n%
    \fi%
-   \edef\process{%
+   \edef\@yquant@process{%
          \yquant@endgroup%
          \ifyquant@config@draw@quality%
             \def\noexpand\yquant@circuit@extendcontrolline@clip{%
@@ -178,7 +178,7 @@
          }%
          \def\noexpand\yquant@draw@@idx@pcontrol{\yquant@draw@@idx@content}%
       }%
-   \process%
+   \@yquant@process%
 }
 
 \protected\def\yquant@draw@inject#1{%
@@ -202,7 +202,7 @@
 \protected\def\yquant@draw@single#1#2{%
    \let\idx=\yquant@draw@@idx@content%
    \yquant@config@operator@multifalse%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@draw@@x, \yquant@register@get@y{#1})%
          node[/yquant/every operator, \yquant@draw@@style, /yquant/this operator,%
               name prefix=, name suffix=, name=yquantbox]%
@@ -213,7 +213,7 @@
                            /yquant/this operator}%
       \fi%
    }%
-   \cmd%
+   \@yquant@cmd%
    \yquant@circuit@extendwire{#1}{center}%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
       {\the\yquant@draw@@currentcontroltype}\yquant@draw@@x{0pt}%
@@ -247,7 +247,7 @@
 
 \protected\def\yquant@draw@multi@contiguous#1#2#3{%
    % We need to somehow extract the y radius
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimexpr.5\dimexpr%
                          \yquant@register@get@y{#1}+\yquant@register@get@y{#2}\relax%
                       \relax)%
@@ -263,9 +263,9 @@
                            /yquant/this operator}%
       \fi%
    }%
-   \cmd%
-   \yquant@for \i := #1 to #2 {%
-      \yquant@circuit@extendwire\i{center}%
+   \@yquant@cmd%
+   \yquant@for \@yquant@i := #1 to #2 {%
+      \yquant@circuit@extendwire\@yquant@i{center}%
    }%
    \yquant@circuit@extendmultiline\yquant@draw@@x%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
@@ -295,7 +295,7 @@
    \edef\pgfdecorationsegmentfromto{\expandafter\@gobble\pgfdecorationsegmentfromto}%
    \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
@@ -312,9 +312,9 @@
                            /yquant/this operator}%
       \fi%
    }%
-   \cmd%
-   \yquant@for \i := #1 to #2 {%
-      \yquant@circuit@extendwire\i{center}%
+   \@yquant@cmd%
+   \yquant@for \@yquant@i := #1 to #2 {%
+      \yquant@circuit@extendwire\@yquant@i{center}%
    }%
    % no control line (init doesn't allow for those, so just save the no-op), no multi line
    % check for empty name parameter
@@ -365,7 +365,7 @@
 \protected\long\def\yquant@draw@output@single#1#2{%
    \let\idx=\yquant@draw@@idx@content%
    \yquant@config@operator@multifalse%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@circuit@endwires@x, \yquant@register@get@y{#1})%
          node[\ifnum\yquant@compat>1 /yquant/every operator,\fi%
               /yquant/every output,%
@@ -384,7 +384,7 @@
          \fi%
       \fi%
    }%
-   \cmd%
+   \@yquant@cmd%
    % only extend for subcircuits
    \ifdefined\yquant@parent%
       \yquant@circuit@extendwire{#1}{center}%
@@ -411,7 +411,7 @@
    \edef\pgfdecorationsegmentfromto{\expandafter\@gobble\pgfdecorationsegmentfromto}%
    \yquant@config@operator@multitrue%
    % We need to somehow extract the y radius
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@circuit@endwires@x, \the\dimexpr.5\dimexpr%
                          \yquant@draw@multiinit@@min+\yquant@draw@multiinit@@max\relax%
                       \relax)%
@@ -432,11 +432,11 @@
          \fi%
       \fi%
    }%
-   \cmd%
+   \@yquant@cmd%
    % only extend for subcircuits
    \ifdefined\yquant@parent%
-      \yquant@for \i := #1 to #2 {%
-         \yquant@circuit@extendwire\i{center}%
+      \yquant@for \@yquant@i := #1 to #2 {%
+         \yquant@circuit@extendwire\@yquant@i{center}%
       }%
    \fi%
    % check for empty name parameter
@@ -477,23 +477,23 @@
       \pgf@size@hookedfalse%
       \let\pgf@path@size@hook=\pgfutil@empty%
       % now we must take care of extending all the wires appropriately until the beginning of the box. #4 contains width of this box, #5 contains registers affected by this box. Note that for subcircuits, x extension by the group is disabled.
-      \dimdef\newx{%
+      \dimdef\@yquant@newx{%
          \yquant@draw@@x\yquant@orientation@minus%
          .5\dimexpr\@secondofthree#4\relax%
       }%
-      \dimen0=\newx\space%
-      \let\yquant@draw@subcircuit@leftpos=\newx% seamless subcircuits: do not add another separation if we are there
+      \dimen0=\@yquant@newx\space%
+      \let\yquant@draw@subcircuit@leftpos=\@yquant@newx% seamless subcircuits: do not add another separation if we are there
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#5}%
       % but the new positions are not at the beginning of the box, but inside (with possible margin)
-      \dimdef\newx{%
+      \dimdef\@yquant@newx{%
          \yquant@draw@@x\yquant@orientation@minus%
          .5\dimexpr\@firstofthree#4\relax\yquant@orientation@minus%
          \@thirdofthree#4%
       }%
       \forlistloop\yquant@draw@group@advance{#5}%
       \setbox\yquant@prepare@subcircuit@box=\hbox{{%
-         \let\yquant@draw@subcircuit@wirestart=\newx%
+         \let\yquant@draw@subcircuit@wirestart=\@yquant@newx%
          \let\yquant@parent=\yquant@prefix%
          \def\yquant@prefix{yquant@env#1@}%
          \pgfkeysgetvalue{/tikz/name prefix}\yquant@draw@subcircuit@prevprefix%
@@ -653,12 +653,12 @@
                   \dimen2=-\dimen2 %
                \fi%
             \fi%
-            \edef\cmd{%
+            \edef\@yquant@cmd{%
                \endgroup%
                \dimen0=\the\dimen0 %
                \dimen2=\the\dimen2 %
             }%
-         \cmd%
+         \@yquant@cmd%
       \fi%
       % now, due to cross-subcircuit alignments of enclosing rectangles, it might be that our computed width is far larger than the one we would expect
       \dimen4=\yquant@orientation@minus\maxdimen %
@@ -666,18 +666,18 @@
       \advance \dimen4 by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
       \gundef\yquant@circuit@endwires@operatorsep%
       \dimen6=\@firstofthree#4 %
-      \dimdef\delta{%
+      \dimdef\@yquant@delta{%
          \dimen4%
          -\yquant@draw@@x%
          \yquant@orientation@minus.5\dimen6%
       }%
-      \ifdim\dimexpr\delta\yquant@orientation@minus100sp\relax\ifyquanthorz><0pt %
+      \ifdim\dimexpr\@yquant@delta\yquant@orientation@minus100sp\relax\ifyquanthorz><0pt %
          % we simply increase our size - but this cannot help for the centering if there are multiple subcircuits or a conditional line
-         \dimdef\yquant@draw@@x{\yquant@draw@@x+.5\dimexpr\delta\relax}%
-         \dimdef\yquant@draw@@width{\yquant@draw@@width\yquant@orientation@plus\delta}%
-         \advance \dimen6 by \yquant@orientation@plus\delta\space%
+         \dimdef\yquant@draw@@x{\yquant@draw@@x+.5\dimexpr\@yquant@delta\relax}%
+         \dimdef\yquant@draw@@width{\yquant@draw@@width\yquant@orientation@plus\@yquant@delta}%
+         \advance \dimen6 by \yquant@orientation@plus\@yquant@delta\space%
       \fi%
-      \edef\cmd{%
+      \edef\@yquant@cmd{%
          \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimen0)%
             node[/yquant/every operator, \yquant@draw@@style,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
@@ -688,13 +688,13 @@
                           {\hbox to \the\dimen2 {\vbox to \the\dimen6 {}}}};%
       }%
       \ifyquant@config@draw@quality%
-         \cmd%
+         \@yquant@cmd%
       \else%
          % we draw the box on the behindwires layer. In this way, the box can even be filled without overshadowing the wires. However, this implies that the frame of the box will also be drawn behind the wires. If the color of the frame is different from the color of the wires, this may not be desired. In this case, there's no alternative to the quality layout.
          \yquant@begingroup%
             \let\pgfonlayer@assert@is@active=\relax%
             \pgfonlayer{behindwires}%
-               \cmd%
+               \@yquant@cmd%
             \endpgfonlayer%
          \yquant@endgroup%
       \fi%
@@ -713,7 +713,7 @@
          \global\yquant@pgf@picminx=\pgf@interrupt@saveminx%
       \fi%
       % Now that the subcircuit is finished, we need advance all the wires
-      \dimdef\newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
+      \dimdef\@yquant@newx{\yquant@draw@@x\yquant@orientation@plus.5\dimexpr\yquant@draw@@width\relax}%
       \forlistloop\yquant@draw@group@advance{#5}%
    \yquant@endgroup%
    % name mangling
@@ -780,14 +780,14 @@
    \yquant@config@operator@multifalse%
    \yquant@draw@subcircuit@prepare{#2}{#3}{#4}{#5}{#1}%
    \ifyquant@config@draw@quality%
-      \edef\cmd{%
+      \edef\@yquant@cmd{%
          \pgfshapeclippath{yquantbox}{%
              /yquant/every operator, \yquant@draw@@style,%
              /yquant/operators/every subcircuit box, /yquant/this operator,%
              /yquant/operators/this subcircuit box,%
          }%
       }%
-      \cmd%
+      \@yquant@cmd%
       % see comment in draw@subcircuit@multi
       \yquant@softpath@extractmaxxat\pgfshapeclippathhorzresult{\yquant@register@get@y{#1}}%
       \let\pgfshapeclippathhorzresult=\empty%
@@ -816,7 +816,7 @@
    % there is no contiguous slicing for subcircuits, as they may have all kinds of wire operations that can extend beyond the individual slices, let alone ancillas
    \yquant@draw@subcircuit@prepare{#5}{#6}{#7}{#8}{#4}%
    \ifyquant@config@draw@quality%
-      \edef\cmd{%
+      \edef\@yquant@cmd{%
          \pgfshapeclippath{yquantbox}{%
              /yquant/every operator, \yquant@draw@@style,%
              /yquant/operators/every subcircuit box, /yquant/this operator,%
@@ -824,20 +824,20 @@
              /yquant/internal/multi main=true,%
          }%
       }%
-      \cmd%
+      \@yquant@cmd%
       % install the clippings - but only on wires that are visually between the first and list while not being part of the circuit.
       \let\nonaffectedpgfshapeclippathhorzresult=\pgfshapeclippathhorzresult%
-      \yquant@for \i := #1 to #2 {%
-         \xifinlist{\i}{#4}{%
+      \yquant@for \@yquant@i := #1 to #2 {%
+         \xifinlist{\@yquant@i}{#4}{%
             % Usually, we always begin with a wire from the center of the operator shape and clip the inner parts away. This can't be done here, as the wire needs to be drawn _inside_ of the outer box operator here. Instead of clipping against the clip path, we extract its maximum x position at the position of the wire (which is an overkill for simple shapes, but allows to specify even more complicated ones) and place the wire at this position without clipping.
             % Note: this works very well for lines joining at perpendicular angles; but if the shape of the box is more fancy, while the position will be calculated correctly, the wire has a rectangular (or rounded, depending on the line cap) shape that is drawn on top of the operator. While \yquant@softpath@extractmaxxat could without much effort determine exactly the segment of the path that corresponds to the rightmost line, we would then have to convert this single line into a closed path that fills the linewidth and clip against it to get proper joiners. Since most likely, no-one will ever need this, we don't do it. But file a feature request if desired.
             \yquant@softpath@extractmaxxat\nonaffectedpgfshapeclippathhorzresult%
-                                          {\yquant@register@get@y\i}%
+                                          {\yquant@register@get@y\@yquant@i}%
             \let\pgfshapeclippathhorzresult=\empty%
-            \yquant@circuit@extendwire\i*%
+            \yquant@circuit@extendwire\@yquant@i*%
          }{%
             \let\pgfshapeclippathhorzresult=\nonaffectedpgfshapeclippathhorzresult%
-            \yquant@circuit@extendwire\i{center}%
+            \yquant@circuit@extendwire\@yquant@i{center}%
          }%
       }%
    \else%
@@ -849,11 +849,11 @@
          \pgfpointanchor{yquantbox}{south}%
          \dimen0=\pgf@y%
       }%
-      \yquant@for \i := #1 to #2 {%
-         \xifinlist{\i}{#4}{%
-            \yquant@circuit@extendwire\i*%
+      \yquant@for \@yquant@i := #1 to #2 {%
+         \xifinlist{\@yquant@i}{#4}{%
+            \yquant@circuit@extendwire\@yquant@i*%
          }{%
-            \yquant@circuit@extendwire\i{center}%
+            \yquant@circuit@extendwire\@yquant@i{center}%
          }%
       }%
    \fi%
@@ -866,7 +866,7 @@
 }
 
 \protected\def\yquant@draw@control#1#2#3{%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@draw@@x, \yquant@register@get@y{#2})%
          node[/yquant/every control, /yquant/every #1 control, /yquant/this control,%
               name prefix=, name suffix=, name=yquantbox]%
@@ -877,7 +877,7 @@
                            /yquant/this control}%
       \fi%
    }%
-   \cmd%
+   \@yquant@cmd%
    \yquant@circuit@extendwire{#2}{center}%
    \yquant@draw@@currentcontroltype=\yquant@register@get@type{#2}\relax%
    \expandafter\yquant@circuit@extendcontrolline\expandafter%
@@ -930,19 +930,19 @@
                \pgfusepathqclip%
             \endgroup%
          \fi%
-         \edef\cmd{%
+         \edef\@yquant@cmd{%
             \noexpand\path[/yquant/every control line]%
                \yquant@circuit@extendcontrolline@cmd;%
          }%
-         \cmd%
+         \@yquant@cmd%
       \endpgfscope%
    \else%
       \yquant@draw@onwires{%
-         \edef\cmd{%
+         \edef\@yquant@cmd{%
             \noexpand\path[/yquant/every control line]%
                \yquant@circuit@extendcontrolline@cmd;%
          }%
-         \cmd%
+         \@yquant@cmd%
       }%
    \fi%
 }
@@ -996,34 +996,34 @@
 
 \protected\def\yquant@draw@wire#1#2{%
    \yquant@begingroup%
-      \yquant@register@get@typeywire{#1}\wiretype\wireypos\wirelast%
-      \unless\ifnum\wiretype=\yquant@register@types@nobit%
-         \edef\wirexprevpos{\expandafter\@firstoffour\wirelast}%
+      \yquant@register@get@typeywire{#1}\@yquant@wiretype\@yquant@wireypos\@yquant@wirelast%
+      \unless\ifnum\@yquant@wiretype=\yquant@register@types@nobit%
+         \edef\@yquant@wirexprevpos{\expandafter\@firstoffour\@yquant@wirelast}%
          \ifx0#2%
-            \edef\wirexpos{\expandafter\@secondoffour\wirelast}%
+            \edef\@yquant@wirexpos{\expandafter\@secondoffour\@yquant@wirelast}%
          \else%
-            \let\wirexpos=\yquant@circuit@endwires@x%
+            \let\@yquant@wirexpos=\yquant@circuit@endwires@x%
          \fi%
-         \ifdim\yquant@orientation@plus\wirexpos>\yquant@orientation@plus\wirexprevpos %
-            \edef\wirestyle{\noexpand\tikzset{%
+         \ifdim\yquant@orientation@plus\@yquant@wirexpos>\yquant@orientation@plus\@yquant@wirexprevpos %
+            \edef\@yquant@wirestyle{\noexpand\tikzset{%
                /yquant/this wire/.style={%
                   /yquant/every wire,%
-                  /yquant/every \yquant@register@type@tostring\wiretype\space wire,%
+                  /yquant/every \yquant@register@type@tostring\@yquant@wiretype\space wire,%
                      \yquant@register@get@style{#1}%
                }, /yquant/this wire%
             }}%
-            \wirestyle%
+            \@yquant@wirestyle%
             \ifyquant@config@draw@quality%
                % load all clippings
-               \edef\wireclipping{%
+               \edef\@yquant@wireclipping{%
                   \unexpanded\expandafter\expandafter\expandafter{%
-                     \expandafter\@thirdandfourthoffour\wirelast%
+                     \expandafter\@thirdandfourthoffour\@yquant@wirelast%
                   }%
                }%
                \pgfscope%
-                  \unless\ifx\wireclipping\empty% may happen if the style is altered to be invisible, though the type is not none
+                  \unless\ifx\@yquant@wireclipping\empty% may happen if the style is altered to be invisible, though the type is not none
                      % install the clipping
-                     \pgfsyssoftpath@setcurrentpath\wireclipping%
+                     \pgfsyssoftpath@setcurrentpath\@yquant@wireclipping%
                      % invert the clipping
                      \ifyquantdebug%
                         \pgfsetfillcolor{orange}%
@@ -1043,11 +1043,11 @@
                      \fi%
                   \fi%
                   % the clip inversion is left to the drawing commands (clip two \pgflinewidth more to avoid renderer artifacts)
-                  \csname yquant@draw@wire@\wiretype\endcsname{#1}%
+                  \csname yquant@draw@wire@\@yquant@wiretype\endcsname{#1}%
                \endpgfscope%
             \else%
                \yquant@draw@onwires{%
-                  \csname yquant@draw@wire@\wiretype\endcsname{#1}%
+                  \csname yquant@draw@wire@\@yquant@wiretype\endcsname{#1}%
                }%
             \fi%
          \fi%
@@ -1057,51 +1057,51 @@
 
 % quantum wire
 \protected\csdef{yquant@draw@wire@\yquant@register@types@qubit}#1{%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path [/yquant/this wire]%
-         \yquant@coords(\wirexprevpos,\wireypos) -- \yquant@coords(\wirexpos,\wireypos);%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos) -- \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos);%
    }%
-   \cmd%
+   \@yquant@cmd%
 }
 
 % classical wire
 \protected\csdef{yquant@draw@wire@\yquant@register@types@cbit}#1{%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path [/yquant/this wire]%
-         \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --
-         \yquant@coords(\wirexpos,\wireypos+2\pgflinewidth)%
-         \yquant@coords(\wirexprevpos,\wireypos-2\pgflinewidth) --
-         \yquant@coords(\wirexpos,\wireypos-2\pgflinewidth);%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos+2\pgflinewidth) --
+         \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos+2\pgflinewidth)%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos-2\pgflinewidth) --
+         \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos-2\pgflinewidth);%
    }%
-   \cmd%
+   \@yquant@cmd%
 }
 
 % quantum-bundle
 \protected\csdef{yquant@draw@wire@\yquant@register@types@qubits}#1{%
-   \edef\cmd{%
+   \edef\@yquant@cmd{%
       \noexpand\path [/yquant/this wire]%
-         \yquant@coords(\wirexprevpos,\wireypos+2\pgflinewidth) --
-         \yquant@coords(\wirexpos,\wireypos+2\pgflinewidth)%
-         \yquant@coords(\wirexprevpos,\wireypos) --
-         \yquant@coords(\wirexpos,\wireypos)%
-         \yquant@coords(\wirexprevpos,\wireypos-2\pgflinewidth) --
-         \yquant@coords(\wirexpos,\wireypos-2\pgflinewidth);%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos+2\pgflinewidth) --
+         \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos+2\pgflinewidth)%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos) --
+         \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos)%
+         \yquant@coords(\@yquant@wirexprevpos,\@yquant@wireypos-2\pgflinewidth) --
+         \yquant@coords(\@yquant@wirexpos,\@yquant@wireypos-2\pgflinewidth);%
    }%
-   \cmd%
+   \@yquant@cmd%
 }
 
 \protected\def\yquant@draw@hspace#1#2{%
    \begingroup%
-      \yquant@register@get@maxxlist\newx{#1}%
-      \dimdef\newx{\newx\yquant@orientation@plus#2}%
-      \dimen0=\newx%
+      \yquant@register@get@maxxlist\@yquant@newx{#1}%
+      \dimdef\@yquant@newx{\@yquant@newx\yquant@orientation@plus#2}%
+      \dimen0=\@yquant@newx%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#1}%
    \endgroup%
 }
 
 \protected\def\yquant@draw@move@loop#1{%
-   \yquant@register@set@x{#1}\newx%
+   \yquant@register@set@x{#1}\@yquant@newx%
    \yquant@circuit@extendwire{#1}*%
 }
 
@@ -1137,24 +1137,24 @@
 
 \protected\def\yquant@draw@enclose@measure@anyrelevant#1#2{%
    \ifyquant\ifcsname yquant@circuit@enclose@#1@extentT@\yquant@register@resolvetocolon{#2}\endcsname\fi{%
-      \let\next=\@firstofone%
+      \let\@yquant@next=\@firstofone%
       \listbreak%
    }\relax%
 }
 
 \protected\def\yquant@draw@enclose@measure@register#1#2{%
-   \edef\resolution{\yquant@register@resolvetocolon{#2}}%
-   \ifcsname yquant@circuit@enclose@#1@extentT@\resolution\endcsname%
-      \ifcsname yquant@draw@enclose@#1@left@\resolution\endcsname%
-         \ifdim\csname yquant@draw@enclose@#1@left@\resolution\endcsname>\leftpos\space%
-            \global\cslet{yquant@draw@enclose@#1@left@\resolution}\leftpos%
+   \edef\@yquant@resolution{\yquant@register@resolvetocolon{#2}}%
+   \ifcsname yquant@circuit@enclose@#1@extentT@\@yquant@resolution\endcsname%
+      \ifcsname yquant@draw@enclose@#1@left@\@yquant@resolution\endcsname%
+         \ifdim\csname yquant@draw@enclose@#1@left@\@yquant@resolution\endcsname>\@yquant@leftpos\space%
+            \global\cslet{yquant@draw@enclose@#1@left@\@yquant@resolution}\@yquant@leftpos%
          \fi%
-         \ifdim\csname yquant@draw@enclose@#1@right@\resolution\endcsname<\rightpos\space%
-            \global\cslet{yquant@draw@enclose@#1@right@\resolution}\rightpos%
+         \ifdim\csname yquant@draw@enclose@#1@right@\@yquant@resolution\endcsname<\@yquant@rightpos\space%
+            \global\cslet{yquant@draw@enclose@#1@right@\@yquant@resolution}\@yquant@rightpos%
          \fi%
       \else%
-         \global\cslet{yquant@draw@enclose@#1@left@\resolution}\leftpos%
-         \global\cslet{yquant@draw@enclose@#1@right@\resolution}\rightpos%
+         \global\cslet{yquant@draw@enclose@#1@left@\@yquant@resolution}\@yquant@leftpos%
+         \global\cslet{yquant@draw@enclose@#1@right@\@yquant@resolution}\@yquant@rightpos%
       \fi%
    \fi%
 }
@@ -1164,24 +1164,24 @@
       \ifcase\csname yquant@circuit@enclose@#2@shape\endcsname\space%
          % is any of the registers in the target list relevant for our enclose?
          \expandafter\ifx\csname yquant@circuit@enclose@#2@involved\endcsname\yquant@circuit@enclose@allinvolved%
-            \let\next=\@firstofone%
+            \let\@yquant@next=\@firstofone%
          \else%
-            \let\next=\@gobble%
+            \let\@yquant@next=\@gobble%
             \forlistloop{\yquant@draw@enclose@measure@anyrelevant{#2}}{#1}%
          \fi%
-         \next{%
-            \edef\width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
-            \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x-\width\relax%
-               \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x-\width}%
+         \@yquant@next{%
+            \edef\@yquant@width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
+            \ifdim\csname yquant@draw@enclose@#2@left\endcsname>\dimexpr\yquant@draw@@x-\@yquant@width\relax%
+               \csdimgdef{yquant@draw@enclose@#2@left}{\yquant@draw@@x-\@yquant@width}%
             \fi%
-            \ifdim\csname yquant@draw@enclose@#2@right\endcsname<\dimexpr\yquant@draw@@x+\width\relax%
-               \csdimgdef{yquant@draw@enclose@#2@right}{\yquant@draw@@x+\width}%
+            \ifdim\csname yquant@draw@enclose@#2@right\endcsname<\dimexpr\yquant@draw@@x+\@yquant@width\relax%
+               \csdimgdef{yquant@draw@enclose@#2@right}{\yquant@draw@@x+\@yquant@width}%
             \fi%
          }%
       \or%
-         \edef\width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
-         \dimdef\leftpos{\yquant@draw@@x-\width}%
-         \dimdef\rightpos{\yquant@draw@@x+\width}%
+         \edef\@yquant@width{\unless\ifyquant@config@operator@position@rightalign.5\fi\dimexpr\yquant@draw@@width\relax}%
+         \dimdef\@yquant@leftpos{\yquant@draw@@x-\@yquant@width}%
+         \dimdef\@yquant@rightpos{\yquant@draw@@x+\@yquant@width}%
          \forlistloop{\yquant@draw@enclose@measure@register{#2}}{#1}%
       \else%
          \PackageError{yquant.sty}{Internal error}{Unknown enclose shape type (2).}%
@@ -1195,7 +1195,7 @@
 }
 
 \protected\def\yquant@draw@enclose@calctop#1#2{%
-   \dimdef\enclosetop{%
+   \dimdef\@yquant@enclosetop{%
       \yquant@register@colonsplitcs\yquant@register@peek@y{yquant@sort@item#2}%
       \yquant@orientation@plus%
       \csname yquant@circuit@enclose@#1@extentT@\csname yquant@sort@item#2\endcsname\endcsname%
@@ -1205,7 +1205,7 @@
 }
 
 \protected\def\yquant@draw@enclose@calcbottom#1#2{%
-   \dimdef\enclosebottom{%
+   \dimdef\@yquant@enclosebottom{%
       \yquant@register@colonsplitcs\yquant@register@peek@y{yquant@sort@item#2}%
       \yquant@orientation@minus%
       \csname yquant@circuit@enclose@#1@extentB@\csname yquant@sort@item#2\endcsname\endcsname%
@@ -1218,14 +1218,14 @@
    \ifdim\csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname=\maxdimen%
       \PackageError{yquant.sty}{Partially empty enclose}{Polygon \string\enclose\space contained a register with no gates in the region.}%
    \fi%
-   \dimdef\encloseleft{%
+   \dimdef\@yquant@encloseleft{%
       \csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname%
       -\dimen4%
    }%
 }
 
 \protected\def\yquant@draw@enclose@calcright#1#2{%
-   \dimdef\encloseright{%
+   \dimdef\@yquant@encloseright{%
       \csname yquant@draw@enclose@#1@right@\csname yquant@sort@item#2\endcsname\endcsname%
       +\dimen4%
    }%
@@ -1243,14 +1243,14 @@
          \expandafter\tikzset\expandafter{\unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}%
          \pgfmathsetlength\pgf@x{\pgfkeysvalueof{/pgf/inner xsep}}%
          \pgfmathsetlength\pgf@y{\pgfkeysvalueof{/pgf/inner ysep}}%
-         \edef\setsep{%
+         \edef\@yquant@setsep{%
             \endgroup%
             \noexpand\dimen\ifyquanthorz46=\the\pgf@x\space%
             \noexpand\dimen\ifyquanthorz64=\the\pgf@y\space%
          }%
-         \setsep%
+         \@yquant@setsep%
       \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
-         \def\i{1}%
+         \def\@yquant@i{1}%
          \csdef{yquant@sort@item0}{1:1}%
          \csedef{yquant@sort@item1}{1:\csname yquant@env1@registers\endcsname}%
          \def\yquant@sort@count{2}%
@@ -1260,24 +1260,24 @@
          \expandafter\yquant@sort@addlist\csname yquant@circuit@enclose@#1@involved\endcsname%
          \yquant@sort\yquant@draw@enclose@sort%
          % Now prepare all the points in our rectangle/polygon (we always use the polygon shape for consistency)
-         \numdef\i{\yquant@sort@count-1}%
+         \numdef\@yquant@i{\yquant@sort@count-1}%
       \fi%
-      \yquant@draw@enclose@calcbottom{#1}\i%
-      \dimen0=\enclosebottom\space% store the bottom-most position
+      \yquant@draw@enclose@calcbottom{#1}\@yquant@i%
+      \dimen0=\@yquant@enclosebottom\space% store the bottom-most position
       \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
          % If we just need a rectangle, the remaining extracting steps are simple, just look at the extremal parts.
          \ifdim\csname yquant@draw@enclose@#1@left\endcsname=\maxdimen%
             \PackageError{yquant.sty}{Empty enclose}{No gates contained in \string\enclose\space region.}%
          \fi%
-         \dimdef\encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\dimen4}%
-         \dimen2=\encloseleft\space%
-         \dimdef\encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\dimen4}%
+         \dimdef\@yquant@encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\dimen4}%
+         \dimen2=\@yquant@encloseleft\space%
+         \dimdef\@yquant@encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\dimen4}%
          \yquant@draw@enclose@calctop{#1}0%
-         \edef\points{%
-            \yquant@coords(\encloseleft,\enclosebottom)%
-            \yquant@coords(\encloseright,\enclosebottom)%
-            \yquant@coords(\encloseright,\enclosetop)%
-            \yquant@coords(\encloseleft,\enclosetop)%
+         \edef\@yquant@points{%
+            \yquant@coords(\@yquant@encloseleft,\@yquant@enclosebottom)%
+            \yquant@coords(\@yquant@encloseright,\@yquant@enclosebottom)%
+            \yquant@coords(\@yquant@encloseright,\@yquant@enclosetop)%
+            \yquant@coords(\@yquant@encloseleft,\@yquant@enclosetop)%
          }%
          \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
             \csgundef{yquant@circuit@enclose@#1@extentT@1:1}%
@@ -1289,49 +1289,49 @@
          \csgundef{yquant@draw@enclose@#1@right}%
       \or%
          % If we need a polygon, we have to collect all the necessary parts. Let's start with the bottom line:
-         \yquant@draw@enclose@calcleft{#1}\i%
-         \yquant@draw@enclose@calcright{#1}\i%
-         \edef\points{%
-            \yquant@coords(\encloseleft,\enclosebottom)%
-            \yquant@coords(\encloseright,\enclosebottom)%
+         \yquant@draw@enclose@calcleft{#1}\@yquant@i%
+         \yquant@draw@enclose@calcright{#1}\@yquant@i%
+         \edef\@yquant@points{%
+            \yquant@coords(\@yquant@encloseleft,\@yquant@enclosebottom)%
+            \yquant@coords(\@yquant@encloseright,\@yquant@enclosebottom)%
          }%
          % Then we go up at the right
-         \yquant@fordown \i := \numexpr\i-1\relax downto 0 {%
+         \yquant@fordown \@yquant@i := \numexpr\@yquant@i-1\relax downto 0 {%
             % first we calculate the next right position
-            \let\encloseoldright=\encloseright%
-            \yquant@draw@enclose@calcright{#1}\i%
-            \unless\ifdim\encloseoldright=\encloseright\space% only if the right position changes, a new path segment follows
-               \yquant@draw@enclose@calctop{#1}{\the\numexpr\i+1\relax}%
-               \yquant@draw@enclose@calcbottom{#1}\i%
-               \dimdef\midpoint{.5\dimexpr\enclosetop\relax+.5\dimexpr\enclosebottom\relax}% to prevent overflow
-               \eappto\points{%
-                  \yquant@coords(\encloseoldright,\midpoint)%
-                  \yquant@coords(\encloseright,\midpoint)%
+            \let\@yquant@encloseoldright=\@yquant@encloseright%
+            \yquant@draw@enclose@calcright{#1}\@yquant@i%
+            \unless\ifdim\@yquant@encloseoldright=\@yquant@encloseright\space% only if the right position changes, a new path segment follows
+               \yquant@draw@enclose@calctop{#1}{\the\numexpr\@yquant@i+1\relax}%
+               \yquant@draw@enclose@calcbottom{#1}\@yquant@i%
+               \dimdef\@yquant@midpoint{.5\dimexpr\@yquant@enclosetop\relax+.5\dimexpr\@yquant@enclosebottom\relax}% to prevent overflow
+               \eappto\@yquant@points{%
+                  \yquant@coords(\@yquant@encloseoldright,\@yquant@midpoint)%
+                  \yquant@coords(\@yquant@encloseright,\@yquant@midpoint)%
                }%
             \fi%
          }%
          % Then there's the topmost register, some part of the right line might still be missing
          \yquant@draw@enclose@calctop{#1}0%
          \yquant@draw@enclose@calcleft{#1}0%
-         \eappto\points{%
-            \yquant@coords(\encloseright,\enclosetop)%
-            \yquant@coords(\encloseleft,\enclosetop)%
+         \eappto\@yquant@points{%
+            \yquant@coords(\@yquant@encloseright,\@yquant@enclosetop)%
+            \yquant@coords(\@yquant@encloseleft,\@yquant@enclosetop)%
          }%
-         \dimen2=\encloseleft\space% figure out the leftmost position
+         \dimen2=\@yquant@encloseleft\space% figure out the leftmost position
          % Let's go down at the left
-         \yquant@for \i := 1 to \numexpr\yquant@sort@count-1\relax {%
-            \let\encloseoldleft=\encloseleft%
-            \yquant@draw@enclose@calcleft{#1}\i%
-            \unless\ifdim\encloseoldleft=\encloseleft\space%
-               \yquant@draw@enclose@calcbottom{#1}{\the\numexpr\i-1\relax}%
-               \yquant@draw@enclose@calctop{#1}\i%
-               \dimdef\midpoint{.5\dimexpr\enclosetop\relax+.5\dimexpr\enclosebottom\relax}%
-               \eappto\points{%
-                  \yquant@coords(\encloseoldleft,\midpoint)%
-                  \yquant@coords(\encloseleft,\midpoint)%
+         \yquant@for \@yquant@i := 1 to \numexpr\yquant@sort@count-1\relax {%
+            \let\@yquant@encloseoldleft=\@yquant@encloseleft%
+            \yquant@draw@enclose@calcleft{#1}\@yquant@i%
+            \unless\ifdim\@yquant@encloseoldleft=\@yquant@encloseleft\space%
+               \yquant@draw@enclose@calcbottom{#1}{\the\numexpr\@yquant@i-1\relax}%
+               \yquant@draw@enclose@calctop{#1}\@yquant@i%
+               \dimdef\@yquant@midpoint{.5\dimexpr\@yquant@enclosetop\relax+.5\dimexpr\@yquant@enclosebottom\relax}%
+               \eappto\@yquant@points{%
+                  \yquant@coords(\@yquant@encloseoldleft,\@yquant@midpoint)%
+                  \yquant@coords(\@yquant@encloseleft,\@yquant@midpoint)%
                }%
-               \ifdim\encloseleft<\dimen2 %
-                  \dimen2=\encloseleft\space%
+               \ifdim\@yquant@encloseleft<\dimen2 %
+                  \dimen2=\@yquant@encloseleft\space%
                \fi%
             \fi%
          }%
@@ -1341,7 +1341,7 @@
       \fi%
       \xappto\yquant@draw@enclose@drawcommands{%
          \yquant@draw@enclose@handlelayers{#1}{\pgfkeysvalueof{/yquant/enclose/layer}}{\pgfkeysvalueof{/yquant/enclose/label layer}}{%
-            \noexpand\node[{shape=yquant-enclose-polygon, /yquant/enclose/shape/polygon/points={\points},
+            \noexpand\node[{shape=yquant-enclose-polygon, /yquant/enclose/shape/polygon/points={\@yquant@points},
                             /yquant/enclose/every enclose,
                             \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname},
                             anchor=south \ifyquanthorz{west}{east}, transform shape,
@@ -1371,8 +1371,8 @@
 \protected\def\yquant@draw@enclose@align#1{%
    % this is an align that surpasses subcircuits - #1 is a list containing prefixes and ids
    \begingroup%
-      \yquant@register@peek@maxxlist\newx{#1}%
-      \dimen0=\newx%
+      \yquant@register@peek@maxxlist\@yquant@newx{#1}%
+      \dimen0=\@yquant@newx%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop{\yquant@register@colonsplit\yquant@draw@enclose@align@loop}{#1}%
    \endgroup%
@@ -1381,7 +1381,7 @@
 \protected\def\yquant@draw@enclose@align@loop#1#2{%
    \begingroup%
       \edef\yquant@prefix{yquant@env#1@}%
-      \yquant@register@set@x{#2}\newx%
+      \yquant@register@set@x{#2}\@yquant@newx%
       \yquant@circuit@extendwire{#2}*%
    \endgroup%
 }
@@ -1414,15 +1414,15 @@
                \endpgfonlayer%
             }%
          \yquant@endgroup%
-         \edef\drawrest{%
+         \edef\@yquant@drawrest{%
             \noexpand\path[late options={/yquant/internal/name unaliased=yquantbox, /yquant/internal/dename, /yquant/enclose/every enclose,
                                          \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname}}];%
          }%
          \ifstrequal{#3}{main}{%
-            \yquant@draw@enclose@beamercommand{\drawrest}%
+            \yquant@draw@enclose@beamercommand{\@yquant@drawrest}%
          }{%
             \pgfonlayer{#3}%
-               \yquant@draw@enclose@beamercommand{\drawrest}%
+               \yquant@draw@enclose@beamercommand{\@yquant@drawrest}%
             \endpgfonlayer%
          }%
       }%

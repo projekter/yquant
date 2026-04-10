@@ -282,25 +282,25 @@
    \begingroup%
       \let\yquant@config@onlyloop@idxs=\empty%
       \forcsvlist\yquant@config@onlyloop{#2}%
-      \let\ifdoit=\iffalse%
+      \let\@ifyquant@doit=\iffalse%
       \ifdefined\yquant@config@onlyloop@allupto%
          \unless\ifnum\idx>\yquant@config@onlyloop@allupto\space%
-            \csletcs{ifdoit}{iftrue}%
+            \csletcs{@ifyquant@doit}{iftrue}%
          \fi%
       \fi%
       \ifdefined\yquant@config@onlyloop@allfrom%
          \unless\ifnum\idx<\yquant@config@onlyloop@allfrom\space%
-            \csletcs{ifdoit}{iftrue}%
+            \csletcs{@ifyquant@doit}{iftrue}%
          \fi%
       \fi%
-      \unless\ifdoit%
+      \unless\@ifyquant@doit%
          \xifinlist\idx\yquant@config@onlyloop@idxs{%
-            \csletcs{ifdoit}{iftrue}%
+            \csletcs{@ifyquant@doit}{iftrue}%
          }\relax%
       \fi%
       \expandafter%
    \endgroup%
-   #1\ifdoit
+   #1\@ifyquant@doit
       \pgfkeysalso{#3}%
    \fi%
 }
@@ -338,8 +338,8 @@
             \numdef\yquant@config@onlyloop@allfrom{#1}%
          \fi%
       }{%
-         \yquant@for \i := #1 to #2 {%
-            \listeadd\yquant@config@onlyloop@idxs\i%
+         \yquant@for \@yquant@i := #1 to #2 {%
+            \listeadd\yquant@config@onlyloop@idxs\@yquant@i%
          }%
       }%
    }%
@@ -699,11 +699,11 @@
       \def\yquant@config@corner@max{#4}%
       \begingroup%
          \tikzset{/yquant/every control line}%
-         \edef\tmp{%
+         \edef\@yquant@tmp{%
             \endgroup%
             \def\noexpand\yquant@config@corner@xamount{#1\the\dimexpr.5\pgflinewidth\relax}%
          }%
-         \tmp%
+         \@yquant@tmp%
    },%
    internal/name unaliased/.code={%
       \let\yquant@config@internal@oldppname=\tikz@pp@name%

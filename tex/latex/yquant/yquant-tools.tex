@@ -258,16 +258,16 @@
 \protected\def\yquant@sort@aux#1#2{%
    \ifnum#1<#2\relax%
       \yquant@sort@divide{#1}{#2}%
-      \edef\cmd{%
+      \edef\@yquant@cmd{%
          \noexpand\yquant@sort@aux{#1}{\the\numexpr\count0-1\relax}%
          \noexpand\yquant@sort@aux{\the\numexpr\count0+1\relax}{#2}%
       }%
-      \cmd%
+      \@yquant@cmd%
    \fi%
 }
 
-\def\iftrue@hidden{\iftrue}%
-\def\iffalse@hidden{\iffalse}%
+\def\yquant@iftrue{\iftrue}%
+\def\yquant@iffalse{\iffalse}%
 \protected\def\yquant@sort@divide#1#2{%
    \count0=#1\relax% i
    \count2=#2\relax% j
@@ -285,13 +285,13 @@
                   \expandafter\expandafter\expandafter{%
                      \csname yquant@sort@item\the\count0\endcsname%
                   }{%
-                     \expandafter\iffalse@hidden%
+                     \expandafter\yquant@iffalse%
                   }{%
                      \advance\count0 by 1 %
-                     \expandafter\iftrue@hidden%
+                     \expandafter\yquant@iftrue%
                   }%
             \else%
-               \expandafter\iffalse@hidden%
+               \expandafter\yquant@iffalse%
             \fi%
          \repeat%
          \expandafter%
@@ -309,12 +309,12 @@
                      \csname yquant@sort@item\the\count2\endcsname%
                   }{%
                      \advance\count2 by -1 %
-                     \expandafter\iftrue@hidden%
+                     \expandafter\yquant@iftrue%
                   }{%
-                     \expandafter\iffalse@hidden%
+                     \expandafter\yquant@iffalse%
                   }%
             \else%
-               \expandafter\iffalse@hidden%
+               \expandafter\yquant@iffalse%
             \fi%
          \repeat%
          \expandafter%
@@ -322,15 +322,15 @@
       \expandafter\count\expandafter2\expandafter=\the\count2\relax%
       \ifnum\count0<\count2 %
          % swap item i <> item j
-         \letcs\tmp{yquant@sort@item\the\count0}%
+         \letcs\@yquant@tmp{yquant@sort@item\the\count0}%
          \csletcs{yquant@sort@item\the\count0}{yquant@sort@item\the\count2}%
-         \cslet{yquant@sort@item\the\count2}\tmp%
+         \cslet{yquant@sort@item\the\count2}\@yquant@tmp%
       \fi%
       \ifnum\count0<\count2 %
    \repeat%
-   \letcs\tmp{yquant@sort@item\the\count0}%
+   \letcs\@yquant@tmp{yquant@sort@item\the\count0}%
    \csletcs{yquant@sort@item\the\count0}{yquant@sort@item#2}%
-   \cslet{yquant@sort@item#2}\tmp%
+   \cslet{yquant@sort@item#2}\@yquant@tmp%
 }
 
 % Add an internal etoolbox list to the sorted items
@@ -369,7 +369,7 @@
    \count0=0 %
    \loop%
       \ifnum\count0<\yquant@sort@count%
-         \expandafter\expandafter\expandafter\do%
+         \expandafter\expandafter\expandafter\@yquant@do%
          \expandafter\expandafter\expandafter{%
             \csname yquant@sort@item\the\count0\endcsname%
          }%
@@ -455,13 +455,13 @@
    \begingroup%
       \let\yquant@register@multi=\@fourthoffour
       \def\yquant@register@multi@contiguous##1##2##3{\yquant@list@range{##1}{##2}}%
-      \edef\listA{#1}%
-      \edef\listB{#2}%
-      \let\ifsuccess=\iftrue%
-      \forlistloop\yquant@registersubset@loop\listA%
+      \edef\@yquant@listA{#1}%
+      \edef\@yquant@listB{#2}%
+      \let\@ifyquant@success=\iftrue%
+      \forlistloop\yquant@registersubset@loop\@yquant@listA%
       \expandafter%
    \endgroup%
-   \ifsuccess%
+   \@ifyquant@success%
       \expandafter\@firstoftwo%
    \else%
       \expandafter\@secondoftwo%
@@ -469,8 +469,8 @@
 }
 
 \protected\def\yquant@registersubset@loop#1{%
-   \ifinlist{#1}\listB\relax{%
-      \let\ifsuccess=\iffalse%
+   \ifinlist{#1}\@yquant@listB\relax{%
+      \let\@ifyquant@success=\iffalse%
       \listbreak%
    }%
 }

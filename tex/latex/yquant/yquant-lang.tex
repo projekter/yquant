@@ -249,8 +249,8 @@
    \fi%
    % if we have the after attribute, we fake an align gate
    \ifdefined\yquant@lang@attr@after%
-      \edef\jointindices{\yquant@circuit@operator@targets\yquant@lang@attr@after}%
-      \yquant@circuit@align\jointindices%
+      \edef\@yquant@jointindices{\yquant@circuit@operator@targets\yquant@lang@attr@after}%
+      \yquant@circuit@align\@yquant@jointindices%
       % and we also need to change the wire after the alignment
       \let\yquant@circuit@settype@to=\yquant@lang@create@type%
       \let\yquant@prepare@callback@prepare=\yquant@circuit@settype@prepare%
@@ -288,8 +288,8 @@
       \epreto\yquant@attrs@remaining{internal/setregidx={\idx}{\reg},}%
       \unless\ifx\yquant@lang@attr@value\empty%
          % make sure to immediately remove the "clear" marker again if we have a text
-         \yquant@for \i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
-            \yquant@register@execclear@lastgate{\i}{init}%
+         \yquant@for \@yquant@i := \yquant@circuit@operator@mintarget to \yquant@circuit@operator@maxtarget {%
+            \yquant@register@execclear@lastgate{\@yquant@i}{init}%
          }%
       \fi%
       \expandafter\yquant@prepare%
@@ -610,12 +610,12 @@
    {phase}%
    {}%
    {%
-      \edef\cmd{%
+      \edef\@yquant@cmd{%
          \yquant@prepare%
             {}%
             {/yquant/operators/every phase, label={\unexpanded\expandafter{\yquant@lang@attr@value}}}%
       }%
-      \cmd%
+      \@yquant@cmd%
    }
 \yquant@langhelper@setup@attrs{phase}{value}{}%
 
@@ -852,20 +852,20 @@
          \fi%
          \def\yquant@config@operator@minimum@width{0pt}%
          \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
-         \edef\cmd{%
+         \edef\@yquant@cmd{%
             \yquant@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                {/yquant/every label, /yquant/every initial label,%
                /yquant/every \yquant@lang@attr@type\space label}%
          }%
       \else%
-         \edef\cmd{%
+         \edef\@yquant@cmd{%
             \yquant@prepare%
                {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                {/yquant/every label, /yquant/every \yquant@lang@attr@type\space label}%
          }%
       \fi%
-      \cmd%
+      \@yquant@cmd%
    }
 \yquant@langhelper@setup@attrs{init}{}{type,value}
 
@@ -896,8 +896,8 @@
       \listadd\yquant@lang@@init@encloserelevant{#1}%
    \else%
       \ifnum\csname yquant@circuit@enclose@#1@shape\endcsname=0 %
-         \yquant@for \i := \yquant@circuit@operator@minctrl to \yquant@circuit@operator@maxctrl {
-            \xifinlistcs{\yquant@env@prefix@id\yquant@prefix:\i}{yquant@circuit@enclose@#1@involved}{%
+         \yquant@for \@yquant@i := \yquant@circuit@operator@minctrl to \yquant@circuit@operator@maxctrl {
+            \xifinlistcs{\yquant@env@prefix@id\yquant@prefix:\@yquant@i}{yquant@circuit@enclose@#1@involved}{%
                \listadd\yquant@lang@@init@encloserelevant{#1}%
                \listbreak%
             }\relax

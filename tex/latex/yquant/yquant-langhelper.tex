@@ -92,16 +92,16 @@
 % #3: comma-separated list of optional attrs
 \protected\def\yquant@langhelper@setup@attrs#1#2#3{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
-      \edef\keyscmd{%
-         \noexpand\pgfkeyslet{/yquant/attrs/\cmd/.unknown/.@cmd}%
+      \lowercase{\edef\@yquant@cmd{#1}}%
+      \edef\@yquant@keyscmd{%
+         \noexpand\pgfkeyslet{/yquant/attrs/\@yquant@cmd/.unknown/.@cmd}%
                              \yquant@langhelper@setup@attrs@unknown%
       }%
-      \let\keysset=\relax%
-      \let\keyscheck=\relax%
+      \let\@yquant@keysset=\relax%
+      \let\@yquant@keyscheck=\relax%
       \def\@yquant@do##1{%
-         \eappto\keyscmd{%
-            \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
+         \eappto\@yquant@keyscmd{%
+            \noexpand\pgfkeysdef{/yquant/attrs/\@yquant@cmd/##1}{%
                \unexpanded{%
                   \cslet{yquant@langhelper@attrs@req@##1}\relax%
                   \pgfkeysinterruptkeyfilter%
@@ -110,20 +110,20 @@
                }%
             }%
          }%
-         \eappto\keysset{%
+         \eappto\@yquant@keysset{%
             \def\expandafter\noexpand\csname yquant@langhelper@attrs@req@##1\endcsname{%
                \yquant@langhelper@setup@attrs@missing{##1}%
             }%
          }%
-         \expandafter\appto\expandafter\keyscheck%
+         \expandafter\appto\expandafter\@yquant@keyscheck%
             \csname yquant@langhelper@attrs@req@##1\endcsname%
       }%
       \forcsvlist\@yquant@do{#2}%
-      \global\cslet{yquant@langhelper@setup@attrs@set@\cmd}\keysset%
-      \global\cslet{yquant@langhelper@setup@attrs@check@\cmd}\keyscheck%
+      \global\cslet{yquant@langhelper@setup@attrs@set@\@yquant@cmd}\@yquant@keysset%
+      \global\cslet{yquant@langhelper@setup@attrs@check@\@yquant@cmd}\@yquant@keyscheck%
       \def\@yquant@do##1{%
-         \eappto\keyscmd{%
-            \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
+         \eappto\@yquant@keyscmd{%
+            \noexpand\pgfkeysdef{/yquant/attrs/\@yquant@cmd/##1}{%
                \unexpanded{%
                   \pgfkeysinterruptkeyfilter%
                      \pgfkeys{/yquant/all attrs/##1={####1}}%
@@ -135,7 +135,7 @@
       \forcsvlist\@yquant@do{#3}%
       \expandafter%
    \endgroup%
-   \keyscmd%
+   \@yquant@keyscmd%
 }
 
 \protected\def\yquant@langhelper@setup@attrs@unknown#1\pgfeov{%
@@ -165,14 +165,14 @@
 
 % BEGIN_FOLD Parsing command itself
 \protected\def\yquant@langhelper@check@name#1 {%
-   \lowercase{\edef\cmd{#1}}%
-   \unless\ifcsname yquant@lang@\cmd\endcsname%
+   \lowercase{\edef\@yquant@cmd{#1}}%
+   \unless\ifcsname yquant@lang@\@yquant@cmd\endcsname%
       \PackageError{yquant.sty}{Unsupported yquant command: `#1'}%
          {You used a command that is unknown to yquant.}%
    \fi%
    \edef\yquant@langhelper@cmd@original{#1}%
    % Provide the association with the correct attributes
-   \csname yquant@langhelper@setup@attrs@set@\cmd\endcsname%
+   \csname yquant@langhelper@setup@attrs@set@\@yquant@cmd\endcsname%
    % For "ordinary" uses of the quotes library (without additional options), it would be better not to load the library now, since then the original text (everything in quotes) is just appended to /yquant/operator style. However, then uses with options will break the pgfkeys parser, as they are invalid. For this reason, we must enable the quotes library already at this state, with the consequence that we store the longer version, i.e., the output of the quotes-parsed expression instead.
    \tikz@enable@node@quotes%
    % execute them
@@ -180,7 +180,7 @@
    \unless\ifx\yquant@langhelper@list@attrs\empty%
       \edef\yquant@langhelper@list@attrs{%
          \noexpand\pgfqkeysfiltered%
-            {/yquant/attrs/\cmd}%
+            {/yquant/attrs/\@yquant@cmd}%
             {\unexpanded\expandafter{\yquant@langhelper@list@attrs}}%
       }%
       \pgfkeys{/yquant/attr filter}%
@@ -204,9 +204,9 @@
 
 \protected\def\yquant@langhelper@check@name@ii{%
    % Check all necessary attributes were given.
-   \csname yquant@langhelper@setup@attrs@check@\cmd\endcsname%
+   \csname yquant@langhelper@setup@attrs@check@\@yquant@cmd\endcsname%
    % Finally execute the command
-   \letcs\cmd{yquant@lang@\cmd}%
+   \letcs\@yquant@cmd{yquant@lang@\@yquant@cmd}%
    \yquant@langhelper@declare@command@@parse%
 }
 % END_FOLD
@@ -219,15 +219,15 @@
 % #3: command (sequence) that is to be called after the target macros are filled
 \protected\def\yquant@langhelper@declare@command#1#2#3{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
-      \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
-         \noexpand\yquant@langhelper@gatecallback{\cmd}%
+      \lowercase{\edef\@yquant@cmd{#1}}%
+      \long\protected\csxdef{yquant@lang@\@yquant@cmd}##1##2##3{%
+         \noexpand\yquant@langhelper@gatecallback{\@yquant@cmd}%
          \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{##1}{##2}{##3}%
          \noexpand\ifyquant@langhelper@execclear@lastgate%
-            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
-               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            \yquant@for \noexpand\@yquant@i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\@yquant@i}{\@yquant@cmd}%
             }%
          \noexpand\fi%
          \unexpanded{#3}%
@@ -241,21 +241,21 @@
 % #3: command (sequence) that is to be called after the target macros are filled
 \protected\def\yquant@langhelper@declare@command@uncontrolled#1#2#3{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
-      \long\protected\csxdef{yquant@lang@\cmd}##1##2##3{%
+      \lowercase{\edef\@yquant@cmd{#1}}%
+      \long\protected\csxdef{yquant@lang@\@yquant@cmd}##1##2##3{%
          \noexpand\ifstrempty{##1}\relax{%
-            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\cmd`}{}%
+            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\@yquant@cmd`}{}%
          }%
          \noexpand\ifstrempty{##2}\relax{%
-            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
+            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\@yquant@cmd`}{}%
          }%
-         \noexpand\yquant@langhelper@gatecallback{\cmd}%
+         \noexpand\yquant@langhelper@gatecallback{\@yquant@cmd}%
          \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#2}%
          \yquant@circuit@operator{}{}{##3}%
          \noexpand\ifyquant@langhelper@execclear@lastgate%
-            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
-               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            \yquant@for \noexpand\@yquant@i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\@yquant@i}{\@yquant@cmd}%
             }%
          \noexpand\fi%
          \unexpanded{#3}%
@@ -268,13 +268,13 @@
 % #2: macro that is to be called with parameter #1 being the name of the register
 \protected\def\yquant@langhelper@declare@command@create#1#2{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
-      \long\protected\csxdef{yquant@lang@\cmd}##1##2{%
+      \lowercase{\edef\@yquant@cmd{#1}}%
+      \long\protected\csxdef{yquant@lang@\@yquant@cmd}##1##2{%
          \noexpand\ifstrempty{##1}\relax{%
-            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\cmd`}{}%
+            \noexpand\PackageError{yquant.sty}{Positive controls are not allowed for the command `\@yquant@cmd`}{}%
          }%
          \noexpand\ifstrempty{##2}\relax{%
-            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\cmd`}{}%
+            \noexpand\PackageError{yquant.sty}{Negative controls are not allowed for the command `\@yquant@cmd`}{}%
          }%
          \noexpand#2%
       }%
@@ -308,12 +308,12 @@
 }
 
 \protected\def\yquant@langhelper@declare@command@@exec#1|#2|~#3;{%
-   \edef\params{%
+   \edef\@yquant@params{%
       {\trim@spaces{#2}}%
       {\trim@spaces{#3}}%
       {\trim@spaces{#1}}%
    }%
-   \expandafter\cmd\params%
+   \expandafter\@yquant@cmd\@yquant@params%
 }
 % END_FOLD
 
@@ -326,7 +326,7 @@
    \begingroup%
       \afterassignment\yquant@langhelper@validate@i%
       #2 255=#3\relax\yquant@end%
-      \unless\ifvalid%
+      \unless\@ifyquant@valid%
          \PackageError{yquant.sty}{Invalid property value: `#3'}%
             {The value must be assignable to a \protect#2 register.}%
       \fi%
@@ -339,14 +339,14 @@
 \protected\def\yquant@langhelper@validate@i#1\relax#2\yquant@end{%
    % if the valid value was not user-delimited by \relax, #1 and #2 are empty
    % if the valid value was user-delimited by \relax, #1 is empty and #2 is \relax
-   \let\ifvalid=\iffalse%
+   \let\@ifyquant@valid=\iffalse%
    \ifstrempty{#1}{%
-      \def\tmp{#2}%
-      \ifx\empty\tmp%
-         \csletcs{ifvalid}{iftrue}%
+      \def\@yquant@tmp{#2}%
+      \ifx\empty\@yquant@tmp%
+         \csletcs{@ifyquant@valid}{iftrue}%
       \else%
-         \ifx\yquant@langhelper@validate@relax\tmp%
-            \csletcs{ifvalid}{iftrue}%
+         \ifx\yquant@langhelper@validate@relax\@yquant@tmp%
+            \csletcs{@ifyquant@valid}{iftrue}%
          \fi%
       \fi%
    }\relax%
