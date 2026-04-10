@@ -428,14 +428,14 @@
 \protected\def\yquant@circuit@actonwires#1#2#3#4{%
    \begingroup%
       \let\tmp=\empty%
-      \def\do##1{%
+      \def\@yquant@do##1{%
          % We do not extend the wire: a register that is discarded somewhere does not make
          % sense, only right after some application (which is supposed to already have
          % extended the wire appropriately).
          \eappto\tmp{#2{##1}#4}%
          #1{##1}#4%
       }%
-      \dolistloop{#3}%
+      \forlistloop\@yquant@do{#3}%
       \csxappto{\yquant@prefix draw}{\tmp}%
    \endgroup%
 }

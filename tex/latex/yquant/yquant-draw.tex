@@ -721,14 +721,14 @@
       % prefix or discard
       \ifstrempty{#2}{%
          % However, if the outer node was not named, no access to the inner nodes is desired, so we delete all nodes again.
-         \def\do##1{%
+         \def\@yquant@do##1{%
             \csgundef{pgf@sh@ns@##1}%
             \csgundef{pgf@sh@np@##1}%
             \csgundef{pgf@sh@nt@##1}%
             \csgundef{pgf@sh@pi@##1}%
             \csgundef{pgf@sh@ma@##1}%
          }%
-         \dolistcsloop{\yquant@draw@subcircuit@nodelist}%
+         \forlistcsloop\@yquant@do{\yquant@draw@subcircuit@nodelist}%
          \csgundef\yquant@draw@subcircuit@nodelist%
       }{%
          \ifcsname\yquant@prefix draw@subcircuit@nodelist\endcsname%
@@ -750,14 +750,14 @@
       \fi%
    \or%
       % discard: remove them all
-      \def\do##1{%
+      \def\@yquant@do##1{%
          \csgundef{pgf@sh@ns@##1}%
          \csgundef{pgf@sh@np@##1}%
          \csgundef{pgf@sh@nt@##1}%
          \csgundef{pgf@sh@pi@##1}%
          \csgundef{pgf@sh@ma@##1}%
       }%
-      \dolistcsloop{\yquant@draw@subcircuit@nodelist}%
+      \forlistcsloop\@yquant@do{\yquant@draw@subcircuit@nodelist}%
       \csgundef\yquant@draw@subcircuit@nodelist%
    \else%
       \PackageError{yquant.sty}{Assertion failure}{Unknown value for name mangling (2).}%

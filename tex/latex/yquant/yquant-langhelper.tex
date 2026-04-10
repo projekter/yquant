@@ -99,7 +99,7 @@
       }%
       \let\keysset=\relax%
       \let\keyscheck=\relax%
-      \def\do##1{%
+      \def\@yquant@do##1{%
          \eappto\keyscmd{%
             \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
                \unexpanded{%
@@ -118,10 +118,10 @@
          \expandafter\appto\expandafter\keyscheck%
             \csname yquant@langhelper@attrs@req@##1\endcsname%
       }%
-      \docsvlist{#2}%
+      \forcsvlist\@yquant@do{#2}%
       \global\cslet{yquant@langhelper@setup@attrs@set@\cmd}\keysset%
       \global\cslet{yquant@langhelper@setup@attrs@check@\cmd}\keyscheck%
-      \def\do##1{%
+      \def\@yquant@do##1{%
          \eappto\keyscmd{%
             \noexpand\pgfkeysdef{/yquant/attrs/\cmd/##1}{%
                \unexpanded{%
@@ -132,7 +132,7 @@
             }%
          }%
       }%
-      \docsvlist{#3}%
+      \forcsvlist\@yquant@do{#3}%
       \expandafter%
    \endgroup%
    \keyscmd%

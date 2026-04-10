@@ -558,8 +558,7 @@
       \count6=-1 % index of main register
       \let\ifinmulti=\iftrue%
       \let\ifallowmain=\iftrue%
-      \let\do=\yquant@register@get@ids@multilist%
-      \docsvlist{#1}%
+      \forcsvlist\yquant@register@get@ids@multilist{#1}%
       \ifnum\count6=-1 %
          \count6=\count0 %
       \fi%
@@ -652,15 +651,13 @@
 }
 
 \protected\def\yquant@register@get@ids@norange@index#1\yquant@register@get@ids@@index{%
-   \let\olddo=\do%
    % the string contains sub-indices; since we are not in a range, multi-indices may still be allowed
    \ifinmulti%
-      \let\do=\yquant@register@get@ids@subindex@nomulti%
+      \expandafter\forcsvlist\expandafter\yquant@register@get@ids@subindex@nomulti%
    \else%
-      \let\do=\yquant@register@get@ids@subindex@allowmulti%
+      \expandafter\forcsvlist\expandafter\yquant@register@get@ids@subindex@allowmulti%
    \fi%
-   \docsvlist{#1}%
-   \let\do=\olddo%
+   {#1}%
 }
 
 \def\yquant@register@get@ids@subindex@nomulti#1{%
@@ -688,8 +685,7 @@
       \count6=-1 % index of main register
       \let\ifinmulti=\iftrue%
       \let\ifallowmain=\iftrue%
-      \let\do=\yquant@register@get@ids@subindex@nomulti%
-      \docsvlist{#1}%
+      \forcsvlist\yquant@register@get@ids@subindex@nomulti{#1}%
       \ifnum\count6=-1 %
          \count6=\count0 %
       \fi%
