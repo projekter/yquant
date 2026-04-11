@@ -15,7 +15,7 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquant}[2026/01/03 v0.9 Yet another quantum circuit library for LaTeX]
+\ProvidesPackage{yquant}[2026/04/11 v0.9.1 Yet another quantum circuit library for LaTeX]
 
 \RequirePackage{etoolbox}[2018/02/11]
 \RequirePackage{tikz}[2015/08/29]
@@ -39,6 +39,10 @@
 \newif\ifyquantdebug
 \pgfdeclarelayer{wires}
 \pgfdeclarelayer{behindwires}
+\newdimen\yquant@dimena
+\newdimen\yquant@dimenb
+\newdimen\yquant@dimenc
+\newdimen\yquant@dimend
 \input yquant-tools.tex
 \input yquant-shapes.tex
 \input yquant-config.tex

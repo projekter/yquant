@@ -59,7 +59,7 @@
    \def\yquant@prepare@injectcontrols@count{0}%
    \def\idx{0}%
    \yquant@prepare@ifs@direct%
-   \dimen2=\yquant@config@operator@minimum@width%
+   \yquant@dimenb=\yquant@config@operator@minimum@width%
    \ifyquant@circuit@operator@hasControls%
       \edef\yquant@prepare@list{%
          \yquant@list@range%
@@ -84,10 +84,10 @@
       }%
          \expandafter%
       \endpgfinterruptboundingbox%
-      \expandafter\dimen\expandafter0\expandafter=%
-         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
-      \ifdim\dimen0>\dimen2 %
-         \dimen2=\dimen0 %
+      \expandafter\yquant@dimena\expandafter=%
+         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\space%
+      \ifdim\yquant@dimena>\yquant@dimenb%
+         \yquant@dimenb=\yquant@dimena%
       \fi%
       \numdef\idx{\idx+1}%
    }%
@@ -107,7 +107,7 @@
    \def\yquant@draw@endgroup{\noexpand\yquant@draw@endinjectiongroup}%
    \yquant@prepare{#1}{#2}%
    \csxdef{yquant@prepare@@injection@\the\yquant@prepare@injections}{%
-      {\the\dimen2}{\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
+      {\the\yquant@dimenb}{\unexpanded\expandafter{\yquant@circuit@operator@targets}}%
    }%
    \forlistloop\yquant@prepare@injection@loop\yquant@circuit@operator@targets%
 }
@@ -159,7 +159,7 @@
 \protected\def\yquant@prepare@inject#1{%
    \letcs\yquant@prepare@inject@@data{yquant@prepare@@injection@#1}%
    \csgundef{yquant@prepare@@injection@#1}%
-   \dimen0=\expandafter\@firstoftwo\yquant@prepare@inject@@data\relax%
+   \yquant@dimena=\expandafter\@firstoftwo\yquant@prepare@inject@@data\space%
    \let\@tmpconti=\yquant@register@multi@contiguous%
    \protected\def\yquant@register@multi@contiguous##1##2{%
       \yquant@for \@yquant@i := ##1 to ##2 {%
@@ -179,8 +179,8 @@
       \@fifthoffive#2% this clears all the actions for the individual contiguous slices
       % but we need to do something for the first register
       \csedef{yquant@prepare@replacecontrol@\@secondoffive#2}{%
-         \noexpand\ifdim\the\dimen0>\dimen2 %
-            \dimen2=\the\dimen0 \relax%
+         \noexpand\ifdim\the\yquant@dimena>\yquant@dimenb%
+            \yquant@dimenb=\the\yquant@dimena\space%
          \noexpand\fi%
          \yquant@sort@eadd{%
             \yquant@draw@inject{#1}%
@@ -188,8 +188,8 @@
       }%
    }{%
       \csedef{yquant@prepare@replacecontrol@#2}{%
-         \noexpand\ifdim\the\dimen0>\dimen2 %
-            \dimen2=\the\dimen0 \relax%
+         \noexpand\ifdim\the\yquant@dimena>\yquant@dimenb%
+            \yquant@dimenb=\the\yquant@dimena\space%
          \noexpand\fi%
          \yquant@sort@eadd{%
             \yquant@draw@inject{#1}%
@@ -259,10 +259,10 @@
          \yquant@register@update@depth{#2}{\the\dimexpr-\yquant@pgf@picminy\relax}%
          \expandafter%
       \endpgfinterruptboundingbox%
-      \expandafter\dimen\expandafter0\expandafter=%
-         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
-      \ifdim\dimen0>\dimen2 %
-         \dimen2=\dimen0 %
+      \expandafter\yquant@dimena\expandafter=%
+         \the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\space%
+      \ifdim\yquant@dimena>\yquant@dimenb%
+         \yquant@dimenb=\yquant@dimena%
       \fi%
       \numdef\idx{\idx+1}%
    \fi%
@@ -328,7 +328,7 @@
    \yquant@sort@dolistloop%
    \protected@csxappto{\yquant@prefix draw}{%
       \yquant@draw@group%
-         {\the\dimen2}%
+         {\the\yquant@dimenb}%
          \ifyquant@circuit@operator@hasControls%
            \yquant@register@get@type\yquant@prepare@controltype%
          \else%
@@ -590,12 +590,12 @@
 
 \protected\def\yquant@prepare@subcircuit@getmaxx#1{%
    \begingroup%
-      \dimen0=\yquant@orientation@minus16383.99999pt %
+      \yquant@dimena=\yquant@orientation@minus16383.99999pt %
       \def\@yquant@do##1{%
          \ifcsname\yquant@prefix xpos@##1\endcsname%
-            \dimen2=\csname\yquant@prefix xpos@##1\endcsname\relax%
-            \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
-               \dimen0=\dimen2 %
+            \yquant@dimenb=\csname\yquant@prefix xpos@##1\endcsname\relax%
+            \ifdim\yquant@orientation@plus\yquant@dimena<\yquant@orientation@plus\yquant@dimenb%
+               \yquant@dimena=\yquant@dimenb%
             \fi%
          \else%
             \PackageError{yquant.sty}{Internal inconsistency detected}%
@@ -605,7 +605,7 @@
       \forlistloop\@yquant@do{#1}%
       \expandafter%
    \endgroup%
-   \expandafter\def\expandafter\@yquant@newx\expandafter{\the\dimen0}%
+   \expandafter\def\expandafter\@yquant@newx\expandafter{\the\yquant@dimena}%
 }
 
 \protected\def\yquant@prepare@subcircuit@move@loop#1{%
@@ -721,12 +721,12 @@
    \else%
       % if we have outputs, those will be realized as additional drawing groups following this macro, so increasing the picture at this point is rather pointless. Instead, we adjust the wire positions appropriately. The additional separation will be inserted by the outputs.
       \begingroup%
-         \dimen0=\yquant@orientation@minus16383.99999pt %
+         \yquant@dimena=\yquant@orientation@minus16383.99999pt %
          \yquant@fordown \@yquant@i := \csname\yquant@prefix registers\endcsname downto 1 {%
             \ifcsname\yquant@prefix xpos@\@yquant@i\endcsname%
-               \dimen2=\csname\yquant@prefix xpos@\@yquant@i\endcsname\relax%
-               \ifdim\yquant@orientation@plus\dimen0<\yquant@orientation@plus\dimen2 %
-                  \dimen0=\dimen2 %
+               \yquant@dimenb=\csname\yquant@prefix xpos@\@yquant@i\endcsname\relax%
+               \ifdim\yquant@orientation@plus\yquant@dimena<\yquant@orientation@plus\yquant@dimenb%
+                  \yquant@dimena=\yquant@dimenb%
                \fi%
             \else%
                \PackageError{yquant.sty}{Internal inconsistency detected}%
@@ -735,7 +735,7 @@
          }%
          \expandafter%
       \endgroup%
-      \expandafter\def\expandafter\@yquant@newx\expandafter{\the\dimen0}%
+      \expandafter\def\expandafter\@yquant@newx\expandafter{\the\yquant@dimena}%
       \yquant@fordown \@yquant@i := \csname\yquant@prefix registers\endcsname downto 1 {%
          \cslet{\yquant@prefix xpos@\@yquant@i}\@yquant@newx%
       }%
@@ -756,7 +756,7 @@
 \protected\long\def\yquant@prepare@subcircuit#1{%
    \yquant@sort@clear%
    \def\idx{0}%
-   \dimen2=\yquant@config@operator@minimum@width%
+   \yquant@dimenb=\yquant@config@operator@minimum@width%
    \ifyquant@circuit@operator@hasControls%
       \edef\yquant@prepare@list{%
          \yquant@list@range%
@@ -855,13 +855,13 @@
             \yquant@register@inject@extents{-\pgf@picminx}{\pgf@picmaxx}%
          }%
          \edef\@yquant@cmd{%
-            \noexpand\endpgfinterruptboundingbox
-            \dimen0=\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\relax%
+            \noexpand\endpgfinterruptboundingbox%
+            \yquant@dimena=\the\dimexpr\yquant@pgf@picmaxx-\yquant@pgf@picminx\relax\space%
             \yquant@prepare@subcircuit@add%
          }%
       \@yquant@cmd%
-      \ifdim\dimen0>\dimen2 %
-         \dimen2=\dimen0 %
+      \ifdim\yquant@dimena>\yquant@dimenb%
+         \yquant@dimenb=\yquant@dimena%
       \fi%
       \numdef\idx{\idx+1}%
    }%

@@ -527,7 +527,7 @@
    \fi%
 }
 
-% #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \dimen0, which is translated to the user coordinate system.
+% #1 is a pgf soft path. We extract the maximum x position at the y position specified in #2 and assign it to \yquant@dimena, which is translated to the user coordinate system.
 % If the circuit is currently vertical, we extract the minimum y position at the x position specified in #2.
 \protected\def\yquant@softpath@extractmaxxat#1#2{%
    \begingroup%
@@ -543,7 +543,7 @@
       #1%
       \expandafter%
    \endgroup%
-   \expandafter\dimen\expandafter0\expandafter=\the\dimen0\relax%
+   \expandafter\yquant@dimena\expandafter=\the\dimen0\relax%
 }
 
 % We work with transformed coordinate systems and inversions, so it may happen that we don't end up exactly within a boundary, but are slightly off.

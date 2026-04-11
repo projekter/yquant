@@ -481,7 +481,7 @@
          \yquant@draw@@x\yquant@orientation@minus%
          .5\dimexpr\@secondofthree#4\relax%
       }%
-      \dimen0=\@yquant@newx\space%
+      \yquant@dimena=\@yquant@newx\space%
       \let\yquant@draw@subcircuit@leftpos=\@yquant@newx% seamless subcircuits: do not add another separation if we are there
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#5}%
@@ -542,13 +542,13 @@
          % Completely empty wires did not yet affect the bounding box
          % Problem: we compare a user-mode TikZ position (register y position) with a system-level pgf position (picture boundary box). If shifts or scalings are in effect, we must first transform the point appropriately. Note that negative scalings may upset our assumption of which is the minimum and which is the maximum! If additionally rotations are in effect, we must even consider those transformations for the leftmost and the rightmost point, which makes all of this far more complicated than it should be. For this reason, we have a shortcut in action in case no nontranslation transformations are present.
          \ifpgf@pt@identity%
-            \dimen0=\dimexpr\yquant@register@get@y1+\yquant@pgf@pt@y\relax%
-            \ifdim\dimen0>\yquant@pgf@picmaxy %
-               \global\yquant@pgf@picmaxy=\dimen0 %
+            \yquant@dimena=\dimexpr\yquant@register@get@y1+\yquant@pgf@pt@y\relax%
+            \ifdim\yquant@dimena>\yquant@pgf@picmaxy %
+               \global\yquant@pgf@picmaxy=\yquant@dimena%
             \fi%
-            \dimen0=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}+\yquant@pgf@pt@y\relax%
-            \ifdim\dimen0<\yquant@pgf@picminy %
-               \global\yquant@pgf@picminy=\dimen0 %
+            \yquant@dimena=\dimexpr\yquant@register@get@y{\csname\yquant@prefix registers\endcsname}+\yquant@pgf@pt@y\relax%
+            \ifdim\yquant@dimena<\yquant@pgf@picminy %
+               \global\yquant@pgf@picminy=\yquant@dimena%
             \fi%
          \else%
             % first wire, left end
@@ -607,8 +607,8 @@
          \fi%
       }}%
       \ifpgf@pt@identity%
-         \dimen0=\dimexpr.5\yquant@pgf@picminy+.5\yquant@pgf@picmaxy-\yquant@pgf@pt@y\relax%
-         \dimen2=\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax%
+         \yquant@dimena=\dimexpr.5\yquant@pgf@picminy+.5\yquant@pgf@picmaxy-\yquant@pgf@pt@y\relax%
+         \yquant@dimenb=\dimexpr\yquant@pgf@picmaxy-\yquant@pgf@picminy\relax%
       \else%
          \begingroup%
             \ifdim\pgf@pt@ab pt=0pt% may also be reflection
@@ -617,11 +617,11 @@
                \pgfpointtransformed{\pgfqpoint{\pgf@picminx}{\pgf@picminy}}%
                \@tempdima=\yquant@pgf@y%
                \pgfpointtransformed{\pgfqpoint{\pgf@picmaxx}{\pgf@picmaxy}}%
-               \dimen2=\dimexpr\yquant@pgf@y-\@tempdima\relax%
-               \ifdim\dimen2<0pt % reflections
-                  \dimen2=-\dimen2 %
+               \yquant@dimenb=\dimexpr\yquant@pgf@y-\@tempdima\relax%
+               \ifdim\yquant@dimenb<0pt % reflections
+                  \yquant@dimenb=-\yquant@dimenb%
                \fi%
-               \dimen0=\dimexpr.5\dimexpr\@tempdima+\yquant@pgf@y\relax\relax%
+               \yquant@dimena=\dimexpr.5\dimexpr\@tempdima+\yquant@pgf@y\relax\relax%
             \else%
                % We must figure out the size manually. pgf@picminy/pgf@picmaxy are not trustworthy, as they describe the height over the outer unrotated rectangle that completely covers the rotated one.
                % Let a be the true width of the rotated rectangle and b its height. We are looking for b.
@@ -644,48 +644,48 @@
                % The y position of the middle point is simply .5\pgf@picminy+.5\pgf@picmaxy in the unrotated system. Hence, we have to calculate the full point (x, y) and rotate it backwards:
                \ifyquanthorz{%
                   % y cos alpha - x sin alpha
-                  \dimen0=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax-\pgf@pt@ab\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax\relax%
+                  \yquant@dimena=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax-\pgf@pt@ab\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax\relax%
                }{%
                % x cos alpha + y sin alpha
-                  \dimen0=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax+\pgf@pt@ab\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax\relax%
+                  \yquant@dimena=.5\dimexpr\pgf@pt@aa\dimexpr\pgf@picminx+\pgf@picmaxx-2\pgf@pt@x\relax+\pgf@pt@ab\dimexpr\pgf@picminy+\pgf@picmaxy-2\pgf@pt@y\relax\relax%
                }%
-               \ifdim\dimen2<0pt % reflections
-                  \dimen2=-\dimen2 %
+               \ifdim\yquant@dimenb<0pt % reflections
+                  \yquant@dimenb=-\yquant@dimenb%
                \fi%
             \fi%
             \edef\@yquant@cmd{%
                \endgroup%
-               \dimen0=\the\dimen0 %
-               \dimen2=\the\dimen2 %
+               \yquant@dimena=\the\yquant@dimena%
+               \yquant@dimenb=\the\yquant@dimenb%
             }%
          \@yquant@cmd%
       \fi%
       % now, due to cross-subcircuit alignments of enclosing rectangles, it might be that our computed width is far larger than the one we would expect
-      \dimen4=\yquant@orientation@minus\maxdimen %
+      \yquant@dimenc=\yquant@orientation@minus\maxdimen %
       \forlistloop\yquant@draw@subcircuit@remeasure{#5}%
-      \advance \dimen4 by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
+      \advance \yquant@dimenc by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
       \gundef\yquant@circuit@endwires@operatorsep%
-      \dimen6=\@firstofthree#4 %
+      \yquant@dimend=\@firstofthree#4 %
       \dimdef\@yquant@delta{%
-         \dimen4%
+         \yquant@dimenc%
          -\yquant@draw@@x%
-         \yquant@orientation@minus.5\dimen6%
+         \yquant@orientation@minus.5\yquant@dimend%
       }%
       \ifdim\dimexpr\@yquant@delta\yquant@orientation@minus100sp\relax\ifyquanthorz><0pt %
          % we simply increase our size - but this cannot help for the centering if there are multiple subcircuits or a conditional line
          \dimdef\yquant@draw@@x{\yquant@draw@@x+.5\dimexpr\@yquant@delta\relax}%
          \dimdef\yquant@draw@@width{\yquant@draw@@width\yquant@orientation@plus\@yquant@delta}%
-         \advance \dimen6 by \yquant@orientation@plus\@yquant@delta\space%
+         \advance \yquant@dimend by \yquant@orientation@plus\@yquant@delta\space%
       \fi%
       \edef\@yquant@cmd{%
-         \noexpand\path \yquant@coords(\yquant@draw@@x, \the\dimen0)%
+         \noexpand\path \yquant@coords(\yquant@draw@@x, \the\yquant@dimena)%
             node[/yquant/every operator, \yquant@draw@@style,%
                  /yquant/operators/every subcircuit box, /yquant/this operator,%
                  /yquant/operators/this subcircuit box,%
                  /yquant/internal/multi main=true,%
                  name prefix=, name suffix=, name=yquantbox]%
-            {\ifyquanthorz{\vbox to \the\dimen2 {\hbox to \the\dimen6 {}}}%
-                          {\hbox to \the\dimen2 {\vbox to \the\dimen6 {}}}};%
+            {\ifyquanthorz{\vbox to \the\yquant@dimenb {\hbox to \the\yquant@dimend {}}}%
+                          {\hbox to \the\yquant@dimenb {\vbox to \the\yquant@dimend {}}}};%
       }%
       \ifyquant@config@draw@quality%
          \@yquant@cmd%
@@ -765,8 +765,8 @@
 }
 
 \protected\def\yquant@draw@subcircuit@remeasure#1{%
-   \ifdim\dimen4\ifyquanthorz<>\yquant@register@get@x{#1} %
-      \dimen4=\yquant@register@get@x{#1} %
+   \ifdim\yquant@dimenc\ifyquanthorz<>\yquant@register@get@x{#1} %
+      \yquant@dimenc=\yquant@register@get@x{#1} %
    \fi%
 }
 
@@ -795,10 +795,10 @@
    \else%
       \ifyquanthorz{%
          \pgfpointanchor{yquantbox}{east}%
-         \dimen0=\pgf@x%
+         \yquant@dimena=\pgf@x%
       }{%
          \pgfpointanchor{yquantbox}{south}%
-         \dimen0=\pgf@y%
+         \yquant@dimena=\pgf@y%
       }%
       \yquant@circuit@extendwire{#1}*%
    \fi%
@@ -844,10 +844,10 @@
       % we don't fill subcircuits, so the nonaffected wires will be drawn through (we deliberatly fill the subcircuit on the behindwires layer, so that the wires within a subcircuit will be visible despite the filling; but we cannot differentiate between "good" internal and "bad" nonaffected wires). If such a constellation arises, better use the quality layout
       \ifyquanthorz{%
          \pgfpointanchor{yquantbox}{east}%
-         \dimen0=\pgf@x%
+         \yquant@dimena=\pgf@x%
       }{%
          \pgfpointanchor{yquantbox}{south}%
-         \dimen0=\pgf@y%
+         \yquant@dimena=\pgf@y%
       }%
       \yquant@for \@yquant@i := #1 to #2 {%
          \xifinlist{\@yquant@i}{#4}{%
@@ -1094,7 +1094,7 @@
    \begingroup%
       \yquant@register@get@maxxlist\@yquant@newx{#1}%
       \dimdef\@yquant@newx{\@yquant@newx\yquant@orientation@plus#2}%
-      \dimen0=\@yquant@newx%
+      \yquant@dimena=\@yquant@newx\space%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop\yquant@draw@move@loop{#1}%
    \endgroup%
@@ -1200,7 +1200,7 @@
       \yquant@orientation@plus%
       \csname yquant@circuit@enclose@#1@extentT@\csname yquant@sort@item#2\endcsname\endcsname%
       \yquant@orientation@plus%
-      \dimen6%
+      \yquant@dimend%
    }%
 }
 
@@ -1210,7 +1210,7 @@
       \yquant@orientation@minus%
       \csname yquant@circuit@enclose@#1@extentB@\csname yquant@sort@item#2\endcsname\endcsname%
       \yquant@orientation@minus%
-      \dimen6%
+      \yquant@dimend%
    }%
 }
 
@@ -1220,14 +1220,14 @@
    \fi%
    \dimdef\@yquant@encloseleft{%
       \csname yquant@draw@enclose@#1@left@\csname yquant@sort@item#2\endcsname\endcsname%
-      -\dimen4%
+      -\yquant@dimenc%
    }%
 }
 
 \protected\def\yquant@draw@enclose@calcright#1#2{%
    \dimdef\@yquant@encloseright{%
       \csname yquant@draw@enclose@#1@right@\csname yquant@sort@item#2\endcsname\endcsname%
-      +\dimen4%
+      +\yquant@dimenc%
    }%
 }
 
@@ -1245,8 +1245,8 @@
          \pgfmathsetlength\pgf@y{\pgfkeysvalueof{/pgf/inner ysep}}%
          \edef\@yquant@setsep{%
             \endgroup%
-            \noexpand\dimen\ifyquanthorz46=\the\pgf@x\space%
-            \noexpand\dimen\ifyquanthorz64=\the\pgf@y\space%
+            \ifyquanthorz\yquant@dimenc\yquant@dimend=\the\pgf@x\space%
+            \ifyquanthorz\yquant@dimend\yquant@dimenc=\the\pgf@y\space%
          }%
          \@yquant@setsep%
       \expandafter\ifx\csname yquant@circuit@enclose@#1@involved\endcsname\yquant@circuit@enclose@allinvolved%
@@ -1263,15 +1263,15 @@
          \numdef\@yquant@i{\yquant@sort@count-1}%
       \fi%
       \yquant@draw@enclose@calcbottom{#1}\@yquant@i%
-      \dimen0=\@yquant@enclosebottom\space% store the bottom-most position
+      \yquant@dimena=\@yquant@enclosebottom\space% store the bottom-most position
       \ifcase\csname yquant@circuit@enclose@#1@shape\endcsname\space%
          % If we just need a rectangle, the remaining extracting steps are simple, just look at the extremal parts.
          \ifdim\csname yquant@draw@enclose@#1@left\endcsname=\maxdimen%
             \PackageError{yquant.sty}{Empty enclose}{No gates contained in \string\enclose\space region.}%
          \fi%
-         \dimdef\@yquant@encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\dimen4}%
-         \dimen2=\@yquant@encloseleft\space%
-         \dimdef\@yquant@encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\dimen4}%
+         \dimdef\@yquant@encloseleft{\csname yquant@draw@enclose@#1@left\endcsname-\yquant@dimenc}%
+         \yquant@dimenb=\@yquant@encloseleft\space%
+         \dimdef\@yquant@encloseright{\csname yquant@draw@enclose@#1@right\endcsname+\yquant@dimenc}%
          \yquant@draw@enclose@calctop{#1}0%
          \edef\@yquant@points{%
             \yquant@coords(\@yquant@encloseleft,\@yquant@enclosebottom)%
@@ -1317,7 +1317,7 @@
             \yquant@coords(\@yquant@encloseright,\@yquant@enclosetop)%
             \yquant@coords(\@yquant@encloseleft,\@yquant@enclosetop)%
          }%
-         \dimen2=\@yquant@encloseleft\space% figure out the leftmost position
+         \yquant@dimenb=\@yquant@encloseleft\space% figure out the leftmost position
          % Let's go down at the left
          \yquant@for \@yquant@i := 1 to \numexpr\yquant@sort@count-1\relax {%
             \let\@yquant@encloseoldleft=\@yquant@encloseleft%
@@ -1330,8 +1330,8 @@
                   \yquant@coords(\@yquant@encloseoldleft,\@yquant@midpoint)%
                   \yquant@coords(\@yquant@encloseleft,\@yquant@midpoint)%
                }%
-               \ifdim\@yquant@encloseleft<\dimen2 %
-                  \dimen2=\@yquant@encloseleft\space%
+               \ifdim\@yquant@encloseleft<\yquant@dimenb%
+                  \yquant@dimenb=\@yquant@encloseleft\space%
                \fi%
             \fi%
          }%
@@ -1346,7 +1346,7 @@
                             \unexpanded\expandafter\expandafter\expandafter{\csname yquant@circuit@enclose@#1@style\endcsname},
                             anchor=south \ifyquanthorz{west}{east}, transform shape,
                             /yquant/internal/name unaliased=yquantbox}] at %
-               \yquant@coords(\the\dimen2, \the\dimen0) {};
+               \yquant@coords(\the\yquant@dimenb, \the\yquant@dimena) {};
          }%
       }%
    \endgroup%
@@ -1372,7 +1372,7 @@
    % this is an align that surpasses subcircuits - #1 is a list containing prefixes and ids
    \begingroup%
       \yquant@register@peek@maxxlist\@yquant@newx{#1}%
-      \dimen0=\@yquant@newx%
+      \yquant@dimena=\@yquant@newx\space%
       \let\pgfshapeclippathhorzresult=\empty%
       \forlistloop{\yquant@register@colonsplit\yquant@draw@enclose@align@loop}{#1}%
    \endgroup%

@@ -3,7 +3,7 @@
 \protected\def\yquant@circuit@extendwire#1#2{%
    \begingroup%
       \ifx*#2%
-         \edef\@yquant@wirexpos{\the\dimen0}%
+         \edef\@yquant@wirexpos{\the\yquant@dimena}%
       \else%
          \pgfpointanchor{yquantbox}{#2}%
          \edef\@yquant@wirexpos{\the\yquant@pgf@x}%
