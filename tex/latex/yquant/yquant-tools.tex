@@ -229,20 +229,20 @@
       \let#2=\empty%
    \else%
       \letcs#2{yquant@sort@item0}%
-      \count0=1 %
+      \yquant@counta=1 %
       \loop%
-         \ifnum\count0<\yquant@sort@count\relax%
+         \ifnum\yquant@counta<\yquant@sort@count\relax%
             \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter#1%
                \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
                \expandafter\expandafter\expandafter#2%
                \expandafter\expandafter\expandafter}%
                \expandafter\expandafter\expandafter{%
-                  \csname yquant@sort@item\the\count0\endcsname%
+                  \csname yquant@sort@item\the\yquant@counta\endcsname%
                }%
                \relax{%
-               \letcs#2{yquant@sort@item\the\count0}%
+               \letcs#2{yquant@sort@item\the\yquant@counta}%
             }%
-            \advance\count0 by 1 %
+            \advance\yquant@counta by 1 %
       \repeat%
    \fi%
 }
@@ -259,8 +259,8 @@
    \ifnum#1<#2\relax%
       \yquant@sort@divide{#1}{#2}%
       \edef\@yquant@cmd{%
-         \noexpand\yquant@sort@aux{#1}{\the\numexpr\count0-1\relax}%
-         \noexpand\yquant@sort@aux{\the\numexpr\count0+1\relax}{#2}%
+         \noexpand\yquant@sort@aux{#1}{\the\numexpr\yquant@counta-1\relax}%
+         \noexpand\yquant@sort@aux{\the\numexpr\yquant@counta+1\relax}{#2}%
       }%
       \@yquant@cmd%
    \fi%
@@ -269,25 +269,25 @@
 \def\yquant@iftrue{\iftrue}%
 \def\yquant@iffalse{\iffalse}%
 \protected\def\yquant@sort@divide#1#2{%
-   \count0=#1\relax% i
-   \count2=#2\relax% j
-   \advance\count2 by -1 %
+   \yquant@counta=#1\relax% i
+   \yquant@countb=#2\relax% j
+   \advance\yquant@countb by -1 %
    \letcs\yquant@sort@pivot{yquant@sort@item#2}%
    \loop%
       % search an item from the left that is larger or equal to the pivot
       {% protect the outer loop from finding \repeat
          \loop%
-            \ifnum\count0<#2\relax%
+            \ifnum\yquant@counta<#2\relax%
                \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
                   \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
                   \expandafter\expandafter\expandafter\yquant@sort@pivot%
                   \expandafter\expandafter\expandafter}%
                   \expandafter\expandafter\expandafter{%
-                     \csname yquant@sort@item\the\count0\endcsname%
+                     \csname yquant@sort@item\the\yquant@counta\endcsname%
                   }{%
                      \expandafter\yquant@iffalse%
                   }{%
-                     \advance\count0 by 1 %
+                     \advance\yquant@counta by 1 %
                      \expandafter\yquant@iftrue%
                   }%
             \else%
@@ -296,19 +296,19 @@
          \repeat%
          \expandafter%
       }%
-      \expandafter\count\expandafter0\expandafter=\the\count0\relax%
+      \expandafter\yquant@counta\expandafter=\the\yquant@counta\relax%
       % search an item from the right that is small than the pivot
       {% protect the outer loop from finding \repeat
          \loop%
-            \ifnum\count2>#1\relax%
+            \ifnum\yquant@countb>#1\relax%
                \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\yquant@sort@cmp%
                   \expandafter\expandafter\expandafter\expandafter\expandafter\expandafter\expandafter{%
                   \expandafter\expandafter\expandafter\yquant@sort@pivot%
                   \expandafter\expandafter\expandafter}%
                   \expandafter\expandafter\expandafter{%
-                     \csname yquant@sort@item\the\count2\endcsname%
+                     \csname yquant@sort@item\the\yquant@countb\endcsname%
                   }{%
-                     \advance\count2 by -1 %
+                     \advance\yquant@countb by -1 %
                      \expandafter\yquant@iftrue%
                   }{%
                      \expandafter\yquant@iffalse%
@@ -319,17 +319,17 @@
          \repeat%
          \expandafter%
       }%
-      \expandafter\count\expandafter2\expandafter=\the\count2\relax%
-      \ifnum\count0<\count2 %
+      \expandafter\yquant@countb\expandafter=\the\yquant@countb\relax%
+      \ifnum\yquant@counta<\yquant@countb %
          % swap item i <> item j
-         \letcs\@yquant@tmp{yquant@sort@item\the\count0}%
-         \csletcs{yquant@sort@item\the\count0}{yquant@sort@item\the\count2}%
-         \cslet{yquant@sort@item\the\count2}\@yquant@tmp%
+         \letcs\@yquant@tmp{yquant@sort@item\the\yquant@counta}%
+         \csletcs{yquant@sort@item\the\yquant@counta}{yquant@sort@item\the\yquant@countb}%
+         \cslet{yquant@sort@item\the\yquant@countb}\@yquant@tmp%
       \fi%
-      \ifnum\count0<\count2 %
+      \ifnum\yquant@counta<\yquant@countb %
    \repeat%
-   \letcs\@yquant@tmp{yquant@sort@item\the\count0}%
-   \csletcs{yquant@sort@item\the\count0}{yquant@sort@item#2}%
+   \letcs\@yquant@tmp{yquant@sort@item\the\yquant@counta}%
+   \csletcs{yquant@sort@item\the\yquant@counta}{yquant@sort@item#2}%
    \cslet{yquant@sort@item#2}\@yquant@tmp%
 }
 
@@ -350,15 +350,15 @@
       \yquant@sort@addlist#1%
       \yquant@sort#2%
       \let#1=\empty%
-      \count0=0 %
+      \yquant@counta=0 %
       \loop%
-         \ifnum\count0<\yquant@sort@count%
+         \ifnum\yquant@counta<\yquant@sort@count%
             \expandafter\expandafter\expandafter\listadd%
             \expandafter\expandafter\expandafter#1%
             \expandafter\expandafter\expandafter{%
-               \csname yquant@sort@item\the\count0\endcsname%
+               \csname yquant@sort@item\the\yquant@counta\endcsname%
             }%
-            \advance\count0 by 1 %
+            \advance\yquant@counta by 1 %
       \repeat%
       \expandafter%
    \endgroup%
@@ -366,14 +366,14 @@
 }
 
 \protected\def\yquant@sort@dolistloop{%
-   \count0=0 %
+   \yquant@counta=0 %
    \loop%
-      \ifnum\count0<\yquant@sort@count%
+      \ifnum\yquant@counta<\yquant@sort@count%
          \expandafter\expandafter\expandafter\@yquant@do%
          \expandafter\expandafter\expandafter{%
-            \csname yquant@sort@item\the\count0\endcsname%
+            \csname yquant@sort@item\the\yquant@counta\endcsname%
          }%
-         \advance\count0 by 1 %
+         \advance\yquant@counta by 1 %
    \repeat%
 }
 

@@ -1302,9 +1302,9 @@
 }
 
 \protected\def\yquant@register@flag@clean#1#2{%
-   \ifstrequal{#2}{init}{%
-      \advance\count8 by 1 %
-   }\relax%
+   \ifdefined\yquant@register@flag@cleancount%
+      \numdef\yquant@register@flag@cleancount{\yquant@register@flag@cleancount+1}%
+   \fi%
    \forlistloop{\yquant@register@flag@clean@enclose{#1}}\yquant@circuit@enclose@active%
 }
 % END_FOLD

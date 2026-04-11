@@ -812,7 +812,7 @@
       \yquant@register@get@allowmultitrue%
       \let\yquant@config@register@default@lazyname=\empty%
       % we will count how many registers contain the "clean" flag, and only if this is equal to the number of targets, we apply the shift.
-      \count8=0 %
+      \def\yquant@register@flag@cleancount{0}%
    }%
    {%
       \ifdefined\yquant@lang@attr@type%
@@ -836,12 +836,12 @@
       \ifyquant@circuit@operator@hasControls%
          \epreto\yquant@attrs@remaining{internal/corner={\yquant@orientation@minus}{\yquant@circuit@operator@targets}{\yquant@circuit@operator@minctrl}{\yquant@circuit@operator@maxctrl},}%
          \let\yquant@prepare@callback@draw=\yquant@circuit@settype@afternobit%
-         \count8=0 % never apply the shift if we have controls
+         \def\yquant@register@flag@cleancount{0}% never apply the shift if we have controls
       \else%
          \let\yquant@prepare@callback@draw=\yquant@circuit@settype%
       \fi%
       \let\yquant@prepare@multi=\yquant@prepare@multiinit%
-      \ifnum\count8=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
+      \ifnum\yquant@register@flag@cleancount=\numexpr\yquant@circuit@operator@maxctrl-\yquant@circuit@operator@minctrl+1\relax%
          \let\yquant@lang@@init@encloserelevant=\empty%
          \forlistloop\yquant@lang@@init@checkenclose\yquant@circuit@enclose@active%
          \ifx\yquant@lang@@init@encloserelevant\empty%
