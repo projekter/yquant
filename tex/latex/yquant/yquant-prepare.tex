@@ -491,10 +491,10 @@
       \fi%
 }
 
-\protected\gdef\yquant@prepare@output@discard#1#2#3{%
-   \ifstrequal{#3}{discard}{%
+\protected\gdef\yquant@prepare@output@discard#1#2#3#4{%
+   \ifstrequal{#4}{discard}{%
       % This notification is triggered in the main circuit if there was an output gate on a wire with [out] or [inout] modifier, but the wire was discarded directly after the subcircuit. Then, it would look weird to extend the wire from the output gate until the end of the subcircuit, so we change the modifier to [ancilla] (not really, this is an artificial state) or [out].
-      \listcsxadd{#1inonly}{#2}%
+      \listcsxadd{#2inonly}{#1}%
    }\relax%
 }
 
@@ -509,7 +509,7 @@
    \ifdefined\yquant@parent%
       \ifinlistcs{#3}{\yquant@prefix inonly}\relax{%
          \yquant@register@set@lastgate{#3}{%
-            \yquant@prepare@output@discard{\yquant@prefix}%
+            \yquant@prepare@output@discard{#3}{\yquant@prefix}%
          }%
       }%
    \fi%
@@ -546,7 +546,7 @@
       \yquant@for \@yquant@i := \@yquant@first to \@yquant@last {%
          \xifinlistcs\@yquant@i{\yquant@prefix inonly}\relax{%
             \yquant@register@set@lastgate\@yquant@i{%
-               \yquant@prepare@output@discard{\yquant@prefix}%
+               \yquant@prepare@output@discard{\@yquant@i}{\yquant@prefix}%
             }%
          }%
       }%

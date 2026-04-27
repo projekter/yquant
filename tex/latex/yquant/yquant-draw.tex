@@ -663,7 +663,9 @@
       % now, due to cross-subcircuit alignments of enclosing rectangles, it might be that our computed width is far larger than the one we would expect
       \yquant@dimenc=\yquant@orientation@minus\maxdimen %
       \forlistloop\yquant@draw@subcircuit@remeasure{#5}%
-      \advance \yquant@dimenc by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
+      \expandafter\unless\expandafter\ifx\csname\yquant@prefix outputs\endcsname\relax%
+         \advance \yquant@dimenc by \yquant@orientation@plus\yquant@circuit@endwires@operatorsep\space%
+      \fi%
       \gundef\yquant@circuit@endwires@operatorsep%
       \yquant@dimend=\@firstofthree#4 %
       \dimdef\@yquant@delta{%
