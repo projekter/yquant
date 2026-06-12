@@ -791,10 +791,12 @@
                   % it was a vector register
                   \ifdefined\newid%
                      \edef\@yquant@do{%
-                        \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@relevant@i>{#2}}%
-                           \expandafter\yquant@register@fullresolvetocolon%
-                              \csname yquant@circuit@enclose@#1@prefixid\endcsname%
-                              \newid%
+                        \noexpand\yquant@register@colonsplit{\yquant@circuit@enclose@relevant@i{\yquant@env@prefix@id\yquant@prefix}{#2}>}%
+                           {%
+                              \expandafter\yquant@register@fullresolvetocolon%
+                                 \csname yquant@circuit@enclose@#1@prefixid\endcsname%
+                                 \newid%
+                           }%
                      }%
                      \expandafter\@yquant@do\expandafter\@gobble\yquant@list@endchar% we need to eat up the \listbreak, if it comes
                      \global\cslet{yquant@config@enclose@#1@toresolved}\relax%
