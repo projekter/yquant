@@ -1,7 +1,7 @@
 % yquantlanguage-qasm.sty
 %  Extend yquant to understand qasm syntax.
 %
-% Copyright 2021 Benjamin Desef
+% Copyright 2021-2026 Benjamin Desef
 %
 % This work may be distributed and/or modified under the conditions of the LaTeX Project
 % Public License, either version 1.3c of this license or (at your option) any later
@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-qasm}[2021/12/24 v0.6 yquant-qasm]
+\ProvidesPackage{yquantlanguage-qasm}[2026/06/25 v0.9.1 yquant-qasm]
 
-\RequirePackage{yquant}[2021/12/24]
+\RequirePackage{yquant}[2026/04/11]
 
 % BEGIN_FOLD Environment definitions
 \begingroup
@@ -213,13 +213,13 @@
 % BEGIN_FOLD Langhelper definitions
 % Parsing command itself
 \protected\qasm@defwithnewline\qasm@langhelper@check@name#1 #2{%
-   \lowercase{\edef\cmd{#1}}%
-   \unless\ifcsname qasm@lang@\cmd\endcsname%
+   \lowercase{\edef\@qasm@cmd{#1}}%
+   \unless\ifcsname qasm@lang@\@qasm@cmd\endcsname%
       \PackageError{yquant.sty}{Unsupported qasm command: `#1'}%
          {You used a command that is unknown to qasm.}%
    \fi%
    \catcode`\^^M=5 % this catcode is required for scantokens, which we almost always need (because we use yquant's extensive register name facilities)
-   \csname qasm@lang@\cmd\endcsname#2 \qasm@end%
+   \csname qasm@lang@\@qasm@cmd\endcsname#2 \qasm@end%
 }
 
 % Defines a yquant command for qasm
@@ -230,9 +230,9 @@
 % #5: pre-actions
 \protected\def\qasm@langhelper@alias@yquant#1#2#3#4#5{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
+      \lowercase{\edef\@qasm@cmd{#1}}%
       % everything after the next space is just gobbled
-      \protected\long\csgdef{qasm@lang@\cmd}##1 ##2\qasm@end{%
+      \protected\long\csgdef{qasm@lang@\@qasm@cmd}##1 ##2\qasm@end{%
          \unexpanded{#5}%
          \qasm@langhelper@declare@command@@fetchargs{#2}{#3}{##1}{\csname yquant@lang@#4\endcsname}%
          \yquant@env@rescan%
@@ -248,14 +248,14 @@
 % #5: actions to be taken after parsing
 \protected\def\qasm@langhelper@declare@command#1#2#3#4#5{%
    \begingroup%
-      \lowercase{\edef\cmd{#1}}%
-      \long\protected\csxdef{qasm@lang@\cmd}##1 ##2\qasm@end{%
+      \lowercase{\edef\@qasm@cmd{#1}}%
+      \long\protected\csxdef{qasm@lang@\@qasm@cmd}##1 ##2\qasm@end{%
          \noexpand\yquant@langhelper@execclear@lastgatetrue%
          \unexpanded{#4}%
          \qasm@langhelper@declare@command@@fetchargs{#2}{#3}{##1}\yquant@circuit@operator%
          \noexpand\ifyquant@langhelper@execclear@lastgate%
-            \yquant@for \noexpand\i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
-               \yquant@register@execclear@lastgate{\noexpand\i}{\cmd}%
+            \yquant@for \noexpand\@qasm@i := \noexpand\yquant@circuit@operator@minctrl to \noexpand\yquant@circuit@operator@maxctrl {%
+               \yquant@register@execclear@lastgate{\noexpand\@qasm@i}{\@qasm@cmd}%
             }%
          \noexpand\fi%
          \unexpanded{#5}%
@@ -265,8 +265,8 @@
 }
 
 \protected\def\qasm@langhelper@declare@command@@fetchargs#1#2#3#4{%
-   \let\targets=\empty%
-   \let\controls=\empty%
+   \let\@qasm@targets=\empty%
+   \let\@qasm@controls=\empty%
    \count0=0 %
    \count2=#1 %
    \forcsvlist%
@@ -276,21 +276,21 @@
       \PackageError{yquant.sty}{Invalid command use}%
          {This gate requires #2 target\unless\ifnum#2=1 s\fi\space and #1 control\unless\ifnum#1=1 s\fi.}%
    \fi%
-   \edef\cmd{%
+   \edef\@qasm@cmd{%
       \unexpanded{#4}%
-         {\expandafter\@gobble\controls\empty}{}%
-         {\expandafter\@gobble\targets\empty}%
+         {\expandafter\@gobble\@qasm@controls\empty}{}%
+         {\expandafter\@gobble\@qasm@targets\empty}%
    }%
-   \cmd%
+   \@qasm@cmd%
 }
 
 \protected\def\qasm@langhelper@declare@command@@fetchargs@#1{%
    \advance\count0 by 1 %
    \unless\ifnum\count0>\count2 %
       % we are at the beginning
-      \appto\controls{,#1}%
+      \appto\@qasm@controls{,#1}%
    \else%
-      \appto\targets{,#1}%
+      \appto\@qasm@targets{,#1}%
    \fi%
 }
 
@@ -458,12 +458,11 @@
          \everyeof{\noexpand}%
          \endlinechar=-1 %
          \edef\process{%
+            \endgroup%
             \def\noexpand\yquant@lang@attr@value{%
                \scantokens{\unexpanded{#3}}%
             }%
-         }
-         \expandafter%
-      \endgroup%
+         }%
       \process%
    }{%
       % make num subscript if name = alpha+numbers
@@ -480,13 +479,12 @@
             \everyeof{\noexpand}%
             \endlinechar=-1 %
             \edef\process{%
+               \endgroup%
                \def\noexpand\yquant@lang@attr@value{%
                   $\unexpanded\expandafter{\yquant@lang@attr@value} = %
                    \scantokens{\unexpanded{#2}}$%
                }%
-            }
-            \expandafter%
-         \endgroup%
+            }%
          \process%
       }%
    \else%
@@ -503,14 +501,13 @@
             \everyeof{\noexpand}%
             \endlinechar=-1 %
             \edef\process{%
+               \endgroup%
                \def\noexpand\yquant@lang@attr@value{%
                   $\noexpand\qasm@config@qubit@namevalue%
                    {\unexpanded\expandafter{\yquant@lang@attr@value}}%
                    {\scantokens{\unexpanded{#2}}}$%
                }%
-            }
-            \expandafter%
-         \endgroup%
+            }%
          \process%
       }%
    \fi%
@@ -541,11 +538,11 @@
 }
 
 \protected\def\qasm@lang@def#1,#2,'#3' #4\qasm@end{%
-      \lowercase{\def\cmd{#1}}%
+      \lowercase{\def\@qasm@cmd{#1}}%
       % we need to do a couple of case distinctions (it might seem crazy to look for the existence of a particular macro in #3, but this is what qasm does)
       \ifstrequal{#3}{bullet}{%
          \edef\process{%
-            \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+            \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
                \let\noexpand\yquant@lang@attr@value=\noexpand\empty%
                \noexpand\yquant@lang@phase%
             }%
@@ -557,40 +554,39 @@
             \everyeof{\noexpand}%
             \endlinechar=-1 %
             \edef\process{%
-               \def\noexpand\texcode{%
+               \endgroup%
+               \def\noexpand\@qasm@texcode{%
                   \scantokens{\unexpanded{#3}}%
                }%
             }%
-            \expandafter%
-         \endgroup%
          \process%
          % now check whether the text begins with \meter, \dmeter or \dmeterwide. This is not 100% equivalent to qasm, which only checks whether these macros are present, not whether they are at the beginning. But due to our node approach, anything different from the whole content being this macro does not make sense.
-         \expandafter\ifyquant@firsttoken\expandafter\meter\expandafter{\texcode}{%
+         \expandafter\ifyquant@firsttoken\expandafter\meter\expandafter{\@qasm@texcode}{%
             \edef\process{%
-               \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+               \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
                   \noexpand\yquant@lang@measure%
                }%
             }%
          }{%
-            \expandafter\ifyquant@firsttoken\expandafter\dmeter\expandafter{\texcode}{%
+            \expandafter\ifyquant@firsttoken\expandafter\dmeter\expandafter{\@qasm@texcode}{%
                \protected@edef\process{%
-                  \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
-                     \def\noexpand\yquant@lang@attr@value{\texcode}%
+                  \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
+                     \def\noexpand\yquant@lang@attr@value{\@qasm@texcode}%
                      \noexpand\yquant@lang@dmeter%
                   }%
                }%
             }{%
-               \expandafter\ifyquant@firsttoken\expandafter\dmeterwide\expandafter{\texcode}{%
+               \expandafter\ifyquant@firsttoken\expandafter\dmeterwide\expandafter{\@qasm@texcode}{%
                   \protected@edef\process{%
-                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
-                        \def\noexpand\yquant@lang@attr@value{\texcode}%
+                     \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
+                        \def\noexpand\yquant@lang@attr@value{\@qasm@texcode}%
                         \noexpand\yquant@lang@dmeter%
                      }%
                   }%
                }{%
                   \edef\process{%
-                     \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
-                        \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\texcode}$}%
+                     \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
+                        \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\@qasm@texcode}$}%
                         \noexpand\yquant@lang@box%
                      }%
                   }%
@@ -599,14 +595,13 @@
          }%
       }%
       \eappto\process{%
+         \endgroup%
          % we don't use \qasm@langhelper@declare@command here, since it works globally
-         \protected\long\def\expandafter\noexpand\csname qasm@lang@\cmd\endcsname####1 ####2\noexpand\qasm@end{%
-            \qasm@langhelper@declare@command@@fetchargs{#2}1{####1}\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname%
+         \protected\long\def\expandafter\noexpand\csname qasm@lang@\@qasm@cmd\endcsname####1 ####2\noexpand\qasm@end{%
+            \qasm@langhelper@declare@command@@fetchargs{#2}1{####1}\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname%
             \noexpand\yquant@env@rescan%
          }%
       }%
-      \expandafter%
-   \endgroup%
    \process%
    \yquant@env@scan%
 }
@@ -616,34 +611,32 @@
          \PackageError{yquant.sty}{Invalid box definition}%
                       {You need at least as many total qubits as controls.}%
       \fi%
-      \lowercase{\def\cmd{#1}}%
+      \lowercase{\def\@qasm@cmd{#1}}%
       % no special cases here
       \begingroup%
          \qasm@env@restorecatcodes%
          \everyeof{\noexpand}%
          \endlinechar=-1 %
          \edef\process{%
-            \def\noexpand\texcode{%
+            \endgroup%
+            \def\noexpand\@qasm@texcode{%
                \scantokens{\unexpanded{#4}}%
             }%
          }%
-         \expandafter%
-      \endgroup%
       \process%
       \edef\process{%
-         \def\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname{%
+         \endgroup%
+         \def\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname{%
             \noexpand\yquant@register@get@allowmultitrue%
-            \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\texcode}$}%
+            \def\noexpand\yquant@lang@attr@value{$\unexpanded\expandafter{\@qasm@texcode}$}%
             \noexpand\yquant@lang@box%
          }%
          % we don't use \qasm@langhelper@declare@command here, since it works globally
-         \protected\long\def\expandafter\noexpand\csname qasm@lang@\cmd\endcsname####1 ####2\noexpand\qasm@end{%
-            \qasm@langhelper@declare@command@@fetchargs{#3}{\the\numexpr#2-#3\relax}{####1}\expandafter\noexpand\csname qasm@lang@@def@\cmd\endcsname%
+         \protected\long\def\expandafter\noexpand\csname qasm@lang@\@qasm@cmd\endcsname####1 ####2\noexpand\qasm@end{%
+            \qasm@langhelper@declare@command@@fetchargs{#3}{\the\numexpr#2-#3\relax}{####1}\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname%
             \noexpand\yquant@env@rescan%
          }%
       }%
-      \expandafter%
-   \endgroup%
    \process%
    \yquant@env@scan%
 }

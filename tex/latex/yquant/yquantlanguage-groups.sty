@@ -1,7 +1,7 @@
 % yquantlanguage-groups.sty
 %  Extend yquant for quick and simple circuit equations.
 %
-% Copyright 2021 Benjamin Desef
+% Copyright 2021-2026 Benjamin Desef
 %
 % This work may be distributed and/or modified under the conditions of the LaTeX Project
 % Public License, either version 1.3c of this license or (at your option) any later
@@ -15,9 +15,9 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-groups}[2022/01/07 v0.7 yquant-groups]
+\ProvidesPackage{yquantlanguage-groups}[2026/06/25 v0.9.1 yquant-groups]
 
-\RequirePackage{yquant}[2022/01/07]
+\RequirePackage{yquant}[2026/04/11]
 
 % BEGIN_FOLD Config
 \newif\ifyquantgroup@config@aligned
@@ -108,8 +108,8 @@
       \yquant@env@end%
    \fi%
    \ifcsname\yquantgroup@parent cleanup\endcsname%
-      \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
-         \csgundef{\yquantgroup@prefix import@\i}%
+      \yquant@for \@yquant@i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
+         \csgundef{\yquantgroup@prefix import@\@yquant@i}%
       }%
       \expandafter\expandafter\expandafter\yquant@cleanup\csname\yquantgroup@parent cleanup\endcsname|%
       \csgundef{\yquantgroup@parent cleanup}%
@@ -243,8 +243,8 @@
             \csgdef{\yquantgroup@prefix import@\the\numexpr\csname\yquant@prefix registers\endcsname+1\relax}{%
                ####1\yquant@langhelper@cmd@original####2#1[+1];%
             }%
-            \noexpand\yquant@for \noexpand\i := 2 to \yquantgroup@registers@create@parse@extract#2 {%
-               \csgdef{\yquantgroup@prefix import@\noexpand\the\numexpr\csname\yquant@prefix registers\endcsname+\noexpand\i\relax}{%
+            \noexpand\yquant@for \noexpand\@yquant@i := 2 to \yquantgroup@registers@create@parse@extract#2 {%
+               \csgdef{\yquantgroup@prefix import@\noexpand\the\numexpr\csname\yquant@prefix registers\endcsname+\noexpand\@yquant@i\relax}{%
                   [\yquantgroup@registers@remember@attrs]%
                   \yquant@langhelper@cmd@original####2#1[+1];%
                }%
@@ -271,10 +271,10 @@
    \ifdef\yquant@prefix{%
       \ifyquanthorz{%
          % We already started the yquant environment - but this means that potentially, we could have changed our wire styles. The underlying subcircuit architecture will preserve these changes, but since in our context, we treat the circuits as independent, this is not the desired behavior: remove all styles.
-         \yquant@for \i := 1 to \csname\yquant@prefix registers\endcsname {%
+         \yquant@for \@yquant@i := 1 to \csname\yquant@prefix registers\endcsname {%
             % we don't really need to flush a wire, since it is discarded anyway
             \csxappto{\yquant@prefix draw}{%
-               \yquant@register@set@style{\i}{}%
+               \yquant@register@set@style{\@yquant@i}{}%
             }%
          }%
          \@gobble%
@@ -292,8 +292,8 @@
          % we re-create all the outer registers, but without the names.
          % sync with yquant-registers/\yquant@register@define
          \global\csletcs{\yquant@prefix registers}{\yquantgroup@prefix registers}%
-         \yquant@for \i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
-            \csxdef{\yquant@prefix register@\i}{%
+         \yquant@for \@yquant@i := 1 to \csname\yquantgroup@prefix registers\endcsname {%
+            \csxdef{\yquant@prefix register@\@yquant@i}{%
                {\yquant@register@types@nobit}% type
                {0pt}% x pos
                {{\yquant@config@register@minimum@height}%
@@ -303,9 +303,9 @@
                {}% wire style
                {\yquant@register@flag@clean}%
             }%
-            \yquant@cleanup@csadd{\yquant@prefix register@\i}%
+            \yquant@cleanup@csadd{\yquant@prefix register@\@yquant@i}%
             \csxappto{\yquant@prefix draw}{%
-               \yquant@draw@init{\i}{\yquant@register@types@nobit}%
+               \yquant@draw@init{\@yquant@i}{\yquant@register@types@nobit}%
             }%
          }%
    }%
@@ -553,7 +553,7 @@
    \fi%
    % there is no cleanup of names when leaving a tikzpicture, so all the shapes are still there - all we have to do is to remember the correct number, and also be aware of the fact that the minimum x value in the picture needs to be preserved - else and left margin will just be dropped.
    \ifx1#2%
-      \edef\tmp{%
+      \edef\@yquant@tmp{%
          \unexpanded{%
             \yquantgroup@end@tikzpicture%
             \par#1%
@@ -565,14 +565,14 @@
          \fi%
       }%
    \else%
-      \def\tmp{%
+      \def\@yquant@tmp{%
          \yquantgroup@end@tikzpicture%
          \par#1%
          \yquantgroup@start@tikzpicture%
          \def\yquantgroup@alignments{0}% the assignments were global, so we must rather reset them
       }%
    \fi%
-   \tmp%
+   \@yquant@tmp%
 }
 
 \def\yquantgroup@pagebreak{%
@@ -623,12 +623,12 @@
       \PackageError{yquant.sty}{There is no circuit here to end}%
                    {You did not start a circuit before requesting an intertext.}%
    \fi%
-   \edef\tmp{%
+   \edef\@yquant@tmp{%
       \unexpanded{%
          \yquantgroup@end@tikzpicture%
-         \par\penalty\postdisplaypenalty\vskip#1%
+         \par\penalty\postdisplaypenalty\vskip#1 %
          \noindent\ignorespaces#3%
-         \par\penalty\predisplaypenalty\vskip#2%
+         \par\penalty\predisplaypenalty\vskip#2 %
          \yquantgroup@start@tikzpicture%
       }%
       \global\pgf@picminx=\the\pgf@picminx\space%
@@ -636,7 +636,7 @@
          \noexpand\yquantgroup@shiftright@ii0[1]%
       \fi%
    }%
-   \tmp%
+   \@yquant@tmp%
 }
 % END_FOLD
 
