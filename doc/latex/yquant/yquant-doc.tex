@@ -1338,7 +1338,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             This is a synonym for \ttlink{/yquant/register/minimum height}, which provides a naming that makes sense in both horizontal and vertical mode.
          \end{option}
 
-         \begin{option}[New in 0.7]{register/minimum after}!1.5mm!
+         \begin{option}[Fixed in 0.9.1\\New in 0.7]{register/minimum after}!1.5mm!
             This is a synonym for \ttlink{/yquant/register/minimum depth}, which provides a naming that makes sense in both horizontal and vertical mode.
          \end{option}
 
@@ -1385,6 +1385,14 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \begin{option}[New in 0.7]{default fill}!fill/.expanded=\pgfkeysvalueof{/yquant/default background}!
             Use this style if you want to apply the default filling to a user\hyp defined gate.
          \end{option}
+         
+         \begin{option}[New in 0.9.1]{idx base}!0!
+            Within configuration keys, the macro \tex!\idx! will expand to the index of the current register.
+            By default, this is zero\hyp based in accordance with how the registers are named within \Yquant.
+            However, as \tex!\idx! is mostly used for printing its value, it can be convenient to change this to a one\hyp based setting (or even something completely different).
+            This is possible by passing \texttt{idx base=1} as an option to the circuit.
+            Note that this will \emph{only} affect the macro \tex!\idx!; everything within \Yquant{} is still zero\hyp based.
+         \end{option}
 
       \subsection{Register creation}\unskipOpt
          \begin{option}{register/default name}!\regidx!
@@ -1392,7 +1400,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             The following macros are available:
             \begin{itemize}
                \item \linkdef\reg\tex!\reg! contains your name to identify this register.
-               \item \linkdef\idx\tex!\idx! contains the index (zero\hyp based) of the current register within a vector register.
+               \item \linkdef\idx\tex!\idx! contains the index (by default zero\hyp based, see \ttlink{/yquant/idx base}) of the current register within a vector register.
                   \compat{Changed in 0.8}Note that before version~0.8, this was not strictly true; \tex!\idx! contained the index within the \emph{currently added} registers.
                   Most often, this is the same; however, if you were adding, say, the second part of a discontinuous register (or you were using the \langlink{groups} library), then the indices would have started with zero again.
                   Starting from \ttlink{compat} version~0.8, \tex!\idx! will always contain the index of the complete vector register.
@@ -1562,7 +1570,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
             It allows to selectively apply its contents only to a certain part of a multi\hyp partite operator.
             The style expects an even number of parameters.
             The first (third, ...) parameter contains the index of the operator/control where the style should apply.
-            This index corresponds to the values that \texlink{\idx} can take; i.e., it will be zero for the topmost operator/control (leftmost for vertical circuits) and then increment by one.
+            This index corresponds to the values that \texlink{\idx} can take (but always zero\hyp based, irrespective of \ttlink{/yquant/idx base}); i.e., it will be zero for the topmost operator/control (leftmost for vertical circuits) and then increment by one.
             The indices of operators, positive, and negative controls are all independent.
             You may not only give a single index, but instead also a comma\hyp separated list, and you may also use index ranges (where both the first and second part of the range can be omitted, which then means ``from the first'' or ``to the last'').
             The second (fourth, ...) parameter then contains all the styles that should actually be applied.
@@ -1873,7 +1881,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
          \Yquant{} provides a global attribute \texttt{name} that can be assigned to every gate.
          All quantum operations are in fact \TikZ{} nodes, and the name you give to them then becomes a \TikZ{} name, which you can easily reference to get the coordinates of a particular operator.
          Note that the name you specify is only available if a single register is targeted.
-         The name is suffixed by \tex!-\idx!, where \tex!\idx! refers to the (zero\hyp based) index of the operation ordered from top to bottom (i.e., if an operator acts on two qubits and should be named \texttt{op}, the topmost operator will be available as \texttt{op-0} and the second as \texttt{op-1}).
+         The name is suffixed by \tex!-\idx!, where \tex!\idx! refers to the (always zero\hyp based, irrespective of \ttlink{/yquant/idx base}) index of the operation ordered from top to bottom (i.e., if an operator acts on two qubits and should be named \texttt{op}, the topmost operator will be available as \texttt{op-0} and the second as \texttt{op-1}).
          Multiple slices in a discontiguous multi\hyp register are additionally suffixed by \texttt{-s\textit{<slice index>}}.
          All controls are also named, suffixed by \tex!-p\idx! or \tex!-n\idx! for positive and negative controls (i.e., the topmost positive control of the previous operator will be available as \texttt{op-p0}).
          Counters for target registers, positive, and negative controls are all independent.
@@ -1985,7 +1993,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
       This section lists all operations \Yquant{} currently understands.
       It also details all arguments that can be given to customize the operation, apart from \ttlink{name} and \compat{New in 0.4}\ttlink{overlay}, which are always available.
       Note that the \texlink[value]{[value=<value>]} attribute can (and should) alternatively be given as a braced expression that follows the name of the register.
-      Within \tex!<value>!, unless specified differently, the macro \texlink{\idx} is always available and corresponds to the index of the current register in the list of targets.
+      Within \tex!<value>!, unless specified differently, the macro \texlink{\idx} is always available and corresponds to the index of the current register in the list of targets, \compat{New in 0.9.1}shifted by \ttlink{/yquant/idx base}.
 
       \subsection[\texorpdfstring{\yquant{addstyle}}{addstyle}]{\compat{New in 0.1.2}\yquant!addstyle!}\linkdef{addstyle}
          Syntax: \yquant!setstyle <target>;! \\
@@ -2278,7 +2286,7 @@ IndexSingle = ?number? | ( [ ?number? ], "-", [ ?number? ] );
                Denotes the label that is printed to the left of the wire.
                If the value is omitted, the default is used (\ttlink{/yquant/register/default name}, preinitialized to \texlink\regidx).
 
-               Inside the value, \texlink{\reg} expands to \texttt{<name>}, \texlink{\len} expands to \texttt{<len>}, \texlink{\idx} expands to the current index within the vector register (for new registers, $0 \leq \text{\tex!\idx!} < \text{\texttt{<len>}}$), and \texlink{\regidx} expands to \texlink{\reg} if \texttt{<len>} is one, or to \tex!\reg[\idx]! else.
+               Inside the value, \texlink{\reg} expands to \texttt{<name>}, \texlink{\len} expands to \texttt{<len>}, \texlink{\idx} expands to the current index within the vector register (for new registers, \compat{Enhanced in 0.9.1.}$\text{\ttlink{/yquant/idx base}} \leq \text{\tex!\idx!} < \text{\texttt{<len>}} + \text{\ttlink{/yquant/idx base}}$), and \texlink{\regidx} expands to \texlink{\reg} if \texttt{<len>} is one, or to \tex!\reg[\idx]! else.
                For details about these macros and changes in version~0.8, see their documentation.
             \item \yquant![enclose/set from=<enclose name>]! \\
                Tells \Yquant{} that the named enclosing \texttt{<name>} should at least start from this register (if multiple registers are created, from the first one), if not at a preceding one. \\
@@ -3041,11 +3049,11 @@ qubit {$\ket{q_{\idx}} = \Ifcase\idx\relax \ket\psi \Else \ket0 \Fi$} q[3];
                \end{example}
 
             \paragraph{C. Vertical wires}\leavevmode
-               \begin{example}<Updated in 0.4, 0.1.1>
+               \begin{example}<Updated in 0.9.1, 0.4, 0.1.1>
                   \begin{codeexample}
 \begin{tikzpicture}
-   \begin{yquant*}
-      box {$U_{\The\numexpr\idx+1}$} q[0, 2] | q[1];
+   \begin{yquant*}[idx base=1]
+      box {$U_\idx$} q[0, 2] | q[1];
    \end{yquant*}
 \end{tikzpicture}
                   \end{codeexample}
@@ -4164,17 +4172,17 @@ $=$
 
          \clearpage
          \subsubsection{X. Troubleshooting}
-            \begin{example}<Updated in 0.4>
+            \begin{example}<Updated in 0.9.1, 0.4>
                \begin{codeexample*}
 \begin{tikzpicture}
-   \begin{yquant}
+   \begin{yquant}[idx base=1]
       qubit {$\ket0$} a[2];
       box {$\begin{pmatrix}
                \alpha & \beta \\
                \beta & -\alpha
             \end{pmatrix}$} a[0];
       cnot a[1] | a[0];
-      box {$U_{\The\numexpr\idx+1}$} a;
+      box {$U_\idx$} a;
    \end{yquant}
 \end{tikzpicture}
                \end{codeexample*}
@@ -6115,7 +6123,11 @@ $=$
          Bugfix: Subcircuits will now work properly even in the presence of global rotation transformations. \\
          Bugfix: Subcircuits will in vertical mode now properly account for their box space when calculating register positions.
 
-      \subsection*{2026-04-11: Version 0.9.1}
-         Fix \href{https://github.com/projekter/yquant/issues/36}{\#36}: Largely refactor the code as it appeared that some user code can be executed in internal groups which might mess with macros or registers.
+      \subsection*{2026-07-19: Version 0.9.1}
+         Fix \href{https://github.com/projekter/yquant/issues/36}{\#36}: Largely refactor the code as it appeared that some user code can be executed in internal groups which might mess with macros or registers. \\
+         Regression: wire lengths in subcircuits with outputs and discarded wires (introduced in~0.9). \\
+         Bugfix: Make \ttlink{/yquant/register/minimum after} configuration key work, which has been broken from the very beginning. \\
+         Bugfix: Make enclosing \ttlink[/yquant/enclose/to]{to} work with vector registers. \\
+         New: \ttlink{/yquant/idx base} configuration key, which allows to let the \tex!\idx! macro start at, e.g., $1$ instead of $0$, avoiding the need for \tex!\The\numexpr\idx+1\relax! in some situations.
 %END_FOLD
 \end{document}
