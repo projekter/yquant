@@ -188,14 +188,14 @@
    % we allow for scattering, so check whether the register already exists
    \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
       \ifyquant@firsttoken+{#2}{%
-         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1}%
+         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1+\yquant@config@idxbase}%
          \numdef\len{\len+\idx}%
       }{%
          \PackageError{yquant.sty}{Duplicate registers}%
             {Register `\reg' was already defined. Use `\reg[+#2]' with explicit plus symbol to indicate that you want to enlarge the register on purpose.}%
       }%
    \else%
-      \def\idx{0}%
+      \let\idx=\yquant@config@idxbase%
    \fi%
    \ifnum\len>1 %
       \def\regidx{\reg[\idx]}%
@@ -218,7 +218,7 @@
          \fi%
          \let\yquant@lang@create@type=\yquant@register@types@nobit%
       \fi%
-      \yquant@for \idx := \idx to \numexpr \len -1\relax {%
+      \yquant@for \idx := \numexpr\idx-\yquant@config@idxbase\relax to \numexpr\len-1\relax {%
          \yquant@prepare@create\reg\idx\yquant@lang@create@type%
       }%
    \endgroup%

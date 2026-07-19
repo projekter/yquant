@@ -413,13 +413,13 @@
       \edef\reg{\trim@spaces{#1}}%
       % Was this register already defined?
       \ifcsname\yquant@prefix registerhigh@\reg\endcsname%
-         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1}%
-         \unless\ifnum\idx<\len\relax%
+         \numdef\idx{\csname\yquant@prefix registerhigh@\reg\endcsname+1+\yquant@config@idxbase}%
+         \unless\ifnum\numexpr\idx-\yquant@config@idxbase\relax<\len\space%
             \PackageError{yquant.sty}{Internal inconsistency detected}%
                {Tried to create a register on-the-fly that already existed.}%
          \fi%
       \else%
-         \def\idx{0}%
+         \let\idx=\yquant@config@idxbase%
       \fi%
       % define text macros
       \ifnum\len>1 %
@@ -435,7 +435,7 @@
       \numdef\yquant@circuit@operator@mintarget{\csname\yquant@prefix registers\endcsname+1}%
       \let\yquant@circuit@enclose@allowmovelabel=\@gobble%
       \begingroup%
-         \yquant@for \idx := \idx to \numexpr \len -1\relax {%
+         \yquant@for \idx := \numexpr\idx-\yquant@config@idxbase\relax to \numexpr\len-1\relax {%
             \yquant@prepare@create\reg\idx\yquant@register@types@qubit%
          }%
       \endgroup%

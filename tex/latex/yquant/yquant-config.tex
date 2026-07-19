@@ -218,6 +218,8 @@
       {/yquant/this operator/.append style={#1},%
        /yquant/every control line/.append style={#1},%
        /yquant/this control/.append style={#1}},%
+   idx base/.code=%
+      {\yquant@langhelper@validate\yquant@config@idxbase\count{#1}},
    operator/multi as single/.code=%
       {\ifnum\yquant@draw@@currentcontroltype=0 %
           \pgfkeysalso{/yquant/every multi line/.style=/yquant/every control line}%
@@ -284,12 +286,12 @@
       \forcsvlist\yquant@config@onlyloop{#2}%
       \let\@ifyquant@doit=\iffalse%
       \ifdefined\yquant@config@onlyloop@allupto%
-         \unless\ifnum\idx>\yquant@config@onlyloop@allupto\space%
+         \unless\ifnum\numexpr\idx-\yquant@config@idxbase\relax>\yquant@config@onlyloop@allupto\space%
             \csletcs{@ifyquant@doit}{iftrue}%
          \fi%
       \fi%
       \ifdefined\yquant@config@onlyloop@allfrom%
-         \unless\ifnum\idx<\yquant@config@onlyloop@allfrom\space%
+         \unless\ifnum\numexpr\idx-\yquant@config@idxbase\relax<\yquant@config@onlyloop@allfrom\space%
             \csletcs{@ifyquant@doit}{iftrue}%
          \fi%
       \fi%
@@ -851,6 +853,7 @@
 \def\yquant@config@operator@sep{1mm}
 \def\yquant@config@operator@minimum@width{\yquant@config@operator@minimum@width@default}
 \def\yquant@config@operator@minimum@width@default{5mm}
+\def\yquant@config@idxbase{0}
 \def\yquant@config@enclose@spacing{2}
 \def\yquant@config@enclose@shape{0}
 \def\yquant@config@enclose@beamercommand{\uncover}

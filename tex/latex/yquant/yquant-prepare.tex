@@ -57,7 +57,7 @@
 \protected\long\def\yquant@prepare#1#2{%
    \yquant@sort@clear%
    \def\yquant@prepare@injectcontrols@count{0}%
-   \def\idx{0}%
+   \let\idx=\yquant@config@idxbase%
    \yquant@prepare@ifs@direct%
    \yquant@dimenb=\yquant@config@operator@minimum@width%
    \ifyquant@circuit@operator@hasControls%
@@ -75,7 +75,7 @@
       \ifx\yquant@lang@attr@name\empty%
          \let\@yquant@nodename=\empty%
       \else%
-         \edef\@yquant@nodename{\yquant@lang@attr@name-\idx}%
+         \edef\@yquant@nodename{\yquant@lang@attr@name-\the\numexpr\idx-\yquant@config@idxbase\relax}%
       \fi%
       \ifyquant@firsttoken\yquant@register@multi{##1}{%
          \yquant@prepare@multi{#1}{#2}{##1}%
@@ -221,7 +221,7 @@
    \ifx\yquant@lang@attr@name\empty%
       \let\@yquant@nodename=\empty%
    \else%
-      \edef\@yquant@nodename{\yquant@lang@attr@name-#1\idx}%
+      \edef\@yquant@nodename{\yquant@lang@attr@name-#1\the\numexpr\idx-\yquant@config@idxbase\relax}%
    \fi%
    \ifcsname yquant@prepare@replacecontrol@#2\endcsname%
       \ifcsempty{yquant@prepare@replacecontrol@#2}\relax{%
@@ -270,9 +270,9 @@
 
 \protected\def\yquant@prepare@controls{%
    \ifyquant@circuit@operator@hasControls%
-      \def\idx{0}%
+      \let\idx=\yquant@config@idxbase%
       \forlistloop{\yquant@prepare@controls@loop p}\yquant@circuit@operator@pctrls%
-      \def\idx{0}%
+      \let\idx=\yquant@config@idxbase%
       \forlistloop{\yquant@prepare@controls@loop n}\yquant@circuit@operator@nctrls%
       \unless\ifdefined\yquant@prepare@controltype%
          \PackageError{yquant.sty}{Internal inconsistency detected}%
@@ -755,7 +755,7 @@
 
 \protected\long\def\yquant@prepare@subcircuit#1{%
    \yquant@sort@clear%
-   \def\idx{0}%
+   \let\idx=\yquant@config@idxbase%
    \yquant@dimenb=\yquant@config@operator@minimum@width%
    \ifyquant@circuit@operator@hasControls%
       \edef\yquant@prepare@list{%
@@ -771,7 +771,7 @@
       \ifx\yquant@lang@attr@name\empty%
          \let\@yquant@nodename=\empty%
       \else%
-         \edef\@yquant@nodename{\yquant@lang@attr@name-\idx}%
+         \edef\@yquant@nodename{\yquant@lang@attr@name-\the\numexpr\idx-\yquant@config@idxbase\relax}%
       \fi%
       \ifyquant@firsttoken\yquant@register@multi{##1}{%
          \yquant@prepare@subcircuit@multi{#1}{##1}%

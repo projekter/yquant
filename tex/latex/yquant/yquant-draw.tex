@@ -200,7 +200,7 @@
 }
 
 \protected\def\yquant@draw@single#1#2{%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    \yquant@config@operator@multifalse%
    \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@draw@@x, \yquant@register@get@y{#1})%
@@ -226,7 +226,7 @@
 
 \protected\def\yquant@draw@multi#1#2#3#4#5{%
    \yquant@config@operator@multitrue%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    \edef\yquant@draw@multi@@name{#5}%
    \def\yquant@draw@@idx@multipart{0}%
    \let\yquant@circuit@extendmultiline@cmd=\empty%
@@ -281,7 +281,7 @@
 }
 
 \protected\def\yquant@draw@multiinit#1#2#3#4#5{%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
@@ -363,7 +363,7 @@
 }
 
 \protected\long\def\yquant@draw@output@single#1#2{%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    \yquant@config@operator@multifalse%
    \edef\@yquant@cmd{%
       \noexpand\path \yquant@coords(\yquant@circuit@endwires@x, \yquant@register@get@y{#1})%
@@ -397,7 +397,7 @@
 }
 
 \protected\long\def\yquant@draw@output@multi#1#2#3#4#5{%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    \@tempdima=\yquant@orientation@minus.5\dimexpr\yquant@config@register@sep\relax%
    \dimdef\yquant@draw@multiinit@@min{\yquant@register@get@y{#1}-\@tempdima}%
    \dimdef\yquant@draw@multiinit@@max{\yquant@register@get@y{#2}+\@tempdima}%
@@ -458,7 +458,7 @@
 % #4: {width of subcircuit (excluding outer box)}{including outer box}{left margin}
 % #5: affected wires
 \protected\long\def\yquant@draw@subcircuit@prepare#1#2#3#4#5{%
-   \let\idx=\yquant@draw@@idx@content%
+   \numdef\idx{\yquant@draw@@idx@content+\yquant@config@idxbase}%
    % In order to wrap the inner circuit in a proper box operator and clip outer paths appropriately (which was not possible yet, as we didn't know the exact vertical positions), we first place it within a box.
    % First, we anticipate the macro that is used by our subcircuit to store the node
    % names.
@@ -891,13 +891,13 @@
 }
 
 \protected\def\yquant@draw@pcontrol#1#2{%
-   \let\idx=\yquant@draw@@idx@pcontrol%
+   \numdef\idx{\yquant@draw@@idx@pcontrol+\yquant@config@idxbase}%
    \yquant@draw@control{positive}{#1}{#2}%
    \numdef\yquant@draw@@idx@pcontrol{\yquant@draw@@idx@pcontrol+1}%
 }
 
 \protected\def\yquant@draw@ncontrol#1#2{%
-   \let\idx=\yquant@draw@@idx@ncontrol%
+   \numdef\idx{\yquant@draw@@idx@ncontrol+\yquant@config@idxbase}%
    \yquant@draw@control{negative}{#1}{#2}%
    \numdef\yquant@draw@@idx@ncontrol{\yquant@draw@@idx@ncontrol+1}%
 }
