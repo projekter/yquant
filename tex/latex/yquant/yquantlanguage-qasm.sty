@@ -15,7 +15,7 @@
 %
 % The Current Maintainer of this work is Benjamin Desef.
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{yquantlanguage-qasm}[2026/06/25 v0.9.1 yquant-qasm]
+\ProvidesPackage{yquantlanguage-qasm}[2026/07/19 v0.9.1 yquant-qasm]
 
 \RequirePackage{yquant}[2026/04/11]
 
@@ -595,13 +595,14 @@
          }%
       }%
       \eappto\process{%
-         \endgroup%
          % we don't use \qasm@langhelper@declare@command here, since it works globally
          \protected\long\def\expandafter\noexpand\csname qasm@lang@\@qasm@cmd\endcsname####1 ####2\noexpand\qasm@end{%
             \qasm@langhelper@declare@command@@fetchargs{#2}1{####1}\expandafter\noexpand\csname qasm@lang@@def@\@qasm@cmd\endcsname%
             \noexpand\yquant@env@rescan%
          }%
       }%
+      \expandafter%
+   \endgroup%
    \process%
    \yquant@env@scan%
 }
